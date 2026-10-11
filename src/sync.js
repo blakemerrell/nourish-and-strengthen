@@ -382,7 +382,11 @@ window.Store = (function () {
         ingp: Array.isArray(r.ingp) ? r.ingp.filter(function (x) {
           return x && typeof x === 'object' && typeof x.k === 'string';
         }).map(function (x) {
-          return { k: x.k, g: num(x.g, 0), u: str(x.u, 'g') };
+          var item = { k: x.k, g: num(x.g, 0), u: str(x.u, 'g') };
+          if (typeof x.a === 'string' && x.a) item.a = x.a;
+          if (x.o) item.o = true;
+          if (x.x) item.x = true;
+          return item;
         }) : []
       };
     });
@@ -1694,9 +1698,10 @@ window.Store = (function () {
       var order = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
       batch(function () {
         Object.keys(fill).forEach(function (d) {
-          var before = order[order.indexOf(d) - 1];
+          var before = order[(order.indexOf(d) + 6) % 7];
+          var prevDinners = (fill[before] || []).concat(self.day(before) || []);
           var list = fill[d].filter(function (e) {
-            return !e.lo || (fill[before] || []).some(function (c) { return c.id === e.id && !c.lo; });
+            return !e.lo || prevDinners.some(function (c) { return c.id === e.id && !c.lo; });
           });
           if (list.length) writeDay(d, list);
         });
@@ -1729,6 +1734,7 @@ window.Store = (function () {
         var weeks = Object.assign({}, state.weeks);
         weeks[id] = w; state.weeks = weeks; state.active = id;
       });
+      return id;
     },
 
     renameWeek: function (name) {

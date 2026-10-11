@@ -138,7 +138,9 @@
          day's arithmetic. Missing is not zero, and has to say so. */
       var known = [e.v, pr2.v, fa.v, ca.v].some(function (v) { return typeof v === 'number'; });
       if (!known) throw new Error('nonutrition');
-      var num2 = function (v) { return typeof v === 'number' ? Math.round(v) : 0; };
+      /* To a tenth, as the label prints a gram: whole grams made a drink's
+         0.5 g of fat per can none at all per 100 mL (2026-10-11). */
+      var num2 = function (v) { return typeof v === 'number' ? Math.round(v * 10) / 10 : 0; };
       /* Sodium and fiber on the same basis as the rest, from the same reply:
          they were always in it, and thrown away. Open Food Facts keeps sodium
          in grams, and sometimes only salt, which is sodium times 2.5. One the
@@ -207,11 +209,16 @@
 
   // the grams or mL in a serving as Open Food Facts writes it: "1/2 cup (130 g)", "30g", "330 ml"
   function mServingGrams(s, p) {
-    if (p && Number(p.serving_quantity) > 0) return Number(p.serving_quantity);
+    var u = String((p && p.serving_quantity_unit) || '').toLowerCase();
+    var isWeight = /^(g|grams?|ml|milliliters?)$/i.test(u);
+    if (p && isWeight && Number(p.serving_quantity) > 0) return Number(p.serving_quantity);
     var m = /(\d+(?:[.,]\d+)?)\s*(?:g|grams?|ml|milliliters?)\b/i.exec(String(s || ''));
     if (m) return Number(m[1].replace(',', '.'));
     var fl = /(\d+(?:[.,]\d+)?)\s*(?:fl\s*oz|fluid\s*ounces?)\b/i.exec(String(s || ''));
     if (fl) return Math.round(Number(fl[1].replace(',', '.')) * 29.57);
+    var oz = /(\d+(?:[.,]\d+)?)\s*(?:oz|ounces?)\b/i.exec(String(s || ''));
+    if (oz) return Math.round(Number(oz[1].replace(',', '.')) * 28.35);
+    if (p && Number(p.serving_quantity) > 0 && (!u || isWeight)) return Number(p.serving_quantity);
     return null;
   }
 

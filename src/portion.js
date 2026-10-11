@@ -27,7 +27,11 @@
      "Meal Prep Containers" is counted in containers. A food carries its unit
      outright. */
   function mUnitWord(r) {
-    if (r.food) return String(r.unit || 'serving');
+    if (r.food) {
+      var ls = mLabelServing(r);
+      if (ls && ls.noun && MSTEP_COUNT[ls.noun.toLowerCase()]) return ls.noun.toLowerCase();
+      return String(r.unit || 'serving');
+    }
     /* The word is only the serving's word when the count in front of it IS
        the serving count. "8 Pancakes (4 Servings)" named a plate "1 pancake"
        and charged two; "About 1 Cup (8 Servings)" of syrup read "1 cup" for

@@ -95,18 +95,21 @@ The Run and Not Be Weary recipes that fell furthest from their authored score:
 
 | # | Recipe | Was | Now | Sodium | Fiber |
 |---|---|---|---|---|---|
-
+| 5 | Smoked Ham & Mustard Pickle Roll-Ups | 90 | 56 | 1532 mg | 1.2 g |
+| 13 | Cheddar & Sliced Ham Protein Stack | 81 | 51 | 1374 mg | 0.5 g |
+| 96 | Whipped Strawberry Gelatin Cloud | 86 | 56 | 215 mg | 0 g |
+| 34 | Cottage Cheese Protein Waffles | 75 | 46 | 1006 mg | 1.6 g |
+| 89 | Protein Pudding Parfait | 84 | 55 | 583 mg | 0.4 g |
+| 3 | Quick Canned Chicken & Salsa Bowl | 99 | 71 | 1092 mg | 3.1 g |
 
 Deli ham, canned soup and bottled sauce, every one. And the ones that rose:
 
 | # | Recipe | Was | Now | Sodium | Fiber |
 |---|---|---|---|---|---|
-| 297 | Chicken & Broccoli Cold Bowl | null | 98 | 141 mg | 6.6 g |
-| 299 | Chicken, Pepper & Onion Lunch Box | null | 94 | 86 mg | 4.4 g |
-| 290 | Chicken & Pepper Breakfast Skillet | null | 92 | 285 mg | 3.4 g |
-| 292 | Chicken Breast & Tomato Breakfast Bowl | null | 91 | 291 mg | 3 g |
-| 295 | Cold Chicken & Cucumber Plate | null | 91 | 89 mg | 3 g |
-| 309 | Chicken with Green Beans in Tomato & Onion | null | 91 | 403 mg | 6.3 g |
+| 84 | Sweet Cinnamon Toast Crisp | 35 | 65 | 172 mg | 3.1 g |
+| 80 | Microwave Apple Cinnamon Crisp | 43 | 72 | 2 mg | 5.6 g |
+| 83 | Frozen Banana & Cocoa Whip | 46 | 73 | 16 mg | 4.9 g |
+| 88 | Cinnamon Baked Apple Slices | 48 | 73 | 2 mg | 5.7 g |
 
 Fruit and oats, which the old score had nothing good to say about because it only
 ever asked how much protein was in them.

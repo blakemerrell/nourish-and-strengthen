@@ -12,7 +12,7 @@ const path = require('path');
 const { M } = require('../tools/mutate.js');
 
 const ROOT = path.join(__dirname, '..');
-const read = (f) => (fs.existsSync(path.join(ROOT, f)) ? fs.readFileSync(path.join(ROOT, f), 'utf8') : '');
+const read = (f) => (fs.existsSync(path.join(ROOT, f)) ? fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\r\n/g, '\n') : '');
 const count = (text, bit) => text.split(bit).length - 1;
 
 module.exports = {

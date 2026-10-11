@@ -569,7 +569,7 @@
   var SORE_V = [1, 0, -1];
   var PUMP = ['Low', 'Moderate', 'Great'];
   var PUMP_W = ['low pump', 'moderate pump', 'great pump'];
-  var PUMP_V = [1, 0, -1];
+  var PUMP_V = [1, 0, 0];
   var WORK = ['Easy', 'About right', 'Pushed my limits', 'Too much'];
   var WORK_W = ['felt easy', 'workload about right', 'pushed your limits', 'too much'];
   var WORK_V = [1, 0, -1, -2];
@@ -1953,7 +1953,7 @@
    * No answers at all is a total of zero: one more set, the default step. */
   function feedback(ms, w, d, m) {
     var wo = woFor(ms, w, d);
-    if (!wo) return { d: 0, why: 'Held — last week’s session was not logged.' };
+    if (!wo) return { d: 0, body: 'last week’s session was not logged' };
     var fb = (wo.fb && wo.fb[m]) || {};
     var sr = soreAfter(wo, m);
     var score = 0, said = [];
@@ -4750,7 +4750,8 @@
     }
     var focus = focusOn();
     var left = restLeft();
-    var resting = left !== null && left >= -8;
+    var overdue = left !== null && left < 0 && LIVE.rs && !LIVE.rs.rung;
+    var resting = left !== null && (left >= -8 || overdue);
     var done = resting && left <= 0;
     var pct = resting ? (done ? 100 : Math.max(0, Math.min(100, 100 * (1 - left / LIVE.rs.dur)))) : 0;
     var say = done ? 'Rest\u2019s up' : resting ? 'Rest ' + clock(left) : '';
@@ -8188,7 +8189,7 @@
           : '<div class="tr-plates">' + (pm.plates.length ? pm.plates.map(function (p) {
             return '<span class="tr-plate p' + String(p).replace('.', '_') + ' ' + plCls(p) + '">' + fmtP(p) + '</span>';
           }).join('') : '<span class="tr-note">Just the bar.</span>') + '</div>' +
-            '<div class="tr-sub">Each side' + (pm.left > 0 ? ' — ' + fmtP(pm.left * 2) + ' ' + T.pr.u + ' short with ' + (pm.have ? 'the plates you have at home' : 'standard plates') : '') + '.</div>');
+            '<div class="tr-sub">Each side' + (pm.left > 0 ? ' — ' + fmtP(pm.left) + ' ' + T.pr.u + ' short (' + fmtP(pm.left * 2) + ' ' + T.pr.u + ' on the bar) with ' + (pm.have ? 'the plates you have at home' : 'standard plates') : '') + '.</div>');
   }
 
   /* A warm-up that rehearses the lift without tiring it: half the working

@@ -114,11 +114,15 @@
        yesterday is listed once, under Favorites. With nothing typed the
        favorites, the named foods and the USDA box are all empty, and the
        resting list is what it was. */
-    var favs = mpFavsHTML(shown);
-    var pins = mpPinsHTML(shown);
-    var recent = mpRecentHTML(shown);
-    var named = mpNamedHTML(shown);
-    var closers = mpComboHTML(shown);
+    /* On the Saved meals lens (pickbands.js) the list is the saved meals and
+       nothing else: it is where an empty meal's "Saved meals" lands, and a
+       favourite claimed by the band above would have gone missing from it. */
+    var only = S.mpSec === 'saved' && !mpQ();
+    var favs = only ? '' : mpFavsHTML(shown);
+    var pins = only ? '' : mpPinsHTML(shown);
+    var recent = only ? '' : mpRecentHTML(shown);
+    var named = only ? '' : mpNamedHTML(shown);
+    var closers = only ? '' : mpComboHTML(shown);
     var fits = mpFitsHTML(shown);
     /* The USDA's answers last, under everything the app itself knows.
        Blake, 2026-10-08: "the USDA search is mostly what I see and it's
@@ -132,7 +136,7 @@
        it does. A barcode is not this box: a scan opens what it found
        straight away (camera.js, mScanGot). */
     var look = mpLookFootHTML();
-    var body = favs + pins + recent + named + fits + closers + mpElseHTML(shown);
+    var body = favs + pins + recent + named + fits + closers + (only ? '' : mpElseHTML(shown));
     /* Judged on the ROWS, not on the string. A barcode with nothing behind it
        draws a band and no rows, and so does a shelf crossed with a lens that
        has nothing in it — and the Fits band now keeps its divider either way,
@@ -143,7 +147,9 @@
     if (!Object.keys(shown).length) {
       body += '<div class="mslot-empty">' + (mpQ()
         ? 'Nothing matches ' + esc(S.mpQuery.trim()) + '.'
-        : S.mpShelf || S.mpSec !== 'meal'
+        : S.mpSec === 'saved' && !S.mpShelf
+          ? 'No saved meals yet. Put two or more foods on a meal, then Save meal in its ⋯.'
+          : S.mpShelf || S.mpSec !== 'meal'
           ? 'Nothing here in this lens.'
           : 'Nothing to offer for this meal yet.') + '</div>';
     }

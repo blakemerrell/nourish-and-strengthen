@@ -11,7 +11,7 @@ const { nourish, pickerList, pickRecipe, closeSheet, storedDay, weighIn, todayOn
    recipe in the list goes on the meal at a tap, and × goes home to the day. */
 async function addInto(pg, n) {
   await pg.evaluate((i) => {
-    const a = document.querySelectorAll('#macroSlots [data-mopen]')[i];
+    const a = document.querySelectorAll('#macroSlots .mtray-b[data-mopen], #macroSlots .mtray-skb[data-mopen]')[i];
     a.scrollIntoView({ block: 'center' });
     a.click();
   }, n);

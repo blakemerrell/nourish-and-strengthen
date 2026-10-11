@@ -36,7 +36,7 @@ window.Walmart = (function () {
   /* An item number from what was pasted: the number itself, or a product
      address, which ends in it (walmart.com/ip/name/10447842?...). */
   function wmParseId(v) {
-    v = String(v || '').trim();
+    v = String(v || '').trim().replace(/^(?:item\s*#?\s*|#\s*)/i, '');
     var m = v.match(/\/ip\/(?:[^\/?#]*\/)?(\d{5,12})/) || v.match(/^(\d{5,12})$/);
     return m ? m[1] : '';
   }
@@ -62,7 +62,8 @@ window.Walmart = (function () {
       var l = by[k], we = P[k] && P[k].we;
       /* Not a Walmart food at all: where it is bought instead. */
       if (we && !l.own) { away.push({ key: k, label: l.label, where: we[0], url: we[1] }); return; }
-      l.qty = l.pack && !l.own ? Math.min(12, Math.max(1, Math.ceil(l.g / l.pack - 0.1))) : 1;
+      if (l.g <= 0) return;
+      l.qty = l.pack ? Math.min(12, Math.max(1, Math.ceil(l.g / l.pack - 0.1))) : 1;
       (l.id ? cart : find).push(l);
     });
     return { cart: cart, find: find, away: away };

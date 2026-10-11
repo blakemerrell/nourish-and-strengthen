@@ -239,10 +239,13 @@ module.exports = nourish({
        part you plan against: 0 of 44 protein says what to go looking for. */
     t.ok('an empty meal still says what it is meant to hold',
       await pillPg.evaluate(() => {
-        // on its tray's flame pill, "0/642": nothing yet, against its share
-        const k = document.querySelector('#macroSlots .mtray .mtray-caps .mcap .mcap-t');
-        const m = k && k.textContent.replace(/,/g, '').replace(/\s/g, '').match(/(\d+)\/(\d+)$/);
-        return !!m && Number(m[1]) === 0 && Number(m[2]) > 0;
+        /* On its tray's flame pill, "0/642": nothing yet, against its share.
+           Since round 3b (2026-10-11) an empty meal is one row with no pills,
+           and the share is the faint "642 kcal" beside its name. */
+        const c = document.querySelector('#macroSlots .mtray.mtray-empty');
+        const a = c && c.querySelector('.mtray-aim');
+        const m = a && a.textContent.replace(/,/g, '').match(/^(\d+) kcal$/);
+        return !!m && Number(m[1]) > 0 && Number(a.dataset.want) === Number(m[1]) && !c.querySelector('.mcap');
       }));
     await pillPg.click('#macroFill');
     await pillPg.waitForTimeout(700);
@@ -407,7 +410,9 @@ module.exports = nourish({
        (a read of 0 cannot show a share moving). */
     const shareRead = () => skipPg.evaluate(() => {
       const b = document.querySelector('#macroSlots [data-mopen="b"]');
-      const k = b && b.closest('.mtray') && b.closest('.mtray').querySelector('.mtray-caps .mcap');
+      // its calorie pill, or the faint target an empty meal has instead (2026-10-11)
+      const c = b && b.closest('.mtray');
+      const k = c && (c.querySelector('.mtray-caps .mcap') || c.querySelector('.mtray-aim'));
       return k ? Number(k.dataset.want) : 0;
     });
     const bShareBefore = await shareRead();
@@ -417,7 +422,7 @@ module.exports = nourish({
     const undoInSheet = await skipPg.evaluate(() => !!document.querySelector('#modalRoot .msh-skipped [data-mskip="l"]'));
     await closeSheet(skipPg);
     const skipped = await skipPg.evaluate((u) => {
-      const el = document.querySelector('#macroSlots .mtray-skip[data-mopen="l"]');
+      const el = document.querySelector('#macroSlots .mtray-skip [data-mopen="l"]');
       return { line: !!el, says: el ? el.textContent.replace(/\s+/g, ' ').trim() : '', undo: u };
     }, undoInSheet);
     t.ok('and it becomes a line that says so, with the way back in its sheet',

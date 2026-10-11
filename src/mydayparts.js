@@ -105,7 +105,42 @@
           return m === null || m === undefined || (Array.isArray(m) && m.every(mPlainObj));
         });
       },
-      put: function (k, v) { LIVE.MDAYS[k] = v; } },
+      merge: function (k, v) {
+        var cur = LIVE.MDAYS[k], changed = false;
+        if (!cur || typeof cur !== 'object') {
+          LIVE.MDAYS[k] = v;
+          return true;
+        }
+        Object.keys(v || {}).forEach(function (sk) {
+          var remotePlates = v[sk];
+          var localPlates = cur[sk];
+          if (Array.isArray(remotePlates) && remotePlates.length > 0) {
+            if (!localPlates || !localPlates.length) {
+              cur[sk] = remotePlates.slice();
+              changed = true;
+            }
+          }
+        });
+        return changed;
+      },
+      put: function (k, v, localStamp) {
+        var cur = LIVE.MDAYS[k];
+        if (!cur || typeof cur !== 'object' || !localStamp) {
+          LIVE.MDAYS[k] = v;
+          return;
+        }
+        var next = Object.assign({}, cur);
+        Object.keys(v || {}).forEach(function (sk) {
+          var remotePlates = v[sk];
+          var localPlates = cur[sk];
+          if (Array.isArray(remotePlates) && remotePlates.length > 0) {
+            next[sk] = remotePlates;
+          } else if (!localPlates || !localPlates.length) {
+            next[sk] = remotePlates;
+          }
+        });
+        LIVE.MDAYS[k] = next;
+      } },
 
     { part: 'dn', ls: 'bsc.macroDone', stamps: false,
       store: function () { return LIVE.MDONE; },

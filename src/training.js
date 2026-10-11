@@ -268,7 +268,7 @@
      more than you said you would. */
   function mIsTrainingDay(k) {
     var train = mTrainDays();
-    if (train.length >= 7) return false;
+    if (train.length >= 7) return true;
     var planned = train.indexOf(mWkIx(keyDate(k))) >= 0;
     /* Not synced, the tick is how Nourish hears; unticked, a workout
        Strengthen has on the day, read from Strengthen when asked; otherwise

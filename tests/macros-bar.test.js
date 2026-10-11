@@ -621,13 +621,18 @@ module.exports = nourish({
        every tray carries its foods with their amounts — so what went wrong
        here (a folded meal printed as dish names with no numbers) cannot, and
        printing has to leave that so and not throw. */
+    /* Since 2026-10-10 a card on the day is in one of three views, and only
+       Details carries the amounts; Foods carries what each food costs and
+       Status is shut. Paper is what has to carry them all. */
     const amounts = () => paper.evaluate(() => {
       const lines = [...document.querySelectorAll('#macroSlots .mtray.filled .mtray-f')];
-      return { n: lines.length, withAmount: lines.filter((l) => /\d/.test((l.querySelector('em') || {}).textContent || '')).length };
+      return { n: lines.length, withAmount: lines.filter((l) => /\d/.test((l.querySelector('em') || {}).textContent || '')).length,
+        withCost: lines.filter((l) => /\d/.test((l.querySelector('em, .mtray-ck') || {}).textContent || '')).length,
+        shut: document.querySelectorAll('#macroSlots .mtray.filled.mv-1').length };
     });
     const before3 = await amounts();
-    t.ok('a filled day\u2019s trays carry every food with its amount',
-      before3.n > 0 && before3.withAmount === before3.n, JSON.stringify(before3));
+    t.ok('a filled day\u2019s trays carry every food with its amount or what it costs',
+      before3.n > 0 && before3.withCost === before3.n && before3.shut === 0, JSON.stringify(before3));
     paperErrs.length = 0;
     await paper.emulateMedia({ media: 'print' });
     await paper.evaluate(() => window.dispatchEvent(new Event('beforeprint')));

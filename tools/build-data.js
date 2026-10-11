@@ -520,7 +520,7 @@ const batchLooking = b1.filter((x) => {
 const allScores = out.map((r) => r.score).filter((s) => s !== null).sort((a, b) => a - b);
 const srcById = {};
 SRC.forEach((r) => { srcById[r.id] = r; });
-const movers = out.filter((r) => r.book === 1)
+const movers = out.filter((r) => r.book === 1 && typeof srcById[r.id].score === 'number')
   .map((r) => ({
     id: r.id, name: r.name, was: srcById[r.id].score, now: r.score,
     na: r.macro.na, fib: r.macro.fib, d: Math.abs(srcById[r.id].score - r.score),

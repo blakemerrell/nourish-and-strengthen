@@ -321,8 +321,11 @@
            foods already saved on somebody's phone. */
         macro: (function () {
           var fp = Number(f.p) || 0, fc = Number(f.c) || 0, ff2 = Number(f.f) || 0;
+          /* Not rounded per unit, since 2026-10-11: a drink kept per 100 mL
+             came to 30 kcal a unit for 29.7, and 540 mL of it read 162 for
+             160. Every screen rounds what it shows. */
           return { kcal: (fp || fc || ff2)
-            ? kcalOf({ p: fp, c: fc, f: ff2 }) + (Number(f.kx) > 0 ? Math.round(Number(f.kx)) : 0)
+            ? Math.round((4 * fp + 4 * fc + 9 * ff2) * 100) / 100 + (Number(f.kx) > 0 ? Math.round(Number(f.kx)) : 0)
             : Number(f.kcal) || 0,
           p: fp, c: fc, f: ff2,
           na: Number(f.na) || 0, fib: Number(f.fib) || 0 };
@@ -330,6 +333,12 @@
       };
       // what the packet declared, off the scan that made it (src/camera.js); not a nutrient, so not in macro
       if (Array.isArray(f.alg) && f.alg.length) rec.alg = f.alg.map(String).slice(0, 8);
+      /* The barcode it was scanned from, so the same packet scanned again
+         opens this food rather than asking Open Food Facts for the numbers
+         you may have fixed (mOwnScan); and the label's own serving, from a
+         fix (src/foodsheet.js), offered as a unit on the food's page. */
+      if (/^\d{6,14}$/.test(String(f.code || ''))) rec.code = String(f.code);
+      if (f.sz && typeof f.sz === 'object' && Number(f.sz.n) > 0) rec.sz = { t: String(f.sz.t || ''), n: Number(f.sz.n) };
       // and its grades, the same way (Nutri-Score a–e, NOVA 1–4)
       if (/^[a-e]$/.test(String(f.ns || ''))) rec.ns = String(f.ns);
       if (Number(f.nova) >= 1 && Number(f.nova) <= 4) rec.nova = Math.round(Number(f.nova));
@@ -810,6 +819,10 @@
     /* Which meals you have pressed open or shut, against the default of
        folding one you have eaten. Ephemeral: a new day starts fresh. */
     mFold: {}, mFoldFor: '', mTouched: '', mtOpen: '',
+    // each meal's view on the day, by day (myday.js, mViewOf); the skip a card is asking about; Undo's copy
+    mView: {}, mViewAll: 0, mSkipAsk: '', mSkipUndo: null,
+    // which empty meals have their line of ways to fill them open, by day (myday.js, emptyHTML)
+    mEmptyOpen: {},
     chartOpen: false, chartWhich: 'weight', mcRange: 'all', keepMeal: '',
     /* What the picker has been told to add, before it is told to stop. A meal
        assembled from parts — a scoop of whey, a splash of half and half, a
@@ -1817,7 +1830,7 @@
     var best = '', g = 0;
     (r.ingp || []).forEach(function (it) {
       var c = ((window.PANTRY || {})[it.k] || {}).c;
-      if (c === 'Meat' && it.g > g) { g = it.g; best = it.k; }
+      if ((c === 'Meat' || c === 'Canned meats') && it.g > g) { g = it.g; best = it.k; }
     });
     return best;
   }
@@ -2019,10 +2032,13 @@
      that follow another asked-for night, the weekend's big cook first. */
   function pwLoNights(a, nights) {
     var lo = {}, left = a.lo;
-    var pairs = nights.filter(function (d, i) { return i + 1 < nights.length && PW_DAYS.indexOf(nights[i + 1]) === PW_DAYS.indexOf(d) + 1; });
+    var pairs = nights.filter(function (d) {
+      var nxt = PW_DAYS[(PW_DAYS.indexOf(d) + 1) % 7];
+      return nights.indexOf(nxt) >= 0;
+    });
     pairs.sort(function (x, y) { return (PW_WEEKEND.indexOf(y) >= 0) - (PW_WEEKEND.indexOf(x) >= 0); });
     pairs.forEach(function (d) {
-      var nxt = PW_DAYS[PW_DAYS.indexOf(d) + 1];
+      var nxt = PW_DAYS[(PW_DAYS.indexOf(d) + 1) % 7];
       if (left > 0 && !lo[d] && !lo[nxt]) { lo[nxt] = d; left--; }
     });
     return lo;
@@ -2229,7 +2245,7 @@
   /* For the tests: the rules without the sheet, so a picker with chance in it
      can be run forty times and held to what it promises every time. */
   window.__pw = { pool: pwPool, next: pwNext, cost: pwCost, avoids: pwAvoids, prot: pwProt, kind: pwKind, fit: pwFitCaps, fits: pwFits, plate: pwPlate, answers: pwAnswers,
-    plans: pwPlans, capFor: pwCapFor,
+    loNights: pwLoNights, plans: pwPlans, capFor: pwCapFor,
     count: pwCount, pick: function (a) { var keep = S.pw; S.pw = { a: a, picks: [], seen: {} }; pwPick(); var out = S.pw.picks; S.pw = keep; return out; } };
   function pwOpen() {
     var a = pwAnswers();
@@ -3151,6 +3167,8 @@
   function mFsState(r) { return FOODSHEET.mFsState(r); }
   function mFsRefresh() { return FOODSHEET.mFsRefresh(); }
   function mFoodSheetHTML() { return FOODSHEET.mFoodSheetHTML(); }
+  function mFsFixRead(r) { return FOODSHEET.mFsFixRead(r); }
+  function mFsFixRefresh() { return FOODSHEET.mFsFixRefresh(); }
 
   /* src/dayfoot.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
@@ -3276,7 +3294,24 @@
 
   /* src/camera.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var CAMERA = window.HiveParts.camera({ S: S, mBarcodeLookup: mBarcodeLookup, mDecodeFrame: mDecodeFrame, mLookSay: mLookSay, mLookupRows: mLookupRows, mMealNowHTML: mMealNowHTML, renderModal: renderModal, LIVE: LIVE });
+  /* A barcode you have already saved a food for opens that food: its page,
+     over the meal, with the meal's Add on it. Blake fixed a scan's numbers
+     from the can (2026-10-11), and the next scan of the same can went back
+     to Open Food Facts and offered the wrong ones again as a new food. Your
+     own record wins, and nothing is sent anywhere to find it. */
+  function mOwnScan(code) {
+    var c = String(code || '').replace(/\D/g, '');
+    if (!c || !S.macroPick) return false;
+    var r = null;
+    MFOODS.forEach(function (f) { if (!r && f.code === c) r = f; });
+    if (!r) return false;
+    S.mpMode = 'home';
+    S.foodOpen = { id: r.id, x: 1, slot: S.macroPick.slot, onPlate: false };
+    pushSheet({ m: 1 });
+    renderModal();
+    return true;
+  }
+  var CAMERA = window.HiveParts.camera({ S: S, mBarcodeLookup: mBarcodeLookup, mDecodeFrame: mDecodeFrame, mLookSay: mLookSay, mLookupRows: mLookupRows, mMealNowHTML: mMealNowHTML, mOwnScan: mOwnScan, renderModal: renderModal, LIVE: LIVE });
   function mScanStop() { return CAMERA.mScanStop(); }
   function mScanStart() { return CAMERA.mScanStart(); }
   function mScanGot(code, typed) { return CAMERA.mScanGot(code, typed); }
@@ -3742,9 +3777,9 @@
     'data-addday', 'data-pswap', 'data-prate', 'data-adf', 'data-adadd', 'data-adsw', 'data-adopen', 'data-pwpick', 'data-pwsee', 'data-pwback', 'data-pwwant', 'data-pwopen', 'data-dayopen', 'data-dsact', 'data-srctag', 'data-fold',
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close',
     'data-poff', 'data-week', 'data-neww', 'data-mult', 'data-drop', 'data-ed', 'data-tab',
-    'data-mopen', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
+    'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
-    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpfit', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal'];
+    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpfit', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave'];
 
   function focusKey(el) {
     if (!el || el === document.body || !el.getAttribute) return null;
@@ -3917,6 +3952,7 @@
       root.innerHTML = mFoodSheetHTML();
       if (!root.innerHTML) { S.foodOpen = null; }       // the food is gone; nothing to show
       else {
+        if (S.foodOpen.fix) mFsFixRefresh();            // what the fix changes, read off the boxes just drawn
         document.body.style.overflow = 'hidden';
         if (keepScroll) root.querySelector('.scrim').scrollTop = keepScroll;
         return;
@@ -5265,8 +5301,10 @@
        — tap what the pills say is missing and watch them fill, with the
        amounts dialled for you. Only on the sheet, and only for the meal it
        is open on: the day's trays have no dials. */
-    function mRefitMeal(k, sk, hold) {
-      if (!S.macroPick || S.macroPick.slot !== sk) return {};
+    /* `fromDay`: the scale on the meal's card (myday.js), which balances
+       with no sheet open — the re-fit is otherwise the open sheet's alone. */
+    function mRefitMeal(k, sk, hold, fromDay) {
+      if (!fromDay && (!S.macroPick || S.macroPick.slot !== sk)) return {};
       var before = (mDay(k)[sk] || []).map(function (it) { return { id: it.id, x: it.x }; });
       mBalanceMeal(sk, { hold: hold, quiet: true });
       var after = mDay(k)[sk] || [], was = {};
@@ -5311,15 +5349,121 @@
       if (e.target.closest('.msh-top, .mrows, .msh-tray, .msh-skipped')) mDayClick(e);
     });
 
+    /* Skip, from the meal's card (Blake, 2026-10-10: "I need a way to
+       easily skip a meal on the main day menu. Somehow that got buried in
+       the food selector"). The sheet's ⋯ only ever offered it on an empty
+       meal, because a skip counts only on an empty one (myday.js). So the
+       card takes the food off and puts the skip on together, and Undo in the
+       toast puts both back — he chose "clear it, with Undo". */
+    function mSkipMeal(k, sk) {
+      var had = mDay(k)[sk] || [];
+      if (had.some(function (it) { return it.eaten; })) return;
+      had = JSON.parse(JSON.stringify(had));
+      if (had.length) mEditDay(k, function (day) { day[sk] = []; });
+      mSetSkip(k, sk, true);
+      S.mSkipAsk = '';
+      if (S.mAmt && S.mAmt.indexOf(k + '|' + sk + ':') === 0) { S.mAmt = ''; S.mType = null; }
+      S.mSkipUndo = { k: k, sk: sk, items: had };
+      renderMacros();
+      var n = had.filter(function (it) { return BY_ID[it.id]; }).length;
+      mToast(esc(mSlotName(sk)) + ' skipped' + (n ? ', and its ' + (n === 1 ? 'food' : n + ' foods') + ' came off.' : '.'), sk, 'data-mskipundo');
+    }
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest || !e.target.closest('[data-mskipundo]') || !S.mSkipUndo) return;
+      var u = S.mSkipUndo;
+      S.mSkipUndo = null;
+      if (u.items.length) mEditDay(u.k, function (day) { day[u.sk] = (day[u.sk] || []).concat(u.items); });
+      mSetSkip(u.k, u.sk, false);
+      var el = $('mToast'); if (el) el.hidden = true;
+      if (S.view === 'macros') renderMacros();
+    });
+
+    /* Holding + down on an empty meal opens its line of ways to fill it
+       (myday.js, emptyHTML; Blake: "or I long press the plus button, it'll
+       open up the view"). A plain tap on + is still the way to food search,
+       so the click that ends a hold is swallowed — once, and only on +. */
+    /* The swallow is a window opened as the finger lifts, not a flag left
+       waiting for a click: the hold redraws the card, the click that would
+       have ended it may land on the new + or on nothing, and a flag left up
+       ate the next honest tap on + instead. */
+    var mHoldT = null, mHoldFired = false, mHeldNow = false;
+    $('macroSlots').addEventListener('pointerdown', function (e) {
+      var hb = e.target.closest && e.target.closest('[data-mhold]');
+      if (!hb) return;
+      clearTimeout(mHoldT);
+      mHoldFired = false;
+      mHoldT = setTimeout(function () {
+        var hk = mViewKey(), hsk = hb.dataset.mhold;
+        (S.mEmptyOpen[hk] = S.mEmptyOpen[hk] || {})[hsk] = true;
+        mHoldFired = true;
+        renderMacros();
+        if (navigator.vibrate) { try { navigator.vibrate(10); } catch (err) { /* not on this phone */ } }
+      }, 450);
+    });
+    $('macroSlots').addEventListener('pointerup', function () {
+      clearTimeout(mHoldT);
+      if (mHoldFired) {
+        mHoldFired = false; mHeldNow = true;
+        setTimeout(function () { mHeldNow = false; }, 400);
+      }
+    });
+    ['pointercancel', 'pointerleave'].forEach(function (ev) {
+      $('macroSlots').addEventListener(ev, function () { clearTimeout(mHoldT); });
+    });
+    $('macroSlots').addEventListener('contextmenu', function (e) {
+      if (e.target.closest && e.target.closest('[data-mhold]')) e.preventDefault();
+    });
+
     function mDayClick(e) {
-      /* Tapping the meal header toggles between showing full food lines and
-         just the food items (Blake, 2026-10-08). */
-      var mfld = e.target.closest('[data-mfold]');
-      if (mfld && mfld.dataset.mfold && mfld.dataset.mfold !== 'weigh') {
-        var sk = mfld.dataset.mfold;
-        S.mFold[sk] = !S.mFold[sk];
-        if (S.mFold[sk] && S.mAmt && S.mAmt.indexOf(sk + ':') >= 0) S.mAmt = '';
-        mRedraw();
+      if (mHeldNow && e.target.closest('[data-mhold]')) { mHeldNow = false; e.preventDefault(); return; }
+      /* An empty meal's name opens and shuts its line of ways to fill it. */
+      var meo = e.target.closest('[data-meopen]');
+      if (meo) {
+        var ok2 = mViewKey(), osk = meo.dataset.meopen;
+        var om = (S.mEmptyOpen[ok2] = S.mEmptyOpen[ok2] || {});
+        om[osk] = !om[osk];
+        keepingFocus(renderMacros);
+        return;
+      }
+      /* Saved meals, from an empty meal's line: its sheet, on the Saved meals
+         lens (pickbands.js). */
+      var svd = e.target.closest('[data-msaved]');
+      if (svd) {
+        rememberOpener();
+        S.mEdit = null;
+        mOpenPicker(svd.dataset.msaved, 'home');
+        S.mpSec = 'saved';
+        renderModal();
+        return;
+      }
+      /* A meal's name steps its card through Status, Foods and Details
+         (myday.js, mViewOf), held for the day it was pressed on. What the
+         view hides goes shut: an open line, a box being typed in. */
+      var mvw = e.target.closest('[data-mview]');
+      if (mvw) {
+        var vk = mViewKey(), vsk = mvw.dataset.mview, nv = (Number(mvw.dataset.mv) || 2) % 3 + 1;
+        (S.mView[vk] = S.mView[vk] || {})[vsk] = nv;
+        if (nv !== 3 && S.mAmt && S.mAmt.indexOf(vk + '|' + vsk + ':') === 0) { S.mAmt = ''; S.mType = null; }
+        keepingFocus(renderMacros);
+        return;
+      }
+      var ska = e.target.closest('[data-mskipask]');
+      if (ska) {
+        var ak = mViewKey(), ask = ska.dataset.mskipask;
+        if ((mDay(ak)[ask] || []).some(function (it) { return BY_ID[it.id]; })) {
+          S.mSkipAsk = S.mSkipAsk === ak + '|' + ask ? '' : ak + '|' + ask;
+          keepingFocus(renderMacros);
+        } else mSkipMeal(ak, ask);
+        return;
+      }
+      var skg = e.target.closest('[data-mskipgo]');
+      if (skg) { mSkipMeal(mViewKey(), skg.dataset.mskipgo); return; }
+      var skn = e.target.closest('[data-mskipno]');
+      if (skn) {
+        S.mSkipAsk = '';
+        renderMacros();
+        var back = document.querySelector('#macroSlots [data-mskipask="' + skn.dataset.mskipno + '"]');
+        if (back) back.focus();
         return;
       }
       /* A tray opens its meal's sheet: the one place food is added or
@@ -5455,10 +5599,18 @@
         var bk = mViewKey(), bsk = bal.dataset.mbal;
         if (S.mAmt && S.mAmt !== '*') S.mAmt = '';
         mEditDay(bk, function (day) { (day[bsk] || []).forEach(function (it) { if (!it.eaten) it.l = 0; }); });
-        var bwas = mRefitMeal(bk, bsk);
+        var bwas = mRefitMeal(bk, bsk, undefined, !S.macroPick);
         S.mMarks = { k: bk, sk: bsk, was: bwas, fresh: {}, snap: null };
         S.mMenu = '';
         mRedraw();
+        /* From the card's scale the amounts change under it without a word
+           (the sheet marks each row that moved), so the toast says what
+           happened, nothing included. */
+        if (!S.macroPick) {
+          var bn = Object.keys(bwas).length;
+          mToast(bn ? esc(mSlotName(bsk)) + ' balanced: ' + bn + (bn === 1 ? ' food' : ' foods') + ' moved.'
+            : 'Nothing on ' + esc(mSlotName(bsk)) + ' could move any closer.');
+        }
         return;
       }
       /* A food's line on the day opens under itself; one at a time. */
@@ -6292,6 +6444,8 @@
         if (S.view !== 'macros') return;
         mPrintFold = S.mFold;
         S.mFold = {};
+        // every meal whole on paper, whatever view each card is in
+        S.mViewAll = 3;
         mOnPaper = true;
         /* Held on the day it is already on, so the arrival seed does not run
            and fold everything straight back down. */
@@ -6302,6 +6456,7 @@
         if (mPrintFold === null) return;
         S.mFold = mPrintFold;
         mPrintFold = null;
+        S.mViewAll = 0;
         mOnPaper = false;
         renderMacros();
       });
@@ -6496,6 +6651,44 @@
       if (fsm && S.foodOpen) {
         mFsRefresh();
         S.foodOpen.pick = fsm.dataset.mfsmeal;
+        renderModal();
+        return;
+      }
+      /* A food of your own, its numbers fixed from the label (foodsheet.js,
+         mFoodFixHTML): the form over the food's page, and back to it. */
+      if (e.target.closest('[data-mffix]') && S.foodOpen) {
+        S.foodOpen.fix = 1;
+        renderModal();
+        return;
+      }
+      if (e.target.closest('[data-mffno]') && S.foodOpen) {
+        S.foodOpen.fix = 0;
+        renderModal();
+        return;
+      }
+      if (e.target.closest('[data-mffsave]') && S.foodOpen) {
+        var xr = BY_ID[S.foodOpen.id], xgot = xr && mFsFixRead(xr);
+        if (!xgot) return;
+        if (xgot.err) { if ($('mffNote')) $('mffNote').textContent = xgot.err; return; }
+        var xkey = String(xr.id).replace(/^f:my:/, ''), xmine = mReadMyFoods(), xrec = xmine[xkey];
+        if (!xrec || String(xr.id).indexOf('f:my:') !== 0) return;
+        var xp = xgot.per;
+        /* Over the food's own unit, so every plate keeps its amount. The
+           calories typed are kept for a food with no macros to count them
+           from; with macros, the day counts four, four and nine (mBuildFoods). */
+        xrec.kcal = xp.kcal || 0; xrec.p = xp.p; xrec.f = xp.f; xrec.c = xp.c;
+        ['na', 'fib'].forEach(function (k4) { if (xp[k4] === undefined) delete xrec[k4]; else xrec[k4] = xp[k4]; });
+        var xlab = {};
+        ['sat', 'chol', 'sug', 'ca', 'fe', 'k'].forEach(function (k4) { if (xp[k4] !== undefined) xlab[k4] = xp[k4]; });
+        if (Object.keys(xlab).length) xrec.lab = xlab; else delete xrec.lab;
+        if (xgot.sz) xrec.sz = xgot.sz; else delete xrec.sz;
+        if (xgot.code) xrec.code = xgot.code; else delete xrec.code;
+        mWriteMyFoods(xmine);
+        mBuildFoods();
+        S.foodOpen.fix = 0;
+        S.foodOpen.amt = undefined;
+        mToast(esc(xr.name) + ' fixed. Every day it is on counts the label’s numbers now.');
+        renderMacros();
         renderModal();
         return;
       }
@@ -6760,9 +6953,14 @@
         }
         var nval = function (id) { return String((($(id) || {}).value) || '').trim(); };
         var nnum = function (id) { return Math.max(0, Math.round(Number(($(id) || {}).value) || 0)); };
+        /* Protein, fat and carbs to a tenth (2026-10-11). Whole grams turned
+           a drink's 0.15 g of fat per 100 mL into none, and its 0.92 g of
+           carbs into one; the smaller the unit, the more of the food the
+           rounding ate. */
+        var ndec = function (id) { return Math.max(0, Math.round((Number(($(id) || {}).value) || 0) * 10) / 10); };
         var nm = nval('nfName');
         if (!nm) { $('nfNote').textContent = 'It needs a name to be findable again.'; return; }
-        var kc = nnum('nfKcal'), pp = nnum('nfP'), ff = nnum('nfF'), cc = nnum('nfC');
+        var kc = nnum('nfKcal'), pp = ndec('nfP'), ff = ndec('nfF'), cc = ndec('nfC');
         if (!kc && !pp && !ff && !cc) {
           $('nfNote').textContent = 'Give it at least the calories, or it counts for nothing.';
           return;
@@ -6786,7 +6984,7 @@
            than approximating it. Such a food carries calories with no macros
            to check them against; that is a gap in what is known, not two
            answers to the same question. */
-        if (pp || ff || cc) kc = 4 * pp + 4 * cc + 9 * ff;
+        if (pp || ff || cc) kc = Math.round(4 * pp + 4 * cc + 9 * ff);
         var allF = mReadMyFoods(), ffresh = mNewFoodKey(nm, allF), fkey = ffresh.key;
         nm = ffresh.name;
         allF[fkey] = { name: nm, unit: nval('nfUnit') || 'serving', kcal: kc, p: pp, f: ff, c: cc };
@@ -6805,6 +7003,9 @@
         var noff = (S.newFood.pre && S.newFood.pre.off) || {};
         if (noff.ns) allF[fkey].ns = noff.ns;
         if (noff.nova) allF[fkey].nova = noff.nova;
+        // the barcode it came from, so a scan of the same packet opens this food (mOwnScan)
+        var ncode = String((S.newFood.pre && S.newFood.pre.code) || '').replace(/\D/g, '');
+        if (/^\d{6,14}$/.test(ncode)) allF[fkey].code = ncode;
         /* A food looked up with its sizes is saved as the size picked, and
            goes on the plate as the servings asked for; the rest of its label
            (saturated fat, cholesterol, sugars, calcium, iron, potassium)
@@ -7472,6 +7673,7 @@
         return;
       }
       if (S.foodOpen && e.target.id === 'mfsAmt') mFsRefresh();
+      if (S.foodOpen && S.foodOpen.fix && /^mff/.test(e.target.id || '')) mFsFixRefresh();
       if (S.editId && (e.target.id === 'edIng' || e.target.id === 'edServings' ||
         e.target.id === 'edExtras' || /^ed(Kcal|P|C|F)$/.test(e.target.id))) refreshPreview();
       if (S.syncOpen && e.target.id === 'myJoin') S.myJoin = e.target.value;
@@ -7597,6 +7799,7 @@
            #modalRoot and so above it; they had no trap at all. */
         var scrim = document.querySelector('#dialogRoot .dlg') ||
           document.querySelector('#trainRoot .scrim') ||
+          document.querySelector('#weighSheet.scrim') ||
           document.querySelector('#modalRoot .scrim, #modalRoot .dlg');
         if (scrim) {
           var f = Array.prototype.filter.call(
@@ -7615,7 +7818,8 @@
       if (e.key === 'Escape' && S.filtPop) { filtersPop(false); return; }
       // Plan's sheets too: Plan my week, a day's dinner, Add to a day stayed up on Escape
       if (e.key === 'Escape' && (S.openId || S.syncOpen || S.macroPick || S.macroTargOpen || S.newFood ||
-        S.keepMeal || S.chartOpen || S.foodOpen || S.mCopyFrom || S.pwOpen || S.daySheet || S.addOpen)) close();
+        S.keepMeal || S.chartOpen || S.foodOpen || S.mCopyFrom || S.pwOpen || S.daySheet || S.addOpen ||
+        S.favPick || S.tdSheet || S.mDoneOpen || (WGAPI && WGAPI.isOpen && WGAPI.isOpen()))) close();
     });
   }
 
@@ -7881,8 +8085,9 @@
     /* Tonight is the day's dinner-section recipe or, failing one, whatever
        is planned: a recipe of your own, or a breakfast for dinner, was on
        the Plan grid and not on Today at all. */
+    var curWk = window.Store.thisWeek();
     var dinnerOf = function (key) {
-      var all = window.Store.day(key).filter(function (e) { return BY_ID[e.id]; });
+      var all = window.Store.dayOf(curWk, key).filter(function (e) { return BY_ID[e.id]; });
       return all.filter(function (e) { return pwIsDinner(BY_ID[e.id]); })[0] || all[0] || null;
     };
     var t = dinnerOf(dk), r = t && BY_ID[t.id];

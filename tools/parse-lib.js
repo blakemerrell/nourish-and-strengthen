@@ -147,15 +147,27 @@ function parseLine(raw) {
   // drop parentheticals ("(sliced)", "(cooked & chilled)")
   s = s.replace(/\s*\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
 
-  // leading quantity: "1.5", "2", "¼", "1 ½", "5g"
+  // leading quantity: "1.5", "2", "¼", "1 ½", "5g", "1/2", "1 1/2"
   let qty = null;
-  let m = s.match(/^(\d+(?:\.\d+)?)\s*([½¼¾⅓⅔⅛⅜⅝⅞])?\s*/);
-  if (m && m[0].trim()) {
-    qty = parseFloat(m[1]) + (m[2] ? FRAC[m[2]] : 0);
-    s = s.slice(m[0].length);
+  const mixedSlash = s.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)\s*/);
+  if (mixedSlash) {
+    qty = parseFloat(mixedSlash[1]) + parseFloat(mixedSlash[2]) / parseFloat(mixedSlash[3]);
+    s = s.slice(mixedSlash[0].length);
   } else {
-    m = s.match(/^([½¼¾⅓⅔⅛⅜⅝⅞])\s*/);
-    if (m) { qty = FRAC[m[1]]; s = s.slice(m[0].length); }
+    const slash = s.match(/^(\d+)\s*\/\s*(\d+)\s*/);
+    if (slash) {
+      qty = parseFloat(slash[1]) / parseFloat(slash[2]);
+      s = s.slice(slash[0].length);
+    } else {
+      let m = s.match(/^(\d+(?:\.\d+)?)\s*([½¼¾⅓⅔⅛⅜⅝⅞])?\s*/);
+      if (m && m[0].trim()) {
+        qty = parseFloat(m[1]) + (m[2] ? FRAC[m[2]] : 0);
+        s = s.slice(m[0].length);
+      } else {
+        m = s.match(/^([½¼¾⅓⅔⅛⅜⅝⅞])\s*/);
+        if (m) { qty = FRAC[m[1]]; s = s.slice(m[0].length); }
+      }
+    }
   }
 
   // vague leading word ("dash vanilla", "splash milk", "pinch salt")

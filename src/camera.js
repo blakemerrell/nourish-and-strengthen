@@ -23,6 +23,7 @@
   var mLookSay = app.mLookSay;
   var mLookupRows = app.mLookupRows;
   var mMealNowHTML = app.mMealNowHTML;
+  var mOwnScan = app.mOwnScan;
   var renderModal = app.renderModal;
   var LIVE = app.LIVE;
 
@@ -148,6 +149,8 @@
     if (!code || (!typed && !mCam)) return;
     LIVE.mCamDone = true;
     mScanStop();
+    // a packet you have saved a food for opens that food, and asks nobody (app.js)
+    if (mOwnScan(code)) return;
     if ($('nfFind')) $('nfFind').value = code;
     var res = $('nfResults');
     if (res) res.innerHTML = '<div class="mslot-empty">Looking up ' + esc(code) + '&hellip;</div>';
@@ -211,7 +214,8 @@
        numbers are read out as Calories and Protein rather than as unnamed
        boxes; a tap on the word puts the caret in the box too. */
     var row = function (id, label, unit, ph, v, sub) {
-      var dec = id === 'nfFib';
+      // fiber, and since 2026-10-11 protein, fat and carbs, to a tenth (app.js keeps them so)
+      var dec = /^nf(Fib|P|F|C)$/.test(id);
       /* Sodium and fiber are often missing from a lookup, and an example
          figure in grey in an empty box reads as the food's own. */
       return '<div class="nfl-row' + (sub ? ' sub' : '') + '">' +
@@ -317,7 +321,7 @@
     var r = function (v, to) { return typeof v === 'number' ? Math.round(v * x * (to || 1)) / (to || 1) : null; };
     var u = (z && z.u) || (/ml/i.test(String(z.t || '')) ? 'mL' : 'g');
     var at = { unit: /^\d+(?:\.\d+)?\s*(?:g|mL|ml)$|\(/.test(z.t) ? z.t : z.t + ' (' + mNfShow(z.g) + ' ' + u + ')', g: z.g, t: z.t,
-      kcal: r(h.kcal), p: r(h.p), f: r(h.f), c: r(h.c), na: r(h.na), fib: r(h.fib, 10),
+      kcal: r(h.kcal), p: r(h.p, 10), f: r(h.f, 10), c: r(h.c, 10), na: r(h.na), fib: r(h.fib, 10),
       sat: r(h.sat, 2), chol: r(h.chol), sug: r(h.sug), ca: r(h.ca), fe: r(h.fe, 10), k: r(h.k) };
     if (z.row) ['unit', 'kcal', 'p', 'f', 'c', 'na', 'fib'].forEach(function (k) { at[k] = pre[k]; });
     return at;
@@ -464,8 +468,9 @@
     }
     var say = $('nfCounts');
     if (!say) return;
-    var p = Math.round(num('nfP')), f = Math.round(num('nfF')), c = Math.round(num('nfC'));
-    var typed = Math.round(num('nfKcal')), counts = 4 * p + 4 * c + 9 * f, fib = num('nfFib');
+    var tenth = function (id) { return Math.round(num(id) * 10) / 10; };
+    var p = tenth('nfP'), f = tenth('nfF'), c = tenth('nfC');
+    var typed = Math.round(num('nfKcal')), counts = Math.round(4 * p + 4 * c + 9 * f), fib = num('nfFib');
     say.textContent = (p || f || c) && typed && Math.abs(counts - typed) >= 5
       ? 'The day counts ' + counts + ' kcal, not ' + typed + ': protein and carbs at 4 a gram, fat at 9' +
         (fib && counts > typed ? ', where the label counts its ' + (Math.round(fib * 10) / 10) + ' g of fiber at less.' : '.')

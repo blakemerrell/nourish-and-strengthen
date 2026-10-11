@@ -6,7 +6,8 @@
  * open the meal; the recipe was two taps and an opened tray away, inside the
  * meal's sheet. A recipe's line on the day is now a door of its own, opening
  * the card scaled to the plate the way the sheet's own door does. The tray's
- * head still opens the meal (a food's line opens in place since 2026-10-08).
+ * pills and its + open the meal (a food's line opens in place since
+ * 2026-10-08, and the meal's name steps its card's views since 2026-10-10).
  *
  * And, from the same report: "After I try and exit the food picker it shows
  * this recipe card." The card he sent was the meatloaf at 1x, which only a
@@ -84,26 +85,28 @@ module.exports = {
     const back = await open(p);
     t.ok('back from it is the day again, nothing open', !back.meal && !back.recipe, JSON.stringify(back));
 
-    // the head is still the meal's door; a food's line is the line's own
+    // the pills are the meal's door, the name steps the card; a food's line is the line's own
     const at = await p.evaluate(() => {
       const tr = document.querySelector('[data-mopen="d"]').closest('.mtray');
       const f = [...tr.querySelectorAll('.mtray-f')].find((x) => /yogurt/i.test(x.textContent)).getBoundingClientRect();
       const g = tr.querySelector('.mtray-go .mtray-fn').getBoundingClientRect();
       const h = tr.querySelector('.mtray-n').getBoundingClientRect();
+      const c = tr.querySelector('.mtray-caps .mcap').getBoundingClientRect();
       const hit = (x, y) => {
         const e = document.elementFromPoint(x, y);
-        return !e ? 'none' : e.closest('[data-mopen]') ? 'meal' : e.closest('[data-open]') ? 'recipe' : e.closest('[data-mfood]') ? 'food'
+        return !e ? 'none' : e.closest('[data-mview]') ? 'view' : e.closest('[data-mopen]') ? 'meal' : e.closest('[data-open]') ? 'recipe' : e.closest('[data-mfood]') ? 'food'
           : e.closest('[data-mamt], .mfl-r') ? 'line' : e.className;
       };
       return {
         head: hit(h.left + 10, h.top + h.height / 2),
+        pills: hit(c.left + c.width / 2, c.top + c.height / 2),
         food: hit(f.left + 60, f.top + 23),
         weight: hit(f.right - 50, f.top + 23),
         recipe: hit(g.left + 20, g.top + g.height / 2),
       };
     });
-    t.ok('a press on the head lands on the meal’s door, on a food’s name on the food, on the rest of its line on the line',
-      at.head === 'meal' && at.food === 'food' && at.weight === 'line' && at.recipe === 'recipe', JSON.stringify(at));
+    t.ok('a press on the name steps the card, on the pills lands on the meal’s door, on a food’s name on the food, on the rest of its line on the line',
+      at.head === 'view' && at.pills === 'meal' && at.food === 'food' && at.weight === 'line' && at.recipe === 'recipe', JSON.stringify(at));
     await p.click('[data-mopen="d"] ~ .mtray-fs .mtray-f:nth-child(2) [data-mamt]');
     await p.waitForTimeout(400);
     const line = await p.evaluate(() => ({ sheet: !!document.querySelector('#modalRoot .msheet'),
@@ -112,7 +115,7 @@ module.exports = {
     await p.click('[data-mopen="d"]');
     await p.waitForTimeout(600);
     const meal = await open(p);
-    t.ok('while pressing the head opens the meal', meal.meal && !meal.recipe, JSON.stringify(meal));
+    t.ok('while pressing + opens the meal', meal.meal && !meal.recipe, JSON.stringify(meal));
     await p.click('#modalRoot .msh-done');
     await p.waitForTimeout(600);
 

@@ -35,9 +35,15 @@ module.exports = {
       if (!/^https:\/\/www\.walmart\.com\/sc\/cart\/addToCart\?items=\d+_\d+(,\d+_\d+)*$/.test(url)) bad.push('url ' + url);
       if (W.parse('https://www.walmart.com/ip/Beef-Flank-Steak/123456789?athbdg=L1600') !== '123456789') bad.push('a product link gives its number');
       if (W.parse('987654321') !== '987654321' || W.parse('flank') !== '') bad.push('a bare number, and nothing from words');
-      localStorage.setItem('sh.wm', JSON.stringify({ flank_steak: '123456789' }));
+      if (W.parse('#987654321') !== '987654321' || W.parse('item # 987654321') !== '987654321') bad.push('leading # and item # are stripped');
+      localStorage.setItem('sh.wm', JSON.stringify({ flank_steak: '123456789', chicken_breast: '88888888' }));
       const L2 = W.lines([{ key: 'carne_asada', label: 'Carne asada', g: 500 }]);
       if (!(L2.cart[0] && L2.cart[0].id === '123456789')) bad.push('a pasted number puts it in the cart');
+      const Lchx = W.lines([{ key: 'chicken_breast', label: 'Chicken breast', g: 3000 }]);
+      if (!(Lchx.cart[0] && Lchx.cart[0].id === '88888888' && Lchx.cart[0].qty === 3)) bad.push('own item number calculates pack quantity from weight');
+      /* Pickle juice maps to pickles with weight ratio 0: it should not add unneeded pickles to cart */
+      const Lpj = W.lines([{ key: 'pickle_juice', label: 'Pickle juice', g: 100 }]);
+      if (Lpj.cart.length > 0 || Lpj.find.length > 0) bad.push('zero gram items are filtered out');
       /* Crio Bru is not a Walmart food: it says where it is bought instead. */
       const L3 = W.lines([{ key: 'crio_bru', label: 'Crio Bru', g: 100 }]);
       if (!(L3.away[0] && /Lin/.test(L3.away[0].where) && /^https:/.test(L3.away[0].url) && !L3.cart.length && !L3.find.length)) bad.push('Crio Bru is sent to Lin\u2019s or online ' + JSON.stringify(L3));

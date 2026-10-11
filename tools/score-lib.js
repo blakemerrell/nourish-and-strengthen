@@ -43,6 +43,17 @@
 const MAX = { p: 27, k: 18, f: 8, s: 22, b: 13, c: 12 };   // 100
 
 function scoreFrom(macro) {
+  if (!macro || !(macro.kcal > 0)) {
+    return {
+      score: 0,
+      sc: {
+        p: 0, k: MAX.k, f: 0, s: MAX.s, b: 0, c: 0,
+        pPct: 0, fPct: 0, cPct: 0,
+        na: Math.round((macro && macro.na) || 0),
+        fib: Math.round(((macro && macro.fib) || 0) * 10) / 10,
+      },
+    };
+  }
   const pPct = (macro.p * 4) / macro.kcal * 100;
   const fPct = (macro.f * 9) / macro.kcal * 100;
   const na = macro.na || 0;

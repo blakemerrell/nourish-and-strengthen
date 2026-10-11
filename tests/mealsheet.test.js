@@ -70,9 +70,11 @@ module.exports = {
       day.grams && day.caps === 4, JSON.stringify(day));
     t.ok('each food in the kitchen\u2019s words before its weight (Blake: "if I just want to eyeball it I can")', day.measured === 7, JSON.stringify(day.lines));
     /* Since 2026-10-08 each food is a line of its own (tests/daylines.test.js):
-       its name, the line itself and its own tick. */
-    t.ok('and nothing else to press on it: the tick, the tray itself, and each food’s name, line and tick',
-      day.controls === 2 + 2 * day.lines.length && day.ticks === day.lines.length, JSON.stringify(day));
+       its name, the line itself and its own tick. Since 2026-10-10 the
+       card's head is its name (which steps its views) and three drawings:
+       +, the scale and ⊘. Lunch is the next meal, so it is on Details. */
+    t.ok('and nothing else to press on it: the tick, its name, + ⚖ ⊘, the tray itself, and each food’s name, line and tick',
+      day.controls === 6 + 2 * day.lines.length && day.ticks === day.lines.length, JSON.stringify(day));
     t.ok('the bar is Rebalance, Sweep, Copy day and the one primary: no Add food, no Open all', !day.add && !day.openAll &&
       day.bar.join() === 'macroRebal,macroSweep,macroCopy,macroFill', JSON.stringify(day.bar));
 
@@ -350,12 +352,16 @@ module.exports = {
       const shown = [...t2.childNodes].filter((n) => !(n.classList && n.classList.contains('vis-hidden'))).map((n) => n.textContent).join('');
       return { shown: shown, heard: hid ? hid.textContent.trim() : '', dashed: getComputedStyle(c).borderTopStyle === 'dashed' };
     }), scope);
-    const onTray = await spentPills('.mtray:has([data-mopen="e"]) .mtray-caps');
+    /* Since 2026-10-11 an empty meal on the day is one row with no pills
+       (myday.js, emptyHTML), and with nothing left for it no target either:
+       its name, + and ⊘. The dashed pills are its sheet's. */
+    const onTray = await sp.evaluate(() => { const c = document.querySelector('#macroSlots [data-mslot="e"]');
+      return c && { empty: c.classList.contains('mtray-empty'), pills: c.querySelectorAll('.mcap').length, aim: !!c.querySelector('.mtray-aim') }; });
     await sp.click('[data-mopen="e"]');
     await sp.waitForTimeout(400);
     const onSheet = await spentPills('#modalRoot .msh-top');
     const quiet = (a) => a.length === 4 && a.every((x) => !/none|left/i.test(x.shown) && /—$/.test(x.shown) && x.heard === 'none left' && x.dashed);
-    t.ok('a meal with nothing left shows a dash in a dashed pill on its tray, no words', quiet(onTray), JSON.stringify(onTray));
+    t.ok('a meal with nothing left is one quiet row on the day: no pills, and no target to aim at', !!onTray && onTray.empty && !onTray.pills && !onTray.aim, JSON.stringify(onTray));
     t.ok('and the same in its sheet, the words kept for a screen reader', quiet(onSheet), JSON.stringify(onSheet));
     await sp.context().close();
 

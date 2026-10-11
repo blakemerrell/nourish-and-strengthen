@@ -57,12 +57,13 @@
            different things to a checklist and one thing to a person. Nothing
            needed the prefix: a food key can only be under one heading at a
            time, so there was never a collision for it to prevent. */
-        var key = s.s ? it.a : it.k;
+        var alias = (typeof it.a === 'string' && it.a.trim()) ? it.a.trim() : 'Seasoning';
+        var key = s.s ? alias : it.k;
         if (!bucket[key]) {
           bucket[key] = {
             key: key, extra: true, g: 0,
             unit: s.u, per: s.p, lad: s.d,
-            label: s.s ? it.a.charAt(0).toUpperCase() + it.a.slice(1) : s.l
+            label: s.s ? alias.charAt(0).toUpperCase() + alias.slice(1) : s.l
           };
         }
         /* One line per thing, and the same predicate every other part of the

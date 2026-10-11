@@ -253,8 +253,9 @@ service cloud.firestore {
         && request.resource.data.exp is int
         && request.resource.data.exp > request.time.toMillis()
         && request.resource.data.exp <= request.time.toMillis() + 8 * 86400000
-        && request.auth.uid in get(/databases/$(database)/documents/households/$(request.resource.data.house)).data.members;
+        && request.auth.uid in get(/databases/$(database)/documents/households/$(request.resource.data.house)).data.get('members', []);
       allow update: if request.auth != null
+        && named()
         && resource.data.used == false
         && resource.data.exp > request.time.toMillis()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedBy'])

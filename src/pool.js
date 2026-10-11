@@ -205,7 +205,8 @@
   function mTryAgain(sk) {
     var k = mViewKey();
     S.mTouched = sk;                   // keep the meal you are cycling open
-    S.mFold[sk] = false;
+    // and its card showing what it now holds, if it was shut to its status
+    if (S.mView[k] && S.mView[k][sk] === 1) S.mView[k][sk] = 2;
     var targets = mDayTargets(k);
     var slots = mReadSlots();
     var srec = null;

@@ -33,7 +33,7 @@ const openTray = async (pg) => {
 };
 const openMeal = async (pg, sk) => {
   const key = await pg.evaluate((k) => typeof k === 'number'
-    ? ([...document.querySelectorAll('#macroSlots [data-mopen]')][k] || { dataset: {} }).dataset.mopen
+    ? ([...document.querySelectorAll('#macroSlots .mtray-b[data-mopen], #macroSlots .mtray-skb[data-mopen]')][k] || { dataset: {} }).dataset.mopen
     : k, sk);
   const open = await pg.evaluate((k) => !!document.querySelector('#modalRoot .msheet .msh-h [data-mdot="' + k + '"]'), key);
   if (open) { await openTray(pg); return; }

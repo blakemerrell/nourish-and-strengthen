@@ -18,24 +18,27 @@ const SETUP = path.join(ROOT, 'SETUP.md');
 
 // the rules, comments taken out and runs of blank lines made one
 function stripped(rules) {
+  const eol = rules.includes('\r\n') ? '\r\n' : '\n';
   return rules
     .replace(/\/\*[\s\S]*?\*\//g, '')
-    .split('\n')
+    .split(/\r?\n/)
     .filter((l) => !/^\s*\/\//.test(l))
     .map((l) => l.replace(/\s*\/\/.*$/, '').replace(/\s+$/, ''))
     .join('\n')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/\{\n\n+/g, '{\n')
     .replace(/\n\n+(\s*\})/g, '\n$1')
-    .trim() + '\n';
+    .trim()
+    .replace(/\n/g, eol) + eol;
 }
 
 // the one fenced block in SETUP.md that holds rules: [start, end] of its body
 function block(setup) {
-  const re = /```\n(rules_version[\s\S]*?)```/;
+  const re = /```\r?\n(rules_version[\s\S]*?)```/;
   const m = re.exec(setup);
   if (!m) throw new Error('SETUP.md has no fenced block starting rules_version');
-  return { start: m.index + 4, end: m.index + 4 + m[1].length, body: m[1] };
+  const fenceLen = m[0].indexOf('rules_version');
+  return { start: m.index + fenceLen, end: m.index + fenceLen + m[1].length, body: m[1] };
 }
 
 module.exports = { stripped, block, RULES, SETUP };

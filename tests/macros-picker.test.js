@@ -182,7 +182,7 @@ module.exports = nourish({
       return Math.abs(Math.round(kc - dayK * me.w / sumW));
     });
     const wasOff = await gapOf();
-    await bar.click('[data-mbal="d"]');
+    await bar.click('#modalRoot [data-mbal="d"]');
     await bar.waitForTimeout(500);
     const nowOff = await gapOf();
     t.ok('balancing a meal moves it toward its share, not away',
@@ -446,11 +446,14 @@ module.exports = nourish({
        tray read for what its flame pill says. */
     const trays = await gaugePage.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray')].map((tr) => {
       const kEl = tr.querySelector('.mtray-caps .mcap');
-      const k = (kEl || {}).textContent || '';
+      /* An empty meal is one row since 2026-10-11 and says what it is for
+         in faint type beside its name ("272 kcal"), with nothing yet against it. */
+      const aim = tr.querySelector('.mtray-aim');
+      const k = aim ? '0 / ' + aim.textContent.replace(/\D/g, '') : (kEl || {}).textContent || '';
       const m = /([\d,]+)\s*\/\s*([\d,]+)/.exec(k.trim()) || [];
       const n = (x) => Number(String(x || '').replace(/,/g, ''));
       return { sk: tr.querySelector('[data-mopen]').dataset.mopen, name: tr.querySelector('.mtray-n').textContent,
-        got: n(m[1]), want: n(m[2]), filled: tr.classList.contains('filled'),
+        got: n(m[1]), want: n(m[2]), filled: tr.classList.contains('filled'), shut: tr.classList.contains('mv-1'),
         verdict: !!kEl && (kEl.classList.contains('over') || kEl.classList.contains('on')),
         foods: tr.querySelectorAll('.mtray-f:not(.mtray-none)').length, h: Math.round(tr.getBoundingClientRect().height),
         say: tr.querySelector('.mtray-b').getAttribute('aria-label') || '' };
@@ -530,8 +533,10 @@ module.exports = nourish({
       noFood.length > 0 && noFood.every((c) => c.got === 0 && c.want > 0),
       JSON.stringify(noFood.map((c) => c.name + ' ' + c.got + '/' + c.want)));
 
-    t.ok('while a meal with food on it still prints the food',
-      fed.length > 0 && fed.every((c) => c.got > 0),
+    /* An eaten meal's card starts shut to its Status since 2026-10-10 —
+       circles, not numbers — so there it is its sheet that prints it. */
+    t.ok('while a meal with food on it still prints the food: in its sheet, and on its card unless shut to Status',
+      fed.length > 0 && fed.every((c) => c.caps[0].v > 0 && (c.shut || c.got > 0)) && fed.some((c) => !c.shut),
       JSON.stringify(fed.map((c) => c.name + ' ' + c.got + '/' + c.want)));
 
     /* Quiet, still: an empty meal wears no verdict colour, about food the day
@@ -543,11 +548,13 @@ module.exports = nourish({
       fed.length > 0 && fed.some((c) => c.caps.some((g) => g.cls)),
       JSON.stringify(fed.map((c) => c.name + ':' + c.caps.map((g) => g.cls || '-').join('|'))));
 
-    /* An empty tray is no taller than one holding a single food: it says
-       "Nothing yet" on the line the food would take. */
+    /* An empty tray used to be as tall as one holding a single food, saying
+       "Nothing yet" on the line the food would take. Blake, 2026-10-11: "I
+       don't like seeing that expanded and 'nothing yet'... a collapsed card".
+       So it is one row now, shorter than any meal with food on it. */
     const one = gz.filter((c) => c.foods === 1);
-    t.ok('and a blank meal is the same height as a one-food one',
-      one.length > 0 && noFood.length > 0 && noFood.every((c) => Math.abs(c.h - one[0].h) <= 1),
+    t.ok('and a blank meal is one row, shorter than a one-food one, with no "Nothing yet"',
+      one.length > 0 && noFood.length > 0 && noFood.every((c) => c.h < one[0].h && c.h < 70 && c.foods === 0),
       JSON.stringify(gz.map((c) => c.name + ':' + c.foods + ':' + c.h)));
 
     t.ok('and the meal keeps its whole name at phone width',

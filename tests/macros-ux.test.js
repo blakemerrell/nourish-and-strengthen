@@ -1033,7 +1033,13 @@ module.exports = nourish({
       await pg.fill('#macroDayPick', FAR);
       await pg.dispatchEvent('#macroDayPick', 'change');
       await pg.waitForTimeout(400);
-      /* Every tray lists its foods (2026-10-04), so the plates are read off the day. */
+      /* Every tray lists its foods (2026-10-04), so the plates are read off
+         the day — once the eaten dinner, which starts on its Status
+         (2026-10-10), is tapped open to them. */
+      if (await pg.$('#macroSlots .mtray.mv-1[data-mslot="d"]')) {
+        await pg.click('#macroSlots [data-mslot="d"] [data-mview]');
+        await pg.waitForTimeout(250);
+      }
       const onFar = await pg.evaluate(() => ({ sel: document.getElementById('macroDaySel').value,
         text: document.getElementById('macroDaySel').selectedOptions[0].text,
         shut: document.querySelector('.mday-pick').classList.contains('hide'),
@@ -1060,9 +1066,10 @@ module.exports = nourish({
       t.ok('the food sheet has an amount box, starting at what you had last time (3 whole), with its units',
         fs1.amt === '3' && fs1.units[0] === 'whole' && fs1.units.indexOf('g') > 0 && fs1.units.indexOf('cup') > 0, JSON.stringify(fs1));
       /* As a Nutrition Facts panel since 2026-10-07 (mockup F): the packet's
-         order and words, not the list's. */
-      t.ok('and gives calories, fat, sodium, carbs, fiber and protein for that amount, as a label',
-        fs1.nutr.join() === 'Calories,Total Fat,Sodium,Total Carbohydrate,Dietary Fiber,Protein', fs1.nutr.join());
+         order and words, not the list's. Compact since 2026-10-11 ("make this
+         a lot more compact"): a grid, the four the day counts first. */
+      t.ok('and gives calories, protein, fat, carbs, sodium and fiber for that amount, the four the day counts first',
+        fs1.nutr.join() === 'Calories,Protein,Fat,Carbs,Sodium,Fiber', fs1.nutr.join());
       t.ok('and an Add button for the meal it was opened from', fs1.add === 'Add to Breakfast', fs1.add);
       await pg.selectOption('#mfsUnit', { label: 'g' });
       await pg.waitForTimeout(250);

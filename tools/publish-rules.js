@@ -28,9 +28,12 @@ const crypto = require('crypto');
 const ROOT = path.join(__dirname, '..');
 const API = process.env.RULES_API || 'https://firebaserules.googleapis.com/v1';
 
+class FailError extends Error {}
+
 function fail(msg) {
   process.stderr.write('publish-rules: ' + msg + '\n');
-  process.exit(1);
+  process.exitCode = 1;
+  throw new FailError();
 }
 
 function b64url(buf) {
@@ -119,4 +122,6 @@ async function main() {
   process.stdout.write('Published firestore.rules (sha256 ' + sha + ') to ' + want + ' as ' + ruleset.split('/').pop() + '.\n');
 }
 
-main().catch((e) => fail(e && e.message ? e.message : String(e)));
+main().catch((e) => {
+  if (!(e instanceof FailError)) fail(e && e.message ? e.message : String(e));
+});

@@ -327,8 +327,11 @@ module.exports = nourish({
     const nuts = await plate(0);
     t.ok('and typing thirty makes it thirty, in the food own word',
       /^30\s*nuts?$/.test(nuts.portion), JSON.stringify(nuts));
+    /* 126: a nut is 0.6 g of carbs and 0.2 of fat, 4.2 kcal at four and nine.
+       It read 120 until 2026-10-11, when an own food stopped being rounded
+       to whole calories a unit (a drink kept per 100 mL read 162 for 160). */
     t.ok('and the cost follows it rather than the number alone moving',
-      /^120 kcal/.test(nuts.mac), JSON.stringify(nuts));
+      /^126 kcal/.test(nuts.mac), JSON.stringify(nuts));
 
     /* Grams are the case where the number on screen is NOT x: mPortion shows
        r.grams * x, so typing 185 and storing 185 would store a hundred and
@@ -350,7 +353,8 @@ module.exports = nourish({
     const rice = await plate(1);
     t.ok('and typing its grams shows those grams back', /^185\s*g$/.test(rice.portion),
       JSON.stringify(rice));
-    t.ok('and 185 g of it costs 185 g worth', /^233 kcal/.test(rice.mac),
+    // 125.5 kcal a unit times 1.85, unrounded per unit since 2026-10-11 (it read 233 from 126)
+    t.ok('and 185 g of it costs 185 g worth', /^232 kcal/.test(rice.mac),
       JSON.stringify(rice));
     t.ok('and what is stored is the multiplier, not the weight',
       await typ.evaluate(() => {

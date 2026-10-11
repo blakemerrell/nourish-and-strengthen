@@ -81,6 +81,9 @@
   --bar-p: oklch(0.48 0.13 20);
   --bar-f: oklch(0.47 0.10 65);
   --bar-c: oklch(0.44 0.09 150);
+  /* the meal card's rings: on plan, and over (myday.js, mBeadsOf) */
+  --ring-on: oklch(0.58 0.11 150);
+  --ring-over: oklch(0.68 0.13 70);
   /* Each letter sits at the unfilled end of its bar, on the track, so the
      track is what it has to be read against: 4.7:1 and up. They were 3.8 to
      4.3 — the F and the flame the faintest words on the screen. */
@@ -378,6 +381,8 @@
     --bar-p: oklch(0.76 0.10 20);
     --bar-f: oklch(0.80 0.09 70);
     --bar-c: oklch(0.76 0.10 150);
+    --ring-on: oklch(0.76 0.11 150);
+    --ring-over: oklch(0.80 0.12 75);
     --mlim-quiet-pale: oklch(0.36 0.012 65);
     --muted:      oklch(0.72 0.02 75);
     --muted-2:    oklch(0.80 0.02 80);
@@ -1697,14 +1702,6 @@ select { max-width: 280px; }
 .mfs-pn { font-family: var(--serif); }
 .mfs-px { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .mfs-pm { grid-column: 1 / -1; font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.mfs-micro {
-  display: flex;
-  gap: 14px;
-  margin-top: 6px;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  font-size: 0.8125rem;
-}
 .mp-meals { display: flex; gap: 5px; margin: 12px 0 2px; overflow-x: auto; scrollbar-width: none; }
 .mp-meals::-webkit-scrollbar { display: none; }
 .mp-meals button {
@@ -2500,23 +2497,6 @@ select { max-width: 280px; }
 .nfs-src { margin-top: 12px; font-size: 0.8125rem; line-height: 1.4; color: var(--muted-2); }
 /* a link in a line of text: a thumb tall, the line unmoved */
 .nfs-src a { color: var(--ochre-text); display: inline-block; padding: 13px 0; margin: -13px 0; }
-/* The food's own page (src/foodsheet.js) draws the same panel, read-only:
-   its rows are .mfs-nr too, so the list's spacing and grey names are undone
-   inside it */
-.nfl-read { margin-top: 4px; }
-.nfl .mfs-nr { justify-content: flex-start; gap: 6px; padding: 0; border-bottom: 1px solid var(--ink); font-size: 1rem; }
-.nfl .mfs-nr span { color: var(--ink); }
-.nfl .mfs-nr span em { font-style: normal; font-weight: 800; }
-.nfl .mfs-nr.sub { padding-left: 16px; }
-.nfl .mfs-nr b { font-weight: 400; }
-.nfl .mfs-nr i.nfl-dv { font-style: normal; }
-.nfl-read .nfl-serv { min-height: 34px; justify-content: space-between; }
-.nfl-read .nfl-cal { border-bottom: 5px solid var(--ink); padding: 2px 0; align-items: flex-end; justify-content: space-between; }
-.nfl-read .nfl-cal span { font-size: 1.75rem; font-weight: 900; line-height: 1.1; }
-.nfl-read .nfl-cal b { font-size: 2rem; font-weight: 900; line-height: 1.1; }
-/* the same line on the food's own page */
-.mfs-alg { font-size: 0.875rem; margin-top: 6px; }
-.mfs-alg span { font-size: 0.8125rem; color: var(--muted); }
 /* the meal rows: arrow, name, kind, gone — edited in place, saved together */
 /* One meal, one line: arrow, name, kind, share, gone. Everything is scoped
    under .mtm-row because the phone media query hands every bare .txt the
@@ -3661,14 +3641,14 @@ select { max-width: 280px; }
   display: block; font-size: 0.71875rem; letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--muted); margin-bottom: 5px;
 }
-.ed-f .txt { width: 100%; }
+.ed-f .txt { width: 100%; min-width: 0; }
 .ed-ta {
   font-family: var(--sans); font-size: 0.875rem; line-height: 1.55; resize: vertical;
   min-height: 96px;
 }
 .ed-row { display: flex; gap: 12px; flex-wrap: wrap; }
 .ed-row > .ed-f { flex: 1 1 130px; min-width: 0; }
-.ed-row4 > .ed-f { flex: 1 1 70px; }
+.ed-row4 > .ed-f { flex: 1 1 70px; min-width: 0; }
 .ed-score {
   background: var(--ed-score-bg); border: 1px solid var(--tint-green-line);
   border-radius: 3px; padding: 11px 13px; margin: 0 0 15px;
@@ -6621,17 +6601,104 @@ button.mitem-uom.mitem-bw::after, .mt-swap::after, .mt-ld-go::after {
 .mcf-x { flex: none; color: var(--muted-2); font-size: 0.8125rem; }
 .mcf-go { width: 100%; gap: 6px; color: var(--ink); border-color: var(--line-firm); font-weight: 600; }
 .mcf-go .mday-ic { width: 18px; height: 18px; stroke-width: 2; }
-.mfs-amt { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-.mfs-amt input { width: 92px; min-height: 44px; font-size: 1.125rem; text-align: right; padding: 6px 10px;
-  border: 1px solid var(--line-firm); border-radius: 4px; background: var(--card); color: var(--ink); }
-.mfs-amt select { min-height: 44px; font-size: 1rem; }
+/* ---- a food's own page, compact (src/foodsheet.js) ----
+   Blake, on the scan-fix mockup (2026-10-11): "this whole think is really
+   hard to use, make this a lot more compact please". It was a screen and a
+   half: the allergens and the grades a line each, the plate, a divider and a
+   line of fibre and salt, "Add more to …", an amount box and a big button
+   wrapped onto their own lines, and a Nutrition Facts panel with its % Daily
+   Values. Now what it is takes a line, the plate a line, the amount and its
+   Add a line, and the label is a grid of two columns.
+   The rows of a sheet are a grid, so align-content: the phone rule makes a
+   sheet the screen's height (.sheet, min-height), and a grid hands that
+   height out as gaps between the rows. */
+.mfs-sheet { display: grid; gap: 8px; align-content: start; }
+.mfs-sheet .mfs-name { margin-top: 0; }
+.mfs-meta { font-size: 0.8125rem; line-height: 1.4; color: var(--muted); margin-top: -6px; }
+.mfs-meta .mfs-one { font-size: inherit; color: inherit; margin: 0; }
+.mfs-meta b { color: var(--ink); font-weight: 600; }
+.mfs-fix {
+  justify-self: start; min-height: 44px; margin: -8px 0 -6px; padding: 0; border: 0; background: none;
+  font: inherit; font-size: 0.8125rem; text-align: left; color: var(--muted); cursor: pointer;
+}
+.mfs-fix b { color: var(--ochre-text); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.mfs-sheet .mt-div { margin: 4px 0 0; }
+.mfs-plate {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 10px;
+  padding: 8px 0 0; border-top: 1px solid var(--line-soft);
+}
+.mfs-k { font-size: 0.8125rem; font-weight: 600; color: var(--label); }
+.mfs-plate .mk-tot { margin: 0; font-size: 0.875rem; }
+.mfs-amt { display: grid; grid-template-columns: 5em minmax(4.5em, 1fr) auto; align-items: center; gap: 8px; }
+/* boxes, over the sheet's underlined figures (.mt-sheet input), which read as text to change rather than a box to type in */
+.mfs-sheet .mfs-amt input:not([type="checkbox"]), .mfs-sheet .mfs-amt select {
+  width: 100%; min-width: 0; min-height: 44px; padding: 0 10px; border: 1px solid var(--line-firm); border-radius: 8px;
+  background: var(--card); color: var(--ink); font-family: var(--sans); font-size: 1rem; font-weight: 500;
+}
+.mfs-sheet .mfs-amt input:not([type="checkbox"]) { text-align: right; }
+.mfs-sheet .mfs-amt select { max-width: 11em; padding-right: 4px; }
 .mfs-u { font-size: 0.9375rem; color: var(--muted-2); }
-.mfs-amt .btn-primary { margin-left: auto; min-height: 48px; font-size: 0.9375rem; }
-.mfs-nutr { margin-top: 10px; border-top: 1px solid var(--line-soft); }
+.mfs-amt .btn-primary { min-height: 48px; padding: 0 14px; font-size: 0.9375rem; white-space: nowrap; }
+.mfs-nutr { border-top: 1px solid var(--line-soft); }
 .mfs-nr { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--line-soft);
   font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
 .mfs-nr span { color: var(--muted-2); }
-.mfs-meals { margin-top: 8px; }
+.mfs-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; }
+.mfs-grid .mfs-nr { align-items: baseline; gap: 8px; min-height: 30px; padding: 5px 0; font-size: 0.8125rem; }
+.mfs-grid .mfs-nr b { font-weight: 500; color: var(--ink); white-space: nowrap; }
+.mfs-grid .mfs-nr.key { font-size: 0.875rem; }
+.mfs-grid .mfs-nr.key span { color: var(--ink); }
+.mfs-grid .mfs-nr.key b { font-weight: 700; }
+.mfs-meals { margin-top: 0; }
+/* a narrow phone: the Add under the amount, the width of the sheet */
+@media (max-width: 360px) {
+  .mfs-amt { grid-template-columns: 5em minmax(0, 1fr); }
+  .mfs-amt .btn-primary { grid-column: 1 / -1; }
+}
+
+/* ---- fixing a food's numbers from its label (src/foodsheet.js) ----
+   The label's serving on one line, its twelve figures three across with
+   each name over its box (four short rows, and a box wide enough for
+   "1,200 mg" at 320 px), what the fix changes, and Save. The boxes are
+   boxes, not the underlined figures of the new-food form: these are typed
+   off a can in the hand, one after another. */
+.mff-serv {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto 4.5em auto; gap: 6px; align-items: center;
+  padding: 6px 0; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft);
+}
+.mff-serv label, .mff-sl { font-size: 0.875rem; font-weight: 600; color: var(--ink); }
+.mff-serv span, .mff-serv em { font-style: normal; font-size: 0.875rem; color: var(--muted); }
+.mff-serv b { grid-column: 2 / -1; justify-self: end; font-weight: 600; font-size: 0.9375rem; }
+.mff-sheet .mff-serv input:not([type="checkbox"]), .mff-sheet .mff-iw input:not([type="checkbox"]),
+.mff-sheet .mff-code input:not([type="checkbox"]) {
+  width: 100%; min-width: 0; min-height: 44px; padding: 0 8px; border: 1px solid var(--line-firm); border-radius: 8px;
+  background: var(--card); color: var(--ink); font-family: var(--sans); font-size: 0.9375rem; font-weight: 600; text-align: right;
+}
+.mff-sheet .mff-iw input:not([type="checkbox"]) { padding-right: 2.1em; }
+.mff-sheet .mff-iw.nu input:not([type="checkbox"]) { padding-right: 8px; }
+.mff-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 10px; }
+.mff-in { display: grid; gap: 2px; font-size: 0.8125rem; color: var(--muted); }
+.mff-in > span:first-child { min-width: 0; }
+.mff-in.key > span:first-child { color: var(--ink); font-weight: 600; font-size: 0.875rem; }
+.mff-iw { position: relative; display: block; min-width: 0; }
+.mff-iw em {
+  position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+  font-style: normal; font-size: 0.8125rem; color: var(--muted); pointer-events: none;
+}
+.mff-code { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: center; font-size: 0.8125rem; color: var(--muted); }
+.mff-sheet .mff-code input:not([type="checkbox"]) { text-align: left; font-weight: 500; }
+.mff-what { display: grid; gap: 2px; padding: 8px 10px; border-radius: 8px; background: var(--hint); font-size: 0.875rem; }
+.mff-what div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 10px; align-items: baseline; }
+.mff-what div b { margin-left: auto; }
+.mff-what span { color: var(--muted); min-width: 0; }
+.mff-what b { font-weight: 600; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
+.mff-what b small { display: block; font-weight: 400; color: var(--muted); font-size: 0.8125rem; }
+.mff-what p { margin: 2px 0 0; font-size: 0.8125rem; line-height: 1.35; color: var(--muted); }
+.mff-what p:empty { display: none; }
+.mff-go { display: flex; gap: 8px; }
+.mff-go .btn-primary { flex: 1 1 auto; min-height: 44px; }
+.mff-go .ghost { min-height: 44px; }
+@media (max-width: 360px) { .mff-form { column-gap: 8px; } }
 
 /* ---- Nourish: a meal's verbs, drawings in the plate's boxes ----
    Blake: "get all the buttons on the food tag into a single row." They were
@@ -7848,22 +7915,102 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .mtray-b::after { content: ''; position: absolute; inset: 0; border-radius: 11px; }
 .mtray-b:focus-visible { outline: none; }
 .mtray-b:focus-visible::after { outline: 2px solid var(--ochre); outline-offset: -2px; }
-.mtray-b:hover .mtray-n { color: var(--ink); }
-.mtray-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-height: 20px; position: relative; z-index: 1; }
-.mtray-fold {
-  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+/* The head (Blake, 2026-10-10): the name, which steps the card through
+   Status, Foods and Details (myday.js, mViewOf), with three pips for where
+   it is, and the card's verbs as drawings at the end. It stands above the
+   pills' reach, and is the tick's height so the two sit level. */
+.mtray-hr { position: relative; z-index: 1; display: flex; align-items: center; gap: 4px; min-height: 48px; margin: -12px 0 0; }
+.mtray-hd {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; min-height: 48px;
+  border: 0; background: none; padding: 0; margin: 0; text-align: left; cursor: pointer; color: var(--ink); font: inherit;
   -webkit-tap-highlight-color: transparent;
 }
-.mtray-fold .mfold-cue {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 18px; height: 18px; border-radius: 50%;
-  font-size: 0.75rem; line-height: 1;
-  background: var(--paper-soft); color: var(--muted);
-  transition: transform 0.15s ease;
+.mtray-hd .mtray-n { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mtray-hd:hover .mtray-n { color: var(--ink); }
+.mtray-hd:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; border-radius: 8px; }
+.mtray-hd .mtray-k { margin-left: auto; }
+/* The pills are the door to the meal now the name steps the views, so the
+   row they sit in is a thumb tall; Status has no pills and its door none. */
+.mtray-b { min-height: 44px; justify-content: center; }
+.mtray-b .mtray-caps { margin: 2px 0; }
+.mtray.mv-1 .mtray-b, .mtray.mtray-empty .mtray-b { min-height: 0; }
+.mtray-pips { display: inline-flex; gap: 3px; flex: none; }
+.mtray-pips i { width: 5px; height: 5px; border-radius: 50%; background: var(--line-firm); }
+.mtray-pips i.on { background: var(--ochre); }
+.mtray-vbs { display: inline-flex; flex: none; }
+.mtray-ib {
+  display: grid; place-items: center; width: 44px; height: 44px; border: 0; background: none; padding: 0; margin: 0;
+  color: var(--label); cursor: pointer; border-radius: 10px;
 }
-.mtray-fold[aria-expanded="true"] .mfold-cue { transform: rotate(180deg); }
-.mtray-fold:hover .mtray-n { color: var(--ink); }
-.mtray-fold:hover .mfold-cue { color: var(--ink); background: var(--line-firm); }
+.mtray-ib .mday-ic { width: 19px; height: 19px; }
+.mtray-ib:hover, .mtray-ib:focus-visible { color: var(--ochre-text); background: var(--hint); }
+/* Status: the card closed to its head, a ring each for calories, protein,
+   fat and carbs, filling toward the meal's share: grey while it fills,
+   soft green on plan, soft amber over. Quiet: no glow (round 3, 2026-10-11). */
+.mtray.mv-1 .mtray-c { padding-top: 6px; padding-bottom: 6px; }
+.mtray.mv-1 .mtray-hr { margin-top: 0; }
+/* level with the head (6 of padding, 48 of row), and stays there when the skip question opens under it */
+#macroSlots .mtray.mv-1 .mday-dot { margin-top: 8px; }
+.mbds { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; flex: none; }
+.mbd {
+  --rc: color-mix(in oklab, var(--label) 50%, var(--card)); position: relative; display: grid; place-items: center; width: 28px; height: 28px; flex: none;
+  color: var(--note); font: 700 0.8125rem/1 var(--sans);
+}
+.mbd > svg.mbd-r { position: absolute; inset: 0; width: 100%; height: 100%; }
+.mbd-t { fill: none; stroke: var(--line-soft); stroke-width: 2.4; }
+.mbd-f { fill: none; stroke: var(--rc); stroke-width: 2.4; stroke-linecap: round; }
+.mbd b { position: relative; display: grid; place-items: center; font: inherit; }
+.mbd b svg { width: 13px; height: 13px; }
+.mbd.rg-on { --rc: var(--ring-on); color: var(--ring-on); }
+.mbd.rg-over { --rc: var(--ring-over); color: var(--ring-over); }
+.mbd.rg-none { color: color-mix(in oklab, var(--label) 35%, transparent); }
+/* An empty meal, shut: one row, its name and what it is for faint, + and ⊘.
+   Its name or a held + opens the line of ways to fill it (myday.js). */
+.mtray.mtray-empty .mtray-c { padding-top: 6px; padding-bottom: 6px; }
+.mtray.mtray-empty.open .mtray-c { padding-bottom: 2px; }
+.mtray.mtray-empty .mtray-hr { margin-top: 0; }
+#macroSlots .mtray.mtray-empty .mday-dot { margin-top: 8px; }
+.mtray.mtray-empty .mtray-n { color: var(--note); }
+.mtray-aim { font-size: 0.8125rem; font-weight: 500; color: color-mix(in oklab, var(--note) 75%, transparent); white-space: nowrap; }
+.mtray-hold { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+.mtray-acts { position: relative; z-index: 1; display: flex; flex-wrap: wrap; column-gap: 2px; margin: -10px 0 0 -48px; }
+.mtray-acts button {
+  position: relative; min-height: 44px; padding: 0 7px; border: 0; background: none; cursor: pointer; border-radius: 8px;
+  font: 500 0.8125rem/1 var(--sans); color: var(--ochre-text);
+}
+.mtray-acts button + button::before { content: '·'; position: absolute; left: -3px; color: var(--line-firm); }
+.mtray-acts button:hover, .mtray-acts button:focus-visible { background: var(--hint); }
+/* Foods: the leaf, the name, and what it costs, a line each. */
+.mtray-cl { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto auto; align-items: center; column-gap: 10px; min-height: 44px; }
+.mtray-cl .mfl-nm { -webkit-line-clamp: 2; }
+.mtray-ck { font-size: 0.875rem; font-weight: 600; color: var(--ink); text-align: right; white-space: nowrap; }
+.mtray-ck small { font-weight: 400; font-size: 0.8125rem; color: var(--note); }
+.mtray-cm { display: inline-grid; grid-template-columns: repeat(3, 2.6em); text-align: right; font-size: 0.8125rem; font-weight: 500; color: var(--note); white-space: nowrap; }
+.mtray-cm i { font-style: normal; font-weight: 700; margin-left: 1px; }
+.mtray-kept { display: grid; place-items: center; color: var(--ochre-text); }
+.mtray-kept .mday-ic { width: 20px; height: 20px; }
+/* Skip, asked on the card when the meal has food on it. */
+.mtray-ask {
+  position: relative; z-index: 1; display: grid; gap: 8px; margin: 8px 0 2px; padding: 10px 12px;
+  border-radius: 10px; background: var(--hint); border: 1px solid var(--line-firm);
+}
+.mtray-ask p { margin: 0; font-size: 0.875rem; line-height: 1.4; color: var(--ink); }
+.mtray-askb { display: flex; gap: 8px; flex-wrap: wrap; }
+.mtray-askb button { min-height: 44px; padding: 0 14px; }
+/* The narrowest phones: the circles a little smaller and the pips gone, so
+   a head keeps to one line; a food's calories lose their word, which the
+   pill above already says, so the name keeps its room. */
+@media (max-width: 360px) {
+  .mbd { width: 24px; height: 24px; }
+  .mbds { gap: 3px; }
+  .mtray-hd .mtray-n { letter-spacing: 0.08em; }
+  .mtray-acts button { padding: 0 6px; }
+  .mtray-lg { display: none; }
+  .mtray-pips { display: none; }
+  .mtray-cm { grid-template-columns: repeat(3, 2.4em); }
+  .mtray-ck small { display: none; }
+  .mtray-cl { column-gap: 8px; }
+}
 .mtray-n { font-size: 0.78125rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--label); }
 .mtray-k { font-size: 0.8125rem; color: var(--note); white-space: nowrap; }
 .mtray-k b { font-weight: 700; color: var(--ink); }
@@ -7874,23 +8021,11 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
    tick, so a leaf sits in that column and every name starts where the meal's
    own name does; 46px is the tick's 44 and its 2 of margin. */
 .mtray-fs { position: relative; z-index: 1; display: flex; flex-direction: column; margin: 6px 0 0 -46px; }
-.mtray.collapsed .mtray-fs { margin-top: 4px; }
 /* "Nothing yet" takes the line a food would, so an empty tray is the height
    of a tray with one food on it; it is the door's, not a line of its own. */
 .mtray-fs .mtray-none { pointer-events: none; display: flex; align-items: center; min-height: 46px; padding-left: 46px; font-size: 0.84375rem; }
 .mtray-f { position: relative; }
 .mtray-f + .mtray-f::before { content: ''; position: absolute; top: 0; left: 46px; right: 0; border-top: 1px solid var(--line-soft); }
-.mtray-f-compact { min-height: 28px; }
-.mtray-f-compact + .mtray-f-compact::before { display: none; }
-.mtray-f-compact .mfl-r {
-  min-height: 28px; height: 28px; padding: 2px 0;
-  grid-template-columns: 38px minmax(0, 1fr);
-}
-.mtray-f-compact .mfl-lf { height: 28px; }
-.mtray-f-compact .mtray-fn {
-  min-height: 28px; height: 28px; line-height: 28px;
-  font-size: 0.84375rem;
-}
 .mfl-r {
   display: grid; grid-template-columns: 38px minmax(0, 1fr) auto 30px; align-items: center; column-gap: 8px;
   min-height: 46px; cursor: pointer; -webkit-tap-highlight-color: transparent;
@@ -7992,9 +8127,16 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 }
 .mtray-none { color: var(--note); }
 .mtray-skip {
-  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; margin: 0;
-  border: 1px dashed var(--line-firm); border-radius: 12px; background: none; padding: 0 12px 0 14px;
-  font: inherit; text-align: left; cursor: pointer; color: var(--note);
+  display: flex; align-items: center; gap: 4px; width: 100%; min-height: 44px; margin: 0; box-sizing: border-box;
+  border: 1px dashed var(--line-firm); border-radius: 12px; padding: 0 4px 0 0; color: var(--note);
+}
+.mtray-skb {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 44px;
+  border: 0; background: none; padding: 0 0 0 14px; font: inherit; text-align: left; cursor: pointer; color: inherit;
+}
+.mtray-unskip {
+  flex: none; min-height: 44px; padding: 0 10px; border: 0; background: none; cursor: pointer;
+  color: var(--ochre-text); font: 600 0.875rem/1 var(--sans); text-decoration: underline; text-underline-offset: 3px;
 }
 .mtray-skip .mtray-n { color: var(--note); flex: none; }
 .mtray-sw { font-size: 0.78125rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

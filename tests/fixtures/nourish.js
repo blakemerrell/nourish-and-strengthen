@@ -94,12 +94,17 @@ async function revealPlanFields(pg) {
     /* A meal's tray is the one door to adding food since 2026-10-04: a tap
        opens the meal's sheet, with the picker inside it. The first meal on
        the day that is not skipped. */
+    /* By the first of its doors a thumb can see: the pills, or since
+       2026-10-11 the + on an empty meal's one row, whose door is drawn
+       with nothing in it (myday.js, emptyHTML). */
     await pg.evaluate(() => {
-      const b = document.querySelector('#macroSlots .mtray-b');
-      if (b) b.scrollIntoView({ block: 'center' });
+      const c = document.querySelector('#macroSlots .mtray');
+      const b = c && [...c.querySelectorAll('[data-mopen]')].find((e) => e.getBoundingClientRect().height > 0);
+      document.querySelectorAll('[data-addon]').forEach((e) => e.removeAttribute('data-addon'));
+      if (b) { b.setAttribute('data-addon', '1'); b.scrollIntoView({ block: 'center' }); }
     });
     await pg.waitForTimeout(150);
-    await pg.click('#macroSlots .mtray-b');
+    await pg.click('#macroSlots [data-addon]');
     await pg.waitForTimeout(250);
     // the meal's rows are in its tray, which opens shut
     await openTray(pg);

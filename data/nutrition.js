@@ -844,15 +844,27 @@ function parseLine(raw) {
   // drop parentheticals ("(sliced)", "(cooked & chilled)")
   s = s.replace(/\s*\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
 
-  // leading quantity: "1.5", "2", "¼", "1 ½", "5g"
+  // leading quantity: "1.5", "2", "¼", "1 ½", "5g", "1/2", "1 1/2"
   let qty = null;
-  let m = s.match(/^(\d+(?:\.\d+)?)\s*([½¼¾⅓⅔⅛⅜⅝⅞])?\s*/);
-  if (m && m[0].trim()) {
-    qty = parseFloat(m[1]) + (m[2] ? FRAC[m[2]] : 0);
-    s = s.slice(m[0].length);
+  const mixedSlash = s.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)\s*/);
+  if (mixedSlash) {
+    qty = parseFloat(mixedSlash[1]) + parseFloat(mixedSlash[2]) / parseFloat(mixedSlash[3]);
+    s = s.slice(mixedSlash[0].length);
   } else {
-    m = s.match(/^([½¼¾⅓⅔⅛⅜⅝⅞])\s*/);
-    if (m) { qty = FRAC[m[1]]; s = s.slice(m[0].length); }
+    const slash = s.match(/^(\d+)\s*\/\s*(\d+)\s*/);
+    if (slash) {
+      qty = parseFloat(slash[1]) / parseFloat(slash[2]);
+      s = s.slice(slash[0].length);
+    } else {
+      let m = s.match(/^(\d+(?:\.\d+)?)\s*([½¼¾⅓⅔⅛⅜⅝⅞])?\s*/);
+      if (m && m[0].trim()) {
+        qty = parseFloat(m[1]) + (m[2] ? FRAC[m[2]] : 0);
+        s = s.slice(m[0].length);
+      } else {
+        m = s.match(/^([½¼¾⅓⅔⅛⅜⅝⅞])\s*/);
+        if (m) { qty = FRAC[m[1]]; s = s.slice(m[0].length); }
+      }
+    }
   }
 
   // vague leading word ("dash vanilla", "splash milk", "pinch salt")
@@ -1033,6 +1045,17 @@ function gramsFor(line) {
 const MAX = { p: 27, k: 18, f: 8, s: 22, b: 13, c: 12 };   // 100
 
 function scoreFrom(macro) {
+  if (!macro || !(macro.kcal > 0)) {
+    return {
+      score: 0,
+      sc: {
+        p: 0, k: MAX.k, f: 0, s: MAX.s, b: 0, c: 0,
+        pPct: 0, fPct: 0, cPct: 0,
+        na: Math.round((macro && macro.na) || 0),
+        fib: Math.round(((macro && macro.fib) || 0) * 10) / 10,
+      },
+    };
+  }
   const pPct = (macro.p * 4) / macro.kcal * 100;
   const fPct = (macro.f * 9) / macro.kcal * 100;
   const na = macro.na || 0;

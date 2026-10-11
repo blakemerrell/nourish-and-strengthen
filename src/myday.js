@@ -736,7 +736,12 @@
                 '<button class="mtray-ib" data-mskipask="' + esc(sk) + '" aria-label="Skip ' + esc(name) + ' today" title="Skip today">' + mIcon('skip') + '</button>' +
               '</span>' +
             '</div>' +
-            '<button class="mtray-b" data-mopen="' + esc(sk) + '" aria-label="Open ' + esc(name) + (M.pillsSay ? ' — ' + esc(M.pillsSay) : '') + '"></button>' +
+            /* The door every card has, kept so a meal is found the same way
+               whatever it holds, but drawn to nothing here: the + beside the
+               name is this card's way in. Out of the tab order and the
+               accessibility tree too, or a keyboard stopped on an invisible
+               button on every empty meal. */
+            '<button class="mtray-b" data-mopen="' + esc(sk) + '" tabindex="-1" aria-hidden="true" aria-label="Open ' + esc(name) + (M.pillsSay ? ' — ' + esc(M.pillsSay) : '') + '"></button>' +
             (!open ? '' : '<div class="mtray-acts">' +
               '<button data-mopen="' + esc(sk) + '">Add food</button>' +
               '<button data-mtry="' + esc(sk) + '" aria-label="Autofill ' + esc(name) + ' from your plan">Autofill</button>' +

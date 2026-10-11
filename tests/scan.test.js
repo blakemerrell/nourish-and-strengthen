@@ -52,9 +52,9 @@ module.exports = {
       await p.reload();
       await p.click('.tab[data-view="macros"]');
       await p.waitForTimeout(250);
-      // a meal's tray opens its sheet, the picker inside it (2026-10-04)
-      await p.evaluate(() => { const b = document.querySelector('#macroSlots .mtray-b'); if (b) b.scrollIntoView({ block: 'center' }); });
-      await p.click('#macroSlots .mtray-b');
+      // a meal's + opens its sheet, the picker inside it (2026-10-04; by +, as an empty meal opens since 2026-10-11)
+      await p.evaluate(() => { const b = document.querySelector('#macroSlots .mtray .mtray-ib[data-mopen]'); if (b) b.scrollIntoView({ block: 'center' }); });
+      await p.click('#macroSlots .mtray .mtray-ib[data-mopen]');
       await p.waitForTimeout(600);
       return p;
     }

@@ -53,8 +53,8 @@ module.exports = {
       await p.reload();
       await p.click('.tab[data-view="macros"]');
       await p.waitForTimeout(250);
-      await p.evaluate(() => { const b = document.querySelector('#macroSlots .mtray-b'); b.scrollIntoView({ block: 'center' }); });
-      await p.click('#macroSlots .mtray-b');
+      await p.evaluate(() => { const b = document.querySelector('#macroSlots .mtray .mtray-ib[data-mopen]'); b.scrollIntoView({ block: 'center' }); });
+      await p.click('#macroSlots .mtray .mtray-ib[data-mopen]');
       await p.waitForTimeout(500);
       return p;
     }
@@ -153,8 +153,8 @@ module.exports = {
       await a.waitForTimeout(150);
       await a.keyboard.press('Escape');
       await a.waitForTimeout(150);
-      await a.evaluate(() => { const b = document.querySelector('#macroSlots .mtray-b'); b.scrollIntoView({ block: 'center' }); });
-      await a.click('#macroSlots .mtray-b');
+      await a.evaluate(() => { const b = document.querySelector('#macroSlots .mtray .mtray-ib[data-mopen]'); b.scrollIntoView({ block: 'center' }); });
+      await a.click('#macroSlots .mtray .mtray-ib[data-mopen]');
       await a.waitForTimeout(400);
       await ask(a, '0078742370842');
       await take(a);
@@ -251,8 +251,8 @@ module.exports = {
       await g.waitForTimeout(150);
       await g.keyboard.press('Escape');
       await g.waitForTimeout(150);
-      await g.evaluate(() => { const b = document.querySelector('#macroSlots .mtray-b'); b.scrollIntoView({ block: 'center' }); });
-      await g.click('#macroSlots .mtray-b');
+      await g.evaluate(() => { const b = document.querySelector('#macroSlots .mtray .mtray-ib[data-mopen]'); b.scrollIntoView({ block: 'center' }); });
+      await g.click('#macroSlots .mtray .mtray-ib[data-mopen]');
       await g.waitForTimeout(400);
       await ask(g, '0078742370859');
       await take(g);
@@ -411,8 +411,8 @@ module.exports = {
     await sp.reload();
     await sp.click('.tab[data-view="macros"]');
     await sp.waitForTimeout(250);
-    await sp.evaluate(() => { const b = document.querySelector('#macroSlots .mtray-b'); b.scrollIntoView({ block: 'center' }); });
-    await sp.click('#macroSlots .mtray-b');
+    await sp.evaluate(() => { const b = document.querySelector('#macroSlots .mtray .mtray-ib[data-mopen]'); b.scrollIntoView({ block: 'center' }); });
+    await sp.click('#macroSlots .mtray .mtray-ib[data-mopen]');
     await sp.waitForTimeout(400);
     await sp.evaluate(() => window.Store.toggleFav('f:chicken_breast'));     // a food you starred
     await sp.fill('#mpFind', 'chicken breast');

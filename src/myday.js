@@ -717,14 +717,19 @@
        https://claude.ai/artifact/Vn1dzLvzzUgVBxKNPdUc8c */
     var emptyHTML = function (M, sk, name) {
       var open = !!(S.mEmptyOpen[k] && S.mEmptyOpen[k][sk]);
-      var want = M.aim ? (M.aim.kcal || (4 * M.aim.p + 9 * M.aim.f + 4 * M.aim.c)) : 0;
+      /* The faint target is the calorie pill's figure, worked the same way
+         (capsHTML), and carries the same data-want the pill did, so whatever
+         read a meal's share off its pill reads it here. A day whose calories
+         are spent shows none, as the pill showed a dash. */
+      var spent = (M.ask && M.ask.spent) || {};
+      var want = M.aim && !spent.kcal ? (M.aim.kcal || (4 * M.aim.p + 9 * M.aim.f + 4 * M.aim.c)) : 0;
       return '<div class="mslot mtray mtray-empty' + (open ? ' open' : '') + '" data-mslot="' + esc(sk) + '">' +
           M.dot +
           '<div class="mtray-c">' +
             '<div class="mtray-hr">' +
               '<button class="mtray-hd" data-meopen="' + esc(sk) + '" aria-expanded="' + open + '" aria-label="' + esc(name) +
                 ', nothing on it yet' + (want > 0 ? ', ' + fmtK(want) + ' kcal to plan' : '') + '. ' + (open ? 'Hide' : 'Show') + ' the ways to fill it">' +
-                '<span class="mtray-n">' + esc(name) + '</span>' + (want > 0 ? '<span class="mtray-aim num">' + fmtK(want) + ' kcal</span>' : '') + '</button>' +
+                '<span class="mtray-n">' + esc(name) + '</span>' + (want > 0 ? '<span class="mtray-aim num" data-want="' + Math.round(want) + '">' + fmtK(want) + ' kcal</span>' : '') + '</button>' +
               '<span class="mtray-vbs">' +
                 '<button class="mtray-ib mtray-hold" data-mopen="' + esc(sk) + '" data-mhold="' + esc(sk) + '" aria-label="Add food to ' + esc(name) +
                   '. Press and hold for more ways to fill it" title="Add food">' + mIcon('plus') + '</button>' +

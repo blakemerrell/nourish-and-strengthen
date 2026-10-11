@@ -459,8 +459,9 @@ module.exports = {
     t.ok('a food searched for offers the sizes the USDA weighs it in, best first and its shrugs left out, with 100 g last',
       cd.sizes.length === 7 && /^1 cup, cooked, diced 165 g$/.test(cd.sizes[0]) && /^1 small breast 150 g$/.test(cd.sizes[1]) &&
         cd.sizes[6] === '100 g' && !cd.sizes.some((z) => /NS|not specified/.test(z)) && /1 cup/.test(cd.on), JSON.stringify(cd.sizes));
+    // protein, fat and carbs to a tenth since 2026-10-11, as the label prints a gram
     t.ok('the panel is that size\u2019s label, with the rest of the label the USDA gives',
-      cd.unit === '1 cup, cooked, diced (165 g)' && cd.kcal === '333' && cd.p === '35' && cd.f === '15' && cd.c === '12' &&
+      cd.unit === '1 cup, cooked, diced (165 g)' && cd.kcal === '333' && cd.p === '34.9' && cd.f === '15.1' && cd.c === '12.1' &&
         cd.na === '749' && cd.sat === '3.5' && cd.chol === '129' && cd.cholDv === '43%' && cd.sug === '10' && cd.ca === '20' &&
         cd.fe === '0.9' && cd.k === '462' && cd.kDv === '10%', JSON.stringify(cd));
     const look = await sp.evaluate(() => {
@@ -468,8 +469,10 @@ module.exports = {
       return { gap: inp.getBoundingClientRect().left - lab.getBoundingClientRect().right, w: inp.getBoundingClientRect().width,
         btn: document.querySelector('[data-nf="save"]').textContent };
     });
+    /* As wide as its figure: "15.1" now that fat comes to a tenth, where it
+       was "15" under 44 px. */
     t.ok('each typed figure sits just after its name, as the read rows\u2019 do, and the button names the meal',
-      look.gap < 12 && look.w < 44 && /^Add to Breakfast$/.test(look.btn), JSON.stringify(look));
+      look.gap < 12 && look.w < 56 && /^Add to Breakfast$/.test(look.btn), JSON.stringify(look));
     await sp.evaluate(() => { document.getElementById('nfC').blur(); document.getElementById('nfC').closest('.nfl-row').querySelector('.nfl-dv').click(); });
     t.ok('and a tap anywhere on a row puts the caret in its box', await sp.evaluate(() => document.activeElement && document.activeElement.id === 'nfC'));
     t.ok('with how much, and the meal\u2019s own pills with it on, and its salt against a day\u2019s',
@@ -497,7 +500,8 @@ module.exports = {
       return { food: mine.find((f) => /Chicken breast/.test(f.name)), x: (items.find((it) => /^f:my:/.test(it.id)) || {}).x };
     });
     t.ok('saved as the size picked, its label per serving kept, and on the plate as the servings asked for',
-      ck.food && ck.food.unit === '1 small breast (150 g)' && ck.food.kcal === 4 * 32 + 4 * 11 + 9 * 14 && ck.x === 1.5 &&
+      ck.food && ck.food.unit === '1 small breast (150 g)' && ck.food.p === 31.7 && ck.food.f === 13.7 &&
+        ck.food.kcal === Math.round(4 * 31.7 + 4 * 11 + 9 * 13.7) && ck.x === 1.5 &&
         ck.food.lab && ck.food.lab.chol === 117 && ck.food.lab.k === 420 && ck.food.lab.sat === 3, JSON.stringify(ck));
     await sp.context().close();
 

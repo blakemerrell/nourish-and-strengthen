@@ -19,8 +19,15 @@ const SETUP = () => {
   localStorage.setItem('bsc.macroSlots', JSON.stringify({ list: [{ k: 'b', n: 'Breakfast', t: 'b' }, { k: 'l', n: 'Lunch', t: 'l' },
     { k: 'd', n: 'Dinner', t: 'd' }, { k: 's', n: 'Snacks', t: 's' }], names: { b: 'Breakfast', l: 'Lunch', d: 'Dinner', s: 'Snacks' } }));
   const f = (k, x, e) => ({ id: 'f:' + k, x: x, eaten: e ? 1 : 0 });
-  localStorage.setItem('bsc.macroDays', JSON.stringify({ '2026-10-10': {
-    b: [f('greek_yogurt', 1, 1), f('oats', 0.75, 1)],
+  // a meal saved to yourself (Save meal), for the empty meal's Saved meals
+  localStorage.setItem('bsc.myFoods', JSON.stringify({ salad: { name: 'House side salad', unit: 'plate', kcal: 150, p: 4, f: 11, c: 9,
+    parts: [{ id: 'f:apple', x: 1, name: 'Apples', unit: 'whole' }] } }));
+  localStorage.setItem('bsc.macroDays', JSON.stringify({
+    // a snack on the day before, for Repeat a day
+    '2026-10-09': { s: [f('apple', 1, 1)] },
+    '2026-10-10': {
+    // four eggs on breakfast: protein well past its share, and fat
+    b: [f('greek_yogurt', 1, 1), f('oats', 0.75, 1), f('egg', 4, 1)],
     l: [f('chicken_breast', 1), f('green_beans', 1), f('apple', 1)],
     d: [{ id: 66, x: 1, eaten: 0 }, f('egg', 2)],
     s: [] } }));
@@ -47,8 +54,9 @@ module.exports = {
     const start = await p.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray[data-mslot]')].map((c) => ({
       k: c.dataset.mslot, v: (c.className.match(/\bmv-(\d)/) || [])[1], beads: c.querySelectorAll('.mbd').length,
       skip: !!c.querySelector('[data-mskipask]'), door: !!c.querySelector('.mtray-b[data-mopen]') })));
-    t.ok('the eaten breakfast starts on Status with its four circles; Lunch, next, on Details; Dinner and the empty Snacks on Foods',
-      start.map((c) => c.k + c.v).join() === 'b1,l3,d2,s2' && start[0].beads === 4 && start.slice(1).every((c) => !c.beads), JSON.stringify(start));
+    t.ok('the eaten breakfast starts on Status with its four rings; Lunch, next, on Details; Dinner on Foods; the empty Snacks one row',
+      start.map((c) => c.k + (c.v || '-')).join() === 'b1,l3,d2,s-' && start[0].beads === 4 && start.slice(1).every((c) => !c.beads) &&
+      await p.evaluate(() => document.querySelector('#macroSlots [data-mslot="s"]').classList.contains('mtray-empty')), JSON.stringify(start));
     t.ok('every card keeps its door to the meal, Status too', start.every((c) => c.door), JSON.stringify(start));
     t.ok('a meal anything was eaten from has no ⊘; the others do', !start[0].skip && start.slice(1).every((c) => c.skip), JSON.stringify(start));
 
@@ -114,7 +122,74 @@ module.exports = {
     await p.waitForTimeout(200);
     const back = await p.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray[data-mslot]')].map((c) => (c.className.match(/\bmv-(\d)/) || [])[1]).join());
     // the empty Snacks has nothing to show on either, and stays as it was drawn
-    t.ok('printing shows every meal with food on Details, and the cards go back after', paper === '3,3,3,2' && back === '1,3,2,2', JSON.stringify({ paper, back }));
+    t.ok('printing shows every meal with food on Details, and the cards go back after', paper === '3,3,3,' && back === '1,3,2,', JSON.stringify({ paper, back }));
+
+    /* ---- rings: protein past its share stays green, fat past it amber ---- */
+    const ringsOf = (sk) => p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mbd')].map((b) => (b.className.match(/rg-\w+/) || [''])[0]), card(sk));
+    const bRings = await ringsOf('b');
+    await p.click(card('b') + ' [data-mview]');
+    await p.waitForTimeout(200);
+    const bPills = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-caps .mcap')].map((c) => ({ want: Number(c.dataset.want),
+      have: Number(c.querySelector('.mcap-t').childNodes[1].textContent.replace(/,/g, '')) })), card('b'));
+    await p.click(card('b') + ' [data-mview]');
+    await p.waitForTimeout(150);
+    await p.click(card('b') + ' [data-mview]');
+    await p.waitForTimeout(150);
+    t.ok('on the eaten breakfast, protein past its share is still green and fat past it is amber',
+      bPills.length === 4 && bPills[1].have > bPills[1].want * 1.1 && bRings[1] === 'rg-on' &&
+      bPills[2].have > bPills[2].want * 1.1 && bRings[2] === 'rg-over', JSON.stringify({ bRings, bPills }));
+
+    /* ---- an empty meal: one row; its name, or + held down, opens the ways to fill it ---- */
+    const emp = () => p.evaluate((sel) => {
+      const c = document.querySelector(sel);
+      return { open: c.classList.contains('open'), h: Math.round(c.getBoundingClientRect().height), pills: c.querySelectorAll('.mcap').length,
+        none: !!c.querySelector('.mtray-none'), aim: (c.querySelector('.mtray-aim') || {}).textContent || '',
+        acts: [...c.querySelectorAll('.mtray-acts button')].map((b) => Object.keys(b.dataset)[0] + ':' + b.textContent) };
+    }, card('s'));
+    const shutSheet = async () => {
+      await p.evaluate(() => { const b = document.querySelector('#modalRoot .msh-done') || document.querySelector('#modalRoot .sheet-x'); if (b) b.click(); });
+      await p.waitForTimeout(500);
+    };
+    const e0 = await emp();
+    t.ok('shut, the empty Snacks is one row: its name, what it is for, + and ⊘, and no pills or "Nothing yet"',
+      !e0.open && e0.h < 70 && !e0.pills && !e0.none && /^\d[\d,]* kcal$/.test(e0.aim) && !e0.acts.length, JSON.stringify(e0));
+    await p.click(card('s') + ' [data-meopen]');
+    await p.waitForTimeout(200);
+    const e1 = await emp();
+    t.ok('its name opens one quiet line: Add food, Autofill, Repeat a day, Saved meals',
+      e1.open && e1.acts.join('|') === 'mopen:Add food|mtry:Autofill|mfrom:Repeat a day|msaved:Saved meals', JSON.stringify(e1));
+    await p.click(card('s') + ' [data-meopen]');
+    await p.waitForTimeout(200);
+    const hb = await p.$eval(card('s') + ' [data-mhold]', (e) => { e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+    await p.mouse.move(hb.x, hb.y);
+    await p.mouse.down();
+    await p.waitForTimeout(650);
+    await p.mouse.up();
+    await p.waitForTimeout(500);
+    t.ok('holding + down opens the same line, and does not open food search', (await emp()).open && !(await p.$('#modalRoot .msheet')));
+    await p.click(card('s') + ' [data-mhold]');
+    await p.waitForTimeout(500);
+    t.ok('while a plain tap on + goes straight to food search', !!(await p.$('#modalRoot .msheet #mpFind')));
+    await shutSheet();
+    await p.click(card('s') + ' [data-msaved]');
+    await p.waitForTimeout(500);
+    const sv = await p.evaluate(() => ({ lens: (document.getElementById('mpSec') || {}).value,
+      rows: [...document.querySelectorAll('#modalRoot #mpList [data-mpick]')].map((r) => ((r.closest('.mp-row') || r).querySelector('.mp-name') || {}).textContent) }));
+    t.ok('Saved meals opens Snacks’ sheet on its Saved meals lens, listing the saved meals and nothing else',
+      sv.lens === 'saved' && sv.rows.length === 1 && /House side salad/.test(sv.rows[0]), JSON.stringify(sv));
+    await shutSheet();
+    await p.click(card('s') + ' [data-mfrom]');
+    await p.waitForTimeout(500);
+    t.ok('Repeat a day opens the days Snacks can be copied from', !!(await p.$('#modalRoot [data-mcopy="2026-10-09"]')));
+    await p.goBack();
+    await p.waitForTimeout(500);
+    await shutSheet();
+    await p.click(card('s') + ' [data-mtry]');
+    await p.waitForTimeout(500);
+    const auto = (await dayOf(p)).s || [];
+    t.ok('Autofill drafts Snacks from the plan, there on the day, and it is a card with food on it',
+      auto.length === 1 && auto[0].by === 'f' && auto[0].eaten === 0 &&
+      await p.evaluate((sel) => !document.querySelector(sel).classList.contains('mtray-empty'), card('s')), JSON.stringify(auto));
 
     /* ---- the narrowest phone: one line a head, a thumb a button, no sideways scroll ---- */
     await p.setViewportSize({ width: 320, height: 760 });
@@ -127,7 +202,7 @@ module.exports = {
       }
       const fit = await p.evaluate(() => {
         const heads = [...document.querySelectorAll('#macroSlots .mtray-hr')].map((h) => Math.round(h.getBoundingClientRect().height));
-        const small = [...document.querySelectorAll('#macroSlots button')].filter((e) => {
+        const small = [...document.querySelectorAll('#macroSlots .mtray button, #macroSlots .mtray-skip button')].filter((e) => {
           const r = e.getBoundingClientRect();
           return r.width && r.height && Math.min(r.width, r.height) < 43.5 && !e.classList.contains('mtray-b') && !e.classList.contains('mtray-fn');
         }).map((e) => e.className + ' ' + Math.round(e.getBoundingClientRect().width) + 'x' + Math.round(e.getBoundingClientRect().height));

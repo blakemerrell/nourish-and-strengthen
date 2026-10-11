@@ -561,7 +561,9 @@ module.exports = nourish({
     /* An empty meal opens like any other, from its tray, and its verbs are
        behind the ⋯ on the sheet's head, so it is opened and the menu shown
        the way a thumb would before they are read. */
-    await emptyPg.click('#macroSlots .mtray .mtray-b');
+    /* By its +, since round 3b (2026-10-11): an empty meal is one row, its
+       name opening the ways to fill it and + its way into the sheet. */
+    await emptyPg.click('#macroSlots .mtray .mtray-ib[data-mopen]');
     await emptyPg.waitForTimeout(400);
     await emptyPg.click('#modalRoot .msheet [data-mmenu]');
     await emptyPg.waitForTimeout(250);

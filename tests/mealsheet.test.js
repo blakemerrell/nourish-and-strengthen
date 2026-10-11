@@ -352,12 +352,16 @@ module.exports = {
       const shown = [...t2.childNodes].filter((n) => !(n.classList && n.classList.contains('vis-hidden'))).map((n) => n.textContent).join('');
       return { shown: shown, heard: hid ? hid.textContent.trim() : '', dashed: getComputedStyle(c).borderTopStyle === 'dashed' };
     }), scope);
-    const onTray = await spentPills('.mtray:has([data-mopen="e"]) .mtray-caps');
+    /* Since 2026-10-11 an empty meal on the day is one row with no pills
+       (myday.js, emptyHTML), and with nothing left for it no target either:
+       its name, + and ⊘. The dashed pills are its sheet's. */
+    const onTray = await sp.evaluate(() => { const c = document.querySelector('#macroSlots [data-mslot="e"]');
+      return c && { empty: c.classList.contains('mtray-empty'), pills: c.querySelectorAll('.mcap').length, aim: !!c.querySelector('.mtray-aim') }; });
     await sp.click('[data-mopen="e"]');
     await sp.waitForTimeout(400);
     const onSheet = await spentPills('#modalRoot .msh-top');
     const quiet = (a) => a.length === 4 && a.every((x) => !/none|left/i.test(x.shown) && /—$/.test(x.shown) && x.heard === 'none left' && x.dashed);
-    t.ok('a meal with nothing left shows a dash in a dashed pill on its tray, no words', quiet(onTray), JSON.stringify(onTray));
+    t.ok('a meal with nothing left is one quiet row on the day: no pills, and no target to aim at', !!onTray && onTray.empty && !onTray.pills && !onTray.aim, JSON.stringify(onTray));
     t.ok('and the same in its sheet, the words kept for a screen reader', quiet(onSheet), JSON.stringify(onSheet));
     await sp.context().close();
 

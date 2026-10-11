@@ -124,8 +124,22 @@
   }
   function mpSortNow() { return mpSortsOn() ? S.mpSort : 'fit'; }
 
+  /* The meals you saved (Save meal, in a meal's ⋯): kept to yourself, a
+     food that remembers its parts; shared, a recipe on Ours written from a
+     meal rather than by hand, so with no steps. Blake, 2026-10-11, of an
+     empty meal on the day: "add food, plan meal, create meal" — Saved meals
+     is the way to the last of those from there (myday.js, emptyHTML). */
+  function mpSavedMeals() {
+    var out = [];
+    LIVE.MFOODS.forEach(function (r) { if (r.parts && r.parts.length) out.push(r); });
+    LIVE.RECIPES.forEach(function (r) {
+      if (r.own && r.typedMacro && !(r.steps || []).length && (r.ing || []).length) out.push(r);
+    });
+    return out;
+  }
   function mpLensHTML() {
     var fam = mFamilyIds(mViewKey());
+    var saved = mpSavedMeals().length;
     return '<span class="mp-lens">' +
       '<select id="mpSec" aria-label="Which recipes">' +
         '<option value="meal"' + (S.mpSec === 'meal' ? ' selected' : '') + '>For this meal</option>' +
@@ -141,6 +155,7 @@
            a question about kind, not macro. The rail cannot ask it: it is the
            same axis as "Every recipe", which is why it belongs here. */
         '<option value="foods"' + (S.mpSec === 'foods' ? ' selected' : '') + '>Single foods</option>' +
+        (saved || S.mpSec === 'saved' ? '<option value="saved"' + (S.mpSec === 'saved' ? ' selected' : '') + '>Saved meals</option>' : '') +
         (function () {
           var out = '', bk = 0;
           mAllSections().forEach(function (sec) {
@@ -458,6 +473,8 @@
         if (!r.macro || !(r.macro.kcal > 0 || r.macro.p > 0)) return;
         pool.push(r);
       });
+    } else if (S.mpSec === 'saved') {
+      pool = mpSavedMeals();
     } else if (S.mpSec === 'meal') {
       pool = mMealPool(slot, mWideOpen(S.macroPick.slot));
     } else {

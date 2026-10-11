@@ -162,8 +162,8 @@ module.exports = {
     const views = await p.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray[data-mslot]')].map((c) => ({
       k: c.dataset.mslot, v: c.querySelector('[data-mview]') ? c.querySelector('[data-mview]').dataset.mv : '',
       cls: c.className, head: Object.keys((c.querySelector('.mtray-hd') || { dataset: {} }).dataset).join() })));
-    t.ok('each card starts where it should: Lunch (next) on Details, Dinner and Snacks on Foods, empty Breakfast a door to food',
-      views.map((c) => c.k + (c.v || '-')).join() === 'b-,l3,d2,s2' && /\bmv-2\b/.test(views[0].cls) && views[0].head === 'mopen' &&
+    t.ok('each card starts where it should: Lunch (next) on Details, Dinner and Snacks on Foods, empty Breakfast one row its name opens',
+      views.map((c) => c.k + (c.v || '-')).join() === 'b-,l3,d2,s2' && /\bmtray-empty\b/.test(views[0].cls) && views[0].head === 'meopen' &&
       /\bmv-3\b/.test(views[1].cls), JSON.stringify(views));
 
     /* Foods: the leaf, the name, what it costs, and nothing else to press */
@@ -188,14 +188,14 @@ module.exports = {
       after.some((it, i) => it.x !== before[i].x) && after.every((it) => !it.l) &&
       /Lunch balanced: \d+ foods? moved/.test(await textOf(p, '#mToast')) && !(await p.$('#modalRoot .msheet')), JSON.stringify({ before, after }));
 
-    /* What each circle should say, worked out here from the meal's own
-       pills (have/want): within a tenth on, a quarter close, with 5 g of
-       grace on P, F and C (10 for close). */
+    /* What each ring should say, worked out here from the meal's own pills
+       (have/want): within a tenth on plan, past it over, short of it still
+       filling — protein over stays on (2026-10-11). */
     const want = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-caps .mcap')].map((c) => ({
       want: Number(c.dataset.want), have: Number(c.querySelector('.mcap-t').childNodes[1].textContent.replace(/,/g, '')) })), card('l'));
     const judged = want.map((w, i) => {
-      const d = Math.abs(w.have - w.want), fl = i ? 5 : 0;
-      return d <= Math.max(w.want * 0.1, fl) ? 'on' : d <= Math.max(w.want * 0.25, fl * 2) ? 'near' : 'off';
+      const r = w.have / w.want;
+      return r >= 0.9 && (i === 1 || r <= 1.1) ? 'on' : r > 1.1 ? 'over' : 'under';
     });
 
     /* the name steps the card: Details → Status → Foods → Details */
@@ -211,11 +211,12 @@ module.exports = {
     t.ok('a tap on the name shuts the card to its Status: no lines, no pills, a circle each for 🔥 P F C, and only Skip',
       status.v === '1' && status.lines === 0 && !status.pills && status.beads.length === 4 && /^mbd-kcal/.test(status.beads[0]) &&
       status.verbs.join() === 'mskipask' && status.h < 70 && status.focus, JSON.stringify(status));
-    const SAY = { on: 'on plan', near: 'close', off: 'off' }, CLS = { on: ' lit', near: ' half', off: '' };
-    t.ok('the circles light by the meal’s share, lit on plan and ringed when close, and it is said in words',
-      want.length === 4 && judged.some((j) => j !== 'off') && status.beads.join() === ['kcal', 'p', 'f', 'c'].map((m, i) => 'mbd-' + m + CLS[judged[i]]).join() &&
-      status.say === 'Lunch, planned: ' + ['calories', 'protein', 'fat', 'carbs'].map((m, i) => m + ' ' + SAY[judged[i]]).join(', ') +
-        '. Showing its status; tap for its foods', JSON.stringify({ want, judged, status }));
+    const SAY = { on: '(on plan|over, which is fine)', over: 'over', under: '\\d+% there' };
+    const said = new RegExp('^Lunch, planned: ' + ['calories', 'protein', 'fat', 'carbs'].map((m, i) => m + ' ' + SAY[judged[i]]).join(', ') +
+      '\\. Showing its status; tap for its foods$');
+    t.ok('the rings fill by the meal’s share, green on plan, and it is said in words',
+      want.length === 4 && judged.some((j) => j !== 'under') && status.beads.join() === ['kcal', 'p', 'f', 'c'].map((m, i) => 'mbd-' + m + ' rg-' + judged[i]).join() &&
+      said.test(status.say), JSON.stringify({ want, judged, status }));
     await p.click(card('l') + ' [data-mview]');
     await p.waitForTimeout(250);
     t.ok('again, and it is on Foods', await p.evaluate((sel) => document.querySelector(sel).classList.contains('mv-2') &&

@@ -8,13 +8,16 @@
 const { nourish, pickerList, openMeal, closeSheet } = require('./fixtures/nourish.js');
 
 /* What each meal is asked for, read off its tray: the calorie pill's share
-   (trays, 2026-10-04; the pills, 2026-10-05). */
+   (trays, 2026-10-04; the pills, 2026-10-05). An empty meal is one row with
+   no pills since round 3b (2026-10-11), and its faint "N kcal" carries the
+   same figure; one with none drawn (the day's calories spent) is asked for
+   nothing, as its pill's data-want said. */
 const trayAsks = (pg) => pg.evaluate(() => {
   const out = {};
   document.querySelectorAll('#macroSlots .mtray').forEach((c) => {
     const n = (c.querySelector('.mtray-n') || {}).textContent;
-    const cap = c.querySelector('.mtray-caps .mcap');
-    const k = cap && cap.dataset.want;
+    const cap = c.querySelector('.mtray-caps .mcap') || c.querySelector('.mtray-aim');
+    const k = cap ? cap.dataset.want : c.classList.contains('mtray-empty') ? '0' : null;
     if (n && k) out[n.trim()] = Number(k);
   });
   return out;
@@ -158,6 +161,9 @@ module.exports = nourish({
        empty day, not the glyph. */
     /* Restated for the trays (Blake, 2026-10-04): on the day an empty meal is
        its tray with "Nothing yet" for its foods — no dash, no items box.
+       Restated again for round 3b (Blake, 2026-10-11: "i don't like seeing
+       that expanded and 'nothing yet'"): one row, its name and a faint
+       target, and no food lines at all, so not even the words.
        Opened, it is the meal's sheet: the pills, the one line saying nothing
        is on it, and the picker under it, still with no dash row. */
     const emptyCard = await trimPg.evaluate(() => {
@@ -169,12 +175,14 @@ module.exports = nourish({
         dash: !!c.querySelector('.mslot-empty'),
         emDash: /\u2014/.test(c.textContent),
         items: !!c.querySelector('.mslot-items'),
-        lines: [...c.querySelectorAll('.mtray-f')].map((x) => x.textContent.trim()),
+        one: c.classList.contains('mtray-empty'),
+        lines: [...c.querySelectorAll('.mtray-f, .mtray-cl')].map((x) => x.textContent.trim()),
+        nothing: /nothing yet/i.test(c.textContent),
       };
     });
     t.ok('an empty meal draws no placeholder row',
       !!emptyCard && !emptyCard.dash && !emptyCard.emDash && !emptyCard.items &&
-        emptyCard.lines.join() === 'Nothing yet', JSON.stringify(emptyCard));
+        emptyCard.one && !emptyCard.lines.length && !emptyCard.nothing, JSON.stringify(emptyCard));
     if (emptyCard) await openMeal(trimPg, emptyCard.sk);
     const emptyOpen = await trimPg.evaluate(() => {
       const c = document.querySelector('#modalRoot .msheet');

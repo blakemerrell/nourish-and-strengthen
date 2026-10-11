@@ -321,8 +321,11 @@
            foods already saved on somebody's phone. */
         macro: (function () {
           var fp = Number(f.p) || 0, fc = Number(f.c) || 0, ff2 = Number(f.f) || 0;
+          /* Not rounded per unit, since 2026-10-11: a drink kept per 100 mL
+             came to 30 kcal a unit for 29.7, and 540 mL of it read 162 for
+             160. Every screen rounds what it shows. */
           return { kcal: (fp || fc || ff2)
-            ? kcalOf({ p: fp, c: fc, f: ff2 }) + (Number(f.kx) > 0 ? Math.round(Number(f.kx)) : 0)
+            ? Math.round((4 * fp + 4 * fc + 9 * ff2) * 100) / 100 + (Number(f.kx) > 0 ? Math.round(Number(f.kx)) : 0)
             : Number(f.kcal) || 0,
           p: fp, c: fc, f: ff2,
           na: Number(f.na) || 0, fib: Number(f.fib) || 0 };
@@ -330,6 +333,12 @@
       };
       // what the packet declared, off the scan that made it (src/camera.js); not a nutrient, so not in macro
       if (Array.isArray(f.alg) && f.alg.length) rec.alg = f.alg.map(String).slice(0, 8);
+      /* The barcode it was scanned from, so the same packet scanned again
+         opens this food rather than asking Open Food Facts for the numbers
+         you may have fixed (mOwnScan); and the label's own serving, from a
+         fix (src/foodsheet.js), offered as a unit on the food's page. */
+      if (/^\d{6,14}$/.test(String(f.code || ''))) rec.code = String(f.code);
+      if (f.sz && typeof f.sz === 'object' && Number(f.sz.n) > 0) rec.sz = { t: String(f.sz.t || ''), n: Number(f.sz.n) };
       // and its grades, the same way (Nutri-Score a–e, NOVA 1–4)
       if (/^[a-e]$/.test(String(f.ns || ''))) rec.ns = String(f.ns);
       if (Number(f.nova) >= 1 && Number(f.nova) <= 4) rec.nova = Math.round(Number(f.nova));
@@ -3158,6 +3167,8 @@
   function mFsState(r) { return FOODSHEET.mFsState(r); }
   function mFsRefresh() { return FOODSHEET.mFsRefresh(); }
   function mFoodSheetHTML() { return FOODSHEET.mFoodSheetHTML(); }
+  function mFsFixRead(r) { return FOODSHEET.mFsFixRead(r); }
+  function mFsFixRefresh() { return FOODSHEET.mFsFixRefresh(); }
 
   /* src/dayfoot.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
@@ -3283,7 +3294,24 @@
 
   /* src/camera.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var CAMERA = window.HiveParts.camera({ S: S, mBarcodeLookup: mBarcodeLookup, mDecodeFrame: mDecodeFrame, mLookSay: mLookSay, mLookupRows: mLookupRows, mMealNowHTML: mMealNowHTML, renderModal: renderModal, LIVE: LIVE });
+  /* A barcode you have already saved a food for opens that food: its page,
+     over the meal, with the meal's Add on it. Blake fixed a scan's numbers
+     from the can (2026-10-11), and the next scan of the same can went back
+     to Open Food Facts and offered the wrong ones again as a new food. Your
+     own record wins, and nothing is sent anywhere to find it. */
+  function mOwnScan(code) {
+    var c = String(code || '').replace(/\D/g, '');
+    if (!c || !S.macroPick) return false;
+    var r = null;
+    MFOODS.forEach(function (f) { if (!r && f.code === c) r = f; });
+    if (!r) return false;
+    S.mpMode = 'home';
+    S.foodOpen = { id: r.id, x: 1, slot: S.macroPick.slot, onPlate: false };
+    pushSheet({ m: 1 });
+    renderModal();
+    return true;
+  }
+  var CAMERA = window.HiveParts.camera({ S: S, mBarcodeLookup: mBarcodeLookup, mDecodeFrame: mDecodeFrame, mLookSay: mLookSay, mLookupRows: mLookupRows, mMealNowHTML: mMealNowHTML, mOwnScan: mOwnScan, renderModal: renderModal, LIVE: LIVE });
   function mScanStop() { return CAMERA.mScanStop(); }
   function mScanStart() { return CAMERA.mScanStart(); }
   function mScanGot(code, typed) { return CAMERA.mScanGot(code, typed); }
@@ -3751,7 +3779,7 @@
     'data-poff', 'data-week', 'data-neww', 'data-mult', 'data-drop', 'data-ed', 'data-tab',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
-    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpfit', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal'];
+    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpfit', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave'];
 
   function focusKey(el) {
     if (!el || el === document.body || !el.getAttribute) return null;
@@ -3924,6 +3952,7 @@
       root.innerHTML = mFoodSheetHTML();
       if (!root.innerHTML) { S.foodOpen = null; }       // the food is gone; nothing to show
       else {
+        if (S.foodOpen.fix) mFsFixRefresh();            // what the fix changes, read off the boxes just drawn
         document.body.style.overflow = 'hidden';
         if (keepScroll) root.querySelector('.scrim').scrollTop = keepScroll;
         return;
@@ -6625,6 +6654,44 @@
         renderModal();
         return;
       }
+      /* A food of your own, its numbers fixed from the label (foodsheet.js,
+         mFoodFixHTML): the form over the food's page, and back to it. */
+      if (e.target.closest('[data-mffix]') && S.foodOpen) {
+        S.foodOpen.fix = 1;
+        renderModal();
+        return;
+      }
+      if (e.target.closest('[data-mffno]') && S.foodOpen) {
+        S.foodOpen.fix = 0;
+        renderModal();
+        return;
+      }
+      if (e.target.closest('[data-mffsave]') && S.foodOpen) {
+        var xr = BY_ID[S.foodOpen.id], xgot = xr && mFsFixRead(xr);
+        if (!xgot) return;
+        if (xgot.err) { if ($('mffNote')) $('mffNote').textContent = xgot.err; return; }
+        var xkey = String(xr.id).replace(/^f:my:/, ''), xmine = mReadMyFoods(), xrec = xmine[xkey];
+        if (!xrec || String(xr.id).indexOf('f:my:') !== 0) return;
+        var xp = xgot.per;
+        /* Over the food's own unit, so every plate keeps its amount. The
+           calories typed are kept for a food with no macros to count them
+           from; with macros, the day counts four, four and nine (mBuildFoods). */
+        xrec.kcal = xp.kcal || 0; xrec.p = xp.p; xrec.f = xp.f; xrec.c = xp.c;
+        ['na', 'fib'].forEach(function (k4) { if (xp[k4] === undefined) delete xrec[k4]; else xrec[k4] = xp[k4]; });
+        var xlab = {};
+        ['sat', 'chol', 'sug', 'ca', 'fe', 'k'].forEach(function (k4) { if (xp[k4] !== undefined) xlab[k4] = xp[k4]; });
+        if (Object.keys(xlab).length) xrec.lab = xlab; else delete xrec.lab;
+        if (xgot.sz) xrec.sz = xgot.sz; else delete xrec.sz;
+        if (xgot.code) xrec.code = xgot.code; else delete xrec.code;
+        mWriteMyFoods(xmine);
+        mBuildFoods();
+        S.foodOpen.fix = 0;
+        S.foodOpen.amt = undefined;
+        mToast(esc(xr.name) + ' fixed. Every day it is on counts the label’s numbers now.');
+        renderMacros();
+        renderModal();
+        return;
+      }
       var fsa = e.target.closest('[data-mfsadd]');
       if (fsa && S.foodOpen) {
         mFsRefresh();
@@ -6886,9 +6953,14 @@
         }
         var nval = function (id) { return String((($(id) || {}).value) || '').trim(); };
         var nnum = function (id) { return Math.max(0, Math.round(Number(($(id) || {}).value) || 0)); };
+        /* Protein, fat and carbs to a tenth (2026-10-11). Whole grams turned
+           a drink's 0.15 g of fat per 100 mL into none, and its 0.92 g of
+           carbs into one; the smaller the unit, the more of the food the
+           rounding ate. */
+        var ndec = function (id) { return Math.max(0, Math.round((Number(($(id) || {}).value) || 0) * 10) / 10); };
         var nm = nval('nfName');
         if (!nm) { $('nfNote').textContent = 'It needs a name to be findable again.'; return; }
-        var kc = nnum('nfKcal'), pp = nnum('nfP'), ff = nnum('nfF'), cc = nnum('nfC');
+        var kc = nnum('nfKcal'), pp = ndec('nfP'), ff = ndec('nfF'), cc = ndec('nfC');
         if (!kc && !pp && !ff && !cc) {
           $('nfNote').textContent = 'Give it at least the calories, or it counts for nothing.';
           return;
@@ -6912,7 +6984,7 @@
            than approximating it. Such a food carries calories with no macros
            to check them against; that is a gap in what is known, not two
            answers to the same question. */
-        if (pp || ff || cc) kc = 4 * pp + 4 * cc + 9 * ff;
+        if (pp || ff || cc) kc = Math.round(4 * pp + 4 * cc + 9 * ff);
         var allF = mReadMyFoods(), ffresh = mNewFoodKey(nm, allF), fkey = ffresh.key;
         nm = ffresh.name;
         allF[fkey] = { name: nm, unit: nval('nfUnit') || 'serving', kcal: kc, p: pp, f: ff, c: cc };
@@ -6931,6 +7003,9 @@
         var noff = (S.newFood.pre && S.newFood.pre.off) || {};
         if (noff.ns) allF[fkey].ns = noff.ns;
         if (noff.nova) allF[fkey].nova = noff.nova;
+        // the barcode it came from, so a scan of the same packet opens this food (mOwnScan)
+        var ncode = String((S.newFood.pre && S.newFood.pre.code) || '').replace(/\D/g, '');
+        if (/^\d{6,14}$/.test(ncode)) allF[fkey].code = ncode;
         /* A food looked up with its sizes is saved as the size picked, and
            goes on the plate as the servings asked for; the rest of its label
            (saturated fat, cholesterol, sugars, calcium, iron, potassium)
@@ -7598,6 +7673,7 @@
         return;
       }
       if (S.foodOpen && e.target.id === 'mfsAmt') mFsRefresh();
+      if (S.foodOpen && S.foodOpen.fix && /^mff/.test(e.target.id || '')) mFsFixRefresh();
       if (S.editId && (e.target.id === 'edIng' || e.target.id === 'edServings' ||
         e.target.id === 'edExtras' || /^ed(Kcal|P|C|F)$/.test(e.target.id))) refreshPreview();
       if (S.syncOpen && e.target.id === 'myJoin') S.myJoin = e.target.value;

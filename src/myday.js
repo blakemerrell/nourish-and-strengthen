@@ -188,50 +188,59 @@
      what it costs, "clean and uncluttered") and Details (the lines as they
      were, each opening to its keys), and round again. The two-way fold of
      2026-10-08 (names only, or everything) is what it replaced. Mockups he
-     approved, round 2 the last:
+     approved, round 3b the last:
      https://claude.ai/artifact/Vn1dzLvzzUgVBxKNPdUc8c
    *
-     On, close or off against what the meal is asked for NOW (M.aim, the
-     number its own pills show), so a meal the day re-planned — after a big
-     breakfast, or once Rebalance has re-sized its plates — is judged by its
-     new share. He knew that could light every meal while the macros moved
-     between them ("if a rebalance happened, it could all be green"); the
-     day's pills at the top keep the day's truth. Within a tenth is on and a
-     quarter is close; P, F and C get 5 g of grace (10 for close), so a snack
-     aiming at 6 g of fat is not off for being 3 g short. No ceiling or floor
-     past that, by his call: "it is the daily amount that matters in the
-     end". */
-  function mJudge(got, want, m) {
-    if (!(want > 0)) return 'none';
-    var d = Math.abs(got - want), floor = m === 'kcal' ? 0 : 5;
-    if (d <= Math.max(want * 0.10, floor)) return 'on';
-    if (d <= Math.max(want * 0.25, floor * 2)) return 'near';
-    return 'off';
-  }
+     Each of calories, protein, fat and carbs is a thin ring round its
+     letter that fills toward what the meal is asked for NOW (M.aim, the
+     number its own pills show), so a meal the day re-planned is judged by
+     its new share. Grey while it fills, soft green once on plan (within a
+     tenth), soft amber once over. Protein over stays green, as the pills
+     have always had it, and as Blake had it: "over on protein is good".
+   *
+     Round 3 (2026-10-11). The first circles lit in the macro's own colour,
+     and protein's is a red: "I am seeing bright red on my meals and nothing
+     in the other colours. Was I good on those, or bad?" Grey said off
+     without saying over or under. A ring says how full; its colour says
+     only whether that is good. "The glow doesn't have to be loud", so
+     there is none. */
   var MBD = [['kcal', 'calories'], ['p', 'protein'], ['f', 'fat'], ['c', 'carbs']];
+  var RING_C = 2 * Math.PI * 11;
   /* A flame drawn rather than the emoji, so it can go grey like the letters. */
   var I_FLAME = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.6 2.5c.5 3.1 4.9 5.2 4.9 10.3a5.5 5.5 0 0 1-11 0c0-2.6 1.3-4.3 2.7-5.5.1 1.7.9 2.9 2.1 3.4-.3-3.5.6-6.1 1.3-8.2Z"/></svg>';
+  function mRingOf(got, want, m) {
+    if (!(want > 0)) return { s: 'none', f: 0, r: 0 };
+    var r = got / want;
+    return { s: r >= 0.9 && (m === 'p' || r <= 1.1) ? 'on' : r > 1.1 ? 'over' : 'under', f: Math.min(1, r), r: r };
+  }
   function mBeadsOf(M) {
     var spent = (M.ask && M.ask.spent) || {};
     return MBD.map(function (x) {
-      var m = x[0], want = !M.aim ? 0 : m === 'kcal' ? (M.aim.kcal || (4 * M.aim.p + 9 * M.aim.f + 4 * M.aim.c)) : (M.aim[m] || 0);
-      return { m: m, word: x[1], s: !M.live || spent[m] ? 'none' : mJudge(M.sub[m] || 0, want, m) };
+      var m = x[0], got = M.sub[m] || 0, R;
+      var want = !M.aim ? 0 : m === 'kcal' ? (M.aim.kcal || (4 * M.aim.p + 9 * M.aim.f + 4 * M.aim.c)) : (M.aim[m] || 0);
+      /* A macro the day can no longer pay for is asked for nought: none on
+         the plate is as it should be, and any is over (protein aside). */
+      if (!M.live) R = { s: 'none', f: 0, r: 0 };
+      else if (spent[m]) R = got >= 0.5 ? { s: m === 'p' ? 'on' : 'over', f: 1, r: 2 } : { s: 'none', f: 0, r: 0 };
+      else R = mRingOf(got, want, m);
+      return { m: m, word: x[1], s: R.s, f: R.f, r: R.r };
     });
   }
-  /* "Greyed out icons... they light up when activated and stay grey. The
-     icon or letter becomes the circle." Lit is on; its colour without the
-     fill is close (he kept the middle look when asked); grey is off. */
   function mBeadsHTML(B) {
     return '<span class="mbds" aria-hidden="true">' + B.map(function (b) {
-      return '<span class="mbd mbd-' + b.m + (b.s === 'on' ? ' lit' : b.s === 'near' ? ' half' : '') + '">' +
-        (b.m === 'kcal' ? I_FLAME : b.m.toUpperCase()) + '</span>';
+      return '<span class="mbd mbd-' + b.m + ' rg-' + b.s + '"><svg class="mbd-r" viewBox="0 0 26 26"><circle class="mbd-t" cx="13" cy="13" r="11"/>' +
+        (b.f > 0 ? '<circle class="mbd-f" cx="13" cy="13" r="11" stroke-dasharray="' + (b.f * RING_C).toFixed(2) + ' ' + RING_C.toFixed(2) +
+          '" transform="rotate(-90 13 13)"/>' : '') +
+        '</svg><b>' + (b.m === 'kcal' ? I_FLAME : b.m.toUpperCase()) + '</b></span>';
     }).join('') + '</span>';
   }
-  var BEAD_SAY = { on: 'on plan', near: 'close', off: 'off', none: 'none left' };
   function mBeadsSay(M, B) {
     if (!M.live) return 'nothing on it yet';
     if (!M.aim) return fmtK(M.sub.kcal) + ' kcal';
-    return (M.eatenAll ? 'eaten: ' : 'planned: ') + B.map(function (b) { return b.word + ' ' + BEAD_SAY[b.s]; }).join(', ');
+    return (M.eatenAll ? 'eaten: ' : 'planned: ') + B.map(function (b) {
+      return b.word + ' ' + (b.s === 'none' ? 'none left' : b.s === 'over' ? 'over'
+        : b.s === 'on' ? (b.r > 1.1 ? 'over, which is fine' : 'on plan') : Math.round(b.r * 100) + '% there');
+    }).join(', ');
   }
   var VIEW_SAY = ['', 'its status', 'its foods', 'its details'];
   function mPipsHTML(v) {
@@ -696,6 +705,42 @@
        found and added. Mockup (Tray A):
        https://claude.ai/artifact/SseR1TPa4JAFNanYYsGP4k */
     var ahead = mAhead(k);
+    /* An empty meal (Blake, 2026-10-11: "I don't like seeing that expanded
+       and 'nothing yet'... when the bar is not tapped it's clean and just a
+       single row"). Its name, what it is for in faint type, + and ⊘. A plain
+       tap on + goes to food search, the way + does on any card; its name,
+       or holding + down (app.js), opens one quiet line of ways to fill it:
+       Add food, Autofill (Try another, from the meal's ⋯, which drafts this
+       one meal from the plan), Repeat a day and Saved meals (the picker on
+       its Saved meals lens). Open is held for the day, like a card's view.
+       It keeps its door, empty, as Status does. Mockup round 3b:
+       https://claude.ai/artifact/Vn1dzLvzzUgVBxKNPdUc8c */
+    var emptyHTML = function (M, sk, name) {
+      var open = !!(S.mEmptyOpen[k] && S.mEmptyOpen[k][sk]);
+      var want = M.aim ? (M.aim.kcal || (4 * M.aim.p + 9 * M.aim.f + 4 * M.aim.c)) : 0;
+      return '<div class="mslot mtray mtray-empty' + (open ? ' open' : '') + '" data-mslot="' + esc(sk) + '">' +
+          M.dot +
+          '<div class="mtray-c">' +
+            '<div class="mtray-hr">' +
+              '<button class="mtray-hd" data-meopen="' + esc(sk) + '" aria-expanded="' + open + '" aria-label="' + esc(name) +
+                ', nothing on it yet' + (want > 0 ? ', ' + fmtK(want) + ' kcal to plan' : '') + '. ' + (open ? 'Hide' : 'Show') + ' the ways to fill it">' +
+                '<span class="mtray-n">' + esc(name) + '</span>' + (want > 0 ? '<span class="mtray-aim num">' + fmtK(want) + ' kcal</span>' : '') + '</button>' +
+              '<span class="mtray-vbs">' +
+                '<button class="mtray-ib mtray-hold" data-mopen="' + esc(sk) + '" data-mhold="' + esc(sk) + '" aria-label="Add food to ' + esc(name) +
+                  '. Press and hold for more ways to fill it" title="Add food">' + mIcon('plus') + '</button>' +
+                '<button class="mtray-ib" data-mskipask="' + esc(sk) + '" aria-label="Skip ' + esc(name) + ' today" title="Skip today">' + mIcon('skip') + '</button>' +
+              '</span>' +
+            '</div>' +
+            '<button class="mtray-b" data-mopen="' + esc(sk) + '" aria-label="Open ' + esc(name) + (M.pillsSay ? ' — ' + esc(M.pillsSay) : '') + '"></button>' +
+            (!open ? '' : '<div class="mtray-acts">' +
+              '<button data-mopen="' + esc(sk) + '">Add food</button>' +
+              '<button data-mtry="' + esc(sk) + '" aria-label="Autofill ' + esc(name) + ' from your plan">Autofill</button>' +
+              '<button data-mfrom="' + esc(sk) + '" aria-label="Repeat ' + esc(name) + ' from another day">Repeat<span class="mtray-lg"> a day</span></button>' +
+              '<button data-msaved="' + esc(sk) + '" aria-label="Saved meals, for ' + esc(name) + '">Saved<span class="mtray-lg"> meals</span></button>' +
+            '</div>') +
+          '</div>' +
+        '</div>';
+    };
     /* The next meal, for where each card starts (mViewOf): the first on the
        plan with food on it still to eat. An empty meal is not it — a
        breakfast never logged would otherwise hold the place all day. */
@@ -748,7 +793,8 @@
          one day is not open on the next. These lines are the card's Details
          now; its Foods and Status are below. */
       var live = M.live, anyEaten = items.some(function (it) { return it.eaten; });
-      var view = live ? mViewOf(k, sk, M, nextSk) : 2;
+      if (!live && onPlan) return emptyHTML(M, sk, name) + mCascadeLineHTML(sk, targets, slots);
+      var view = mViewOf(k, sk, M, nextSk);
       var lines = '';
       if (view === 2) {
         /* Foods: the leaf, the name (still the door to the food or the

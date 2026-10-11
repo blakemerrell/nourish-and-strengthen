@@ -812,6 +812,8 @@
     mFold: {}, mFoldFor: '', mTouched: '', mtOpen: '',
     // each meal's view on the day, by day (myday.js, mViewOf); the skip a card is asking about; Undo's copy
     mView: {}, mViewAll: 0, mSkipAsk: '', mSkipUndo: null,
+    // which empty meals have their line of ways to fill them open, by day (myday.js, emptyHTML)
+    mEmptyOpen: {},
     chartOpen: false, chartWhich: 'weight', mcRange: 'all', keepMeal: '',
     /* What the picker has been told to add, before it is told to stop. A meal
        assembled from parts — a scoop of whey, a splash of half and half, a
@@ -3747,7 +3749,7 @@
     'data-addday', 'data-pswap', 'data-prate', 'data-adf', 'data-adadd', 'data-adsw', 'data-adopen', 'data-pwpick', 'data-pwsee', 'data-pwback', 'data-pwwant', 'data-pwopen', 'data-dayopen', 'data-dsact', 'data-srctag', 'data-fold',
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close',
     'data-poff', 'data-week', 'data-neww', 'data-mult', 'data-drop', 'data-ed', 'data-tab',
-    'data-mopen', 'data-mview', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
+    'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
     'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpfit', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal'];
 
@@ -5347,7 +5349,64 @@
       if (S.view === 'macros') renderMacros();
     });
 
+    /* Holding + down on an empty meal opens its line of ways to fill it
+       (myday.js, emptyHTML; Blake: "or I long press the plus button, it'll
+       open up the view"). A plain tap on + is still the way to food search,
+       so the click that ends a hold is swallowed — once, and only on +. */
+    /* The swallow is a window opened as the finger lifts, not a flag left
+       waiting for a click: the hold redraws the card, the click that would
+       have ended it may land on the new + or on nothing, and a flag left up
+       ate the next honest tap on + instead. */
+    var mHoldT = null, mHoldFired = false, mHeldNow = false;
+    $('macroSlots').addEventListener('pointerdown', function (e) {
+      var hb = e.target.closest && e.target.closest('[data-mhold]');
+      if (!hb) return;
+      clearTimeout(mHoldT);
+      mHoldFired = false;
+      mHoldT = setTimeout(function () {
+        var hk = mViewKey(), hsk = hb.dataset.mhold;
+        (S.mEmptyOpen[hk] = S.mEmptyOpen[hk] || {})[hsk] = true;
+        mHoldFired = true;
+        renderMacros();
+        if (navigator.vibrate) { try { navigator.vibrate(10); } catch (err) { /* not on this phone */ } }
+      }, 450);
+    });
+    $('macroSlots').addEventListener('pointerup', function () {
+      clearTimeout(mHoldT);
+      if (mHoldFired) {
+        mHoldFired = false; mHeldNow = true;
+        setTimeout(function () { mHeldNow = false; }, 400);
+      }
+    });
+    ['pointercancel', 'pointerleave'].forEach(function (ev) {
+      $('macroSlots').addEventListener(ev, function () { clearTimeout(mHoldT); });
+    });
+    $('macroSlots').addEventListener('contextmenu', function (e) {
+      if (e.target.closest && e.target.closest('[data-mhold]')) e.preventDefault();
+    });
+
     function mDayClick(e) {
+      if (mHeldNow && e.target.closest('[data-mhold]')) { mHeldNow = false; e.preventDefault(); return; }
+      /* An empty meal's name opens and shuts its line of ways to fill it. */
+      var meo = e.target.closest('[data-meopen]');
+      if (meo) {
+        var ok2 = mViewKey(), osk = meo.dataset.meopen;
+        var om = (S.mEmptyOpen[ok2] = S.mEmptyOpen[ok2] || {});
+        om[osk] = !om[osk];
+        keepingFocus(renderMacros);
+        return;
+      }
+      /* Saved meals, from an empty meal's line: its sheet, on the Saved meals
+         lens (pickbands.js). */
+      var svd = e.target.closest('[data-msaved]');
+      if (svd) {
+        rememberOpener();
+        S.mEdit = null;
+        mOpenPicker(svd.dataset.msaved, 'home');
+        S.mpSec = 'saved';
+        renderModal();
+        return;
+      }
       /* A meal's name steps its card through Status, Foods and Details
          (myday.js, mViewOf), held for the day it was pressed on. What the
          view hides goes shut: an open line, a box being typed in. */

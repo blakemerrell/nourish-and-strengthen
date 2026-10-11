@@ -920,11 +920,6 @@ select { max-width: 280px; }
 
 /* ----------------------------------------------------------- meal plan */
 .week-acts { display: flex; gap: 8px; flex-wrap: wrap; }
-.weekbar {
-  display: flex; gap: 8px; margin: -8px 0 16px; padding-bottom: 4px;
-  overflow-x: auto; scrollbar-width: none;
-}
-.weekbar::-webkit-scrollbar { display: none; }
 .wk {
   flex: none; display: flex; align-items: baseline; gap: 7px;
   background: var(--card); border: 1px solid var(--line); border-radius: 3px;
@@ -933,12 +928,6 @@ select { max-width: 280px; }
 }
 .wk:hover { border-color: var(--ochre); color: var(--ink); }
 .wk[aria-pressed="true"] { font-weight: 600; }
-.wk-n {
-  font-family: var(--sans); font-size: 0.6875rem; letter-spacing: 0.06em;
-  color: var(--muted);
-}
-.wk[aria-pressed="true"] .wk-n { color: var(--on-ink-soft); }
-.wk-add { font-family: var(--sans); font-size: 0.75rem; letter-spacing: 0.04em; border-style: dashed; }
 /* Capped. On a wide screen this ran the full 1196px of the view — about 180
    characters a line, which is roughly three times what an eye tracks back
    from without losing its place. The pantry's lede was given a width of its
@@ -960,20 +949,6 @@ select { max-width: 280px; }
 .day {
   background: var(--card); border: 1px solid var(--line); border-radius: 3px;
   min-height: 170px; display: flex; flex-direction: column;
-}
-.day-name {
-  border-bottom: 1px solid var(--line-day-name);
-  font-size: 0.71875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-weight: 600;
-  color: var(--label);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 4px 6px 4px 12px;
-  min-height: 48px;
 }
 .day-body { padding: 9px; display: flex; flex-direction: column; gap: 7px; }
 .day-item {
@@ -1000,13 +975,6 @@ select { max-width: 280px; }
   order: 3;
 }
 .day-x:hover { color: var(--ink); }
-.day-x2 {
-  order: 2; flex: none;
-  background: none; border: 1px solid var(--line-soft); border-radius: 2px;
-  font-size: 0.625rem; letter-spacing: 0.04em; color: var(--muted);
-  padding: 1px 4px; line-height: 1.4; margin-top: 1px;
-}
-.day-x2:hover { border-color: var(--ochre); color: var(--ink); }
 .addto-x { color: var(--ochre-text); font-weight: 600; }
 .day-empty { font-size: 0.75rem; color: var(--muted); font-style: italic; padding: 4px 0 0 2px; }
 
@@ -1033,86 +1001,12 @@ select { max-width: 280px; }
 }
 .mslot-h .ghost { white-space: nowrap; flex: none; }
 .mslot-h .mslot-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-/* The whole head is the door — the approved mockup's words.
- *
-   One button carrying the name, the cue and the meal's pills, filling the row
-   beside the dot. It could not be a button while the row held three icon
-   buttons, so the fold target had shrunk to the width of the word: 78x14 in a
-   378x45 row, which is why nobody could find it. The verbs are at the foot of
-   the open meal now and the head is what it looks like. */
-.mslot-head {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  /* Six, not eight. Breakfast needed 342px of a 341px row — it was missing a
-     single line by one pixel, and two of these gaps is where it came from. */
-  column-gap: 6px;
-  row-gap: 3px;
-  align-self: stretch;
-  background: none;
-  border: 0;
-  cursor: pointer;
-  font-family: var(--sans);
-  text-align: left;
-  margin: -8px -10px -4px 0;
-  padding: 8px 10px 4px 0;
-  flex-wrap: wrap;
-}
-/* The name clips, it does not vanish.
- *
-   Told to give way first it gave way entirely: at 320 every meal name was
-   squeezed to nought and the header read as four numbers belonging to
-   nothing. So the name keeps its own width and clips only against the CARD —
-   "EVENING SN…" still says which meal it is — and when the numbers cannot fit
-   beside it they take the next line instead of taking the name. One row where
-   there is room for one, two where there is not, and the name is on the first
-   either way. */
-.mslot-head .mslot-name {
-  /* Shrinks to a floor, then clips. "EVENING SNACK" is the only name long
-     enough to push the numbers onto a line of their own at 412, and losing
-     three letters off the end of a word you can still read is a better trade
-     than giving the meal a second row. Below the floor it stops shrinking and
-     the numbers wrap instead — which is what happens at 320, where nothing
-     was going to fit on one line however much the name gave up. */
-  flex: 0 1 auto; min-width: 3.6em; max-width: 100%; overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap;
-}
-.mslot-head .mmps {
-  flex: 0 1 auto;
-  min-width: 0;
-  gap: 5px;
-}
-.mslot-tail {
-  display: flex; align-items: center; gap: 6px;
-  flex: 0 1 auto; min-width: 0; margin-left: auto;
-}
-/* The mark reads last, on the right, where a thing that opens the card
-   belongs. Ordered ahead of the numbers it landed between the name and them,
-   which reads as a control belonging to the word rather than to the card. */
-.mslot-head:hover .mslot-name { color: var(--ink); }
-/* The head is one row again, so the dot centres on it like everything else. */
-/* .mslot-hrow went with the two-row head — the head IS the row now. */
-.mslot-sp { flex: 1 1 auto; }
 /* The weigh-in card keeps a plain name button; its row carries the box. */
 .mday-weigh > .mslot-h > .mslot-name {
   flex: 1 1 auto; align-self: stretch; min-height: 40px;
   margin: -8px 0 -4px; padding: 8px 0 4px;
 }
 
-/* The verbs, at the foot of the meal they act on, as words. A scale glyph and
-   a recycle glyph are a guess every time until you have pressed them once. */
-.mslot-acts {
-  padding: 4px 9px 6px;
-  border-top: 1px solid var(--line-soft);
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 6px;
-}
-/* The meal's verbs are drawn once, further down, as the plate's boxes —
-   see "a meal's verbs, drawings in the plate's boxes". */
-.mslot-act:disabled { opacity: 0.4; cursor: default; }
 /* The empty meal's lone flame went with mVerdictHTML: an empty meal wears
    the same four pills as a full one now, because the shape of the meal is
    the part you plan against and one calorie figure never said it. */
@@ -1154,34 +1048,8 @@ select { max-width: 280px; }
    numbers and the mark were grouped — and each time the failure was silent:
    an open meal's chevron simply went on pointing the way a shut one's does,
    which no layout test was looking at. */
-[aria-expanded="true"] > .mfold-cue,
-[aria-expanded="true"] > .mslot-tail > .mfold-cue { transform: rotate(180deg); }
+[aria-expanded="true"] > .mfold-cue { transform: rotate(180deg); }
 
-/* Open, beside the stepper. A mark where the share sits, so how far past is a
-   distance rather than a subtraction. */
-.msub-bars { padding: 6px 0 2px; }
-.mp-cap {
-  font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 1px;
-}
-.msub-br { display: grid; grid-template-columns: 13px 1fr auto; gap: 8px; align-items: center; margin: 5px 0; }
-.msub-bk { font-size: 0.8125rem; font-weight: 700; font-style: normal; }
-.msub-bt { position: relative; height: 8px; border-radius: 4px; background: var(--line-soft); }
-.msub-bb { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: var(--dial-on); }
-.msub-bb.over { background: var(--dial-over); }
-.msub-bb.short { background: var(--ochre); }
-/* The tolerance the colour is using, drawn on the track it colours. Under the
-   fill, so a bar that lands inside it reads as landed without a number being
-   consulted, and one that stops outside it has its shortfall explained. */
-.msub-bz {
-  position: absolute; top: 0; bottom: 0; border-radius: 2px;
-  background: var(--line); opacity: 0.55;
-}
-.msub-bm { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); opacity: 0.5; }
-.msub-bv {
-  font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap;
-}
-.msub-bv b { color: var(--ink); font-weight: 600; }
 /* The one line in a meal card sits under the HEADER, not under the numbers.
    Fold a meal and the plates go — and what stands in their place is the
    totals row. It is not a summary above the content; when the card is shut it
@@ -1190,7 +1058,7 @@ select { max-width: 280px; }
    whether that is four numbers or four numbers and three plates. No rule
    between the totals and the plates: they are the same half. */
 /* The edge the plates appear and disappear at. */
-.mslot-items, .mslot-thin { padding: 2px 10px 6px; border-top: 1px solid var(--line-soft); }
+.mslot-items { padding: 2px 10px 6px; border-top: 1px solid var(--line-soft); }
 /* Whichever of the three comes first opens the gap; the rest fall in behind
    it, so they read as one group of controls instead of one stranded beside
    the verdict and two over on the edge. */
@@ -1207,58 +1075,6 @@ select { max-width: 280px; }
   gap: 7px;
   padding-bottom: 3px;
 }
-/* A meal that is behind you, folded to what was on it */
-/* Folded, each thing on the meal keeps its leaf as its bullet. Folding used
-   to take the scores away with the plates, which meant the one screen where
-   several meals are scanned at once was the screen with no quality on it at
-   all. It costs nothing: the rows already began at a left margin. Aligned on
-   the centre rather than the baseline, because a leaf has no baseline. */
-.mthin {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  font-size: 0.8125rem;
-  padding: 0;
-  min-height: 32px;
-  position: relative;
-}
-/* smaller than the 20px an open plate wears, so a shut meal stays a list
-   rather than becoming a second stack of cards */
-.mthin .leaf-sm { width: 17px; height: 20px; }
-.mthin .leaf-n { font-size: 0.5625rem; }
-/* A food you entered yourself has no score, so it takes a plain mark in the
-   same column — nothing shifts left when one turns up. */
-.mthin-dot {
-  width: 17px; flex: none; text-align: center; color: var(--muted); opacity: 0.55;
-}
-/* The name is a door on a shut meal too. Button resets rather than a span's
-   defaults, and the font size comes off the row so the list stays a list. */
-.mthin-n {
-  background: none;
-  border: none;
-  padding: 0;
-  text-align: left;
-  color: inherit;
-  font-family: var(--serif);
-  font-size: inherit;
-  cursor: pointer;
-  flex: 1 1 auto;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  align-self: stretch;
-}
-.mthin-n:hover { color: var(--ochre-text); text-decoration: underline; text-underline-offset: 2px; }
-/* Planned is the lighter one now, and eaten is ink with a tick. The rule
-   through an eaten name read as deleted, and left the plate you had not
-   eaten yet as the one that looked real. --muted is 5.5:1 on the card. */
-.mthin:not(.eaten) .mthin-n { color: var(--muted); }
-.mthin-ok {
-  flex: none; width: 14px; text-align: center; font-size: 0.8125rem; line-height: 1;
-  color: var(--green); font-weight: 700;
-}
-.mthin-x { font-size: 0.8125rem; color: var(--muted); flex: none; font-variant-numeric: tabular-nums; }
 .mslot-empty { font-size: 0.8125rem; color: var(--muted); font-style: italic; }
 /* A plate is two rows, each with its controls on the right. Row one is the
    plate and its portion — the dial you reach for most, beside the name. Row
@@ -1422,31 +1238,6 @@ select { max-width: 280px; }
    the one row that should look like it has settled down instead shouted.
    The size and weight are restated rather than inherited, because what is
    wanted is .mstep-x's own, and CSS has no way to say that. */
-/* A meal you are not eating today. A line, not a card: it has no numbers, no
-   plates and nothing to fold, and drawing an empty card around it would give
-   it the same weight as the meals that are actually happening. */
-.mslot-skipped { padding: 9px 12px; background: none; border: 1px dashed var(--line); }
-/* The ROW is the flex container, not the card around it.
- *
-   These two were one element until the chooser moved in, and when it did
-   the layout stayed on the outer box while the row became a bare block —
-   so it only laid out when a card happened to be there to pull it into
-   shape. A skipped meal with nothing to hand out read "Snacksskipped" with
-   the Undo shoved against the words, which is most skipped meals: only the
-   LAST finished meal carries a cascade, so every other skip on the day got
-   the broken one. Layout belongs to the thing being laid out. */
-.mslot-skip-h { display: flex; align-items: center; gap: 10px; }
-/* ...and when the card IS there, the row keeps its own line above it. */
-.mslot-skipped-c { padding: 9px 10px; }
-.mslot-skipped-c .mslot-skip-h { padding: 0 2px; }
-.mslot-skipped-c .mcasc {
-  margin: 8px 0 0; background: var(--card); border-style: solid;
-}
-.mslot-skip-n {
-  font-family: var(--serif); font-size: 0.875rem; color: var(--muted);
-  text-decoration: line-through; flex: 0 0 auto;
-}
-.mslot-skip-w { flex: 1 1 auto; min-width: 0; font-size: 0.8125rem; color: var(--muted); }
 .mslot-unskip {
   flex: 0 0 auto;
   font-size: 0.8125rem;
@@ -1677,7 +1468,10 @@ select { max-width: 280px; }
    It used to be a full-width dashed slab above this row: as tall as a plate,
    drawn in ochre, sitting between the food and the verbs and belonging to
    neither scope. The dashes were claiming "drop something here", which is not
-   what pressing it does. */
+   what pressing it does.
+   (October 2026: it is an item in the meal sheet's ⋯ menu now and wears
+   .mfood-mi like the others there; .mslot-act styled nothing any more and
+   is gone. The ink below is still its own.) */
 .mslot-keep { color: var(--ochre-text); }
 .mslot-keep:hover:not(:disabled) { border-color: var(--ochre); }
 .mk-parts { margin: 12px 0 0; border-top: 1px solid var(--line-soft); }
@@ -1768,19 +1562,9 @@ select { max-width: 280px; }
   background: var(--paper-soft); color: var(--muted-2);
 }
 .mp-way-i { width: 17px; height: 17px; }
-/* what this meal still has room for, said once at the top */
-/* It carries bars now rather than a sentence, so it needs to look like the
-   panel it is instead of like a line of prose. */
-.mp-left {
-  margin-top: 10px; padding: 9px 10px 5px;
-  background: var(--paper-soft); border: 1px solid var(--line-soft); border-radius: 7px;
-}
 /* Three foods that close the day. It sits directly under the bars it is
    answering, so it reads as the same panel continuing rather than a second
    opinion — one border, and the rows inside it. */
-/* Small and quiet: it is a state, not a control. The control is on the open
-   plate; this only says the state survived the fold. */
-.mthin-l { font-size: 0.8125rem; opacity: 0.75; }
 /* ---- the meal's four gauges -------------------------------------------
    Four of them have to fit on a 390 px row beside a name and three buttons,
    so the figure sits ABOVE its track rather than beside it. Calories carries
@@ -1801,27 +1585,6 @@ select { max-width: 280px; }
    it. Twenty grams of protein reads the same whether it is the whole meal or
    the last mouthful, and the fill is the only thing that says which. The
    gradient arrives inline from mFillPill; what is left here is the frame. */
-/* Four, always on one row and always the same width as each other. They wrapped
-   while this was a flex row with a 56px floor: at 320 the fourth dropped to its
-   own line and stretched the full width, and four fills only compare by eye if
-   the boxes match. A grid cannot wrap and cannot stretch one of them. */
-/* Calories take a wider column than the macros, because its figure is a digit
-   longer and carries a glyph in front of it. Equal columns clipped it at 320. */
-.mgps { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 4px; margin-top: 7px; }
-.mgp {
-  display: inline-flex; align-items: baseline; gap: 2px;
-  justify-content: center; min-width: 0; white-space: nowrap;
-  padding: 4px 5px; border-radius: 999px; font-size: 0.8125rem;
-  background: var(--paper-soft); border: 1px solid var(--line-soft);
-  color: var(--muted-2); font-variant-numeric: tabular-nums;
-}
-.mgp span { font-size: 0.8125rem; font-weight: 700; }
-.mgp b { font-weight: 700; }
-/* What the meal is FOR, quieter than what is on it — the same weighting the
-   day's bars give "/ 205 g". */
-.mgp u { text-decoration: none; font-size: 0.8125rem; color: var(--muted); }
-/* Nothing left to fill is a different state, not a small amount left. */
-.mgp.met { border-color: var(--dial-on-pale); color: var(--green); }
 /* A macro read against what the day is still owed: green where this portion
    lands it, warm where it busts it, and nothing at all where it does neither
    — silence is most of the row and is what makes the colour mean something. */
@@ -1835,9 +1598,6 @@ select { max-width: 280px; }
   background: var(--closes-bg); color: var(--green);
   border-radius: 999px; padding: 1px 6px;
 }
-/* The meal name on a card with nothing on it: the same words in the same
-   place, but not a button, because there is nothing for it to fold. */
-.mslot-name-flat { background: none; border: 0; cursor: default; }
 /* The meal's pills, on the seam. The day row's construction said about one
    meal: a proportional fill painted behind the number, the letter in front,
    the target after it in a lighter tone. */
@@ -1947,35 +1707,8 @@ select { max-width: 280px; }
   font-size: 0.8125rem; line-height: 1; color: var(--muted);
 }
 .mpick-wrap.in .mp-tick { background: var(--green); border-color: var(--green); color: var(--paper); }
-/* the basket, as a thing you can see rather than a number in the header */
-.mp-basket {
-  border: 1px solid var(--green); border-radius: 6px; margin: 12px 0 4px;
-  background: color-mix(in oklab, var(--green) 6%, var(--card)); overflow: hidden;
-}
-.mp-basket-h {
-  font-size: 0.8125rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600;
-  color: var(--green); padding: 7px 9px 3px;
-}
-.mpb-row { display: flex; align-items: center; gap: 8px; padding: 5px 9px 7px; }
-.mpb-b { flex: 1 1 auto; min-width: 0; }
-.mpb-n { font-family: var(--serif); font-size: 0.8125rem; display: block;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mpb-m { font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.mpb-m i { font-style: normal; font-weight: 700; font-size: 0.8125rem; }
-.mpb-x { display: flex; align-items: center; gap: 2px; flex: none; }
-.mpb-x > span { font-size: 0.8125rem; color: var(--muted-2); min-width: 28px; text-align: center;
-  font-variant-numeric: tabular-nums; }
-.mpb-x button {
-  width: 26px; height: 26px; border: 1px solid var(--line-soft); border-radius: 3px;
-  background: var(--card); color: var(--muted-2); font-size: 0.875rem; line-height: 1;
-}
-/* Scoped to its row rather than shouted: `.mpb-x button` dresses all three
-   of the row's buttons, and the remove button is the one that goes quiet. */
-.mpb-x .mpb-out { border-color: transparent; color: var(--muted); }
 .mp-side { display: flex; align-items: center; gap: 2px; padding-right: 2px; flex: none;
   border-bottom: 1px solid var(--line-soft); }
-.mpb-fit { display: flex; margin-top: 5px; }
-.mpb-fit > span { height: 24px; }
 .mp-star { background: none; border: 0; padding: 4px 6px; font-size: 0.9375rem; color: var(--line-firm); }
 .mp-star[aria-pressed="true"] { color: var(--ochre); }
 .mp-side button {
@@ -1994,87 +1727,6 @@ select { max-width: 280px; }
    short list. Scoped to .mp-sheet: nine other sheets use .sheet and a flex
    column would let their children shrink instead of overflowing. */
 .sheet.mp-sheet { display: flex; flex-direction: column; }
-/* What the basket will cost, and the button that commits it, along the bottom.
- *
-   `margin-top: auto` is what does the work on a short list — sticky can only
-   pull an element up from its flow position, so on a two-row list the bar
-   would otherwise sit wherever the content ended, mid-card.
- *
-   `align-items: center`, not baseline: a padded button baseline-aligns on its
-   own text, and the macro span wraps to a second line at narrow widths, which
-   at 320px measured 14px of extra bar permanently covering the list. Centre
-   costs nothing and holds 65px at every width from 320 to 430.
- *
-   The safe-area inset goes in padding-bottom, never in `bottom` — moving the
-   bar up would let the list show through underneath it. The inset resolves to
-   0 today because index.html has no viewport-fit=cover; this line is inert
-   until it does, and correct on the day it does. Adding that meta is its own
-   change: it would also drop the topbar under the Android status bar and
-   inflate .mday-acts, which the suite cannot see because env() is 0 in
-   headless Chromium. */
-/* The bar: the basket and its readout, pinned together. The sticky and the
-   auto top margin moved here off .mp-foot, so an open basket rides with the
-   readout instead of scrolling away from it. */
-.mp-bar {
-  position: sticky; bottom: 0; margin: auto -4px -4px;
-  background: var(--card); border-top: 1px solid var(--line); border-radius: 0 0 6px 6px;
-}
-.mp-bar .mp-basket { margin: 0; border: 0; border-bottom: 1px solid var(--line-soft);
-  border-radius: 0; max-height: 38vh; overflow-y: auto; }
-.mp-foot {
-  display: flex; gap: 10px; align-items: center;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
-  background: var(--card); border-radius: 0 0 6px 6px;
-}
-/* The readout is a button now, and has to stop looking like one: it is the
-   same line it always was, with a chevron on the end. */
-.mp-foot-t {
-  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px;
-  background: none; border: 0; padding: 0; font-family: var(--sans); cursor: pointer;
-  text-align: left;
-}
-/* Pointing at what it opens. It was a ‹ rotated -90deg, so shut it pointed
-   DOWN at a drawer that rises from the bar — which says the opposite of what
-   happens, and is why the list behind it went unfound. Shut it now points up,
-   open it points down at the way to shut it: the Android shade's rule, and
-   the same one the meal cards were corrected to in v223. */
-.mp-foot-c { flex: none; color: var(--muted); font-size: 0.8125rem; transform: rotate(180deg);
-  transition: transform .16s ease; }
-.mp-foot-c.open { transform: rotate(0deg); }
-/* The totals and the names, stacked, so the bar says what as well as how
-   much. One line each and both clipped rather than wrapped — a footer that
-   grows a row as you pick things is a footer that moves the commit button. */
-.mp-foot-b { flex: 1 1 auto; min-width: 0; }
-.mp-foot-n {
-  display: block; font-size: 0.8125rem; color: var(--muted); margin-top: 1px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.mp-foot-n:empty { display: none; }
-.mp-foot-m {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 0.8125rem;
-  color: var(--ink);
-}
-.mp-foot-l {
-  font-style: normal;
-  font-size: 0.8125rem;
-  color: var(--muted);
-}
-/* Pinned right in both states. The button used to inherit its right-hand
-   position from the count chip's margin-left:auto in the header; with that
-   chip gone it needs its own, or the commit target slides 89 measured pixels
-   sideways depending on whether the readout says "Adds" or "Over this meal
-   by 427". */
-.mp-done {
-  background: var(--green); color: var(--paper); border: 0; border-radius: 4px;
-  margin-left: auto;
-  padding: 7px 12px; font-family: var(--sans); font-size: 0.8125rem; font-weight: 600; white-space: nowrap;
-}
-.mp-foot.busts { background: color-mix(in oklab, var(--dial-over) 12%, var(--card)); }
-.mp-foot.busts .mp-foot-l { color: var(--dial-over); font-weight: 600; }
 .mp-fit {
   flex: none; font-size: 0.8125rem; color: var(--muted);
   font-variant-numeric: tabular-nums;
@@ -3549,11 +3201,6 @@ select { max-width: 280px; }
 }
 /* the same leaf, sized for a row rather than a card */
 .leaf-sm { width: 20px; height: 24px; flex: none; }
-/* The plate's leaf leads its row now rather than trailing the name, so it
-   is sized to lead: it is the only image a plate has and it carries a
-   number worth reading. */
-.leaf-md { width: 28px; height: 33px; flex: none; }
-.leaf-md .leaf-n { font-size: 0.6875rem; }
 .leaf-sm .leaf-n { font-size: 0.53125rem; }
 .leaf-sr {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
@@ -3586,7 +3233,6 @@ select { max-width: 280px; }
 
 /* ------------------------------------------------------- shopping list */
 .list-view { max-width: 760px; margin: 0 auto; padding: 28px 22px 70px; }
-.list-week { font-size: 0.78125rem; color: var(--muted); margin-top: 3px; }
 .list-group { margin-bottom: 26px; }
 .list-group-title {
   font-size: 0.71875rem; letter-spacing: 0.14em; text-transform: uppercase;
@@ -4155,14 +3801,6 @@ p.sync-diner { font-size: 0.8125rem; line-height: 1.6; color: var(--muted); }
   .grid { grid-template-columns: 1fr; }
   .scrim { padding: 0; }
   .sheet { border-radius: 0; min-height: 100%; padding: 22px 18px 40px; }
-  /* Out to both edges on a phone. The base rule pulls back 4px against the
-     desktop sheet's 34px padding; against this rule's 18px that left the bar
-     14px short of each side, which nobody could see while it was the same
-     colour as the sheet — and which will read as a bug the moment .busts
-     tints it and it is carrying the commit button. */
-  .mp-bar { margin-left: -18px; margin-right: -18px; margin-bottom: 0; }
-  .mp-foot { padding-left: 18px; padding-right: 18px; }
-  .mp-bar .mp-basket { padding-left: 18px; padding-right: 18px; }
   /* The bar carries its own bottom padding, so the sheet's 40px would only
      hold it 36px off the screen — flush on a long list where sticky pins it,
      floating on a short one where it sits in flow. Same bar, two positions,
@@ -4254,22 +3892,6 @@ p.sync-diner { font-size: 0.8125rem; line-height: 1.6; color: var(--muted); }
 @page { size: 5.5in 8.5in; margin: 0.5in 0.52in 0.5in; }
 @media print {
   .mday-stop { break-inside: avoid; border-color: var(--line); }
-  /* An open meal's three bars are made ENTIRELY of background colour: a pale
-     track, a coloured fill, a mark. A printer drops backgrounds by default,
-     so they come out as blank 8px strips under a row of grams — and
-     beforeprint opens every meal, so that is every meal on the page rather
-     than an edge case. Two answers, because they fail differently. Ask for
-     the colour back, which a colour printer will give. And draw the track in
-     ink, so on the mono printer a day plan is actually printed on, the fill
-     still has a length to be read against. The chips carry the verdict
-     itself — see mMacChips — because on grey paper on, over and short are
-     three shades of the same grey. */
-  .msub-bt, .msub-bb, .msub-bm {
-    -webkit-print-color-adjust: exact; print-color-adjust: exact;
-  }
-  /* box-sizing is border-box globally, so this costs no height and moves
-     nothing: the fill and the mark are positioned against the padding box. */
-  .msub-bt { border: 1px solid var(--line); }
 
   /* The rest of the file's !importants live here, and they stay. The preview
      sizes every sheet from script — a scale, a slot height, a width — as
@@ -4464,51 +4086,7 @@ p.sync-diner { font-size: 0.8125rem; line-height: 1.6; color: var(--muted); }
    is not one column either — it is a sheet, read at a glance. So: newspaper
    columns, as many as the window will take, with a shelf never split across
    two of them. On a phone the same rule yields one column and nothing changes. */
-/* The note flows in the same columns as the shelves it introduces.
-   It used to carry a flat 62ch measure, which is a sensible line length and
-   was set with no reference to this layout: on a laptop the shelves run three
-   columns wide and the paragraph stopped halfway across, reading as an
-   unfinished left-hand column rather than as a deliberate measure. Same column
-   rule as #pantryBody, so the text lines up with the list underneath it and
-   the measure comes out around forty characters, which is the right length
-   anyway. */
-.pantry-lede { columns: 15.5rem; }
-#pantryBody { columns: 15.5rem; column-gap: 40px; }
 .shelf { break-inside: avoid; margin: 0 0 24px; }
-.shelf-h {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
-  font-size: 0.625rem; letter-spacing: 0.22em; text-transform: uppercase;
-  color: var(--ochre-text); font-weight: 600;
-  padding-bottom: 7px; border-bottom: 1px solid var(--line); margin-bottom: 2px;
-}
-.shelf-n { letter-spacing: 0.08em; color: var(--muted); font-weight: 400; }
-.pitem {
-  display: flex; align-items: center; gap: 6px;
-  padding: 5px 2px; border-bottom: 1px solid var(--line-soft);
-  font-size: 0.90625rem; line-height: 1.35;
-}
-.pitem-l { flex: 1 1 auto; }
-.pitem-tag {
-  font-size: 0.5625rem; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap;
-  color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 6px;
-}
-/* Quiet until wanted, but never absent: a hundred rows whose only affordance
-   appears on hover is a hundred rows that look like they cannot be edited. So
-   it is faint at rest and solid under the cursor. A mouse can hit 24px; a thumb
-   is given the 34px back below, where the columns have collapsed to one. */
-.pitem-x {
-  /* Was --line-firm at half opacity: about 1.4:1 against the page, for a
-     control, where 3:1 is the floor. --muted is 5.08:1 and is already what
-     this same glyph uses on a switched-off row a few rules down. The quiet
-     comes from the tint behind it now rather than from fading the mark. */
-  border: 0; background: transparent; color: var(--muted); cursor: pointer;
-  font-size: 1.0625rem; line-height: 1; width: 24px; height: 24px; flex: 0 0 auto;
-  border-radius: 50%; transition: background 0.12s;
-  /* It was also faded to 72%, which took the 5.08 back down to 2.9 — so the
-     mark is at full strength, and the tint behind it is the only quiet. */
-}
-.pitem-x:hover { color: var(--ochre-text); background: var(--ochre-wash); }
-.pitem-x.back { font-size: 1.0625rem; }
 @media (pointer: coarse) {
   /* A rail chip is a target like any other. It was held at 40 to keep the
      rail from standing taller than the search box above it — and the search
@@ -4531,11 +4109,6 @@ p.sync-diner { font-size: 0.8125rem; line-height: 1.6; color: var(--muted); }
   font-variant-numeric: tabular-nums; color: var(--muted);
 }
 .mp-shelf.on .mp-shn { color: inherit; opacity: 0.75; }
-  /* The one control in the picker that commits, and the first .mp-* class
-     this block has ever named — the whole picker missed the 44px pass, and
-     this button measured 29px while being the thing the sheet exists to let
-     you press. */
-  .mp-done { min-height: 44px; }
   /* The rest of that pass, measured rather than guessed at: every control the
      picker draws, at 412 and at 320, that came back under 44 on its short
      side. The rail chips were already handled above; these are what was left.
@@ -4561,11 +4134,6 @@ p.sync-diner { font-size: 0.8125rem; line-height: 1.6; color: var(--muted); }
     display: inline-flex; align-items: center; justify-content: center;
   }
   .mpick-new { min-height: 44px; }
-  /* no hover to reveal with, and a target you can actually hit */
-  /* a row a thumb tall, so its × can be given a thumb's reach without that
-     reach spilling into the rows either side of it */
-  .pitem { padding: 8px 2px; font-size: 0.96875rem; min-height: 44px; }
-  .pitem-x { width: 34px; height: 34px; font-size: 1.1875rem; }
   /* the base rule is already 44x44 with flex:none — a coarse pointer needs
      nothing more, and re-stating a width here is how one of them drifts */
   .mstep button[data-mstep] { font-size: 1.1875rem; }
@@ -4574,26 +4142,6 @@ p.sync-diner { font-size: 0.8125rem; line-height: 1.6; color: var(--muted); }
   /* Swapping a lever is a thumb gesture repeated a dozen times in a row —
      the arrows are the most-tapped thing in the sheet. */
 }
-
-/* Taken off, not deleted — you have to be able to find a thing to put it back.
-   It spans the columns rather than flowing into one, because it is not a shelf
-   of the storehouse and reading it as though it were another one is the whole
-   mistake. Chips rather than rows: this list is scanned for a name, not read
-   down, and fourteen full-width rows would out-shout the hundred above them. */
-.shelf-gone {
-  column-span: all; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
-  margin: 12px 0 0; padding-top: 22px; border-top: 1px solid var(--line);
-}
-.shelf-gone .shelf-h {
-  flex: 0 0 100%; color: var(--muted); border: 0; padding: 0; margin: 0 0 2px;
-  justify-content: flex-start;
-}
-.pitem.off {
-  padding: 3px 3px 3px 12px; gap: 2px; border: 1px solid var(--line);
-  border-radius: 999px; background: var(--card);
-}
-.pitem.off .pitem-l { color: var(--muted); flex: 0 0 auto; }
-.pitem.off .pitem-x { color: var(--muted); }
 
 /* ---- an ingredient you would have to go out for ------------------------
    Set in the accent the book already uses for its numbers and section
@@ -4852,8 +4400,11 @@ button.mw-verdict:hover { background: var(--paper-soft); }
 /* BOTH headers. A meal with food wears button.mslot-head; an empty one and
    the weigh-in card wear div.mslot-h. They are the same row to a reader and
    have to behave the same, and styling only one of them is why this looked
-   fixed on an empty day and wrapped on a real one. */
-.mslot-h, .mslot-head { column-gap: 4px; }
+   fixed on an empty day and wrapped on a real one.
+   (October 2026: the meal cards are .mtray rows now and nothing wears
+   .mslot-head any more, so it left these selectors; the weigh-in card's
+   div.mslot-h is the one still here.) */
+.mslot-h { column-gap: 4px; }
 /* On a phone with room, the row does not wrap — the NAME gives way instead.
    With flex-wrap on, a header one pixel too wide moves the whole strip of
    pills to a second line rather than shortening the word, which is the
@@ -4862,8 +4413,8 @@ button.mw-verdict:hover { background: var(--paper-soft); }
    enough room for that trade and the strip takes its own line, still uniform.
    The name already carries text-overflow: ellipsis; this lets it reach it. */
 @media (min-width: 375px) {
-  .mslot-h, .mslot-head { flex-wrap: nowrap; }
-  .mslot-h .mslot-name, .mslot-head .mslot-name { min-width: 2.4em; }
+  .mslot-h { flex-wrap: nowrap; }
+  .mslot-h .mslot-name { min-width: 2.4em; }
 }
 /* A spent meal keeps the width too. Its pill says a word rather than a
    figure — 🔥— , nothing left to give — and letting it shrink would break the
@@ -4911,39 +4462,6 @@ button.mw-verdict:hover { background: var(--paper-soft); }
    came back to read. A plate you ate is a RECORD, and a record is not a
    greyed-out control. The tick says it; the plate keeps its ground. */
 
-/* Three bands, and each answers one question.
- *
-   Blake's layout. WHAT IS THIS — the leaf leads at full size, the name runs
-   to the two controls that keep it. WHAT IS IN IT — the weight and the four
-   figures, indented under the name so they read as belonging to it. WHAT CAN
-   I DO — one outlined strip with every verb that acts on this plate.
- *
-   The grid that used to be here put the tick in a 44px column of its own so
-   the name and the cost could share its height. The tick is not in a corner
-   any more, so the column went with it. */
-.mitem-r1 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding-right: 62px;
-  min-height: 44px;
-}
-.mitem-r1 .mitem-name { flex: 1 1 auto; min-width: 0; }
-.mitem-r1 .leaf-md { flex: none; }
-/* An empty slot the size of the badge, so a food and a recipe start their
-   names in the same place. */
-.leaf-gap { display: block; }
-/* Pin and star, out of the name's line and into the corner of the box.
- *
-   Blake: "Star and pin icons can move closer and to the right top corner
-   more." They were the last two items of a flex row, so the name gave way to
-   them — and "Pink Sugar Cookies, Served Cold" is a name that cannot afford
-   to. In the corner they are a badge on the box rather than the end of a
-   sentence, and the name gets about sixty pixels back. Touching, because two
-   controls of one job read as one thing. */
-.mitem-keep { position: absolute; top: 2px; right: 2px; display: flex; gap: 0; z-index: var(--z-lift); }
-
 /* Row two, indented to the name: the leaf's width plus the gap, so the
    figures start where the title does rather than at the block's edge. */
 /* The name's row keeps clear of the corner badge. */
@@ -4969,120 +4487,11 @@ button.mw-verdict:hover { background: var(--paper-soft); }
    and the two ways out are shrinking the targets or taking a second line —
    the first of which is the thing that must not happen. The old row above
    this made the same trade and its note says so. */
-/* Bin and lock, tight together, so proximity says they are one group and the
-   portion beside them is another. */
-/* Bin and lock, edge to edge, so proximity says they are one group and the
-   portion beside them is another. A box around the pair was tried once and
-   drawn back out as "a keypad", when nothing else on the row wore one; they
-   are boxed again now that everything beside them is (see "the plate's bin
-   and lock, boxed" at the end of this file). */
-.mitem-verbs { flex: none; display: flex; align-items: center; gap: 0; }
-/* Smaller controls, closer together, and the portion takes what that frees.
- *
-   Blake: "Smaller buttons. A bit less space between buttons. Wider serving
-   box." 34px rather than 44, six of gap rather than fourteen — and the box
-   goes from a 46px floor to 80, which is the difference between "1 serving"
-   on one line and "1 / serving" on two.
- *
-   34 is under the 44px thumb target this app has held everywhere else, and
-   that is Blake's call rather than a slip: he was shown the number and asked
-   for it. It clears the 24px accessibility floor with room, and a plate is
-   four controls in a row rather than a dense grid. The rule that enforced 44
-   was rewritten to say 34 and to say why, so the next person to read it is
-   not left guessing whether this was deliberate. */
-.mitem-r3 {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 5px 6px;
-  border-top: 1px solid var(--line-soft);
-  margin-top: 3px;
-  padding-top: 4px;
-}
 /* The portion, boxed, with its two steppers joined to its right — so the
    three things that change the amount read as one control instead of a
    number with a button on either side of it. */
-/* Written under .mstep so it outranks `.mstep .mstep-type`, which strips the
-   border and the ground off this same element from a thousand lines further
-   up. That rule is right for what it was written for — the portion used to be
-   a dotted-underlined word inside a bordered dial — and it is the dial that
-   has the outline now, so the word needs its own. */
-/* min-height, never height. A food typed in from a label carries whatever
-   unit the label used and Blake's bacon reads "1 skillet cooked slice (15 g)"
-   — at a fixed height that clips, and there is a note further up this file
-   recording exactly what clipping a portion costs: "2 1/2 cups" became
-   "2 1/2 c" and ticking the plate silently changed what it said you ate. Two
-   short lines inside the box cost nothing. */
-.mitem-r3 .mstep .mitem-amt {
-  flex: 1 1 auto; min-width: 80px; min-height: 30px; padding: 3px 7px;
-  /* A bounded grid, not a flex row. The portion is a bare text node, so
-     under `display: flex` it becomes an ANONYMOUS flex item — and one of
-     those sizes to max-content and will not shrink, so the words never wrap
-     and "1 ¾ containers" simply ran two pixels past the box. A grid track of
-     `minmax(0, 1fr)` is bounded by the box, which is what lets the text wrap
-     inside it at all. */
-  display: grid; grid-template-columns: minmax(0, 1fr);
-  align-content: center; justify-items: center; gap: 3px;
-  border: 1px solid var(--line-firm); border-radius: 4px; background: var(--card);
-  font-family: var(--sans); font-size: 0.8125rem; font-weight: 600; color: var(--ink);
-  /* Wraps at spaces, and breaks a word ONLY when the word cannot fit a line
-     of its own. `anywhere` was the first try and it broke "1 serving" into
-     "1 / serv / ing" — three lines of nonsense where two honest ones fit,
-     because it breaks wherever it likes rather than only where it must.
-     Plain `normal` was the second and it let "1 ¾ containers" overflow the
-     box by two pixels, which this file calls the worst of the three: a
-     portion that silently loses its last letters is the app misreporting
-     what you ate.
-   *
-     `anywhere`, in the end, and the difference from `break-word` is the one
-     that matters here: only `anywhere` shrinks the intrinsic MIN-CONTENT
-     size. `break-word` will break a too-long word when it lays the line out,
-     but the box is a grid item whose automatic minimum is still the longest
-     word — so the item refused to be narrower than "containers" and ran two
-     pixels past its track, wrapping or not. The three-line "1 / serv / ing"
-     that made me abandon `anywhere` the first time was not its fault either:
-     the box was 44px then, because the tick was still carrying its label. It
-     is 62 to 66 now, which is wider than any word a unit is made of. */
-  line-height: 1.15; text-align: center; white-space: normal; overflow-wrap: anywhere;
-  /* ...and the box grows to hold it. `.mstep-x` sets overflow:hidden with
-     text-overflow:ellipsis a thousand lines up — right for a nowrap dial,
-     fatal for a wrapping one: the words wrapped to four lines and the box
-     clipped them at two. "3 1 skillet cooked slice (15 g)" needed 57px in a
-     42px box. Both halves of that rule have to be undone, not just the
-     white-space. */
-  overflow: visible; text-overflow: clip;
-  /* height:auto, not just min-height. The portion is a <button> while it is
-     being stepped, so `.mstep button { height: 44px }` applies to it — and a
-     min-height cannot undo a height. That rule has its own note a thousand
-     lines up warning that it outranks `.mstep-x`, which is how it truncated
-     "2 1/2 cups" to "2 1/2 c" the last time. Same rule, third visit. */
-  height: auto;
-}
-.mitem-r3 .mstep .mitem-amt.mstep-type:hover,
-.mitem-r3 .mstep .mitem-amt.mstep-wake:hover {
-  border-color: var(--ochre); color: var(--ochre-text);
-}
-.mitem-r3 .mstep .mitem-amt.mstep-wake { text-align: center; }
 .mitem-typing i { font-style: normal; font-size: 0.8125rem; color: var(--muted); font-weight: 400; }
 .mitem-typing .mstep-in { width: 3.2em; min-width: 0; }
-/* The dial is a plain row now: the box carries its own outline and the two
-   keys carry theirs, so the container has nothing left to draw. */
-/* min-width: auto, never 0. At 0 the dial could be squeezed narrower than
-   its own portion and keys, which then spilled out of it: on a 360 phone
-   the tick sat on the last 15px of the + key, and a thumb on the edge of +
-   ticked the plate eaten. At auto a row with no room wraps instead. */
-.mitem-r3 .mstep {
-  flex: 1 1 auto; min-width: auto; display: flex; align-items: center; gap: 5px;
-  border: 0; background: none; border-radius: 0; padding: 0; max-width: none;
-}
-.mstep-keys { flex: none; display: flex; }
-.mitem-r3 .mstep-keys button {
-  flex: none; width: 30px; height: 30px; font-size: 0.9375rem; padding: 0;
-  border: 1px solid var(--line-firm); background: var(--card); color: var(--muted-2);
-}
-.mitem-r3 .mstep-keys button:first-child { border-radius: 4px 0 0 4px; }
-.mitem-r3 .mstep-keys button:last-child { border-radius: 0 4px 4px 0; margin-left: -1px; }
-.mitem-r3 .mstep.spent .mstep-keys button { opacity: 0.35; cursor: default; }
 
 /* The thing pressed most, on the side a thumb is, with a word on it. It was
    a 21px box in the top-left corner: the state of the plate, given the
@@ -5114,29 +4523,6 @@ button.mw-verdict:hover { background: var(--paper-soft); }
 .mitem-ate:checked::after { color: var(--paper-soft); }
 .mitem-ate:disabled { opacity: 0.4; cursor: default; }
 
-/* Lock, pin and bin: one shape, one size, in one order, on every plate. They
-   were a 44px cell inside the dial (lock) and two bare glyphs on the name row
-   (pin, bin) — three controls of the same scope wearing three different
-   clothes in two different places. Each is a glyph with a generous invisible
-   margin, which is the same thing to a thumb and a quieter thing to an eye. */
-.mitem-r1 .mic, .mitem-r3 .mic {
-  flex: none; width: 28px; height: 28px; padding: 0; line-height: 1;
-  border: 0; border-radius: 5px; background: none;
-  color: var(--muted-2); font-size: 0.8125rem;
-}
-.mitem-r1 .mic:hover, .mitem-r3 .mic:hover { background: none; color: var(--ink); }
-.mitem-r1 .mic[aria-pressed="true"], .mitem-r3 .mic[aria-pressed="true"] {
-  /* On, said by the ink rather than by a filled box — the same way the app
-     says a favourite is on. */
-  background: none; border: 0; color: var(--ochre-text);
-}
-/* All three, one size. The bin was the only one of them that was ever drawn
-   rather than typed, so it was the only one carrying a size — and the moment
-   the lock and the pin became SVGs too they had none and filled their whole
-   44px target. Scoped to .mic, which all three wear, so the next one added
-   cannot arrive naked. */
-.mitem-r1 .mic svg, .mitem-r3 .mic svg { width: 16px; height: 16px; display: block; }
-
 /* Everything above is the mouse: a 28px glyph, because a pointer is a pixel.
    On a phone every piece of the strip grows to the target it needs. This is
    the ONE place the plate's touch sizes are written — twice now a second copy
@@ -5151,29 +4537,8 @@ button.mw-verdict:hover { background: var(--paper-soft); }
    and well over the 24 floor, on a row where every control is a repeat of
    one already reachable at full size elsewhere. */
 @media (pointer: coarse) {
-  .mitem-r1 .mic, .mitem-r3 .mic { width: 34px; height: 34px; }
-  .mitem-r1 .mic svg, .mitem-r3 .mic svg { width: 18px; height: 18px; }
-  .mitem-r3 .mstep .mitem-amt { min-height: 34px; min-width: 80px; }
-  .mitem-r3 .mstep-keys button { width: 34px; height: 34px; }
   .mitem-ate { width: 34px; height: 34px; }
-  /* The dial keeps a line of its own once the row has to wrap, so the two
-     keys never end up orphaned under their own box. */
-  .mitem-r3 .mstep { flex: 1 1 128px; }
 }
-/* At 320 the dial wants 148 of the 138px it is given — the portion's 80 plus
-   two 34px keys — and the portion is the only one of the three that can give
-   any back. This sits AFTER the sizes it narrows: an equal-specificity rule
-   written above the one it means to override is not an override, it is a
-   comment, which is how this exact pair spent a release disagreeing. */
-@media (pointer: coarse) and (max-width: 360px) {
-  .mitem-r3 { gap: 4px; }
-  .mitem-r3 .mstep .mitem-amt { min-width: 64px; padding: 0 4px; }
-}
-/* The rule that hid the tick's label below 400px went with the label. It
-   existed because the strip was exactly full at 390 with 44px targets and
-   the portion was the thing being squeezed; at 34px with the word gone there
-   is room for all of it and eighty pixels of portion besides. */
-.mitem-r3 .mdel:hover { color: var(--danger-hover); border-color: var(--danger-hover); }
 
 /* What it costs. Where it came from is no longer said here — .mitem-from went
    with the book, the yield and the portion detail, which were a whole row per
@@ -5245,44 +4610,6 @@ button.mw-verdict:hover { background: var(--paper-soft); }
    plate silently changed what it said you ate. A portion either fits or gets
    its own row; it never gets clipped. */
 /* (See the 380px block by the tab row.) */
-
-/* ---- the control row, at the weight of the words -------------------------
- *
- * Blake, on v319: "buttons are too big. And not spread out well and are out
- * of balance with the rest of the text on the card." He is right and it is
- * not the touch targets: those must stay 44px and do. It is that every one of
- * them was a bordered, filled BOX — a dial in a box beside three buttons in
- * boxes beside a checkbox in a box — so a row of five outlines sat under a
- * 14px name and a 10px macro line and read as a keypad.
- *
- * The targets keep their 44. The CHROME goes. A glyph with a generous
- * invisible margin around it is the same thing to a thumb and a quieter thing
- * to an eye, and it is what pin and bin already were before this rebuild
- * boxed them.
- */
-
-/* What the meal already holds, in the drawer the basket folds into. It keeps
-   the basket's row shape — same kind of object — and refuses its green: green
-   means "about to be added" everywhere else in this sheet, and nothing under
-   this heading is about to be anything. The rule below it separates the two
-   halves of one drawer. */
-.mp-on-h { color: var(--ochre-text); }
-.mp-on-h ~ .mp-basket-h {
-  border-top: 1px solid var(--line-soft); margin-top: 4px; padding-top: 9px;
-}
-/* The bar speaking for the meal rather than the basket: no commit button
-   beside it, so the handle takes the whole width. */
-.mp-foot-on .mp-foot-t { flex: 1 1 auto; }
-.mpb-por {
-  flex: 0 0 auto; font-size: 0.8125rem; color: var(--muted);
-  font-variant-numeric: tabular-nums; white-space: nowrap;
-}
-.mpb-more {
-  font-size: 0.8125rem; color: var(--muted); padding: 0 9px 7px;
-}
-.mp-basket-on {
-  border-color: var(--line-firm); background: var(--paper-soft);
-}
 
 /* ---- "What do you actually eat" -------------------------------------------
    The favourite star as a grid. Chips because you are scanning for names you
@@ -5817,7 +5144,6 @@ button.tr-card:hover { border-color: var(--line-firm); background: var(--field);
    corner now carries three marks, and the padding that keeps the name clear
    of them has to come after the 62px it replaces, at both pointer sizes. */
 .mitem-nm { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 3px 8px; }
-.mitem-r1 .mitem-nm .mitem-name { flex: 0 1 auto; }
 .mwhy {
   display: inline-flex; align-items: center; gap: 4px; font-family: var(--sans); font-size: 0.8125rem;
   font-weight: 600; letter-spacing: 0.01em; padding: 2px 9px; border-radius: 99px; white-space: nowrap;
@@ -6139,10 +5465,6 @@ span.tr-fm { cursor: default; }
 .tr-rdgo b { font-size: 0.90625rem; }
 .tr-rdgo small { font-size: 0.8125rem; line-height: 1.3; text-align: center; opacity: 0.85; }
 .tr-rdr .tr-acts { margin: 0 12px 10px; }
-/* A recipe plate's weight, as a button: tap to weigh the batch. "~" and a
-   dotted edge say it is the ingredient estimate; a solid box, weighed. */
-button.mitem-uom.mitem-bw { font: inherit; cursor: pointer; color: var(--ink); background: none; }
-button.mitem-uom.mitem-bw.est { border-style: dashed; color: var(--muted-2); }
 .mbatch-strip .mbatch-in { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; flex: 1 1 100%; }
 .mbatch-in label { display: flex; align-items: center; gap: 6px; font-size: 0.8125rem; }
 .mbatch-in input { width: 84px; font: inherit; font-size: 1rem; text-align: right;
@@ -6475,21 +5797,18 @@ button.tr-ck-h {
 }
 /* The dot marks the whole meal eaten: its nine-pixel face stays where it
    was, and the button around it is a thumb's reach. */
-.mslot-head, .mday-weigh > .mslot-h > .mslot-name { min-height: 44px; }
+.mday-weigh > .mslot-h > .mslot-name { min-height: 44px; }
 /* Fed or blank, a meal's head is one height: the blank one has no door to
    stretch it, so the row holds it. */
 .mslot > .mslot-h { min-height: 44px; }
-/* The meal's verbs and the plate's controls. */
-.mitem-r1 .mic { width: 44px; height: 44px; }
-.mitem-r1 .mic svg { width: 18px; height: 18px; margin: 0 auto; }
 /* Not the plate's strip. Its bin, lock, keys, portion and tick went to 44
    here too, and on a 360 phone the tick was then drawn over the + key.
    Blake (2026-09-27): "Just make those buttons smaller. So the serving box
    has more room ... smaller like they were before." They are sized in the
    one place the strip's sizes live, "Everything above is the mouse", and
    nowhere else. */
-button.mitem-uom.mitem-bw, .mt-swap, .mt-ld-go, .fp-more, .mline-a button { position: relative; }
-button.mitem-uom.mitem-bw::after, .mt-swap::after, .mt-ld-go::after {
+.mt-swap, .mt-ld-go, .fp-more, .mline-a button { position: relative; }
+.mt-swap::after, .mt-ld-go::after {
   content: ''; position: absolute; left: -4px; right: -4px; top: 50%; height: 44px; margin-top: -22px;
 }
 .mplan-go, .mline-a button { min-height: 44px; }
@@ -6508,8 +5827,7 @@ button.mitem-uom.mitem-bw::after, .mt-swap::after, .mt-ld-go::after {
   width: 44px; height: 44px; padding: 0; margin: -8px -4px -8px 0; border: 0; background: none;
   display: inline-flex; align-items: center; justify-content: center; font-size: 1.1875rem;
 }
-#modalRoot.m-sheets .mpick-new, #modalRoot.m-sheets .mp-done, #modalRoot.m-sheets .mp-foot-t { min-height: 44px; }
-#modalRoot.m-sheets .mpb-x button { width: 44px; height: 44px; font-size: 1.125rem; }
+#modalRoot.m-sheets .mpick-new { min-height: 44px; }
 #modalRoot.m-sheets .mp-meals button { min-height: 44px; font-size: 0.875rem; }
 /* The plan sheet, the foods you eat, the charts, the meals. */
 #modalRoot.m-sheets .mtrain button { width: 44px; height: 44px; font-size: 0.875rem; }
@@ -6565,7 +5883,6 @@ button.mitem-uom.mitem-bw::after, .mt-swap::after, .mt-ld-go::after {
 .m-divi { display: flex; align-items: center; gap: 6px; }
 .m-eyei { display: flex; align-items: center; gap: 4px; }
 .mline-t .m-why { font-family: var(--sans); }
-.mslot-act.add .mday-ic { stroke-width: 2; }
 
 /* ---- Nourish: charts to read on a phone ----
    Type at the size it says (the viewBox is about a phone's width), the
@@ -6700,90 +6017,13 @@ button.mitem-uom.mitem-bw::after, .mt-swap::after, .mt-ld-go::after {
 .mff-go .ghost { min-height: 44px; }
 @media (max-width: 360px) { .mff-form { column-gap: 8px; } }
 
-/* ---- Nourish: a meal's verbs, drawings in the plate's boxes ----
-   Blake: "get all the buttons on the food tag into a single row." They were
-   an icon over a word, a fifth of the row each, and then: "The buttons are
-   still to big to me. Just use icons and the box size that is in the
-   meal/food card uses." So each verb is its drawing alone, in the box the
-   plate's strip draws its keys in (30, and 34 on a phone), packed from the
-   left, with Add alone at the right edge, where a plate keeps its tick. The
-   word each one had lives on in its spoken name and in a mouse's tooltip.
-   The row's sides line up with the plate strip's above it. */
-/* One block for all of them. The verbs used to be drawn six times over —
-   a 29px button with a word, a 44px thumb version, an icon beside its word,
-   a cream wash, and these boxes — each pass restating what the last had
-   said, so the row that shipped was whichever rule came last per property.
-   Only the values that won are kept. */
-.mslot-act {
-  flex: none; display: grid; place-items: center; justify-content: center; gap: 5px;
-  width: 30px; height: 30px; min-width: 0; min-height: 0; margin: 0; padding: 0;
-  border: 1px solid var(--line-firm); border-radius: 4px;
-  /* the meal's own shade, like its head. Blake: "the buttons that are for
-     the whole meal, not just the food, color those like the header" — so a
-     glance sorts them: cream acts on the meal, white acts on one food */
-  background: color-mix(in oklch, var(--paper) 55%, var(--card));
-  font-family: var(--sans); font-size: 0.875rem; color: var(--muted-2);
-  cursor: pointer; white-space: nowrap;
-}
-.mslot-act .mday-ic { width: 16px; height: 16px; }
-/* Add, alone at the right edge where a plate keeps its tick, in the colour
-   of the one thing the row exists for. */
-.mslot-act.add { margin-left: auto; color: var(--ochre-text); font-weight: 600; }
-@media (pointer: coarse) {
-  .mslot-act, .mslot-act.add { width: 34px; height: 34px; }
-  .mslot-act .mday-ic { width: 18px; height: 18px; }
-}
-
-/* ---- Nourish: the plate's bin and lock, boxed ----
-   Blake, once a meal's verbs became boxes with words (2026-09-27): "Garbage
-   and lock icon look out of place now." They were the last two bare glyphs
-   on a strip where the portion, its two keys and the tick are all boxes.
-   Drawn now the way the minus and plus keys are: one joined pair, the edge
-   they share saying they belong together. Pin and star stay glyphs, up on
-   the name row beside the name. */
-.mitem-verbs .mic {
-  display: grid; place-items: center;
-  border: 1px solid var(--line-firm); background: var(--card); border-radius: 4px;
-}
-.mitem-verbs .mic:first-child:not(:last-child) { border-radius: 4px 0 0 4px; }
-.mitem-verbs .mic + .mic { margin-left: -1px; border-radius: 0 4px 4px 0; }
-.mitem-verbs .mic:hover { background: var(--paper-soft); }
-/* A lock that is on says so with its edge as well as its ink. */
-.mitem-verbs .mic[aria-pressed="true"] {
-  position: relative; border: 1px solid var(--ochre); background: var(--card); color: var(--ochre-text);
-}
-
 /* The first screen: 44px of paper stood between the tabs and the day. */
 #view-macros > .view { padding-top: 8px; }
 #view-macros .mday-stick { padding-top: 4px; }
-/* A shut meal's list, closer. Blake: "The space between foods already
-   complete is too much." Each row is 32px to the eye; the name's reach is
-   still 44 — an invisible band hung off the row (the button clips its own
-   overflow, so the band belongs to the row), overlapping its neighbours by
-   six pixels, which a finger cannot tell. */
-.mthin-n::after {
-  /* Downward only. Centred, the band overlapped the row above by six pixels
-     and the later row painted over it, so a tap on the foot of one food
-     opened the next. Hung from the row's top, each row's band is covered by
-     the next row's from its first pixel: every row owns exactly its own
-     strip, and the last one gets the extra reach below. */
-  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 44px;
-}
-.mslot-thin { padding-top: 3px; padding-bottom: 4px; }
 /* The meal's head and its tray, told apart by a shade. Blake: "does it make
    sense to have a different color header for the meals vs their tray?" It
    does: the head is the thing you tap to fold, the tray is what it holds. */
 .mday-stop > .mslot-h { background: color-mix(in oklch, var(--paper) 55%, var(--card)); }
-/* Pressed, a meal's verb goes down to the page's own paper. */
-.mslot-act:not(:disabled):active { background: var(--paper); }
-/* B, Blake's pick (2026-09-27): the meal's own row is a cream band like its
-   head, so the card is bracketed — the meal top and bottom, its foods in the
-   white between. The buttons keep the cream and their borders carry them. */
-.mday-stop .mslot-acts {
-  background: color-mix(in oklch, var(--paper) 55%, var(--card));
-  border-top: 1px solid var(--line-soft);
-  margin: 0 -10px -3px; padding-left: 10px; padding-right: 10px;
-}
 /* ---- The day's headline as a ring, the macros stacked beside it (Blake's
    pick A, 2026-09-27). The ring is 104px, the height of the three pills
    stacked, so the pair is one block and the card grows by about 20px. */
@@ -6820,9 +6060,6 @@ button.mitem-uom.mitem-bw::after, .mt-swap::after, .mt-ld-go::after {
 .pw-sheet { max-width: 480px; }
 .pw-body { padding: 4px 16px 18px; }
 .pw-h { font-family: var(--serif); font-size: 1.375rem; margin: 4px 0 10px; text-wrap: balance; }
-.pw-steps { display: flex; gap: 6px; margin: 0 0 14px; }
-.pw-steps span { flex: 1; height: 4px; border-radius: 9px; background: var(--line); }
-.pw-steps span.on { background: var(--ochre); }
 .pw-q { border: 1px solid var(--line); border-radius: 8px; background: var(--card); padding: 12px; margin-bottom: 10px; }
 .pw-ql { font-weight: 650; font-size: 0.90625rem; margin-bottom: 8px; }
 .pw-chips { display: flex; flex-wrap: wrap; gap: 7px; }
@@ -6838,32 +6075,7 @@ button.mitem-uom.mitem-bw::after, .mt-swap::after, .mt-ld-go::after {
   flex: 1; width: 100%; min-height: 48px; border: 0; border-radius: 6px; background: var(--ink); color: var(--paper);
   font: inherit; font-size: 1rem; font-weight: 650; cursor: pointer; margin-top: 4px;
 }
-.pw-back {
-  min-height: 48px; padding: 0 16px; border: 1px solid var(--line-firm); border-radius: 6px; background: transparent;
-  font: inherit; font-size: 0.9375rem; color: var(--ink); cursor: pointer;
-}
-.pw-row { display: flex; gap: 8px; margin-top: 12px; }
-.pw-row .pw-go { margin: 0; }
-.pw-sum {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap;
-  background: color-mix(in oklch, var(--dial-on) 14%, var(--card)); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;
-}
-.pw-sum.over { background: color-mix(in oklch, var(--dial-over) 14%, var(--card)); }
-.pw-sum b { font-family: var(--serif); font-size: 1.3125rem; }
-.pw-sum span { font-size: 0.8125rem; color: var(--muted-2); }
-.pw-meal { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 8px; background: var(--card); padding: 8px 10px; margin-bottom: 7px; }
-.pw-day { width: 36px; flex: none; text-align: center; font-size: 0.8125rem; font-weight: 700; color: var(--muted-2); letter-spacing: 0.06em; }
-.pw-mt { flex: 1; min-width: 0; }
-.pw-mn { display: block; background: none; border: 0; padding: 0; text-align: left; font-family: var(--serif); font-size: 1rem; color: var(--ink); cursor: pointer; min-height: 30px; }
 .pw-mm { font-size: 0.8125rem; color: var(--muted); }
-.pw-swap { flex: none; width: 44px; height: 44px; border: 1px solid var(--line-firm); border-radius: 6px; background: var(--card); font-size: 1.125rem; color: var(--ink); cursor: pointer; }
-.pw-grp { font-size: 0.8125rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin: 14px 0 4px; }
-.pw-li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 2px; border-bottom: 1px solid var(--line-soft); font-size: 0.90625rem; }
-.pw-n { flex: 1; min-width: 0; }
-.pw-for { display: block; font-size: 0.8125rem; color: var(--muted); }
-.pw-p { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
-.pw-li.have { color: var(--muted); }
-.pw-li.have .pw-p { font-weight: 400; }
 .pw-note { font-size: 0.8125rem; color: var(--muted-2); margin: 10px 0 0; }
 
 /* Plan my week: the filters. Counts ride small inside their chip; a
@@ -6924,19 +6136,13 @@ button.mitem-uom.mitem-bw::after, .mt-swap::after, .mt-ld-go::after {
   background: var(--paper); color: var(--ink); font: inherit; font-size: 1rem;
 }
 
-/* The Plan page, worked from: a strip of the week's numbers, + Add on every
-   day, ↻ on each dinner, and a rating once it has been eaten. On a phone the
-   days stack in one column, so a name has the width to be read. */
-.plan-sum { display: flex; gap: 8px; margin: 0 0 10px; }
-.plan-sum:empty { display: none; }
-.plan-sum div { flex: 1; min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
-.plan-sum b { display: block; font-family: var(--serif); font-size: 1.125rem; font-variant-numeric: tabular-nums; }
-.plan-sum span { font-size: 0.75rem; color: var(--muted); }
+/* The Plan page, worked from: + Add on every day, ↻ on each dinner, and a
+   rating once it has been eaten. On a phone the days stack in one column,
+   so a name has the width to be read. */
 .plan-about { margin: 0 0 12px; }
 .plan-about summary { min-height: 44px; display: inline-flex; align-items: center; font-size: 0.8125rem; color: var(--muted); cursor: pointer; list-style: none; }
 .plan-about summary::-webkit-details-marker { display: none; }
 .plan-about .plan-note { margin: 4px 0 8px; }
-.day.today .day-name { color: var(--ochre-text, var(--ochre)); }
 .day-add {
   min-height: 40px; min-width: 44px; padding: 0 10px; border: 1px dashed var(--line-firm); border-radius: 6px;
   background: transparent; color: var(--ink); font: inherit; font-size: 0.78125rem; letter-spacing: 0.02em; text-transform: none; cursor: pointer;
@@ -6976,7 +6182,7 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
 .ad-why { font-size: 0.78125rem; font-weight: 600; color: var(--ok-text); }
 .ad-plus { flex: none; width: 44px; height: 44px; border: 0; border-radius: 6px; background: var(--ink); color: var(--paper); font-size: 1.25rem; cursor: pointer; }
 .day-ctl { display: flex; align-items: center; gap: 4px; }
-.day-ctl .day-x, .day-ctl .day-x2, .day-ctl .day-sw { order: 0; margin: 0; }
+.day-ctl .day-x, .day-ctl .day-sw { order: 0; margin: 0; }
 .day-ctl .day-x { min-width: 32px; min-height: 36px; }
 @media (min-width: 701px) { .day-item { grid-template-columns: minmax(0, 1fr); } .day-ctl { justify-content: flex-end; } }
 
@@ -7000,21 +6206,16 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
 .kit-tog::after { content: ''; position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--knob); transition: left 0.15s; }
 .kit-tog[aria-checked="true"] { background: var(--store); }
 .kit-tog[aria-checked="true"]::after { left: 24px; }
-.kit-h { font-size: 0.78125rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; color: var(--muted); margin: 16px 0 6px; }
-#storePart.hide { display: none; }
 
 /* ------------------------------------------------------------ plan steps
    Plan, one flow: Where · On hand · Meals · Shop. List and Pantry are its
    steps, reached from this bar, not tabs of their own. */
 .tabs .tab[data-view="list"], .tabs .tab[data-view="pantry"] { display: none; }
-.psteps { display: flex; gap: 4px; padding: 8px 16px 6px; background: var(--card); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: var(--z-steps); }
-.psteps.hide { display: none; }
 .pstep { flex: 1; min-width: 0; min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 5px;
   border: 0; background: none; font: inherit; font-size: 0.78125rem; color: var(--muted); cursor: pointer; padding: 0; white-space: nowrap; }
 .pstep::before { content: ''; width: 100%; height: 4px; border-radius: 9px; background: var(--line); }
 .pstep.done::before, .pstep[aria-current="step"]::before { background: var(--ochre); }
 .pstep[aria-current="step"] { color: var(--ink); font-weight: 700; }
-.pstep-n { font-variant-numeric: tabular-nums; }
 .step-k { font-size: 0.71875rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ochre-text, var(--ochre)); font-weight: 700; margin-top: 4px; }
 .step-h { font-family: var(--serif); font-size: 1.4375rem; margin: 4px 0 6px; text-wrap: balance; }
 .step-sub { font-size: 0.875rem; color: var(--muted); line-height: 1.45; margin: 0 0 14px; }
@@ -7030,22 +6231,13 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
 .wh-opt span span { font-size: 0.84375rem; color: var(--muted); line-height: 1.4; }
 .wh-near { display: flex; align-items: center; gap: 10px; margin: -2px 0 12px 34px; font-size: 0.875rem; }
 /* On hand */
-.kit-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.78125rem; color: var(--muted); margin: 0 0 12px; }
-.kit-legend span { display: inline-flex; align-items: center; gap: 6px; }
-.kit-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: none; }
-.kit-dot.s { background: var(--kit-store); }
-.kit-dot.w { background: var(--kit-walmart); }
 .kit-pill { display: inline-flex; align-items: center; gap: 7px; }
 .kit-grp { margin-bottom: 14px; }
 .kit-gh { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; color: var(--muted); margin: 0 0 7px; }
 .kit-gh small { letter-spacing: 0; text-transform: none; font-weight: 400; font-size: 0.75rem; }
 .kit-more { min-height: 44px; border: 1px dashed var(--line-firm); background: none; border-radius: 99px; padding: 0 12px; font: inherit; font-size: 0.84375rem; color: var(--muted); cursor: pointer; }
-.store-carries { margin-top: 10px; }
-.store-carries > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; list-style: none; }
-.store-carries > summary::-webkit-details-marker { display: none; }
 /* Shop */
 .low-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 0 0 12px; }
-.low-h { font-weight: 650; margin-bottom: 8px; }
 .low-p { font-size: 0.78125rem; color: var(--muted); margin: 8px 0 0; }
 .low-pill[aria-pressed="true"] { background: var(--ochre); border-color: var(--ochre); color: var(--on-ochre); }
 .list-group.where-s, .list-group.where-b { border-radius: 10px; padding: 10px 12px 4px; }
@@ -7082,17 +6274,11 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
   .tabs .tab[aria-selected="true"]::before { background: var(--ochre); }
   .tab.tr-tab-live::after { top: 11px; }
   /* The rest are bands hung off the control, which the finger cannot see. */
-  .synbtn, .mslot-act, .m-toast button, .scaler-box button { position: relative; }
-  .synbtn::after, .mslot-act::after, .m-toast button::after, .scaler-box button::after {
+  .synbtn, .m-toast button, .scaler-box button { position: relative; }
+  .synbtn::after, .m-toast button::after, .scaler-box button::after {
     content: ''; position: absolute; left: 50%; top: 50%;
     width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%);
   }
-  /* A meal's verbs are 40 apart centre to centre at a 6px gap, so their
-     bands would overlap: ten pixels of gap and each band is its own. (The
-     icon buttons, the pantry ×, the cups/grams switch and "How is this
-     scored?" are the parts' own 44px boxes, so they hang no band here: the
-     parts draw what you see in ::after, and a band there would bend it.) */
-  .mslot-acts { gap: 10px; }
   /* A pill clips what hangs off its buttons, so it stops clipping and its
      end buttons carry the rounding the clip used to cut. */
   .scaler-box { overflow: visible; }
@@ -7156,8 +6342,6 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
 .btn-primary.to-done:not(#u#u):hover { background: var(--ink); }
 .mfs-amt .btn-primary:not(#u#u) { min-height: 48px; }
 .wm-btn:not(#u#u) { min-height: 44px; }
-/* Nourish's "+ Add food" is the one big button on its bar, on purpose. */
-.mday-add:not(#u#u) { min-height: 48px; }
 
 /* -- the shared compact shape ---------------------------------------- */
 :is(.ghost, .pw-back, .copy-order, .favbtn, .day-add,
@@ -7307,9 +6491,6 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
 .cal-top { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin: 2px 0 0; }
 .cal-top .cal-sp { flex: 1; }
 .cal-bar { display: flex; align-items: center; margin: 0 0 6px; }
-.cal-range { flex: 1; text-align: center; line-height: 1.15; }
-.cal-range .view-title { font-size: 1.1875rem; margin: 0; }
-.cal-range small { font-size: 0.78125rem; color: var(--muted); }
 #planMyWeek:disabled { opacity: 0.35; }
 .plan-grid:has(.cal-day) { display: block; max-width: 760px; }
 .day.cal-day { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; align-items: start;
@@ -7361,11 +6542,6 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
 .day-rate button[data-v="2"][aria-pressed="true"] svg { fill: currentColor; }
 .day-rate button[data-v="-1"][aria-pressed="true"]:not(#u#u) { color: var(--dial-over); }
 .day-rate-say { font-size: 0.75rem; color: var(--muted); margin-left: 4px; }
-/* Typing a portion is one row, "400 g": the box's single column is for a long
-   label that has to wrap, and it stood the number over its unit. */
-.mitem-r3 .mstep .mitem-amt.mitem-typing { display: flex; flex-wrap: nowrap; align-items: baseline; justify-content: center; gap: 4px; }
-.mitem-r3 .mstep .mitem-amt.mitem-typing .mstep-in { width: 4.5ch; flex: none; }
-.mitem-r3 .mstep .mitem-amt.mitem-typing i { white-space: nowrap; }
 
 /* ---------------------------------------------------------- step headers
    Every Plan step opens the same way: its label, a title, one status line,
@@ -7612,10 +6788,6 @@ html.door-up, html.door-up body { overflow: hidden; }
 /* ---- Plan my week: see what fits, see what landed --------------------------
    The count is a button that opens the dinners that fit, to tick the ones
    wanted; what the pick puts on the week is marked New, with Undo. */
-button.pw-see { text-align: left; background: var(--card); border: 1.5px solid var(--line-firm); border-radius: 10px; padding: 6px 12px;
-  font: inherit; font-size: 0.875rem; color: var(--ink); cursor: pointer; }
-button.pw-see:disabled { cursor: default; border-style: dashed; }
-.pw-see i { display: block; font-style: normal; font-size: 0.875rem; font-weight: 650; color: var(--ochre-text); }
 .pw-toq { margin: -4px 0 4px; }
 .pw-lede { margin: 0 0 10px; }
 .pw-fits { display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 4px; }
@@ -7709,144 +6881,20 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 
 /* The tick: the meal's dot, drawn as the round box the mockup has. Pressed,
    it is green with a check — the meal eaten. */
-#macroSlots .mcard-shut .mday-dot,
-#macroSlots .mcard-open .mday-dot { width: 44px; height: 44px; margin: -7px -4px -7px -10px; }
-#macroSlots .mcard-shut .mday-dot::before,
-#macroSlots .mcard-open .mday-dot::before {
-  width: 26px; height: 26px; border-width: 1.75px; background: var(--card);
-  background-position: center; background-repeat: no-repeat; background-size: 15px;
-}
 #macroSlots .mday-stop.done .mday-dot::before {
   background-color: var(--green); border-color: var(--green);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
 }
 
-/* Shut */
-#macroSlots .mcard-shut { padding: 4px 0 2px; }
-#macroSlots .mcard-shut .mslot-h { align-items: flex-start; padding: 8px 12px 8px 10px; }
-#macroSlots .mcard-head { flex-direction: column; align-items: stretch; flex-wrap: nowrap; row-gap: 2px; padding-bottom: 2px; }
-.mcard-t { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 30px; }
-.mcard-t .mslot-name { flex: 0 1 auto; }
-.mcard-n { font-size: 0.8125rem; color: var(--muted); white-space: nowrap; }
-.mcard-k { margin-left: auto; font-size: 0.8125rem; color: var(--muted); white-space: nowrap; }
-.mcard-k b { font-size: 0.9375rem; font-weight: 600; color: var(--ink); }
-.mcard-t .mfold-cue { flex: none; }
-.mcard-names { display: flex; gap: 6px; min-width: 0; font-size: 0.9375rem; color: var(--ink); }
-.mcard-nm { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mcard-kept { flex: none; display: inline-flex; align-items: center; gap: 3px; font-size: 0.8125rem; color: var(--ochre-text); align-self: center; }
-.mcard-more { flex: none; font-size: 0.8125rem; color: var(--note); align-self: center; }
-.mcard-v { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
-.mcard-tr { flex: 1 1 auto; height: 5px; border-radius: 3px; background: var(--line-soft); overflow: hidden; }
-.mcard-fi { display: block; height: 100%; border-radius: 3px; background: var(--ochre); }
-.mcard-say { font-size: 0.8125rem; color: var(--note); white-space: nowrap; }
-.mcard-shut.is-on .mcard-fi { background: var(--green); }
-.mcard-shut.is-over .mcard-fi { background: var(--warn); }
-.mcard-shut.is-eaten .mcard-fi { background: var(--green); opacity: 0.45; }
-.mcard-shut.is-eaten .mcard-names { color: var(--note); }
-.mcard-say.is-on, .mcard-shut.is-on .mcard-say, .mcard-shut.is-eaten .mcard-say { color: var(--green); font-weight: 600; }
-.mcard-say.is-over, .mcard-shut.is-over .mcard-say { color: var(--warn); font-weight: 600; }
-
-/* Open: one line a food */
-#macroSlots .mcard-row {
-  display: block;
-  background: none; border: 0; border-top: 1px solid var(--line-soft); border-radius: 0;
-  padding: 0; margin: 0;
-}
-.mcard-line { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 5px 0; }
-#macroSlots .mcard-row:first-child { border-top: 0; }
-#macroSlots .mcard-row.held { border-color: var(--line-soft); }
-#macroSlots .mcard-row.moved, #macroSlots .mcard-row.fresh {
-  background: var(--hint); border-radius: 8px; border-top-color: transparent;
-  margin-inline: -6px; padding-inline: 6px;
-}
-#macroSlots .mcard-row + .mcard-row.moved, #macroSlots .mcard-row.moved + .mcard-row { border-top-color: transparent; }
-#macroSlots .mcard-line .mitem-nm { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
-#macroSlots .mcard-row .mitem-name { white-space: normal; overflow-wrap: break-word; text-align: left; font-family: var(--sans); font-size: 0.9375rem; line-height: 1.3; color: var(--ink); max-width: 100%; }
-/* Eaten is ink, planned is lighter (Blake: "Eaten shows a ✓ in normal text,
-   planned looks lighter; no strike-through"). */
-#macroSlots .mcard-row:not(.eaten) .mitem-name { color: var(--muted); }
-#macroSlots .mcard-row small { font-size: 0.8125rem; color: var(--note); display: inline-flex; align-items: center; gap: 4px; }
-.mcard-was { color: var(--ochre-text) !important; }
 .mcard-lk { width: 12px; height: 12px; flex: none; }
-.mcard-new { font-size: 0.8125rem; font-weight: 700; color: var(--on-ochre); background: var(--ochre); border-radius: 99px; padding: 1px 8px; }
-.mcard-amt {
-  flex: 0 1 auto; display: inline-flex; align-items: center; gap: 5px;
-  min-height: 44px; padding: 4px 9px; border: 1.5px solid var(--line-control); border-radius: 9px;
-  background: var(--field); font-family: var(--sans); font-size: 0.8125rem; font-weight: 600; color: var(--ink);
-  cursor: pointer; white-space: nowrap;
-}
-/* The amount is never cut short — it is the number this card is for. The
-   name wraps instead. */
-.mcard-amt { flex: none !important; position: relative; }
-.mcard-stk { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
-.mcard-g { font-size: 0.875rem; font-weight: 600; white-space: nowrap; }
-.mcard-u { font-size: 0.8125rem; font-weight: 400; color: var(--note); white-space: nowrap; }
-.mcard-dot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.mcard-amt:hover { border-color: var(--line-firm); }
-.mcard-amt[aria-expanded="true"] { border-color: var(--ochre); box-shadow: 0 0 0 2px var(--ochre-wash); }
-.mcard-caret { width: 11px; height: 11px; color: var(--muted); }
-.mcard-amt-p { display: none; }
-.mcard-kc { flex: none; width: 34px; text-align: right; font-size: 0.8125rem; color: var(--note); }
-/* A thumb wide, drawn at the plate's size: the box is 44px to the finger and
-   30px to the eye — the outer seven pixels are transparent border. */
-#macroSlots .mcard-line .mitem-ate {
-  margin: 0; width: 44px; height: 44px; border: 7px solid transparent; border-radius: 11px;
-  background-clip: padding-box; box-shadow: inset 0 0 0 1px var(--line-firm);
-}
-#macroSlots .mcard-line .mitem-ate:checked { border-color: transparent; box-shadow: none; }
-#macroSlots .mcard-row.eaten .mcard-amt { color: var(--note); }
 
 /* One food's panel */
 .mcard-panel { background: var(--hint); border-radius: 10px; padding: 10px 12px 12px; margin: 0 -4px 8px; display: flex; flex-direction: column; gap: 9px; }
-.mcard-ptop { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .mcard-big { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; }
-.mcard-ptop .mcard-bigbw { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; padding: 2px 10px; }
 .mcard-big small { font-family: var(--sans); font-size: 0.8125rem; font-weight: 400; color: var(--note); margin-left: 6px; }
 .mcard-pmac { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.8125rem; color: var(--note); }
-.mcard-dial { display: flex; align-items: center; gap: 10px; }
 .mcard-panel .mstep-x { font-size: 0.9375rem; font-weight: 600; }
 .mcard-panel .mitem-uom, .mcard-panel .mitem-mac { font-size: 0.8125rem; }
-.mcard-slide { width: 100%; accent-color: var(--ochre); height: 44px; margin: 0; cursor: pointer; }
-.mcard-slide:disabled { opacity: 0.45; cursor: default; }
-.mcard-icons { display: flex; align-items: center; gap: 8px; }
-.mcard-i {
-  width: 44px; height: 44px; flex: none; border-radius: 50%; padding: 0;
-  border: 1.5px solid var(--line-control); background: var(--field); color: var(--ink);
-  display: grid; place-items: center; cursor: pointer;
-}
-.mcard-i svg { width: 22px; height: 22px; }
-.mcard-i:hover { border-color: var(--line-firm); }
-.mcard-i.mlock[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--card); }
-.mcard-i.mpin[aria-pressed="true"] { background: var(--ochre-soft); border-color: var(--ochre); color: var(--ochre-text); }
-.mcard-i.mfav[aria-pressed="true"] { color: var(--ochre); border-color: var(--ochre); }
-.mcard-i.mfav[aria-pressed="true"] svg path { fill: currentColor; }
-.mcard-i.mdel { margin-left: auto; color: var(--danger); }
-
-/* The meal's foot */
-.mcard-add {
-  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; margin: 6px 0 2px;
-  padding: 0 12px; border: 1.5px dashed var(--line-firm); border-radius: 10px; background: transparent;
-  font-family: var(--sans); font-size: 0.9375rem; color: var(--note); cursor: pointer; text-align: left;
-}
-.mcard-add:hover { border-color: var(--ochre); color: var(--ink); }
-.mcard-add .mday-ic { width: 16px; height: 16px; }
-#macroSlots .mcard-foot { display: flex; align-items: center; gap: 10px; padding: 6px 10px; flex-wrap: nowrap; }
-#macroSlots .mcard-bal { width: 46px; height: 44px; border-radius: 9px; background: var(--ink); border-color: var(--ink); color: var(--card); }
-#macroSlots .mcard-bal svg { width: 24px; height: 24px; }
-#macroSlots .mcard-bal:disabled { opacity: 0.4; cursor: default; }
-.mcard-foot .mcard-say { flex: 1 1 auto; min-width: 0; white-space: normal; }
-.mcard-undo { flex: none; min-height: 44px; }
-.mcard-verbs { flex: none; display: flex; gap: 6px; margin-left: auto; }
-/* A plate key's size (Blake: "the box size that is in the meal/food card
-   uses"), and a thumb wide on a finger. */
-#macroSlots .mcard-verbs .mslot-act { width: 36px; height: 36px; border-radius: 8px; }
-@media (pointer: coarse) { #macroSlots .mcard-verbs .mslot-act { width: 44px; height: 44px; } }
-.mcard-verbs { gap: 4px; }
-
-@media print {
-  .mcard-amt-p { display: inline; font-size: 0.8125rem; }
-  .mcard-line { min-height: 0; }
-}
 
 /* The meal's four pills in its sheet: four to a row, the calories a little
    wider, each its share of the row, so they hold still while the numbers

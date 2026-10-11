@@ -15,12 +15,6 @@
   var mDay = app.mDay;
   var LIVE = app.LIVE;
 
-  function esc(s) {
-    return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-  }
-
   /* What this meal still has room for. mShares works the day's remainder into
      a share per empty meal; this is that share, in the words the plate rows
      already use. */

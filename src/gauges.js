@@ -2,8 +2,8 @@
  * meals landed on their share (mAssumed); one gauge, the plate against a
  * tick where the plan is, coloured only when the miss moves the day
  * (mGauge); the four in order with their marks (MGAUGE); and the pills that
- * fill toward a meal's target, drawn and said (mFillPill, MPILL_TONE,
- * mMealPillsHTML, mMealPillsSay). The longer account is with the code.
+ * fill toward a target, drawn and said (mFillPill, MPILL_TONE,
+ * mMealPillsSay). The longer account is with the code.
  *
  * A part of app.js (Nourish) in a file of its own. app.js calls
  * HiveParts.gauges(app) once, as it starts, and keeps what it gives back
@@ -170,137 +170,6 @@
     met: 'var(--dial-on-pale)', quiet: 'var(--mlim-quiet-pale)',
     near: 'var(--dial-under-pale)', past: 'var(--dial-over-pale)' };
 
-  /* The four of them, on the meal's own header row.
-   *
-     Calories carries a gauge like the other three rather than sitting beside
-     them as a bare number: three bars with a stray digit in front read as a
-     number that had nowhere else to go. The figure sits ABOVE its own track,
-     which is also the only way four of these fit on a 390 px row.
-
-     Planned but not eaten draws faded — a full-looking dinner at eleven in
-     the morning otherwise reads as food you have already had. */
-  /* The meal's four numbers, as pills that fill toward that meal's target.
-   *
-     These replace the ticked gauges. The gauges were the right answer to
-     "how far along is this" and a poor one to "how far along toward WHAT" —
-     the tick marked the target but never named it, so the number it was
-     marking lived only in the bar's geometry. A pill says 128/217 outright
-     and fills behind it, which is the day row's own construction said about
-     one meal. One vocabulary on the screen instead of two.
-
-     The colour rule is the gauges' and is unchanged, because it was the part
-     that was hard-won: the band is measured against the DAY, not the meal's
-     share, or a meal's eleven-to-nineteen grams of fat colours every card
-     every day and colour that is always on has stopped saying anything. */
-  /* `empty` is a meal with nothing on it, and it changes which number the
-     pill prints.
-   *
-     The target used to live in the LENGTH of the rail, which works while
-     there is food on the meal and says nothing at all when there is not: an
-     empty meal's fill is nought, so the rail is blank and the only figure
-     left standing is the 0. Blake, looking at a breakfast reading 0/0/0/0:
-     "I can't see what my target macros are from the main screen." The figure
-     existed the whole time — in data-want, and spoken to a screen reader as
-     "0 of 51 protein" — which is every audience but the one holding the
-     phone.
-
-     So an empty meal prints what it is FOR instead of printing nought four
-     times. Nothing else moves: same pill, same width, same rail, same row.
-     The moment food lands the number becomes what is on the plate and the
-     colour wakes up, which is also the moment the rail starts saying
-     something. */
-  function mMealPillsHTML(sub, ask, targets, planned, empty) {
-    if (!ask) return '';
-    var sh = ask.now || ask;                 // plain shares still work
-    var spent = ask.spent || {};
-    var day = { kcal: kcalOf(targets), p: targets.p, f: targets.f, c: targets.c };
-    var out = MGAUGE.map(function (g) {
-      var m = g[0], want = sh[m] || 0, got = sub[m] || 0;
-      /* Nothing left of this macro, and the day has begun: say it in a word.
-         A meal asked for 0 and holding 0 is not "on target", it is a meal the
-         day can no longer pay for, and 0/0 says the first of those. */
-      if (spent[m]) {
-        /* No track, because there is no target left to be a proportion OF —
-           an empty rail under an em dash would be a bar drawn against zero.
-           The dashed cell says it instead, the way it always has. */
-        return '<span class="mmp spent' + (m === 'kcal' ? ' kc' : '') + '">' +
-          '<span class="mmp-n"><span class="mmp-v">' +
-          (got > 0 ? Math.round(got) : '&mdash;') + '</span>' +
-          '<i class="mb-' + m + '">' + g[1] + '</i></span>' +
-          /* The rail stays, dashed and empty. Without it the pill was shorter
-             than its neighbours, sat out of line and read as broken (Blake,
-             2026-10-04: "These pills are not working"); the dashes are the
-             "nothing left for this today" the border used to say. */
-          '<span class="mmp-tr mmp-tr-none"></span></span>';
-      }
-      var gg = mGauge(got, want, day[m]);
-      if (!gg) return '';
-      /* The fill is proportion of the TARGET and stops at the track's end;
-         the state class says which side of the band it landed. Painted here
-         rather than by a class because the proportion is the data. */
-      var pct = want > 0 ? Math.min(100, (got / want) * 100) : 0;
-      /* The old plan used to be kept beside the number that replaced it, so
-         the card could answer "was that me, or did the day move". Blake, on
-         his own day: "those little numbers under the pills? I don't know what
-         they mean. Let's just get rid of them."
-       *
-         Fair, and the reasoning was thin. A second figure under a pill is
-         only legible if you already know the first one moved, which is the
-         thing it was there to tell you — and it cost the pills their one
-         width, since a pill grown to hold one came out 75.4 px against an
-         unmoved 59. The cascade line above the meals says what moved, in
-         words, at the moment it moves. That is the place for it. */
-      /* A meal asked for as much, or as little, as a meal can be asked for.
-         Only the calorie pill carries it, because the cap is a calorie cap —
-         and only when it BINDS, which on an ordinary day is never. It is the
-         one mark that says the number beside it is not the arithmetic's
-         answer but the limit the arithmetic ran into. */
-      var capMark = (ask.capped && m === 'kcal') ? ' mmp-cap' : '';
-      /* The target stops being a printed figure and becomes the length of the
-         track under the number.
-       *
-         It was 7.5px at 55% opacity — the smallest type in the app, three
-         sizes below anything near it — so a pill said a number and a mood and
-         the comparison, which is the pill's entire job, was not legible at
-         arm's length. That is the same complaint that killed the figures
-         UNDER the pills a few commits ago ("I don't know what they mean"),
-         and it applies with more force to the one that mattered.
-       *
-         The proportion was already being computed — it painted the pill's
-         gradient — so nothing is lost by drawing it as a bar instead of
-         hiding it behind a fill: the same number, at a size an eye can use,
-         and the value beside it climbs from 9.5px to 12. Over target fills
-         the track whole and darkens its ground, because a bar pinned at its
-         own maximum cannot say how far past it went and the ground can.
-       *
-         The figure is not gone from the app, only from the glyph: it is in
-         the head's own aria-label, said in words, which is the first time
-         this strip has been readable to a screen reader at all. */
-      /* data-want is the target, kept as a number on the element that draws
-         it. Not scaffolding: the figure left the glyph and the only other
-         place it survives is a sentence in the head's label, and prose is the
-         wrong thing for anything but a reader to parse — reword the sentence
-         and every check of it breaks for no reason. This is the machine half
-         of the same fact, taken from the same `want`, and the suite asserts
-         the two agree so they cannot drift apart in silence. */
-      /* An empty meal prints its target where a fed one prints its plate.
-         Both are the same fact said from different ends, and the strip's own
-         `empty` class is what tells a reader which end this is. */
-      return '<span class="mmp' + (m === 'kcal' ? ' kc' : '') + capMark + ' ' + gg.st +
-        '" data-want="' + Math.round(want) + '">' +
-        '<span class="mmp-n"><span class="mmp-v">' +
-          Math.round(empty ? want : got) + '</span>' +
-          '<i class="mb-' + m + '">' + g[1] + '</i></span>' +
-        '<span class="mmp-tr"><i style="width:' + pct.toFixed(1) + '%"></i></span>' +
-        '</span>';
-    }).join('');
-    /* Still aria-hidden, and now honestly so: every figure on this strip is
-       said in words in the head's own label, so a reader that announced both
-       would hear the meal twice. See mMealPillsSay. */
-    return out ? '<span class="mmps' + (empty ? ' mmps-blank' : planned ? ' planned' : '') +
-      '" aria-hidden="true">' + out + '</span>' : '';
-  }
-
   /* The same four numbers, in words, for the label of whatever carries them.
    *
      The strip has been aria-hidden since it was built and nothing ever said
@@ -325,5 +194,5 @@
     return parts.join(', ');
   }
 
-  return { mAssumed: mAssumed, mGauge: mGauge, mFillPill: mFillPill, mMealPillsHTML: mMealPillsHTML, mMealPillsSay: mMealPillsSay, MGAUGE: MGAUGE, MPILL_TONE: MPILL_TONE };
+  return { mAssumed: mAssumed, mGauge: mGauge, mFillPill: mFillPill, mMealPillsSay: mMealPillsSay, MPILL_TONE: MPILL_TONE };
 };

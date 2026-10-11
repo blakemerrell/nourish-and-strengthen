@@ -1296,7 +1296,6 @@ window.Store = (function () {
     get configured() { return configured(); },
     // a save to this phone's storage is failing: see write
     get storageFull() { return Object.keys(lsBad).length > 0; },
-    encodeKey: encodeKey,
 
     /* The signed-in Firestore handle, for the one thing in this app that
        deliberately does not go through this file. My Day is personal — it
@@ -1748,22 +1747,6 @@ window.Store = (function () {
       });
     },
 
-    /* Never leave nothing to plan in — the last week empties instead. */
-    deleteWeek: function () {
-      var order = ids();
-      if (order.length < 2) { this.clearPlan(); return; }
-      var gone = state.active;
-      var i = order.indexOf(gone);
-      var next = order[i + 1] || order[i - 1];
-      push(function () {
-        var u = { active: next }; u['weeks.' + gone] = FV.delete(); return doc.update(u);
-      }, function () {
-        var weeks = Object.assign({}, state.weeks);
-        delete weeks[gone];
-        state.weeks = weeks; state.active = next;
-      });
-    },
-
     /* A day holds recipe ids. One cooked at anything other than its own serving
        count is stored as {i, x} instead, so a plain id still means "as written"
        and a week saved by an older version still reads. */
@@ -1799,12 +1782,10 @@ window.Store = (function () {
 
     /* The shared maps, one setter each way. */
     kitchen: function (key) { return state.kitchen[key]; },
-    kitchenAll: function () { return state.kitchen; },
     setKitchen: function (key, v) { setMapKey('kitchen', key, v === 1 || v === 0 ? v : null); },
     src: function (key) { return state.src[key]; },
     setSrc: function (key, v) { setMapKey('src', key, v === 's' || v === 'b' ? v : null); },
     rating: function (id) { return state.rate[id] || 0; },
-    ratings: function () { return state.rate; },
     setRating: function (id, v) { setMapKey('rate', String(id), v === 2 || v === 1 || v === -1 ? v : null); },
     opt: function (k, dflt) { var v = state.opts[k]; return v === 1 || v === 0 ? v === 1 : !!dflt; },
     setOpt: function (k, on) { setMapKey('opts', k, on ? 1 : 0); },
@@ -2005,16 +1986,6 @@ window.Store = (function () {
         state.pantryNew = Object.assign({}, state.pantryNew); state.pantryNew[key] = item;
       });
       return key;
-    },
-
-    renamePantryItem: function (key, label) {
-      if (!state.pantryNew[key]) return;
-      var item = Object.assign({}, state.pantryNew[key], { l: String(label).trim() });
-      push(function () {
-        var u = {}; u['pantryNew.' + key] = item; return doc.update(u);
-      }, function () {
-        state.pantryNew = Object.assign({}, state.pantryNew); state.pantryNew[key] = item;
-      });
     },
 
     removePantryItem: function (key) {

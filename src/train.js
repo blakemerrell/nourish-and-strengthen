@@ -5258,7 +5258,7 @@
   function seshHTML(ms, nx, c, noBack) {
     if (!c || (nx && c.w === nx.w && c.d === nx.d)) return todayHTML(ms, nx);
     var back = nx && !noBack ? '<button class="tr-lnk tr-lnk-q" data-t="gridsel" data-w="' + nx.w + '" data-d="' + nx.d + '">Back to the next one</button>' : '';
-    var day = ms.days[c.d], wk = wkName(ms, c.w), cd = colDays(ms, nx)[c.d];
+    var wk = wkName(ms, c.w), cd = colDays(ms, nx)[c.d];
     if (isEz(ms, c.d)) {
       return '<div id="trSesh" class="tr-card tr-sesh tr-ez">' +
         '<div class="tr-eyebrow">' + (ezFor(ms, c.w, c.d) ? 'Done' : 'Easy day') + ' · ' + wk + '</div>' +

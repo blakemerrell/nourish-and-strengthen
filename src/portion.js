@@ -378,6 +378,6 @@
      cooking rather than while eating. Deleted rather than left standing: a
      function nothing calls is a claim that something does. */
 
-  return { mUnitWord: mUnitWord, mByGram: mByGram, mDialUnit: mDialUnit, mLadder: mLadder, mStepX: mStepX, mTypedFromX: mTypedFromX, mXFromTyped: mXFromTyped, mPortion: mPortion, mPortionText: mPortionText,
-    mDialG: mDialG, mDialEst: mDialEst, mDialText: mDialText, mDialMeasure: mDialMeasure, mDialStep: mDialStep, mDialFromX: mDialFromX, mXFromDial: mXFromDial };
+  return { mByGram: mByGram, mDialUnit: mDialUnit, mLadder: mLadder, mStepX: mStepX, mPortion: mPortion, mPortionText: mPortionText,
+    mDialG: mDialG, mDialText: mDialText, mDialMeasure: mDialMeasure, mDialStep: mDialStep, mDialFromX: mDialFromX, mXFromDial: mXFromDial };
 };

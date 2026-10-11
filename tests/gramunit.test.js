@@ -94,8 +94,9 @@ module.exports = {
       unit: ((document.querySelector('.mfs-u') || document.querySelector('#mfsUnit option:checked')) || {}).textContent,
     }));
     t.ok('the food’s own page offers it in grams too', fs.unit === 'g', JSON.stringify(fs));
-    const one = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mt-div')].map((d) => d.textContent).find((x) => /On your plate/.test(x)) || '');
-    t.ok('and says the plate once: “30 g”, not “30 g · 30 g”', /On your plate: 30 g$/.test(one.trim()), one);
+    // the plate's line since the page went compact (2026-10-11): "On your plate · 30 g"
+    const one = await p.evaluate(() => (document.querySelector('#modalRoot .mfs-plate .mfs-k') || {}).textContent || '');
+    t.ok('and says the plate once: “30 g”, not “30 g · 30 g”', /On your plate · 30 g$/.test(one.trim()), one);
     await p.fill('#mfsAmt', '40');
     await p.waitForTimeout(200);
     await p.click('#mfsAdd');

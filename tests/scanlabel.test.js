@@ -142,10 +142,12 @@ module.exports = {
       b.scrollIntoView({ block: 'center' }); b.click();
     });
     await a.waitForTimeout(250);
-    const page = await a.evaluate(() => ({ alg: (document.querySelector('.mfs-alg') || {}).textContent || '',
-      micro: (document.querySelector('.mfs-micro') || {}).textContent || '' }));
+    /* One line under the name since the page went compact (2026-10-11),
+       whose list it is said once at its end; the sodium in the label's grid. */
+    const page = await a.evaluate(() => ({ alg: (document.querySelector('.mfs-meta') || {}).textContent || '',
+      micro: [...document.querySelectorAll('.mfs-grid .mfs-nr')].map((c) => c.textContent).find((x) => /^Sodium/.test(x)) || '' }));
     t.ok('and its own page says what it contains, and counts the sodium typed',
-      /Contains milk, soy, sesame/.test(page.alg) && /Open Food Facts/.test(page.alg) && /460 mg sodium/.test(page.micro),
+      /Contains milk, soy, sesame/.test(page.alg) && /Open Food Facts$/.test(page.alg.trim()) && /^Sodium460 mg$/.test(page.micro),
       JSON.stringify(page));
     if (process.env.SHOT) {
       await a.screenshot({ path: process.env.SHOT + '/foodpage.png', fullPage: false });
@@ -244,8 +246,8 @@ module.exports = {
       b.scrollIntoView({ block: 'center' }); b.click();
     });
     await g.waitForTimeout(250);
-    const grades = await g.evaluate(() => [...document.querySelectorAll('.mfs-alg')].map((x) => x.textContent).join(' | '));
-    t.ok('and its own page says them again', /Nutri-Score B · Ultra-processed \(NOVA 4\) \(Open Food Facts\)/.test(grades), grades);
+    const grades = await g.evaluate(() => (document.querySelector('.mfs-meta') || {}).textContent || '');
+    t.ok('and its own page says them again', /Nutri-Score B · Ultra-processed \(NOVA 4\) · Open Food Facts/.test(grades), grades);
     if (process.env.SHOT) {
       await g.keyboard.press('Escape');
       await g.waitForTimeout(150);

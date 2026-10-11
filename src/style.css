@@ -1702,14 +1702,6 @@ select { max-width: 280px; }
 .mfs-pn { font-family: var(--serif); }
 .mfs-px { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .mfs-pm { grid-column: 1 / -1; font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.mfs-micro {
-  display: flex;
-  gap: 14px;
-  margin-top: 6px;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  font-size: 0.8125rem;
-}
 .mp-meals { display: flex; gap: 5px; margin: 12px 0 2px; overflow-x: auto; scrollbar-width: none; }
 .mp-meals::-webkit-scrollbar { display: none; }
 .mp-meals button {
@@ -2505,23 +2497,6 @@ select { max-width: 280px; }
 .nfs-src { margin-top: 12px; font-size: 0.8125rem; line-height: 1.4; color: var(--muted-2); }
 /* a link in a line of text: a thumb tall, the line unmoved */
 .nfs-src a { color: var(--ochre-text); display: inline-block; padding: 13px 0; margin: -13px 0; }
-/* The food's own page (src/foodsheet.js) draws the same panel, read-only:
-   its rows are .mfs-nr too, so the list's spacing and grey names are undone
-   inside it */
-.nfl-read { margin-top: 4px; }
-.nfl .mfs-nr { justify-content: flex-start; gap: 6px; padding: 0; border-bottom: 1px solid var(--ink); font-size: 1rem; }
-.nfl .mfs-nr span { color: var(--ink); }
-.nfl .mfs-nr span em { font-style: normal; font-weight: 800; }
-.nfl .mfs-nr.sub { padding-left: 16px; }
-.nfl .mfs-nr b { font-weight: 400; }
-.nfl .mfs-nr i.nfl-dv { font-style: normal; }
-.nfl-read .nfl-serv { min-height: 34px; justify-content: space-between; }
-.nfl-read .nfl-cal { border-bottom: 5px solid var(--ink); padding: 2px 0; align-items: flex-end; justify-content: space-between; }
-.nfl-read .nfl-cal span { font-size: 1.75rem; font-weight: 900; line-height: 1.1; }
-.nfl-read .nfl-cal b { font-size: 2rem; font-weight: 900; line-height: 1.1; }
-/* the same line on the food's own page */
-.mfs-alg { font-size: 0.875rem; margin-top: 6px; }
-.mfs-alg span { font-size: 0.8125rem; color: var(--muted); }
 /* the meal rows: arrow, name, kind, gone — edited in place, saved together */
 /* One meal, one line: arrow, name, kind, share, gone. Everything is scoped
    under .mtm-row because the phone media query hands every bare .txt the
@@ -6626,17 +6601,104 @@ button.mitem-uom.mitem-bw::after, .mt-swap::after, .mt-ld-go::after {
 .mcf-x { flex: none; color: var(--muted-2); font-size: 0.8125rem; }
 .mcf-go { width: 100%; gap: 6px; color: var(--ink); border-color: var(--line-firm); font-weight: 600; }
 .mcf-go .mday-ic { width: 18px; height: 18px; stroke-width: 2; }
-.mfs-amt { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-.mfs-amt input { width: 92px; min-height: 44px; font-size: 1.125rem; text-align: right; padding: 6px 10px;
-  border: 1px solid var(--line-firm); border-radius: 4px; background: var(--card); color: var(--ink); }
-.mfs-amt select { min-height: 44px; font-size: 1rem; }
+/* ---- a food's own page, compact (src/foodsheet.js) ----
+   Blake, on the scan-fix mockup (2026-10-11): "this whole think is really
+   hard to use, make this a lot more compact please". It was a screen and a
+   half: the allergens and the grades a line each, the plate, a divider and a
+   line of fibre and salt, "Add more to …", an amount box and a big button
+   wrapped onto their own lines, and a Nutrition Facts panel with its % Daily
+   Values. Now what it is takes a line, the plate a line, the amount and its
+   Add a line, and the label is a grid of two columns.
+   The rows of a sheet are a grid, so align-content: the phone rule makes a
+   sheet the screen's height (.sheet, min-height), and a grid hands that
+   height out as gaps between the rows. */
+.mfs-sheet { display: grid; gap: 8px; align-content: start; }
+.mfs-sheet .mfs-name { margin-top: 0; }
+.mfs-meta { font-size: 0.8125rem; line-height: 1.4; color: var(--muted); margin-top: -6px; }
+.mfs-meta .mfs-one { font-size: inherit; color: inherit; margin: 0; }
+.mfs-meta b { color: var(--ink); font-weight: 600; }
+.mfs-fix {
+  justify-self: start; min-height: 44px; margin: -8px 0 -6px; padding: 0; border: 0; background: none;
+  font: inherit; font-size: 0.8125rem; text-align: left; color: var(--muted); cursor: pointer;
+}
+.mfs-fix b { color: var(--ochre-text); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.mfs-sheet .mt-div { margin: 4px 0 0; }
+.mfs-plate {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 10px;
+  padding: 8px 0 0; border-top: 1px solid var(--line-soft);
+}
+.mfs-k { font-size: 0.8125rem; font-weight: 600; color: var(--label); }
+.mfs-plate .mk-tot { margin: 0; font-size: 0.875rem; }
+.mfs-amt { display: grid; grid-template-columns: 5em minmax(4.5em, 1fr) auto; align-items: center; gap: 8px; }
+/* boxes, over the sheet's underlined figures (.mt-sheet input), which read as text to change rather than a box to type in */
+.mfs-sheet .mfs-amt input:not([type="checkbox"]), .mfs-sheet .mfs-amt select {
+  width: 100%; min-width: 0; min-height: 44px; padding: 0 10px; border: 1px solid var(--line-firm); border-radius: 8px;
+  background: var(--card); color: var(--ink); font-family: var(--sans); font-size: 1rem; font-weight: 500;
+}
+.mfs-sheet .mfs-amt input:not([type="checkbox"]) { text-align: right; }
+.mfs-sheet .mfs-amt select { max-width: 11em; padding-right: 4px; }
 .mfs-u { font-size: 0.9375rem; color: var(--muted-2); }
-.mfs-amt .btn-primary { margin-left: auto; min-height: 48px; font-size: 0.9375rem; }
-.mfs-nutr { margin-top: 10px; border-top: 1px solid var(--line-soft); }
+.mfs-amt .btn-primary { min-height: 48px; padding: 0 14px; font-size: 0.9375rem; white-space: nowrap; }
+.mfs-nutr { border-top: 1px solid var(--line-soft); }
 .mfs-nr { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--line-soft);
   font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
 .mfs-nr span { color: var(--muted-2); }
-.mfs-meals { margin-top: 8px; }
+.mfs-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; }
+.mfs-grid .mfs-nr { align-items: baseline; gap: 8px; min-height: 30px; padding: 5px 0; font-size: 0.8125rem; }
+.mfs-grid .mfs-nr b { font-weight: 500; color: var(--ink); white-space: nowrap; }
+.mfs-grid .mfs-nr.key { font-size: 0.875rem; }
+.mfs-grid .mfs-nr.key span { color: var(--ink); }
+.mfs-grid .mfs-nr.key b { font-weight: 700; }
+.mfs-meals { margin-top: 0; }
+/* a narrow phone: the Add under the amount, the width of the sheet */
+@media (max-width: 360px) {
+  .mfs-amt { grid-template-columns: 5em minmax(0, 1fr); }
+  .mfs-amt .btn-primary { grid-column: 1 / -1; }
+}
+
+/* ---- fixing a food's numbers from its label (src/foodsheet.js) ----
+   The label's serving on one line, its twelve figures three across with
+   each name over its box (four short rows, and a box wide enough for
+   "1,200 mg" at 320 px), what the fix changes, and Save. The boxes are
+   boxes, not the underlined figures of the new-food form: these are typed
+   off a can in the hand, one after another. */
+.mff-serv {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto 4.5em auto; gap: 6px; align-items: center;
+  padding: 6px 0; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft);
+}
+.mff-serv label, .mff-sl { font-size: 0.875rem; font-weight: 600; color: var(--ink); }
+.mff-serv span, .mff-serv em { font-style: normal; font-size: 0.875rem; color: var(--muted); }
+.mff-serv b { grid-column: 2 / -1; justify-self: end; font-weight: 600; font-size: 0.9375rem; }
+.mff-sheet .mff-serv input:not([type="checkbox"]), .mff-sheet .mff-iw input:not([type="checkbox"]),
+.mff-sheet .mff-code input:not([type="checkbox"]) {
+  width: 100%; min-width: 0; min-height: 44px; padding: 0 8px; border: 1px solid var(--line-firm); border-radius: 8px;
+  background: var(--card); color: var(--ink); font-family: var(--sans); font-size: 0.9375rem; font-weight: 600; text-align: right;
+}
+.mff-sheet .mff-iw input:not([type="checkbox"]) { padding-right: 2.1em; }
+.mff-sheet .mff-iw.nu input:not([type="checkbox"]) { padding-right: 8px; }
+.mff-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 10px; }
+.mff-in { display: grid; gap: 2px; font-size: 0.8125rem; color: var(--muted); }
+.mff-in > span:first-child { min-width: 0; }
+.mff-in.key > span:first-child { color: var(--ink); font-weight: 600; font-size: 0.875rem; }
+.mff-iw { position: relative; display: block; min-width: 0; }
+.mff-iw em {
+  position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+  font-style: normal; font-size: 0.8125rem; color: var(--muted); pointer-events: none;
+}
+.mff-code { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: center; font-size: 0.8125rem; color: var(--muted); }
+.mff-sheet .mff-code input:not([type="checkbox"]) { text-align: left; font-weight: 500; }
+.mff-what { display: grid; gap: 2px; padding: 8px 10px; border-radius: 8px; background: var(--hint); font-size: 0.875rem; }
+.mff-what div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 10px; align-items: baseline; }
+.mff-what div b { margin-left: auto; }
+.mff-what span { color: var(--muted); min-width: 0; }
+.mff-what b { font-weight: 600; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
+.mff-what b small { display: block; font-weight: 400; color: var(--muted); font-size: 0.8125rem; }
+.mff-what p { margin: 2px 0 0; font-size: 0.8125rem; line-height: 1.35; color: var(--muted); }
+.mff-what p:empty { display: none; }
+.mff-go { display: flex; gap: 8px; }
+.mff-go .btn-primary { flex: 1 1 auto; min-height: 44px; }
+.mff-go .ghost { min-height: 44px; }
+@media (max-width: 360px) { .mff-form { column-gap: 8px; } }
 
 /* ---- Nourish: a meal's verbs, drawings in the plate's boxes ----
    Blake: "get all the buttons on the food tag into a single row." They were

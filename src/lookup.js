@@ -138,7 +138,9 @@
          day's arithmetic. Missing is not zero, and has to say so. */
       var known = [e.v, pr2.v, fa.v, ca.v].some(function (v) { return typeof v === 'number'; });
       if (!known) throw new Error('nonutrition');
-      var num2 = function (v) { return typeof v === 'number' ? Math.round(v) : 0; };
+      /* To a tenth, as the label prints a gram: whole grams made a drink's
+         0.5 g of fat per can none at all per 100 mL (2026-10-11). */
+      var num2 = function (v) { return typeof v === 'number' ? Math.round(v * 10) / 10 : 0; };
       /* Sodium and fiber on the same basis as the rest, from the same reply:
          they were always in it, and thrown away. Open Food Facts keeps sodium
          in grams, and sometimes only salt, which is sodium times 2.5. One the

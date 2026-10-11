@@ -121,7 +121,6 @@
      pill, the fold link under a cover. Paper on everything darker. */
   --on-ochre:     oklch(0.20 0.02 60);
   --on-ink:       oklch(0.95 0.012 85);
-  --on-ink-soft:  oklch(0.78 0.03 70);
   --on-green:     oklch(0.98 0.01 145);
   --on-green-2:   oklch(0.97 0.01 145);
   --on-fill:      #fff;                  /* white on a saturated fill that stays saturated */
@@ -136,7 +135,6 @@
   --line-sheet:    oklch(0.86 0.02 75);
   --line-scaler:   oklch(0.88 0.02 75);
   --line-list:     oklch(0.89 0.015 78);
-  --line-day-name: oklch(0.90 0.015 78);
   --chip-line:     oklch(0.88 0.02 78);
 
   /* ---- washes and tints ------------------------------------------------ */
@@ -145,7 +143,6 @@
   --wash:          oklch(0.95 0.02 85);
   --code-bg:       oklch(0.97 0.015 85);
   --ochre-soft:    oklch(0.94 0.03 60);
-  --ochre-wash:    oklch(0.62 0.10 55 / 0.10);
   --ochre-hover:   oklch(0.50 0.11 55);
   --tint-green:      oklch(0.94 0.03 145);
   --tint-green-ink:  oklch(0.38 0.08 145);
@@ -284,8 +281,6 @@
   /* ---- where the food comes from ---------------------------------------- */
   --store:         oklch(0.52 0.12 310);   /* the storehouse's own purple */
   --store-ink:     oklch(0.45 0.12 310);
-  --kit-store:     oklch(0.68 0.12 310);
-  --kit-walmart:   oklch(0.68 0.13 255);
   --walmart:       #0053E2;                /* theirs, not ours: their blue and their spark */
   --walmart-spark: #FFC220;
 
@@ -327,7 +322,6 @@
   --z-sticky: 5;        /* a heading parked while its section scrolls; a lift being dragged */
   --z-sticky-card: 6;   /* Nourish's readout, parked under the header */
   --z-strip: 7;         /* the search row, which the section headings park under */
-  --z-steps: 20;        /* Plan's four steps */
   --z-header: 40;       /* the app's header; a full-screen workout's bar */
   --z-pop-scrim: 44;    /* the filter bar unfolded from the search row, */
   --z-pop: 45;          /* ...over its own shade */
@@ -401,7 +395,6 @@
     --ink-hover: oklch(0.84 0.014 85);
     --on-ochre: oklch(0.20 0.02 60);
     --on-ink: var(--paper);
-    --on-ink-soft: oklch(0.40 0.02 70);
     --on-green: var(--paper);
     --on-green-2: var(--paper);
     --on-danger: var(--paper);
@@ -415,7 +408,6 @@
     --line-sheet: var(--line);
     --line-scaler: var(--line);
     --line-list: var(--line-soft);
-    --line-day-name: var(--line-soft);
     --chip-line: var(--line);
 
     /* washes: the same tint, taken down to the night */
@@ -424,7 +416,6 @@
     --wash: oklch(0.29 0.015 80);
     --code-bg: var(--paper-soft);
     --ochre-soft: oklch(0.32 0.04 62);
-    --ochre-wash: oklch(0.72 0.10 62 / 0.14);
     --ochre-hover: oklch(0.86 0.08 70);
     --tint-green: oklch(0.30 0.04 148);
     --tint-green-ink: oklch(0.82 0.09 148);
@@ -1565,18 +1556,16 @@ select { max-width: 280px; }
 /* Three foods that close the day. It sits directly under the bars it is
    answering, so it reads as the same panel continuing rather than a second
    opinion — one border, and the rows inside it. */
-/* ---- the meal's four gauges -------------------------------------------
-   Four of them have to fit on a 390 px row beside a name and three buttons,
-   so the figure sits ABOVE its track rather than beside it. Calories carries
-   a gauge like the other three: three bars with a stray digit in front read
-   as a number that had nowhere else to go. */
 /* The ticked gauges are gone, and mGaugesHTML with them. They were the right
    answer to "how far along is this" and were replaced by the pills; the
    function outlived the markup by several rebuilds, defined and never called,
    and its twelve rules dressed an element nothing emitted. The tick idea did
    survive — the pills' rail is the same bar, and .mmp.x darkens its ground
    for exactly the reason the tick existed: a bar at its own maximum cannot
-   say how far past the maximum it went. */
+   say how far past the maximum it went.
+   (October 2026: the pills went the same way once the meal cards became
+   rings — mMealPillsHTML had no caller left, and the .mmp rules went with
+   it. The meal sheet's own pills are .mcap, in src/myday.js.) */
 
 /* Still to fill. Kin to the day's own pills and now drawn the same way: the
    number is the gap, the fill is the proportion. This block used to argue for
@@ -1598,91 +1587,6 @@ select { max-width: 280px; }
   background: var(--closes-bg); color: var(--green);
   border-radius: 999px; padding: 1px 6px;
 }
-/* The meal's pills, on the seam. The day row's construction said about one
-   meal: a proportional fill painted behind the number, the letter in front,
-   the target after it in a lighter tone. */
-/* Small. These are a glance, not a read: the meal's own numbers live on the
-   plates below and the day's live at the top of the screen, so this strip
-   only has to say which way each macro is leaning. At 11px in a 24px seam it
-   was taking a full row of a phone to repeat what the card already implies. */
-/* The meal's four numbers: a figure over a track, which is the day chart's
-   own construction one altitude down.
- *
-   They were chips — a value, a 7.5px target at 55% opacity, and a gradient
-   fill standing in for the proportion. Three ways of saying the same thing
-   in a box 44px wide, and the only one an eye could use at arm's length was
-   the colour. The fill knew the proportion all along; it just had nowhere to
-   be read. Now it is a rail under the number, the target lives in its length
-   instead of in type three sizes below anything near it, and the value gets
-   the room that buys: 9.5px to 12.
- *
-   No border, no ground. A box around each of four numbers was most of what
-   made a row of meals read as an instrument panel, and it was the same claim
-   the plate's chips were making before they came off. */
-.mmps { display: flex; gap: 7px; flex: 0 1 auto; min-width: 0; align-items: flex-end; }
-.mmp {
-  flex: none;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 3px;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  /* ...and at 13px letters, "164P" is 36: the floor moves with the type. */
-  min-width: 37px;
-}
-.mmp-n { display: flex; align-items: baseline; gap: 2px; font-size: 0.8125rem; }
-.mmp-v { font-weight: 600; color: var(--ink); }
-/* The letter is identity and never status — the same rule, and the same
-   mb-* classes, the plate's cost line and the day's bars already follow. It
-   was a flat grey here, which made P mean one thing on the plate and another
-   six pixels above it. */
-.mmp i { font-style: normal; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.04em; }
-/* The flame is not a letter and cannot be set like one: at 9px beside a 12px
-   figure it is a smudge, which is the same note the day bar has carried about
-   it for as long as it has been there. */
-.mmp .mb-kcal { font-size: 0.8125rem; letter-spacing: 0; }
-.mmp-tr {
-  display: block; width: 30px; height: 3px; border-radius: 999px;
-  background: var(--line-soft); overflow: hidden;
-}
-.mmp-tr i { display: block; height: 100%; border-radius: 999px; background: var(--line-firm); }
-/* A macro the day can no longer pay for. Dashed, because the shape still says
-   "this is the fat pill" while the border stops claiming a target it does not
-   have — and the figure is an em dash rather than a nought, which would read
-   as a meal sitting exactly on nothing. */
-.mmp.spent { opacity: 0.75; }
-.mmp-tr.mmp-tr-none { background: repeating-linear-gradient(90deg, var(--line-firm) 0 4px, transparent 4px 7px); }
-.mmp.spent .mmp-v { color: var(--muted); font-weight: 600; }
-.mmp.u .mmp-v { color: var(--ochre-text); }  .mmp.u .mmp-tr i { background: var(--dial-under); }
-.mmp.o .mmp-v { color: var(--dial-on); }     .mmp.o .mmp-tr i { background: var(--dial-on); }
-/* Over fills the rail AND darkens its ground. A bar pinned at its own end
-   cannot say how far past the end it went; the ground behind it can. */
-.mmp.x .mmp-v { color: var(--dial-over); }
-.mmp.x .mmp-tr { background: var(--dial-over-pale); }
-.mmp.x .mmp-tr i { background: var(--dial-over); }
-/* Planned and not yet eaten. A full-looking dinner at eleven in the morning
-   otherwise reads as food you have already had. */
-/* The figures in grey rather than through a 55% veil: through the veil an
-   ochre 79 was 2.4:1, a number you had to lean in to. Only the rails fade
-   now, and the grey says "not yet" the way the plate's own name does. */
-.mmps.planned .mmp-v { color: var(--muted); }
-.mmps.planned .mmp-tr { opacity: 0.55; }
-/* Nothing on the meal yet, so the figure is the TARGET rather than the plate.
- *
-   Full opacity, because it is the only real number on the row and a target
-   read through 55% of anything is the 7.5px denominator all over again. Grey
-   rather than a verdict colour: an empty meal has not done anything wrong,
-   and six of them first thing in the morning would otherwise draw twenty-four
-   ochre "short" marks about food the day has not got to yet. The colour
-   arrives with the food, which is when it starts meaning something. */
-/* NOT `.empty` — that is a global utility for empty-state SCREENS and it
-   carries `padding: 60px 20px`, which the strip inherited: 120px of air
-   above and below four pills, and every blank meal's header went 38px to
-   156. A component class that reuses a utility name is a component class
-   that quietly wears the utility's box. */
-.mmps.mmps-blank { opacity: 1; }
-.mmps.mmps-blank .mmp-v { color: var(--muted); font-weight: 600; }
 .mpick-row {
   display: flex; width: 100%; text-align: left; gap: 10px; align-items: center;
   background: none; border: none; border-bottom: 1px solid var(--line-soft);
@@ -4342,9 +4246,6 @@ button.mw-verdict:hover { background: var(--paper-soft); }
   display: grid; place-items: center; font-size: 0.8125rem; line-height: 1;
 }
 .mcasc-fold:hover .mcasc-cue { color: var(--ink); }
-/* A meal asked for as much or as little as a meal can be. The kcal pill is
-   the one that carries it, because the cap is a calorie cap. */
-.mmp.mmp-cap { border-color: var(--dial-over); }
 @media (pointer: coarse) {
   /* A thumb target on every one of them, the checkbox rows included — they
      are the controls now, and a 28px row is a row you miss. */
@@ -4361,37 +4262,6 @@ button.mw-verdict:hover { background: var(--paper-soft); }
 .mw-verdict.mw-open { padding-top: 7px; margin-top: 7px; border-top: 1px solid var(--line-soft); }
 .mslot-name .mfold-cue { margin-left: 5px; }
 
-/* ---- pills the same size, always ----------------------------------------
- *
- * Blake: "Can I get uniform pills on the meal cards, always the same size?"
- * They were shrink-to-fit, so a meal reading 🔥600/98 wore a narrower box
- * than one reading 🔥1104/586, and the four boxes landed in a different place
- * on every card. Nothing lines up down a day of six meals, and comparing two
- * meals by eye means reading both rather than seeing them.
- *
- * The widths are the measured maxima of the widest day the app can draw —
- * 🔥1400/533 at 65.3 px and P126/70 at 48.5 px — rounded up by a hair. Picked
- * as maxima and not as a comfortable middle deliberately: a floor that the
- * occasional four-digit meal overflows is not uniform, it is uniform except
- * when it matters. The same reasoning, and the same two-width split, as the
- * folded pills at v214.
- *
- * This is the width-critical row in the app. Re-measure before changing a
- * pill, a gap or a font size here: at 390 the header spends 338 px of 356.
- */
-/* The width had to come from somewhere. At the natural maxima the four boxes
-   take 239 px of a 336 px row and leave 70 for the name, so BREAKFAST clips on
-   every card at 390 — uniform bought at the price of the one word that says
-   which meal it is. So the denominator and the padding give it back: the
-   denominator is context, not the number you read, and it was set only one
-   step down from the figure it qualifies. */
-/* Uniform down the day, which is the whole reason a floor is set at all: six
-   meals whose columns do not line up is six readings you cannot compare. Set
-   at the widest the app can draw — "1090" over a 30px rail — rather than at
-   the common case, so the occasional big meal is uniform too. */
-.mmp.kc {
-  min-width: 58px;
-}
 /* Two pixels over, at 390, is the difference between one row and two: the
    header spends 15 (dot) + 18 (three 6px gaps) + 78 (BREAKFAST) + 227 (pills)
    = 338 of the 336 it has. The gap gives it back — 4px still separates a dot
@@ -6887,14 +6757,6 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 }
 
 .mcard-lk { width: 12px; height: 12px; flex: none; }
-
-/* One food's panel */
-.mcard-panel { background: var(--hint); border-radius: 10px; padding: 10px 12px 12px; margin: 0 -4px 8px; display: flex; flex-direction: column; gap: 9px; }
-.mcard-big { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; }
-.mcard-big small { font-family: var(--sans); font-size: 0.8125rem; font-weight: 400; color: var(--note); margin-left: 6px; }
-.mcard-pmac { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.8125rem; color: var(--note); }
-.mcard-panel .mstep-x { font-size: 0.9375rem; font-weight: 600; }
-.mcard-panel .mitem-uom, .mcard-panel .mitem-mac { font-size: 0.8125rem; }
 
 /* The meal's four pills in its sheet: four to a row, the calories a little
    wider, each its share of the row, so they hold still while the numbers

@@ -16,11 +16,9 @@
   'use strict';
 
   // what it reads of the app's, and (LIVE) what the app replaces as it goes: BY_ID
-  var S = app.S;
   var kcalOf = app.kcalOf;
   var mDay = app.mDay;
   var mInfoText = app.mInfoText;
-  var mReadSlots = app.mReadSlots;
   var mSendOf = app.mSendOf;
   var mSkipped = app.mSkipped;
   var mSlotW = app.mSlotW;
@@ -516,5 +514,5 @@
      the plate to draw, and four empty tracks per meal is most of what you see
      first thing in the morning. */
 
-  return { mMealDone: mMealDone, mMealAsk: mMealAsk, mSlotOf: mSlotOf, mLastFinished: mLastFinished, mCascadeLineHTML: mCascadeLineHTML, MCASCADE_MIN: MCASCADE_MIN };
+  return { mMealDone: mMealDone, mMealAsk: mMealAsk, mLastFinished: mLastFinished, mCascadeLineHTML: mCascadeLineHTML, MCASCADE_MIN: MCASCADE_MIN };
 };

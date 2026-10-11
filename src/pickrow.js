@@ -1,10 +1,9 @@
 /* A row in the food picker, and what a tap on it adds: what the household
  * is cooking today (mFamilyIds); the icons for the three ways to name a
- * food (mpIcon); one row, wherever it is listed (mpRowHTML); the amount
- * that fits, in words (mFitWords); what you logged last time and the amount
- * a tap puts down (mpLastXs, mDefaultX); and the portion that fits the meal
- * being filled (mpFitX). The longer account is with the
- * code.
+ * food (mpIcon); one row, wherever it is listed (mpRowHTML); what you
+ * logged last time and the amount a tap puts down (mpLastXs, mDefaultX); and
+ * the portion that fits the meal being filled (mpFitX). The longer account
+ * is with the code.
  *
  * A part of app.js (Nourish) in a file of its own. app.js calls
  * HiveParts.pickrow(app) once, as it starts, and keeps what it gives back
@@ -137,14 +136,6 @@
     '</div>';
   }
 
-  /* The chip's amount, as short as it can be said: grams for anything with
-     a weight, as the row beside it says it, and otherwise the same ×-count —
-     "Fits: 2 ½ servings" pushed the dish's name onto three lines at a
-     phone's width, for a word the row already says. */
-  function mFitWords(r, x) {
-    return mDialG(r) ? mDialText(r, x) : '\u00d7' + fmtNum(x).replace(' ', '');
-  }
-
   function mpLastXs() {
     var out = {}, today = todayKey();
     Object.keys(MDAYS).sort().reverse().forEach(function (k) {
@@ -200,5 +191,5 @@
     return e && e.score !== null ? e.x : null;
   }
 
-  return { mFamilyIds: mFamilyIds, mpIcon: mpIcon, mpRowHTML: mpRowHTML, mFitWords: mFitWords, mpLastXs: mpLastXs, mDefaultX: mDefaultX, mpFitX: mpFitX };
+  return { mFamilyIds: mFamilyIds, mpIcon: mpIcon, mpRowHTML: mpRowHTML, mpLastXs: mpLastXs, mDefaultX: mDefaultX };
 };

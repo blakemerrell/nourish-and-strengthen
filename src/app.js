@@ -24,7 +24,6 @@
   var APP_LINE = 'Recipes';           // the second line on a cover
 
   var BASE = window.RECIPES || [];    // the 271 in the two printed books
-  var SHOP = window.SHOP || {};       // food key -> shopping-list name and unit
   var RECIPES = BASE;                 // those, with your changes, plus your own
   var BY_ID = {};
 
@@ -1255,22 +1254,6 @@
       $('planMyWeek').disabled = off < 0 || month;
       $('planMyWeek').classList.toggle('hide', off < 0 || month);      // a week gone by is not planned into
     }
-  }
-
-  function planCount(id) {
-    var st = window.Store.state;
-    var plan = id === st.active ? st.plan : ((st.weeks[id] || {}).plan || {});
-    var seen = [];
-    DAYS.forEach(function (d) {
-      (plan[d[0]] || []).forEach(function (e) {
-        var rid = e && typeof e === 'object' ? e.i : e;
-        /* BY_ID, like planEntries and renderPlan already do. Deleting one of
-           your own recipes leaves its id on whatever days it was on, so the
-           chip on the week counted a meal the week could no longer show. */
-        if (BY_ID[rid] && seen.indexOf(rid) < 0) seen.push(rid);
-      });
-    });
-    return seen.length;
   }
 
   // taps cycle through these, so a Sunday roast for twice the family is two taps
@@ -3081,17 +3064,13 @@
   /* src/portion.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
   var PORTION = window.HiveParts.portion({ fixUnit: fixUnit, fmtNum: fmtNum, mFixNoun: mFixNoun, mServeG: mServeG, LIVE: LIVE });
-  function mUnitWord(r) { return PORTION.mUnitWord(r); }
   function mByGram(r) { return PORTION.mByGram(r); }
   function mDialUnit(r) { return PORTION.mDialUnit(r); }
   function mLadder(r, x) { return PORTION.mLadder(r, x); }
   function mStepX(r, x, dir) { return PORTION.mStepX(r, x, dir); }
-  function mTypedFromX(r, x) { return PORTION.mTypedFromX(r, x); }
-  function mXFromTyped(r, n) { return PORTION.mXFromTyped(r, n); }
   function mPortion(r, x) { return PORTION.mPortion(r, x); }
   function mPortionText(r, x) { return PORTION.mPortionText(r, x); }
   function mDialG(r) { return PORTION.mDialG(r); }
-  function mDialEst(r) { return PORTION.mDialEst(r); }
   function mDialText(r, x) { return PORTION.mDialText(r, x); }
   function mDialMeasure(r, x) { return PORTION.mDialMeasure(r, x); }
   function mDialStep(r, x, dir) { return PORTION.mDialStep(r, x, dir); }
@@ -3117,17 +3096,14 @@
   function mAssumed(day, targets, slots) { return GAUGES.mAssumed(day, targets, slots); }
   function mGauge(got, want, dayT) { return GAUGES.mGauge(got, want, dayT); }
   function mFillPill(cls, tone, pct, body) { return GAUGES.mFillPill(cls, tone, pct, body); }
-  function mMealPillsHTML(sub, ask, targets, planned, empty) { return GAUGES.mMealPillsHTML(sub, ask, targets, planned, empty); }
   function mMealPillsSay(sub, ask, targets) { return GAUGES.mMealPillsSay(sub, ask, targets); }
-  var MGAUGE = GAUGES.MGAUGE;
   var MPILL_TONE = GAUGES.MPILL_TONE;
 
   /* src/shares.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var SHARES = window.HiveParts.shares({ S: S, kcalOf: kcalOf, mDay: mDay, mInfoText: mInfoText, mReadSlots: mReadSlots, mSendOf: mSendOf, mSkipped: mSkipped, mSlotW: mSlotW, mTotals: mTotals, mViewKey: mViewKey, mWhyBtn: mWhyBtn, LIVE: LIVE });
+  var SHARES = window.HiveParts.shares({ kcalOf: kcalOf, mDay: mDay, mInfoText: mInfoText, mSendOf: mSendOf, mSkipped: mSkipped, mSlotW: mSlotW, mTotals: mTotals, mViewKey: mViewKey, mWhyBtn: mWhyBtn, LIVE: LIVE });
   function mMealDone(sk) { return SHARES.mMealDone(sk); }
   function mMealAsk(sk, targets, slots, adjust) { return SHARES.mMealAsk(sk, targets, slots, adjust); }
-  function mSlotOf(slots, k) { return SHARES.mSlotOf(slots, k); }
   function mLastFinished(targets, slots) { return SHARES.mLastFinished(targets, slots); }
   function mCascadeLineHTML(sk, targets, slots) { return SHARES.mCascadeLineHTML(sk, targets, slots); }
   var MCASCADE_MIN = SHARES.MCASCADE_MIN;
@@ -3187,10 +3163,8 @@
   function mFamilyIds(k) { return PICKROW.mFamilyIds(k); }
   function mpIcon(k) { return PICKROW.mpIcon(k); }
   function mpRowHTML(r, x, fitText, fitX) { return PICKROW.mpRowHTML(r, x, fitText, fitX); }
-  function mFitWords(r, x) { return PICKROW.mFitWords(r, x); }
   function mpLastXs() { return PICKROW.mpLastXs(); }
   function mDefaultX(r) { return PICKROW.mDefaultX(r); }
-  function mpFitX(r) { return PICKROW.mpFitX(r); }
 
   /* What you already reach for: starred, or on a plate in the last fortnight.
      Worked out once per list, not per row — see mpHomeBodyHTML. */
@@ -3775,11 +3749,10 @@
     'data-src', 'data-srcpick', 'data-weekbuy', 'data-near', 'data-low', 'data-kitmore', 'data-kitpill', 'data-copyorder', 'data-stepgo',
     'data-cal', 'data-calweek', 'data-calagain', 'data-calfrom', 'data-caltpl',
     'data-addday', 'data-pswap', 'data-prate', 'data-adf', 'data-adadd', 'data-adsw', 'data-adopen', 'data-pwpick', 'data-pwsee', 'data-pwback', 'data-pwwant', 'data-pwopen', 'data-dayopen', 'data-dsact', 'data-srctag', 'data-fold',
-    'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close',
-    'data-poff', 'data-week', 'data-neww', 'data-mult', 'data-drop', 'data-ed', 'data-tab',
+    'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
-    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpfit', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave'];
+    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave'];
 
   function focusKey(el) {
     if (!el || el === document.body || !el.getAttribute) return null;
@@ -4973,23 +4946,6 @@
   }
 
   // ----------------------------------------------------------------- pantry
-  /* The shelf, laid out the way the storehouse order sheet is, so someone
-     holding that sheet can read down it. Foods the books use come from
-     data/recipes.js; anything added here joins them under a shelf of its own,
-     because a household's own staples are not on anybody's order list. */
-  function pantryShelves() {
-    var P = window.PANTRY || {}, own = window.Store.pantryOwn(), by = {}, order = [];
-    function put(key, item, mine) {
-      var c = item.c || 'Yours';
-      if (!by[c]) { by[c] = []; order.push(c); }
-      by[c].push({ k: key, l: item.l, c: c, mine: mine, on: mine ? true : storeCarries(key), std: !!item.s });
-    }
-    Object.keys(P).forEach(function (k) { put(k, P[k], false); });
-    Object.keys(own).forEach(function (k) { put(k, own[k], true); });
-    order.forEach(function (c) { by[c].sort(function (a, b) { return a.l.localeCompare(b.l); }); });
-    return order.map(function (c) { return { name: c, items: by[c] }; });
-  }
-
   /* My kitchen: what the household has, wherever it came from, and one
      switch for whether the storehouse is part of the week at all. */
   /* One pill grid for every "is this so" question about foods: what the
@@ -5865,36 +5821,7 @@
     $('modalRoot').addEventListener('keydown', mTypedKeys);
     $('modalRoot').addEventListener('focusout', mTypedOut);
 
-    /* The slider walks the steppers' own steps. While it moves only the words
-       move; letting go writes the portion, so a redraw never takes the thumb
-       off the handle. */
-    $('macroSlots').addEventListener('input', function (e) {
-      var sl = e.target.closest && e.target.closest('[data-mslide]');
-      if (!sl) return;
-      var ls = String(sl.dataset.ls || '').split('|'), lab = ls[Number(sl.value)] || '';
-      /* grams first on the big line, the measure on the chip, as drawn */
-      var pn = sl.closest('.mcard-panel'), big = pn && pn.querySelector('.mcard-big, .mcard-bigbw');
-      var chip = pn && pn.querySelector('.mcard-pmac .mitem-uom'), cut = lab.indexOf(' \u00b7 ');
-      if (big) big.textContent = cut < 0 ? lab : lab.slice(0, cut);
-      if (chip && cut >= 0) chip.textContent = lab.slice(cut + 3);
-      sl.setAttribute('aria-valuetext', lab);
-    });
     $('macroSlots').addEventListener('change', function (e) {
-      var sl = e.target.closest && e.target.closest('[data-mslide]');
-      if (sl) {
-        var xs = String(sl.dataset.xs || '').split(',').map(Number), nx = xs[Number(sl.value)];
-        var sp = sl.dataset.mslide.split(':');
-        if (nx > 0) {
-          mEditDay(mViewKey(), function (day) {
-            var it = (day[sp[0]] || [])[Number(sp[1])];
-            if (!it) return;
-            if (it.eaten && S.mEdit !== sp.join(':')) return;
-            it.x = nx;
-          });
-        }
-        keepingFocus(renderMacros);
-        return;
-      }
       var c = e.target.closest('[data-meat]');
       if (!c) return;
       var cp = c.dataset.meat.split(':');

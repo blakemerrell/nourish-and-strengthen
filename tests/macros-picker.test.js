@@ -446,7 +446,10 @@ module.exports = nourish({
        tray read for what its flame pill says. */
     const trays = await gaugePage.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray')].map((tr) => {
       const kEl = tr.querySelector('.mtray-caps .mcap');
-      const k = (kEl || {}).textContent || '';
+      /* An empty meal is one row since 2026-10-11 and says what it is for
+         in faint type beside its name ("272 kcal"), with nothing yet against it. */
+      const aim = tr.querySelector('.mtray-aim');
+      const k = aim ? '0 / ' + aim.textContent.replace(/\D/g, '') : (kEl || {}).textContent || '';
       const m = /([\d,]+)\s*\/\s*([\d,]+)/.exec(k.trim()) || [];
       const n = (x) => Number(String(x || '').replace(/,/g, ''));
       return { sk: tr.querySelector('[data-mopen]').dataset.mopen, name: tr.querySelector('.mtray-n').textContent,
@@ -545,11 +548,13 @@ module.exports = nourish({
       fed.length > 0 && fed.some((c) => c.caps.some((g) => g.cls)),
       JSON.stringify(fed.map((c) => c.name + ':' + c.caps.map((g) => g.cls || '-').join('|'))));
 
-    /* An empty tray is no taller than one holding a single food: it says
-       "Nothing yet" on the line the food would take. */
+    /* An empty tray used to be as tall as one holding a single food, saying
+       "Nothing yet" on the line the food would take. Blake, 2026-10-11: "I
+       don't like seeing that expanded and 'nothing yet'... a collapsed card".
+       So it is one row now, shorter than any meal with food on it. */
     const one = gz.filter((c) => c.foods === 1);
-    t.ok('and a blank meal is the same height as a one-food one',
-      one.length > 0 && noFood.length > 0 && noFood.every((c) => Math.abs(c.h - one[0].h) <= 1),
+    t.ok('and a blank meal is one row, shorter than a one-food one, with no "Nothing yet"',
+      one.length > 0 && noFood.length > 0 && noFood.every((c) => c.h < one[0].h && c.h < 70 && c.foods === 0),
       JSON.stringify(gz.map((c) => c.name + ':' + c.foods + ':' + c.h)));
 
     t.ok('and the meal keeps its whole name at phone width',

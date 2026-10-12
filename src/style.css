@@ -5954,7 +5954,6 @@ button.tr-ck-h {
 .pw-ql small { font-weight: 400; font-size: 0.8125rem; color: var(--muted); margin-left: 6px; }
 .pw-chip i { font-style: normal; font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; margin-left: 2px; }
 .pw-chip[aria-pressed="true"] i { color: inherit; opacity: 0.75; }
-.pw-chip.pw-dayc { min-width: 44px; padding: 0 8px; }
 .pw-chip.pw-x[aria-pressed="true"] { background: var(--dial-over); border-color: var(--dial-over); color: var(--on-over); }
 .pw-ings { margin-top: 7px; }
 .pw-find {
@@ -5976,12 +5975,45 @@ button.tr-ck-h {
 .pw-cnt.low b { color: var(--dial-over); }
 /* A night already gone: there to show the week, not to pick. */
 .pw-chip.pw-gone { opacity: 0.4; text-decoration: line-through; cursor: default; }
-/* At 320px the bar's words wrapped inside a word ("tick / ed") beside the button. */
+/* At 320px the bar's words wrapped inside a word ("tick / ed", "night / s")
+   beside the button: the sheet breaks anywhere, and the bar is the one
+   place a word must not break. Held to whole words instead, the count wraps
+   to a second line when it has to; nowrap, the fix before this one, slid
+   "dinners fit" under the button. */
+.pw-cnt, .pw-cnt span { overflow-wrap: normal; word-break: normal; }
 @media (max-width: 340px) {
   .pw-bar .pw-go { padding: 0 12px; }
-  .pw-cnt { white-space: nowrap; }
-  .pw-cnt span { white-space: normal; }
+  /* and when the button is a long one ("Tick the ones you want"), it goes
+     under the count rather than squeezing it to a word a line */
+  .pw-bar { flex-wrap: wrap; row-gap: 8px; }
+  .pw-cnt { flex: 1 1 9.5em; }
+  .pw-bar .pw-go { flex-grow: 1; }
 }
+
+/* Plan my week opens on the nights: the presets, then the week as one
+   strip, a calendar's S M T W Th F S, each day a cell of it rather than a
+   pill of its own, so seven fit across a 320px phone. The cell is the
+   chip's own ::after, squared off and run edge to edge; chosen is ink, as a
+   chip is, and a leftovers night is hatched, since nothing is cooked on it.
+   A night asked for that already has its dinner carries a short ochre rule. */
+.pw-pre { margin-bottom: 10px; }
+.pw-days {
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  border: 1px solid var(--line-firm); border-radius: 12px; overflow: hidden; background: var(--card);
+}
+.pw-days .pw-day:not(#u#u) { min-width: 0; width: 100%; padding: 0; border-left: 1px solid var(--line-soft); font-size: 0.9375rem; }
+.pw-days .pw-day:first-child:not(#u#u) { border-left: 0; }
+.pw-days .pw-day:not(#u#u)::after { top: 0; bottom: 0; transform: none; border: 0; border-radius: 0; }
+.pw-days .pw-day.lo:not(#u#u) { color: var(--ink); }
+.pw-days .pw-day.lo:not(#u#u)::after { background: repeating-linear-gradient(135deg, var(--card) 0 5px, var(--line) 5px 7px); }
+.pw-days .pw-day.has:not(#u#u)::before {
+  content: ''; position: absolute; left: 32%; right: 32%; bottom: 7px; height: 3px; border-radius: 2px; background: var(--ochre);
+}
+.pw-lokey { font-size: 0.8125rem; color: var(--muted-2); margin: 8px 0 0; }
+/* The rest of the answers, in one line, with Change to open them. */
+.pw-usual .pw-ql { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.pw-usual .nut-ask { min-height: 44px; }
+.pw-usual p { margin: 0; font-size: 0.9375rem; line-height: 1.45; color: var(--ink); }
 
 /* Walmart cart: Walmart's own blue on the one button that leaves the app,
    so it reads as going somewhere else; everything under it stays ours. */

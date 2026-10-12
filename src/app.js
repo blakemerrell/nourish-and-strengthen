@@ -1743,17 +1743,65 @@
   }
   var PW_WEEKEND = ['sat', 'sun'];
   var PW_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];   // the calendar's order
+  var PW_WEEKNIGHTS = ['mon', 'tue', 'wed', 'thu', 'fri'];
+  /* The nights in one tap, and the leftovers with them. Blake: "add some
+     pills like M-W-F w/ leftovers". M-W-F is Monday to Friday with two
+     leftovers nights, which pwLoNights lays on Tuesday and Thursday: the
+     night after each of the first two cooks. */
+  var PW_PRESETS = [['wk', 'Weeknights', PW_WEEKNIGHTS, 0], ['mwf', 'M-W-F + leftovers', PW_WEEKNIGHTS, 2],
+    ['all', 'Whole week', PW_DAYS, 0], ['we', 'Weekend', PW_WEEKEND, 0]];
+  function pwPreDays(pre) { return pre[2].filter(function (d) { return !calPastDay(d); }); }
+  // the week strip says a day the way a calendar heads its columns
+  var PW_LETTER = { sun: 'S', mon: 'M', tue: 'T', wed: 'W', thu: 'Th', fri: 'F', sat: 'S' };
+  /* Nights said the short way, in the week's order: three or more in a row
+     are a span, "Mon–Fri"; the rest by name, "Mon, Wed & Fri". */
+  function pwDaysSay(ds) {
+    var idx = ds.map(function (d) { return PW_DAYS.indexOf(d); }).filter(function (i) { return i >= 0; }).sort(function (x, y) { return x - y; });
+    var short = function (i) { var d = PW_DAYS[i]; return DAYS.filter(function (x) { return x[0] === d; })[0][2]; };
+    var pieces = [], run = [];
+    var flush = function () {
+      if (run.length >= 3) pieces.push(short(run[0]) + '\u2013' + short(run[run.length - 1]));
+      else run.forEach(function (i) { pieces.push(short(i)); });
+      run = [];
+    };
+    idx.forEach(function (i) { if (run.length && i !== run[run.length - 1] + 1) flush(); run.push(i); });
+    flush();
+    return pieces.length > 1 ? pieces.slice(0, -1).join(', ') + ' & ' + pieces[pieces.length - 1] : (pieces[0] || '');
+  }
+  /* What the bar says of the nights: the ones it will cook for, by name, and
+     an asked-for night that already has its dinner. A count alone ("for 1
+     night") was how a week of one night went unnoticed. */
+  function pwForSay(a) {
+    var nights = pwNights(a.days), lo = pwLoNights(a, nights);
+    var cook = nights.filter(function (d) { return !lo[d]; });
+    var full = a.days.filter(function (d) { return !calPastDay(d) && nights.indexOf(d) < 0; });
+    return { cook: cook, full: full,
+      say: cook.length ? 'for ' + pwDaysSay(cook) + (cook.length === 1 ? ' only' : '') : '',
+      fullSay: full.length ? pwDaysSay(full) + (full.length === 1 ? ' has a dinner' : ' have dinners') : '' };
+  }
   function pwAnswers() {
     var a = null;
     try { a = JSON.parse(localStorage.getItem(PW_KEY)); } catch (e) { a = null; }
     a = a && typeof a === 'object' ? a : {};
     var list = function (v, ok) { return Array.isArray(v) ? v.filter(ok) : []; };
-    /* Answers saved before the nights were days said how many; that many
-       from Monday is what they meant. */
-    var days = Array.isArray(a.days) ? list(a.days, function (d) { return PW_DAYS.indexOf(d) >= 0; })
-      : ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].slice(0, [3, 4, 5, 7].indexOf(a.n) >= 0 ? a.n : 5);
+    /* The nights belong to the week they were picked for; everything else
+       here is a habit. They were kept like the rest, and a visit on a
+       Saturday, when only Saturday is left to light, saved "Saturday" for
+       good: the next Monday opened on one night, and the bar said only "for
+       1 night" (Blake, 2026-10-12: "I think I just had one day selected at
+       the beginning... it was too confusing"). So the nights are stamped
+       with the week (wk) and come back only in that week; any other week
+       opens on the weeknights. Answers saved before the nights were days
+       said how many; that many from Monday is what they meant. */
+    var days = Array.isArray(a.days) && a.wk === window.Store.activeWeek().id ? list(a.days, function (d) { return PW_DAYS.indexOf(d) >= 0; })
+      : !Array.isArray(a.days) && [3, 4, 5, 7].indexOf(a.n) >= 0 ? ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].slice(0, a.n)
+      : PW_WEEKNIGHTS.slice();
     return {
       days: days,
+      /* Picked dinners with these answers at least once: they are "your
+         usual" from then on, and the sheet opens on the nights with the
+         rest said in one line. */
+      used: a.used ? 1 : 0,
       ppl: [2, 3, 4, 6, 8].indexOf(a.ppl) >= 0 ? a.ppl : 4,
       bud: a.bud >= 20 && a.bud <= 150 ? a.bud : 50,
       t: [20, 30, 45, 0].indexOf(a.t) >= 0 ? a.t : 45,
@@ -1770,7 +1818,10 @@
       shelf: true
     };
   }
-  function pwSave(a) { try { localStorage.setItem(PW_KEY, JSON.stringify(a)); } catch (e) { /* private */ } }
+  function pwSave(a) {
+    a.wk = window.Store.activeWeek().id;
+    try { localStorage.setItem(PW_KEY, JSON.stringify(a)); } catch (e) { /* private */ }
+  }
   function pwMins(r) {
     var t = String(r.time || ''), h = t.match(/(\d+(?:\.\d+)?)\s*hr/), m = t.match(/(\d+)\s*min/);
     var v = (h ? Number(h[1]) * 60 : 0) + (m ? Number(m[1]) : 0);
@@ -2101,6 +2152,22 @@
     var nights = pwNights(a.days);
     return { n: pwPool(a, !wk).length, need: nights.length - Object.keys(pwLoNights(a, nights)).length };
   }
+  /* Everything but the nights, said once, the way you would say it: "4
+     eating · up to $50 · 45 min on weeknights · any protein…". Change opens
+     the questions that say it. */
+  function pwUsualSay(a, plans) {
+    var kinds = a.kind.map(function (k) { return (PW_KIND.filter(function (x) { return x[0] === k; })[0] || [k, '', k])[2].toLowerCase(); });
+    var fit = a.fit === 1 ? 'hits my plan' : a.fit === 2 ? 'high protein' : a.fit === 3 ? (plans.length > 2 ? 'hits everyone\u2019s plan' : 'hits both plans')
+      : typeof a.fit === 'string' ? 'hits ' + esc((plans.filter(function (pl) { return pl.k === a.fit; })[0] || {}).n || 'their') + '\u2019s plan' : '';
+    var out = a.ing.map(function (k) { return pwIngName(k).toLowerCase(); }).concat(a.avoid.map(function (k) { return k.toLowerCase(); }));
+    return [(a.ppl === 8 ? '8+' : a.ppl) + ' eating', 'up to $' + a.bud,
+      a.t ? a.t + ' min on weeknights' : 'any time',
+      a.prot.length ? a.prot.join(' or ').toLowerCase() : 'any protein',
+      kinds.length ? kinds.join(' or ') : 'any kind of night',
+      fit, out.length ? 'no ' + out.map(esc).join(', no ') : '',
+      a.lo ? a.lo + (a.lo === 1 ? ' leftovers night' : ' leftovers nights') : '',
+      a.rec ? 'nothing from the last ' + a.rec + ' weeks' : 'repeats are fine'].filter(Boolean).join(' \u00b7 ');
+  }
   function pwStep1(a) {
     var cnt = pwCount(a), plans = pwPlans(), fit = plans[0], others = plans.slice(1);
     var byProt = {}, byKind = {};
@@ -2127,9 +2194,39 @@
     }).join(' · ') : noPlan ? 'no plan yet — set your numbers in Nourish; a plain ' + fit.kc + ' cal · ' + fit.p + ' g protein a dinner until then'
       : fit.kc + ' cal · ' + fit.p + ' g protein a dinner';
     var low = cnt.n < cnt.need * 2, none = cnt.n < cnt.need || !cnt.need;
-    return '<h2 class="pw-h">What kind of week?</h2>' +
-      '<div class="pw-q"><div class="pw-ql">Which nights</div>' +
-        pwChips('days', CAL_DAYS.map(function (d) { return [d[0], d[2], undefined, calPastDay(d[0])]; }), a.days, 'pw-dayc') + '</div>' +
+    /* The nights first, because they are the one answer that is different
+       every week: the presets, then the week as one strip a calendar's way,
+       S M T W Th F S, with a leftovers night hatched (Blake, 2026-10-12:
+       "Shorten the days to S M T W Th F S... add some pills like m-w-f w/
+       leftovers"). The rest is the usual, in one line, once there is one. */
+    var nights = pwNights(a.days), lo = pwLoNights(a, nights), fs = pwForSay(a);
+    var sorted = a.days.slice().sort().join();
+    /* One preset lit at most: late in the week two can come to the same
+       nights (on a Saturday, Whole week and Weekend are both just Saturday),
+       and the narrower one is what was meant. */
+    var preOn = PW_PRESETS.filter(function (pr) {
+      var ds = pwPreDays(pr);
+      return ds.length && ds.slice().sort().join() === sorted && (a.lo || 0) === pr[3];
+    }).sort(function (x, y) { return x[2].length - y[2].length; })[0];
+    var preHTML = '<div class="pw-chips pw-pre" role="group" aria-label="Quick picks">' + PW_PRESETS.map(function (pr) {
+      return '<button class="pw-chip" data-pwpre="' + pr[0] + '" aria-pressed="' + (pr === preOn) + '"' + (pwPreDays(pr).length ? '' : ' disabled') + '>' + pr[1] + '</button>';
+    }).join('') + '</div>';
+    var stripHTML = '<div class="pw-days" role="group" aria-label="Which nights">' + CAL_DAYS.map(function (d) {
+      var gone = calPastDay(d[0]), on = a.days.indexOf(d[0]) >= 0, isLo = !!lo[d[0]], has = on && !gone && nights.indexOf(d[0]) < 0;
+      return '<button class="pw-chip pw-day' + (isLo ? ' lo' : '') + (has ? ' has' : '') + (gone ? ' pw-gone' : '') + '" data-pwq="days" data-pwv="' + d[0] + '" aria-pressed="' + on + '"' +
+        ' aria-label="' + d[1] + (isLo ? ', leftovers' : has ? ', has a dinner' : '') + '"' + (gone ? ' disabled' : '') + '>' + PW_LETTER[d[0]] + '</button>';
+    }).join('') + '</div>';
+    var los = PW_DAYS.filter(function (d) { return lo[d]; });
+    var loHTML = los.length ? '<p class="pw-lokey">\u21ba ' + pwDaysSay(los).replace(' & ', ' and ') + (los.length === 1 ? ' is' : ' are') + ' leftovers: ' +
+      los.map(function (d) { return DAYS.filter(function (x) { return x[0] === lo[d]; })[0][2] + '\u2019s'; }).join(' and ') +
+      (los.length === 1 ? ' dinner' : ' dinners') + ', cooked double.</p>' : '';
+    var usualHTML = '<div class="pw-q pw-usual"><div class="pw-ql">Your usual <button class="nut-ask" data-pwmore="1" aria-expanded="false">Change</button></div>' +
+      '<p>' + pwUsualSay(a, plans) + '</p></div>';
+    var cntHTML = !cnt.need ? '<b>0</b> nights to fill<span>' + (!a.days.length ? 'pick a night above' : a.days.every(calPastDay) ? 'those nights have gone'
+        : pwDaysSay(fs.full) + (fs.full.length === 1 ? ' already has a dinner' : ' already have dinners')) + '</span>'
+      : '<b>' + cnt.n + '</b> ' + (cnt.n === 1 ? 'dinner fits' : 'dinners fit') + '<span>' +
+        (cnt.n < cnt.need ? 'need ' + cnt.need + ', loosen a filter' : fs.say + (low ? ' \u00b7 not many to choose from' : fs.fullSay ? ' \u00b7 ' + fs.fullSay : '')) + '</span>';
+    var rest = !S.pw.more ? usualHTML :
       '<div class="pw-q"><div class="pw-ql">How many are eating?</div>' + pwChips('ppl', [[2, '2'], [3, '3'], [4, '4'], [6, '6'], [8, '8+']], a.ppl) + '</div>' +
       '<div class="pw-q"><div class="pw-ql">Spend no more than</div><div class="pw-money">' +
         '<input type="range" id="pwBud" min="20" max="150" step="5" value="' + a.bud + '" aria-label="Budget in dollars">' +
@@ -2152,7 +2249,9 @@
       '<div class="pw-q"><div class="pw-ql">Leftovers nights <small>cook double, eat it again the next night</small></div>' +
         pwChips('lo', [[0, 'None'], [1, 'One'], [2, 'Two']], a.lo) + '</div>' +
       '<div class="pw-q"><div class="pw-ql">Variety</div>' +
-        pwChips('rec', [[0, 'Repeats are fine'], [2, 'Nothing from the last 2 weeks'], [4, 'Last 4 weeks']], a.rec) + '</div>' +
+        pwChips('rec', [[0, 'Repeats are fine'], [2, 'Nothing from the last 2 weeks'], [4, 'Last 4 weeks']], a.rec) + '</div>';
+    return '<h2 class="pw-h">Which nights?</h2>' +
+      '<div class="pw-q pw-nights">' + preHTML + stripHTML + loHTML + '</div>' + rest +
 
       /* The count is a door: "See the 11" lists the dinners that fit, to
          tick the ones wanted. Blake, after a pick he could not see: "it just
@@ -2161,11 +2260,8 @@
       /* Pick my dinners is picking: it opens the dinners that fit, to tick
          one a night. Blake: "I expect that when I click pick my dinners it
          would give me a selection to pick my dinners." */
-      '<div class="pw-bar"><div class="pw-cnt' + (low ? ' low' : '') + '" role="status"><b>' + cnt.n + '</b> ' +
-        (cnt.n === 1 ? 'dinner fits' : 'dinners fit') + '<span>' +
-        (!cnt.need ? (!a.days.length ? 'pick a night' : a.days.every(calPastDay) ? 'those nights have gone' : 'those nights already have dinners') :
-          cnt.n < cnt.need ? 'need ' + cnt.need + ', loosen a filter' : low ? 'not many to choose from' : 'for ' + cnt.need + (cnt.need === 1 ? ' night' : ' nights')) +
-        '</span></div><button class="pw-go" data-pwsee="1"' + (none ? ' disabled' : '') + '>Pick my dinners</button></div>';
+      '<div class="pw-bar"><div class="pw-cnt' + (low && cnt.need ? ' low' : '') + '" role="status">' + cntHTML +
+        '</div><button class="pw-go" data-pwsee="1"' + (none ? ' disabled' : '') + '>Pick my dinners</button></div>';
   }
   /* The dinners that fit, to tick the ones wanted. Pick my dinners puts the
      ticked ones on first, in the order ticked, and fills the nights left
@@ -2191,7 +2287,7 @@
         : left + (left === 1 ? ' night' : ' nights') + ' still open.') + '</p>' +
       '<div class="pw-or"><button class="nut-ask" data-pwpick="all">' +
         (want.length && left ? 'Add mine, and pick the other ' + (left === 1 ? 'night' : left) + ' for me' : 'Or pick them all for me') + '</button></div>' +
-      '<div class="pw-bar"><div class="pw-cnt"><b>' + want.length + '</b> ticked<span>for ' + cnt.need + (cnt.need === 1 ? ' night' : ' nights') + '</span></div>' +
+      '<div class="pw-bar"><div class="pw-cnt"><b>' + want.length + '</b> ticked<span>' + pwForSay(a).say + '</span></div>' +
         '<button class="pw-go" data-pwpick="mine"' + (want.length ? '' : ' disabled') + '>' +
           (want.length ? 'Add ' + want.length + ' to my week' : 'Tick the ones you want') + '</button></div>';
   }
@@ -2238,7 +2334,7 @@
     var left = PW_DAYS.filter(function (d) { return !calPastDay(d); });
     a.days = a.days.filter(function (d) { return !calPastDay(d); });
     if (!a.days.length && left.length) a.days = left;
-    S.pw = { a: a, picks: [], seen: {}, want: [], see: false };
+    S.pw = { a: a, picks: [], seen: {}, want: [], see: false, more: !a.used };
     S.pwOpen = true;
     pushSheet({ pw: 1 });
     renderModal();
@@ -2248,6 +2344,13 @@
   }
   document.addEventListener('click', function (e) {
     if (!S.pwOpen || !e.target.closest) return;
+    var pre = e.target.closest('[data-pwpre]');
+    if (pre) {
+      var pr = PW_PRESETS.filter(function (x) { return x[0] === pre.dataset.pwpre; })[0];
+      if (pr) { S.pw.a.days = pwPreDays(pr); S.pw.a.lo = pr[3]; pwSave(S.pw.a); renderModal(); }
+      return;
+    }
+    if (e.target.closest('[data-pwmore]')) { S.pw.more = true; renderModal(); return; }
     var q = e.target.closest('[data-pwq]');
     if (q) {
       var a = S.pw.a, k = q.dataset.pwq, v = q.dataset.pwv;
@@ -2291,6 +2394,8 @@
         S.pw.picks.forEach(function (p) { window.Store.addToDay(p.r.id, p.day, p.x, p.lo); h[String(p.r.id)] = today; });
       });
       try { localStorage.setItem(PW_HIST, JSON.stringify(h)); } catch (err) { /* private */ }
+      S.pw.a.used = 1;
+      pwSave(S.pw.a);
       /* What landed is marked New on the week, and the toast can take it
          all back off again. */
       var added = S.pw.picks.slice(), used = S.pw.used || 0, cooked = added.filter(function (p) { return !p.lo; }).length;
@@ -3748,7 +3853,7 @@
     'data-pwq', 'data-pwing', 'data-pwingx', 'data-wmid',
     'data-src', 'data-srcpick', 'data-weekbuy', 'data-near', 'data-low', 'data-kitmore', 'data-kitpill', 'data-copyorder', 'data-stepgo',
     'data-cal', 'data-calweek', 'data-calagain', 'data-calfrom', 'data-caltpl',
-    'data-addday', 'data-pswap', 'data-prate', 'data-adf', 'data-adadd', 'data-adsw', 'data-adopen', 'data-pwpick', 'data-pwsee', 'data-pwback', 'data-pwwant', 'data-pwopen', 'data-dayopen', 'data-dsact', 'data-srctag', 'data-fold',
+    'data-addday', 'data-pswap', 'data-prate', 'data-adf', 'data-adadd', 'data-adsw', 'data-adopen', 'data-pwpick', 'data-pwsee', 'data-pwback', 'data-pwpre', 'data-pwmore', 'data-pwwant', 'data-pwopen', 'data-dayopen', 'data-dsact', 'data-srctag', 'data-fold',
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',

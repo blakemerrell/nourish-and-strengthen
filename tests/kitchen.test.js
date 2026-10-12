@@ -110,7 +110,7 @@ module.exports = {
     /* Leftovers nights in Plan my week. */
     await p.evaluate(() => {
       window.Store.clearPlan();
-      localStorage.setItem('sh.pw', JSON.stringify({ days: ['mon', 'tue', 'wed', 'thu'], ppl: 4, t: 0, lo: 1, shelf: true }));
+      localStorage.setItem('sh.pw', JSON.stringify({ days: ['mon', 'tue', 'wed', 'thu'], ppl: 4, t: 0, lo: 1, shelf: true, wk: window.Store.activeWeek().id }));
     });
     await p.click('.tab[data-view="plan"]');
     await p.waitForTimeout(250);

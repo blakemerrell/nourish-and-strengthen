@@ -226,7 +226,7 @@ module.exports = {
     t.ok('and High protein lets in more, for Fill my day to top up', hp.high > hp.hits, JSON.stringify(hp));
 
     // on the screen: both chips with their counts, and each dinner says its plate (Saturday and Sunday are still free)
-    await p.evaluate(() => localStorage.setItem('sh.pw', JSON.stringify({ days: ['sat', 'sun'], ppl: 4, bud: 150, t: 0 })));
+    await p.evaluate(() => localStorage.setItem('sh.pw', JSON.stringify({ days: ['sat', 'sun'], ppl: 4, bud: 150, t: 0, wk: window.Store.activeWeek().id })));
     await p.click('#planMyWeek');
     await p.waitForTimeout(300);
     await p.evaluate(() => { const b = document.querySelector('[data-pwq="fit"][data-pwv="1"]'); b.scrollIntoView({ block: 'center' }); });
@@ -441,7 +441,7 @@ module.exports = {
       bar: document.querySelector('.pw-cnt span').textContent, go: !document.querySelector('[data-pwsee]').disabled,
     }));
     t.ok('on a Saturday with Mon–Fri remembered, only the night left is lit, the gone ones are greyed, and Pick my dinners is on',
-      sat.on.join() === 'sat' && sat.gone.join() === 'sun,mon,tue,wed,thu,fri' && sat.go && /1 night/.test(sat.bar), JSON.stringify(sat));
+      sat.on.join() === 'sat' && sat.gone.join() === 'sun,mon,tue,wed,thu,fri' && sat.go && sat.bar === 'for Sat only', JSON.stringify(sat));
     // the sheet takes the focus, and Escape closes it, as the recipe sheet does
     const focused = await p.evaluate(() => document.activeElement && document.activeElement.classList.contains('sheet-x'));
     await p.keyboard.press('Escape');

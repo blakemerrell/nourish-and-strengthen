@@ -138,7 +138,7 @@ module.exports = {
       saved[miss] === '55555555' && pasted.ids.indexOf('55555555') >= 0, JSON.stringify({ miss, saved, ids: pasted.ids }));
 
     /* Plan my week's list carries the same button. */
-    await p.evaluate(() => localStorage.setItem('sh.pw', JSON.stringify({ days: ['thu', 'fri'], shelf: false })));
+    await p.evaluate(() => localStorage.setItem('sh.pw', JSON.stringify({ days: ['thu', 'fri'], shelf: false, wk: window.Store.activeWeek().id })));
     await p.click('.tab[data-view="plan"]');
     await p.waitForTimeout(250);
     await p.click('#planMyWeek');

@@ -17,7 +17,9 @@ module.exports = {
     await p.waitForTimeout(800);
     const errs = [];
     p.on('pageerror', (e) => errs.push(e.message));
-    await p.evaluate(() => localStorage.setItem('sh.pw', JSON.stringify({ days: ['mon', 'tue', 'wed', 'thu'], ppl: 4, t: 45, prot: ['Chicken'], lo: 0, shelf: true })));
+    /* Nights are kept for the week they were picked for (wk), so the four
+       asked for here are this week's. */
+    await p.evaluate(() => localStorage.setItem('sh.pw', JSON.stringify({ days: ['mon', 'tue', 'wed', 'thu'], ppl: 4, t: 45, prot: ['Chicken'], lo: 0, shelf: true, wk: window.Store.activeWeek().id })));
     await p.click('.tab[data-view="plan"]');
     await p.waitForTimeout(300);
     await p.click('#planMyWeek');

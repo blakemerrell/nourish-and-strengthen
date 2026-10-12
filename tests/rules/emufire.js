@@ -114,7 +114,7 @@ function world(port, projectId) {
       removeItem: (k) => { delete ls[k]; },
     };
     const errors = [], heard = {};
-    const location = { origin: 'https://example.test', pathname: '/storehouse-recipes/' };
+    const location = { origin: 'https://example.test', pathname: '/nourish-and-strengthen/' };
     const win = {
       firebase: ns, FIREBASE_CONFIG: { apiKey: 'demo-key', projectId }, crypto: webcrypto,
       localStorage: store, location,

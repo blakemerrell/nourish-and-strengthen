@@ -1,5 +1,5 @@
 {
-  "name": "storehouse-recipes-rules",
+  "name": "nourish-and-strengthen-rules",
   "private": true,
   "description": "Checks firestore.rules, and src/sync.js under them, against the Firestore emulator. Kept apart from the app's own dependencies: nothing the app ships needs these. firebase-shipped is the client src/sync.js loads, at the same version.",
   "scripts": {

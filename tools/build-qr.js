@@ -33,7 +33,7 @@ const qrcode = require('qrcode-generator');
 /* The landing page rather than the app itself. Someone scanning this is
    holding the book and has never seen the app; /welcome/ tells them what it is
    and how to put it on a home screen, and its first button opens the app. */
-const URL = 'https://blakemerrell.github.io/storehouse-recipes/welcome/';
+const URL = 'https://blakemerrell.github.io/nourish-and-strengthen/welcome/';
 
 const q = qrcode(0, 'M');
 q.addData(URL);

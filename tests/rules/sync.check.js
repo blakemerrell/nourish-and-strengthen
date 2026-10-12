@@ -175,7 +175,7 @@ function ok(cond, what) { if (!cond) throw new Error(what); }
     let link = '';
     await check('a member makes a link', async () => {
       link = await A.S.invite();
-      ok(/^https:\/\/example\.test\/storehouse-recipes\/\?invite=[0-9a-z]{24}$/.test(link), 'link ' + link);
+      ok(/^https:\/\/example\.test\/nourish-and-strengthen\/\?invite=[0-9a-z]{24}$/.test(link), 'link ' + link);
     });
     const token = () => link.split('invite=')[1];
     const F = w.phone('frank', {}, { account: true });

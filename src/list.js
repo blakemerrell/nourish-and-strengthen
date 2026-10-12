@@ -1,7 +1,8 @@
 /* The shopping list: the week's, added up in grams and said back in cups,
  * grouped by where each thing comes from (to buy, the storehouse pick-up,
- * already in the kitchen), with the staples that have run out and the
- * Walmart block at the foot of To buy.
+ * already in the kitchen), To buy in aisles, with the staples that have run
+ * out, and the Walmart button pinned to the foot of the screen while To buy
+ * is on it. Where a line comes from is changed under Mark what I have.
  *
  * A part of app.js in a file of its own. app.js calls HiveParts.list(app)
  * once, as it starts, handing over the few things of its own the list reads
@@ -63,7 +64,9 @@
           bucket[key] = {
             key: key, extra: true, g: 0,
             unit: s.u, per: s.p, lad: s.d,
-            label: s.s ? alias.charAt(0).toUpperCase() + alias.slice(1) : s.l
+            label: s.s ? alias.charAt(0).toUpperCase() + alias.slice(1) : s.l,
+            // the shelf the food sits on, which is the aisle it is bought from
+            c: s.s ? 'Seasonings' : ((window.PANTRY || {})[it.k] || {}).c || ''
           };
         }
         /* One line per thing, and the same predicate every other part of the
@@ -95,7 +98,7 @@
       var s = SHOP[k], d = (window.PANTRY || {})[k];
       if (!s || !d) return;
       var from = restockSource(k);
-      if (!bucket[k]) bucket[k] = { key: k, g: d.wm ? d.wm[1] : 0, unit: s.u, per: s.p, lad: s.d, label: s.l };
+      if (!bucket[k]) bucket[k] = { key: k, g: d.wm ? d.wm[1] : 0, unit: s.u, per: s.p, lad: s.d, label: s.l, c: d.c || '' };
       bucket[k].src = from; bucket[k].extra = from === 'b'; bucket[k].low = true;
     });
     /* To buy first, since that is the trip; then the storehouse pick-up;
@@ -112,6 +115,25 @@
         .filter(function (g) { return g.items.length; }),
       recipeCount: entries.length
     };
+  }
+
+  /* To buy, by aisle, in the order a trip through a store goes: fresh things
+     first, the spices last and folded, since most kitchens have them. The
+     aisles are the shelves the food table already files every food under.
+     Blake, of the list as one A-to-Z run with a price and a tag on every
+     line: "Rows too busy... No aisles... Just feels unintuitive". */
+  var AISLES = [['Produce', ['Fresh']], ['Meat', ['Meat']], ['Dairy & eggs', ['Dairy and eggs']], ['Bread', ['Bread']],
+    ['Canned', ['Canned soups', 'Canned veg', 'Canned fruit', 'Canned meats']],
+    ['Rice, beans & pasta', ['Beans, rice, potatoes', 'Flour and pasta', 'Cereal']], ['Baking', ['Baking', 'Sugars']],
+    ['Sauces & condiments', ['Condiments']], ['Drinks & treats', ['Drinks and desserts']], ['Other', []], ['Spices', ['Seasonings']]];
+  function byAisle(items) {
+    var at = {};
+    items.forEach(function (it) {
+      var a = AISLES.filter(function (x) { return x[1].indexOf(it.c) >= 0; })[0];
+      var n = a ? a[0] : 'Other';
+      (at[n] = at[n] || []).push(it);
+    });
+    return AISLES.filter(function (a) { return at[a[0]]; }).map(function (a) { return { name: a[0], items: at[a[0]] }; });
   }
 
   /* What the list's to-buy part costs: the one figure for "to buy", on the
@@ -151,34 +173,47 @@
     var fold = function (id, title, sub, inner, open) {
       return '<details class="list-fold" data-fold="' + id + '"' + (open ? ' open' : '') + '><summary><span>' + title + '</span><small>' + sub + '</small></summary>' + inner + '</details>';
     };
-    var line = function (it, g) {
+    /* A line is a box, the thing, and how much: nothing else. It used to
+       carry its price and a small tag for where it comes from on every row,
+       which made 21 lines read as 63 things. The price is the one total in
+       the head; where a thing comes from is changed for the whole list at
+       once, under Mark what I have, which puts the Have / Storehouse / Buy
+       switch on every line until Done. */
+    var mark = !!S.listMark;
+    var line = function (it) {
       var on = window.Store.isChecked(it.key), food = !!(window.PANTRY || {})[it.key];
       var store = window.Store.opt('store', true), opts = [['h', 'Have'], ['s', srcW().name], ['b', 'Buy']].filter(function (o) { return o[0] !== 's' || store; });
-      var cur = opts.filter(function (o) { return o[0] === it.src; })[0];
-      var pr = g.src === 'b' ? pwPrice(it.key) : 0, usd = pr && it.g ? it.g * pr / 100 : 0;
-      /* Where it comes from is a small tag; tapped, it opens into the
-         Have / Storehouse / Buy switch for that one line. */
-      var seg = !food ? '' : S.listOpen === it.key ?
+      var seg = !mark || !food ? '' :
         '<span class="src-seg no-print" role="group" aria-label="Where ' + esc(it.label) + ' comes from">' + opts.map(function (o) {
           return '<button class="src-' + o[0] + '" data-src="' + esc(it.key) + '" data-v="' + o[0] + '" aria-pressed="' + (it.src === o[0]) + '">' + o[1] + '</button>';
-        }).join('') + '</span>' :
-        '<button class="src-tag src-' + it.src + ' no-print" data-srctag="' + esc(it.key) + '" aria-label="' + esc(it.label) + ': ' + (cur ? cur[1] : '') + '. Change where it comes from">' + (cur ? cur[1] : '') + '</button>';
+        }).join('') + '</span>';
       return '<div class="list-line' + (it.src === 'h' ? ' have' : '') + '"><label class="list-row' + (on ? ' done' : '') + '">' +
         '<input type="checkbox" data-check="' + esc(it.key) + '"' + (on ? ' checked' : '') + '>' +
         '<span>' + esc(it.label) + '</span>' +
         '<span class="qty">' + esc(it.qty) + '</span>' +
-      '</label>' + (usd >= 0.5 ? '<span class="list-usd">' + pwMoney(usd) + '</span>' : '') + seg + '</div>';
+      '</label>' + seg + '</div>';
     };
+    var rows = function (items) { return '<div class="list-items">' + items.map(line).join('') + '</div>'; };
     var group = function (g) {
+      var body = g.src !== 'b' ? rows(g.items) : byAisle(g.items).map(function (a) {
+        var head = '<span>' + esc(a.name) + '</span><small>' + (a.name === 'Spices' ? 'you may have these \u00b7 ' : '') + a.items.length + '</small>';
+        return a.name === 'Spices' && !mark
+          ? '<details class="list-aisle" data-fold="aisle:Spices"' + (S.listFold['aisle:Spices'] ? ' open' : '') + '><summary class="list-aisle-h">' + head + '</summary>' + rows(a.items) + '</details>'
+          : '<div class="list-aisle"><div class="list-aisle-h">' + head + '</div>' + rows(a.items) + '</div>';
+      }).join('');
       return '<div class="list-group where-' + g.src + '">' +
         '<div class="list-group-title">' + esc(g.title) + '</div>' +
         (g.src === 's' ? '<button class="copy-order no-print" data-copyorder="1">' + srcW().copy + '</button>' : '') +
-        '<div class="list-items">' + g.items.map(function (it) { return line(it, g); }).join('') + '</div>' +
-        (g.src === 'b' ? wm : '') + '</div>';
+        body + (g.src === 'b' ? wm : '') + '</div>';
     };
     var have = built.groups.filter(function (g) { return g.src === 'h'; })[0];
-    $('listBody').innerHTML = built.groups.filter(function (g) { return g.src !== 'h'; }).map(group).join('') +
-      (have ? fold('have', 'Already in your kitchen', have.items.length + (have.items.length === 1 ? ' thing' : ' things'), group(have), S.listFold.have) : '');
+    var tools = !total ? '' : mark
+      ? '<div class="list-tools list-marking no-print" role="status"><span>Tap <b>Have</b> on anything already in your kitchen. It comes off the list and the cart.</span>' +
+        '<button class="nut-ask" data-listmark="0">Done</button></div>'
+      : '<div class="list-tools no-print"><button class="nut-ask" data-listmark="1">Mark what I have</button></div>';
+    $('listBody').classList.toggle('marking', mark);
+    $('listBody').innerHTML = tools + built.groups.filter(function (g) { return g.src !== 'h'; }).map(group).join('') +
+      (have ? fold('have', 'Already in your kitchen', have.items.length + (have.items.length === 1 ? ' thing' : ' things'), group(have), S.listFold.have || mark) : '');
     /* Anything run out? The kitchen's staples, folded by shelf, one tap
        each — and the whole shelf under Settings for the rest. */
     var P = window.PANTRY || {};

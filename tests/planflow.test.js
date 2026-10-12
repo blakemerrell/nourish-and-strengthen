@@ -114,6 +114,7 @@ module.exports = {
       low: [...document.querySelectorAll('[data-low]')].map((b) => b.dataset.low),
       shelves: document.querySelectorAll('#listLow .list-shelf').length,
       tags: document.querySelectorAll('#view-list [data-srctag]').length, segs: document.querySelectorAll('#view-list .src-seg').length,
+      mark: !!document.querySelector('#view-list [data-listmark="1"]'),
       back: (document.querySelector('#listNext [data-stepgo="plan"]') || {}).textContent || '',
     }));
     t.ok('storehouse only: the storehouse order leads, and there is no Walmart cart',
@@ -121,7 +122,8 @@ module.exports = {
     t.ok('"Anything run out?" comes last, folded, the staples by shelf — no wall of pills before the food',
       shop.order[0] === 'Storehouse order' && shop.order[shop.order.length - 1] === 'Anything run out?' &&
       shop.folded.every((f) => /:false$/.test(f)) && shop.shelves >= 1, JSON.stringify(shop));
-    t.ok('each line says where it comes from as a tag, not a three-way switch', shop.tags > 3 && shop.segs === 0, JSON.stringify(shop));
+    t.ok('a line is the thing and how much, with no tag and no switch; Mark what I have is where a line changes where it comes from',
+      shop.tags === 0 && shop.segs === 0 && shop.mark, JSON.stringify(shop));
     t.ok('and the foot goes back to the week', shop.back === 'Back to the week', shop.back);
     t.ok('Anything run out? offers the kitchen’s staples', shop.low.indexOf(pill) >= 0, JSON.stringify(shop.low));
     await p.evaluate(() => document.querySelectorAll('#listLow details').forEach((d) => { d.open = true; }));

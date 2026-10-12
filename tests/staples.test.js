@@ -40,7 +40,8 @@ module.exports = {
     const shop = async () => {
       await p.evaluate(() => window.Hive.go('list'));
       await p.waitForTimeout(300);
-      await p.evaluate(() => { const b = document.querySelector('#view-list [data-srctag]'); if (b) b.click(); });
+      // the Have / source / Buy switch is on every line under Mark what I have
+      await p.evaluate(() => { const b = document.querySelector('#view-list [data-listmark="1"]'); if (b) b.click(); });
       await p.waitForTimeout(200);
       return p.evaluate(() => ({
         groups: [...document.querySelectorAll('#view-list .list-group-title')].map((g) => g.textContent),

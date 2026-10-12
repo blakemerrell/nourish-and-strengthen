@@ -59,12 +59,12 @@ module.exports = {
     const kept = await p.evaluate((k) => window.Store.kitchen(k), pick.k);
     t.ok('and it is still there after a reload', kept === 1, String(kept));
 
-    /* A storehouse line moved to Buy. The switch opens from the line's tag;
-       done from the page rather than by a visible click, since a line
-       already in the kitchen sits folded away. */
+    /* A storehouse line moved to Buy. The switch is on every line under
+       Mark what I have; done from the page rather than by a visible click,
+       since a line already in the kitchen sits folded away. */
     const srcTap = (k, v) => p.evaluate(async ([k, v]) => {
-      document.querySelector('#listBody [data-srctag="' + k + '"]').click();
-      await new Promise((r) => setTimeout(r, 150));
+      const m = document.querySelector('#listBody [data-listmark="1"]');
+      if (m) { m.click(); await new Promise((r) => setTimeout(r, 150)); }
       document.querySelector('#listBody [data-src="' + k + '"][data-v="' + v + '"]').click();
     }, [k, v]);
     await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('list')));
@@ -82,8 +82,8 @@ module.exports = {
     /* One tap is one change: the two writes behind Have are saved and drawn
        once, not once each. */
     const saves = await p.evaluate(async (k) => {
-      document.querySelector('#listBody [data-srctag="' + k + '"]').click();
-      await new Promise((r) => setTimeout(r, 150));
+      const m = document.querySelector('#listBody [data-listmark="1"]');
+      if (m) { m.click(); await new Promise((r) => setTimeout(r, 150)); }
       let n = 0;
       const was = Storage.prototype.setItem;
       Storage.prototype.setItem = function (key, v) { if (key === 'bsc.kitchen') n++; return was.call(this, key, v); };

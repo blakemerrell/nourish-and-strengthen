@@ -99,9 +99,13 @@ module.exports = {
     await p.waitForTimeout(250);
 
     /* Have: the line leaves the cart and the kitchen keeps it, for every
-       week after; Buy puts it back. The switch opens from the line's tag. */
-    const tag0 = await p.evaluate((k) => ({ t: document.querySelector('#listBody [data-srctag="' + k + '"]').textContent, seg: !!document.querySelector('#listBody .src-seg') }), firstKey);
-    await p.click('#listBody [data-srctag="' + firstKey + '"]');
+       week after; Buy puts it back. A line is the thing and how much, no
+       more; the switch is on every line under Mark what I have (Blake,
+       2026-10-12, of a list with a price and a tag on every line: "Rows too
+       busy"). */
+    const tag0 = await p.evaluate(() => ({ tag: !!document.querySelector('#listBody [data-srctag]'), seg: !!document.querySelector('#listBody .src-seg'),
+      price: !!document.querySelector('#listBody .list-usd') }));
+    await p.click('#listBody [data-listmark="1"]');
     await p.waitForTimeout(200);
     const seg = await p.evaluate((k) => [...document.querySelectorAll('#listBody [data-src="' + k + '"]')].map((b) => b.dataset.v).join(), firstKey);
     await p.click('#listBody [data-src="' + firstKey + '"][data-v="h"]');
@@ -110,17 +114,18 @@ module.exports = {
     const kit = await p.evaluate((k) => window.Store.kitchen(k), firstKey);
     const moved = await p.evaluate((k) => {
       const l = document.querySelector('#listBody [data-check="' + k + '"]').closest('.list-line');
-      return { seg: !!l.querySelector('.src-seg'), tag: (l.querySelector('[data-srctag]') || {}).textContent, fold: !!l.closest('.list-fold') };
+      return { seg: !!l.querySelector('.src-seg'), on: (l.querySelector('[data-src][aria-pressed="true"]') || { dataset: {} }).dataset.v, fold: !!l.closest('.list-fold') };
     }, firstKey);
     await p.evaluate(() => document.querySelectorAll('#view-list details').forEach((d) => { d.open = true; }));
-    await p.click('#listBody [data-srctag="' + firstKey + '"]');
-    await p.waitForTimeout(200);
     await p.click('#listBody [data-src="' + firstKey + '"][data-v="b"]');
     await p.waitForTimeout(250);
     const back = await read();
-    t.ok('a line says Buy as a tag; tapped, it opens into Have · Buy', tag0.t === 'Buy' && !tag0.seg && seg === 'h,b', JSON.stringify({ tag0, seg }));
+    await p.click('#listBody [data-listmark="0"]');
+    await p.waitForTimeout(200);
+    t.ok('a line is just the thing and how much, with no tag and no price; Mark what I have puts Have · Buy on it',
+      !tag0.tag && !tag0.seg && !tag0.price && seg === 'h,b', JSON.stringify({ tag0, seg }));
     t.ok('marking a line Have takes it out of the cart and into the kitchen, folded under Already in your kitchen; Buy puts it back',
-      had.ids.indexOf(itsId) < 0 && kit === 1 && !moved.seg && moved.tag === 'Have' && moved.fold && back.ids.indexOf(itsId) >= 0, JSON.stringify({ kit, moved, had: had.ids.length, back: back.ids.length }));
+      had.ids.indexOf(itsId) < 0 && kit === 1 && moved.seg && moved.on === 'h' && moved.fold && back.ids.indexOf(itsId) >= 0, JSON.stringify({ kit, moved, had: had.ids.length, back: back.ids.length }));
 
     /* A food with no pack: search it, paste its link, and it goes in. */
     await p.evaluate(() => { document.querySelector('#view-list .wm-fix').open = true; });

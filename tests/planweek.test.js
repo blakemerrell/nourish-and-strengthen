@@ -116,17 +116,25 @@ module.exports = {
       after[1].id !== picks[1].id && after[0].id === picks[0].id && after[2].id === picks[2].id && after[1].day === 'WED',
       JSON.stringify({ was: picks.map((x) => x.id), now: after.map((x) => x.id) }));
 
+    // the week's figure as it stands now, after the swap
+    const weekSum = await p.evaluate(() => document.getElementById('planSum').textContent);
     await p.click('#planNext [data-stepgo="list"]');
     await p.waitForTimeout(300);
-    const list = await p.evaluate(() => {
-      const lines = [...document.querySelectorAll('#view-list .list-group.where-b .list-line')].map((l) => (l.querySelector('.list-usd') || {}).textContent || '');
-      const sum = lines.reduce((n, v) => n + (/^\$/.test(v) ? Number(v.slice(1)) : 0), 0);
-      return { lines: lines.length, priced: lines.filter(Boolean).length, sum, head: document.getElementById('listCount').textContent,
-        first: (document.querySelector('.list-group-title') || {}).textContent || '', titles: [...document.querySelectorAll('.list-group-title')].map((g) => g.textContent) };
-    });
-    t.ok('the list is every ingredient, each priced, and what it says to buy is its lines added up',
-      list.lines > 5 && list.priced >= list.lines * 0.6 && Math.abs(Number((list.head.match(/~\$(\d+(?:\.\d+)?)/) || [])[1]) - list.sum) <= list.lines,
-      JSON.stringify(list));
+    const list = await p.evaluate(() => ({
+      lines: document.querySelectorAll('#view-list .list-group.where-b .list-line').length,
+      priced: document.querySelectorAll('#view-list .list-usd').length, head: document.getElementById('listCount').textContent,
+      aisles: [...document.querySelectorAll('#view-list .where-b .list-aisle-h span')].map((a) => a.textContent),
+      first: (document.querySelector('.list-group-title') || {}).textContent || '', titles: [...document.querySelectorAll('.list-group-title')].map((g) => g.textContent) }));
+    /* One total, the week's, and no price on the lines: the per-line prices
+       made 21 lines read as 63 things (Blake: "Rows too busy"). The total is
+       the same figure the week says, from the same sum. */
+    const weekUsd = Number((weekSum.match(/~\$(\d+(?:\.\d+)?)/) || [])[1]), listUsd = Number((list.head.match(/~\$(\d+(?:\.\d+)?)/) || [])[1]);
+    t.ok('the list is every ingredient to buy, a line each with no price on it, and its one total is the week’s',
+      list.lines > 5 && list.priced === 0 && listUsd > 0 && listUsd === weekUsd, JSON.stringify({ list, weekUsd, listUsd }));
+    const order = ['Produce', 'Meat', 'Dairy & eggs', 'Bread', 'Canned', 'Rice, beans & pasta', 'Baking', 'Sauces & condiments', 'Drinks & treats', 'Other', 'Spices'];
+    t.ok('to buy goes by aisle, in the order a store is walked, the spices last',
+      list.aisles.length >= 2 && list.aisles.every((a, i) => i === 0 || order.indexOf(a) > order.indexOf(list.aisles[i - 1])) && list.aisles.every((a) => order.indexOf(a) >= 0),
+      JSON.stringify(list.aisles));
     t.ok('buying everything (I keep my own), the list opens on what to buy, with no storehouse order in it',
       /^To buy$/i.test(list.first.trim()) && !list.titles.some((g) => /storehouse/i.test(g)), JSON.stringify(list.titles));
     await p.click('#listNext [data-stepgo="plan"]');

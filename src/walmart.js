@@ -77,7 +77,13 @@ window.Walmart = (function () {
       return '<rect x="10.8" y="1.5" width="2.4" height="7.5" rx="1.2" transform="rotate(' + a + ' 12 12)"/>';
     }).join('') + '</g></svg>';
   /* The block: one button for everything matched, a search for what is not,
-     and under a fold, the product each line goes in as, to change. */
+     and under a fold, the product each line goes in as, to change.
+   *
+     The button and what it opens ride in a bar of their own, last in the To
+     buy box and pinned to the foot of the screen while that box is on it: at
+     the end of a 21-line list it was the one thing to do, and the last thing
+     anyone scrolled to (Blake, 2026-10-12). The rest stays where it was,
+     under the list. */
   function wmHTML(items) {
     var L = wmLines(items);
     if (!L.cart.length && !L.find.length && !L.away.length) return '';
@@ -89,20 +95,22 @@ window.Walmart = (function () {
         '<input class="wm-id" data-wmid="' + esc(l.key) + '" inputmode="numeric" placeholder="Item # or link" value="' + (l.own ? esc(l.id) : '') + '" aria-label="Walmart item number for ' + esc(l.label) + '">' +
       '</div>';
     };
+    var also = L.find.length || L.away.length;
     return '<div class="wm">' +
-      (L.cart.length ? '<a class="wm-btn" href="' + esc(wmCartURL(L.cart)) + '" target="_blank" rel="noopener">' + WM_MARK +
-        'Add ' + L.cart.length + (L.cart.length === 1 ? ' item' : ' items') + ' to Walmart cart</a>' : '') +
-      '<div class="wm-sub">' + (L.cart.length ? 'Opens Walmart with ' + (n === L.cart.length ? 'them' : n + ' packs') + ' in your cart. ' : '') +
+      (also ? '<div class="wm-sub">' +
         (L.find.length ? L.find.length + ' to find yourself: ' + L.find.map(function (l) {
           return '<a href="' + esc(wmSearchURL(l.label)) + '" target="_blank" rel="noopener">' + esc(l.label) + '</a>';
         }).join(', ') : '') +
         (L.away.length ? '<span class="wm-away">' + L.away.map(function (l) {
           return esc(l.label) + ': <a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.where) + ' \u2197</a>';
-        }).join(' \u00b7 ') + '</span>' : '') + '</div>' +
+        }).join(' \u00b7 ') + '</span>' : '') + '</div>' : '') +
       '<details class="wm-fix"><summary>Check the products \u203a</summary>' +
         '<p>Paste an item number, or the product’s walmart.com link, to use a different product.</p>' +
         L.find.concat(L.cart).map(row).join('') + '</details>' +
-    '</div>';
+    '</div>' +
+    (L.cart.length ? '<div class="wm-bar no-print"><a class="wm-btn" href="' + esc(wmCartURL(L.cart)) + '" target="_blank" rel="noopener">' + WM_MARK +
+        'Add ' + L.cart.length + (L.cart.length === 1 ? ' item' : ' items') + ' to Walmart cart</a>' +
+      '<div class="wm-sub">Opens Walmart with ' + (n === L.cart.length ? 'them' : n + ' packs') + ' in your cart</div></div>' : '');
   }
 
   // the suite's door in (tests/walmart.test.js)

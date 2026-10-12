@@ -6092,10 +6092,16 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
    switch sits beside it and wraps under on a narrow line. The storehouse
    colour is its own, and Buy is Walmart's blue, since that is where it goes. */
 .list-line { display: flex; align-items: center; column-gap: 8px; border-bottom: 1px solid var(--line-soft); }
-/* one line per food: the name with its amount under it, and the switch beside */
-.list-line .list-row { flex: 1 1 auto; min-width: 0; border-bottom: 0; display: grid; grid-template-columns: 15px minmax(0, 1fr);
-  column-gap: 11px; row-gap: 1px; align-items: center; padding: 7px 2px; }
-.list-line .list-row .qty { grid-column: 2; margin: 0; text-align: left; }
+/* One line per food, read like a written list: the box, the thing, and how
+   much at the right, a thumb tall. Under Mark what I have the amount gives
+   its room to the Have / Storehouse / Buy switch, and the box goes, since
+   that is not the moment for ticking. */
+.list-line .list-row { flex: 1 1 auto; min-width: 0; border-bottom: 0; display: grid; grid-template-columns: 22px minmax(0, 1fr) auto;
+  column-gap: 12px; align-items: center; min-height: 48px; padding: 4px 2px; font-size: 1rem; }
+.list-line .list-row input:not(#u#u) { width: 22px; height: 22px; }
+.list-line .list-row .qty { margin: 0; text-align: right; font-size: 0.875rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#listBody.marking .list-row input, #listBody.marking .list-row .qty { display: none; }
+#listBody.marking .list-line .list-row { grid-template-columns: minmax(0, 1fr); }
 .list-line.have .list-row span:not(.qty) { color: var(--muted); }
 .src-seg { display: inline-flex; flex: none; border: 1px solid var(--line-firm); border-radius: 99px; overflow: hidden; margin: 0; }
 .src-seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 0.75rem; min-height: 34px; min-width: 44px; padding: 0 8px; cursor: pointer; }
@@ -6583,12 +6589,31 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
 .dsh-row b { font-weight: 600; font-size: 0.96875rem; }
 .dsh-row small { font-size: 0.78125rem; color: var(--muted); }
 .dsh-row.dsh-danger b { color: var(--dial-over, #b3261e); }
-/* the list */
-.list-usd { flex: none; font-size: 0.78125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.src-tag { flex: none; min-height: 34px; padding: 0 8px; border: 0; border-radius: 99px; background: transparent; color: var(--muted); font: inherit; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; }
-.src-tag.src-s { color: var(--store-ink); }
-.src-tag.src-b { color: var(--walmart); }
-.src-tag::after { content: ' \203A'; font-weight: 400; }
+/* the list: Mark what I have, then To buy by aisle */
+.list-tools { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin: -4px 0 10px; }
+.list-tools .nut-ask { min-height: 44px; }
+.list-tools.list-marking { justify-content: space-between; background: var(--hint); border-radius: 8px; padding: 4px 12px; margin: 0 0 12px; font-size: 0.875rem; }
+.list-aisle { margin-top: 10px; }
+.list-aisle:first-of-type { margin-top: 0; }
+.list-aisle-h {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 6px 2px 5px;
+  font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; color: var(--muted-2);
+}
+.list-aisle-h small { letter-spacing: 0; text-transform: none; font-weight: 400; font-size: 0.8125rem; color: var(--muted); }
+summary.list-aisle-h { min-height: 44px; align-items: center; cursor: pointer; list-style: none; }
+summary.list-aisle-h::-webkit-details-marker { display: none; }
+summary.list-aisle-h span::after { content: ' \203A'; letter-spacing: 0; }
+details[open] > summary.list-aisle-h span::after { content: ' \2304'; }
+/* The Walmart button, pinned to the foot of the screen while To buy is on
+   it, and last in the box once the box has scrolled by. */
+.wm-bar {
+  position: sticky; bottom: 0; z-index: var(--z-lift); margin: 12px -12px -4px;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: var(--card); border-top: 1px solid var(--line); border-radius: 0 0 10px 10px;
+}
+.wm-bar .wm-sub { margin-top: 5px; }
+/* at 320 the label went to two lines; a step smaller keeps it on one */
+@media (max-width: 340px) { .wm-bar .wm-btn { font-size: 0.875rem; padding: 0 12px; gap: 8px; } }
 .list-fold { margin: 6px 0 10px; }
 .list-fold > summary { display: flex; align-items: baseline; gap: 8px; min-height: 44px; padding: 8px 0; cursor: pointer; list-style: none; border-bottom: 1px solid var(--line-soft); }
 .list-fold > summary::-webkit-details-marker { display: none; }

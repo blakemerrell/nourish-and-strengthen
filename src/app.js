@@ -792,7 +792,7 @@
     filtPop: false,
     /* The list's folds and the one line whose source switch is open; a
        day's dinner opened on the week. None of it is saved. */
-    listFold: {}, listOpen: null, daySheet: null,
+    listFold: {}, listMark: false, daySheet: null,
     /* Cups or grams. Persisted on the device rather than shared, because it is
        a preference about reading, not about the plan — one of you can cook by
        weight while the other cooks by cup without either overruling the other. */
@@ -2444,10 +2444,10 @@
   }
   document.addEventListener('click', function (e) {
     if (!e.target.closest) return;
-    var tg = e.target.closest('[data-srctag]');
-    if (tg) { S.listOpen = S.listOpen === tg.dataset.srctag ? null : tg.dataset.srctag; if (S.view === 'list') renderList(); return; }
+    var lm = e.target.closest('[data-listmark]');
+    if (lm) { S.listMark = lm.dataset.listmark === '1'; if (S.view === 'list') renderList(); return; }
     var b = e.target.closest('[data-src]');
-    if (b) { e.preventDefault(); S.listOpen = null; setFoodSource(b.dataset.src, b.dataset.v); if (S.view === 'list') renderList(); return; }
+    if (b) { e.preventDefault(); setFoodSource(b.dataset.src, b.dataset.v); if (S.view === 'list') renderList(); return; }
   });
   document.addEventListener('input', function (e) {
     if (e.target && e.target.id === 'kitFind') {
@@ -3853,7 +3853,7 @@
     'data-pwq', 'data-pwing', 'data-pwingx', 'data-wmid',
     'data-src', 'data-srcpick', 'data-weekbuy', 'data-near', 'data-low', 'data-kitmore', 'data-kitpill', 'data-copyorder', 'data-stepgo',
     'data-cal', 'data-calweek', 'data-calagain', 'data-calfrom', 'data-caltpl',
-    'data-addday', 'data-pswap', 'data-prate', 'data-adf', 'data-adadd', 'data-adsw', 'data-adopen', 'data-pwpick', 'data-pwsee', 'data-pwback', 'data-pwpre', 'data-pwmore', 'data-pwwant', 'data-pwopen', 'data-dayopen', 'data-dsact', 'data-srctag', 'data-fold',
+    'data-addday', 'data-pswap', 'data-prate', 'data-adf', 'data-adadd', 'data-adsw', 'data-adopen', 'data-pwpick', 'data-pwsee', 'data-pwback', 'data-pwpre', 'data-pwmore', 'data-pwwant', 'data-pwopen', 'data-dayopen', 'data-dsact', 'data-listmark', 'data-fold',
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',

@@ -117,12 +117,14 @@ if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
    Blake, 2026-10-12, after the repository was renamed and the app moved to
    a new address: Chrome's ⋮ → Install said "This app is already installed —
    open the app instead", and opening it said "Could not open app". Nothing
-   was installed at the new address (chrome://webapks had no Hive at all),
-   but two Treasure Up apps were, on the same blakemerrell.github.io. The
-   menu's install looks to be judging by the site rather than by the app's
-   own address. The page's own offer, beforeinstallprompt, is the other way
-   in and is reported to judge by the address, so it is kept here for a
-   button in the app's one sheet of settings.
+   was installed at the new address (chrome://webapks had no Hive at all).
+   What fixed it, the next day, was clearing Chrome's cache: Chrome had been
+   holding a stale record that the app was installed, most likely from the
+   old address, and its menu went by that. (It was first put down to Treasure
+   Up, another app on the same blakemerrell.github.io; that the cache cleared
+   it says otherwise.) The page's own offer, beforeinstallprompt, is a
+   separate way in, so it is kept here for a button in the app's one sheet
+   of settings, which also says plainly when no offer was made.
  *
    Kept, not taken over: no preventDefault, so Chrome's own install pop-up
    still shows when it would have. An offer can be used once; after that the

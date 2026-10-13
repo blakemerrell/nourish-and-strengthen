@@ -4635,8 +4635,8 @@
 
   /* On your home screen: installing the app from inside it, with the offer
      the browser made on this visit (src/boot.js keeps it, and says why: the
-     ⋮ menu's install refused it as "already installed" on a site with
-     another app on it). A button only when there is an offer to take; the
+     ⋮ menu's install once refused it as "already installed" when it was
+     not). A button only when there is an offer to take; the
      rest is one line saying where things stand, so a phone that is never
      offered one says so, rather than the section quietly not being there.
      A note, not a paragraph (kit-say, not sync-p): the sheet keeps its

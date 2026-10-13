@@ -2,9 +2,10 @@
  *
  * Blake, 2026-10-12, after the repository was renamed: Chrome's ⋮ → Install
  * said "This app is already installed", and opening it said "Could not open
- * app". Nothing was installed at the new address; two Treasure Up apps were,
- * on the same site. The page's own offer (beforeinstallprompt) is the other
- * way in, so the app keeps it and puts a button on it. Chrome makes that offer
+ * app". Nothing was installed at the new address; Chrome was holding a stale
+ * record of an earlier install, and clearing its cache put it right. The
+ * page's own offer (beforeinstallprompt) is a separate way in, so the app
+ * keeps it and puts a button on it. Chrome makes that offer
  * only when it would install the app, which the suite cannot make it do, so
  * the offer here is a stand-in with the same shape: prompt() and userChoice. */
 

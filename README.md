@@ -447,9 +447,10 @@ from any other host — the fonts are in this repository, not Google's.
 
 On Android the app can also be installed from inside itself: *Sync & sharing → On your
 home screen → Install the app*, there whenever Chrome is offering to install it. Chrome's
-own ⋮ → *Install* can refuse with "This app is already installed" when another web app
-from the same `github.io` site is on the phone; the button goes in by the page's own
-offer instead, a separate route. The same section says when no offer was made, and on an
+own ⋮ → *Install* can refuse with "This app is already installed" when it is not, going
+by a stale record of an earlier install (after the move to a new address it did, and
+clearing Chrome's cache put it right); the button goes in by the page's own offer
+instead, a separate route. The same section says when no offer was made, and on an
 iPhone says to use Share → *Add to Home Screen*.
 
 ## About the nutrition numbers

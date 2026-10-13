@@ -154,51 +154,75 @@ module.exports = {
     await p.goBack();
     await p.waitForTimeout(500);
 
-    /* ---- three views (Blake, 2026-10-10) ----
-       Where each card starts: Lunch is the next meal with food to eat, so
-       it is on Details; Dinner and Snacks after it on Foods; Breakfast has
-       nothing on it, so there is nothing to step and its name is the way
-       to food. */
+    /* ---- three views (Blake, 2026-10-13) ----
+       Where each card starts: uneaten meals start on State 2 (Foods with
+       Unified Split Pill and checkboxes); eaten meals start on State 1
+       (Status); empty Breakfast is one row its name opens. */
     const views = await p.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray[data-mslot]')].map((c) => ({
       k: c.dataset.mslot, v: c.querySelector('[data-mview]') ? c.querySelector('[data-mview]').dataset.mv : '',
       cls: c.className, head: Object.keys((c.querySelector('.mtray-hd') || { dataset: {} }).dataset).join() })));
-    t.ok('each card starts where it should: Lunch (next) on Details, Dinner and Snacks on Foods, empty Breakfast one row its name opens',
-      views.map((c) => c.k + (c.v || '-')).join() === 'b-,l3,d2,s2' && /\bmtray-empty\b/.test(views[0].cls) && views[0].head === 'meopen' &&
-      /\bmv-3\b/.test(views[1].cls), JSON.stringify(views));
+    t.ok('each card starts where it should: uneaten meals on State 2 (mv-2), empty Breakfast one row its name opens',
+      views.map((c) => c.k + (c.v || '-')).join() === 'b-,l2,d2,s2' && /\bmtray-empty\b/.test(views[0].cls) && views[0].head === 'meopen' &&
+      /\bmv-2\b/.test(views[1].cls), JSON.stringify(views));
 
-    /* Foods: the leaf, the name, what it costs, and nothing else to press */
+    /* State 2 (Foods): leaf, name, Unified Split Pill (kitchen/each + g), and eaten checkbox */
     const foods = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-f')].map((l) => ({
-      name: (l.querySelector('.mtray-fn') || {}).textContent, kcal: (l.querySelector('.mtray-ck') || {}).textContent,
-      mac: (l.querySelector('.mtray-cm') || {}).textContent, amt: !!l.querySelector('.mfl-amt'), tick: !!l.querySelector('input.mitem-ate'),
-      buttons: l.querySelectorAll('button').length, h: Math.round(l.getBoundingClientRect().height) })), card('d'));
-    t.ok('Foods: each line is its leaf, its name, its calories and its P, F and C, the name the only thing to press',
-      foods.length === 2 && foods[1].name === 'Eggs' && /^\d+ kcal$/.test(foods[1].kcal) && /^\d+P\d+F\d+C$/.test(foods[1].mac) &&
-      foods.every((l) => !l.amt && !l.tick && l.buttons === 1 && l.h >= 44), JSON.stringify(foods));
+      name: (l.querySelector('.mtray-fn') || {}).textContent,
+      fm: (l.querySelector('.mtray-fm') || {}).textContent,
+      g: (l.querySelector('.mfl-amt em') || {}).textContent,
+      split: !!l.querySelector('.mfl-amt.split-pill'),
+      tick: !!l.querySelector('input.mitem-ate'),
+      open: l.classList.contains('open'),
+      h: Math.round(l.getBoundingClientRect().height) })), card('d'));
+    t.ok('State 2: each line has its leaf, name, Unified Split Pill (kitchen/each + grams), and eaten tick, closed by default',
+      foods.length === 2 && foods[1].name === 'Eggs' && foods[1].fm === '2 whole' && foods[1].g === '100 g' &&
+      foods.every((l) => l.split && l.tick && !l.open && l.h >= 44), JSON.stringify(foods));
     const verbs = (sel) => p.evaluate((s2) => [...document.querySelectorAll(s2 + ' .mtray-vbs button')].map((b) => Object.keys(b.dataset)[0]), sel);
-    t.ok('and its verbs are drawings: + to add and ⊘ to skip (the scale waits for Details)',
+    t.ok('and its verbs in State 2 are drawings: + to add and ⊘ to skip (the scale waits for State 3)',
       (await verbs(card('d'))).join() === 'mopen,mskipask', JSON.stringify(await verbs(card('d'))));
-    t.ok('Details carries the scale as well', (await verbs(card('l'))).join() === 'mopen,mbal,mskipask', JSON.stringify(await verbs(card('l'))));
-
-    /* The scale on the card balances the meal there, on the day, and says so */
-    const before = await mealOf(p, 'l');
-    await p.click(card('l') + ' [data-mbal="l"]');
-    await p.waitForTimeout(300);
-    const after = await mealOf(p, 'l');
-    t.ok('the card’s scale balances the meal on the day, letting go of the lock, and the toast says it',
-      after.some((it, i) => it.x !== before[i].x) && after.every((it) => !it.l) &&
-      /Lunch balanced: \d+ foods? moved/.test(await textOf(p, '#mToast')) && !(await p.$('#modalRoot .msheet')), JSON.stringify({ before, after }));
 
     /* What each ring should say, worked out here from the meal's own pills
        (have/want): within a tenth on plan, past it over, short of it still
        filling — protein over stays on (2026-10-11). */
     const want = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-caps .mcap')].map((c) => ({
       want: Number(c.dataset.want), have: Number(c.querySelector('.mcap-t').childNodes[1].textContent.replace(/,/g, '')) })), card('l'));
-    const judged = want.map((w, i) => {
+
+    /* Stepping Lunch from State 2 (mv-2) -> State 3 (mv-3): all foods open simultaneously + inline Quick-Add drawer */
+    await p.click(card('l') + ' [data-mview]');
+    await p.waitForTimeout(250);
+    t.ok('State 3 carries the scale in the header as well', (await verbs(card('l'))).join() === 'mopen,mbal,mskipask', JSON.stringify(await verbs(card('l'))));
+    const s3 = await p.evaluate((sel) => {
+      const c = document.querySelector(sel);
+      const ls = [...c.querySelectorAll('.mtray-f')];
+      return {
+        mv3: c.classList.contains('mv-3'),
+        allOpen: ls.length === 2 && ls.every((l) => l.classList.contains('open') && l.querySelectorAll('[data-mstep]').length === 2),
+        hasAddBox: !!c.querySelector('.mtray-add-box [data-mqslot="l"]'),
+        hasBalBtn: !!c.querySelector('.mtray-s3-bal[data-mbal="l"]'),
+        picks: c.querySelectorAll('.mtray-pick[data-mqadd]').length
+      };
+    }, card('l'));
+    t.ok('State 3 opens all food rows simultaneously for immediate multi-food adjusting and shows the inline Quick-Add drawer',
+      s3.mv3 && s3.allOpen && s3.hasAddBox && s3.hasBalBtn && s3.picks > 0, JSON.stringify(s3));
+
+    /* The scale on the card balances the meal there, on the day, and says so */
+    const before = await mealOf(p, 'l');
+    await p.click(card('l') + ' .mtray-s3-bal[data-mbal="l"]');
+    await p.waitForTimeout(300);
+    const after = await mealOf(p, 'l');
+    t.ok('the card’s scale balances the meal on the day, letting go of the lock, and the toast says it',
+      after.some((it, i) => it.x !== before[i].x) && after.every((it) => !it.l) &&
+      /Lunch balanced: \d+ foods? moved/.test(await textOf(p, '#mToast')) && !(await p.$('#modalRoot .msheet')), JSON.stringify({ before, after }));
+
+    /* Recompute ring expectations after balancing Lunch */
+    const wantAfter = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-caps .mcap')].map((c) => ({
+      want: Number(c.dataset.want), have: Number(c.querySelector('.mcap-t').childNodes[1].textContent.replace(/,/g, '')) })), card('l'));
+    const judged = wantAfter.map((w, i) => {
       const r = w.have / w.want;
       return r >= 0.9 && (i === 1 || r <= 1.1) ? 'on' : r > 1.1 ? 'over' : 'under';
     });
 
-    /* the name steps the card: Details → Status → Foods → Details */
+    /* the name steps the card: State 3 (Details) → State 1 (Status) → State 2 (Foods) → State 3 (Details) */
     await p.click(card('l') + ' [data-mview]');
     await p.waitForTimeout(250);
     const status = await p.evaluate((sel) => {
@@ -208,33 +232,45 @@ module.exports = {
         verbs: [...c.querySelectorAll('.mtray-vbs button')].map((b) => Object.keys(b.dataset)[0]), h: Math.round(c.getBoundingClientRect().height),
         focus: document.activeElement === c.querySelector('[data-mview]') };
     }, card('l'));
-    t.ok('a tap on the name shuts the card to its Status: no lines, no pills, a circle each for 🔥 P F C, and only Skip',
+    t.ok('a tap on the name from State 3 shuts the card to State 1 (Status): no lines, no pills, a circle each for 🔥 P F C, and only Skip',
       status.v === '1' && status.lines === 0 && !status.pills && status.beads.length === 4 && /^mbd-kcal/.test(status.beads[0]) &&
       status.verbs.join() === 'mskipask' && status.h < 70 && status.focus, JSON.stringify(status));
     const SAY = { on: '(on plan|over, which is fine)', over: 'over', under: '\\d+% there' };
     const said = new RegExp('^Lunch, planned: ' + ['calories', 'protein', 'fat', 'carbs'].map((m, i) => m + ' ' + SAY[judged[i]]).join(', ') +
       '\\. Showing its status; tap for its foods$');
     t.ok('the rings fill by the meal’s share, green on plan, and it is said in words',
-      want.length === 4 && judged.some((j) => j !== 'under') && status.beads.join() === ['kcal', 'p', 'f', 'c'].map((m, i) => 'mbd-' + m + ' rg-' + judged[i]).join() &&
-      said.test(status.say), JSON.stringify({ want, judged, status }));
+      wantAfter.length === 4 && judged.some((j) => j !== 'under') && status.beads.join() === ['kcal', 'p', 'f', 'c'].map((m, i) => 'mbd-' + m + ' rg-' + judged[i]).join() &&
+      said.test(status.say), JSON.stringify({ wantAfter, judged, status }));
     await p.click(card('l') + ' [data-mview]');
     await p.waitForTimeout(250);
-    t.ok('again, and it is on Foods', await p.evaluate((sel) => document.querySelector(sel).classList.contains('mv-2') &&
-      document.querySelectorAll(sel + ' .mtray-cl').length === 2, card('l')));
+    const onState2 = await p.evaluate((sel) => {
+      const c = document.querySelector(sel);
+      const ls = [...c.querySelectorAll('.mtray-f')];
+      return c.classList.contains('mv-2') && ls.length === 2 &&
+        ls.every((l) => !!l.querySelector('.mfl-amt.split-pill') && !!l.querySelector('input.mitem-ate') && !l.classList.contains('open'));
+    }, card('l'));
+    t.ok('again, and it is on State 2 (Foods with Unified Split Pill and ticks)', onState2);
     await p.click(card('l') + ' [data-mview]');
     await p.waitForTimeout(250);
     const reExpanded = await p.evaluate((sel) => {
       const ls = [...document.querySelectorAll(sel + ' .mtray-f')];
-      return ls.length === 2 && ls.every((l) => !!l.querySelector('.mfl-amt') && !!l.querySelector('input.mitem-ate'));
+      return ls.length === 2 && ls.every((l) => l.classList.contains('open') && !!l.querySelector('.mfl-amt') && !!l.querySelector('input.mitem-ate'));
     }, card('l'));
-    t.ok('and once more back to Details, each line with its amount and tick', reExpanded);
+    t.ok('and once more back to State 3 (Details), all lines open with their dials and quick-add drawer', reExpanded);
 
-    /* A view chosen holds for that day: Dinner put on Details stays there
-       across a redraw, and every card asks for what it needs from there. */
-    await p.click(card('d') + ' [data-mview]');
+    /* Inline Quick-Add drawer in State 3: search and 1-tap add food directly on the card */
+    await p.click(card('l') + ' [data-mqslot="l"]');
+    await p.keyboard.type('rice');
     await p.waitForTimeout(250);
-    await p.click(card('s') + ' [data-mview]');
-    await p.waitForTimeout(250);
+    await p.click(card('l') + ' .mtray-pick[data-mqadd]');
+    await p.waitForTimeout(300);
+    const afterQuickAdd = await p.evaluate((sel) => {
+      const ls = [...document.querySelectorAll(sel + ' .mtray-f')];
+      const qin = document.querySelector(sel + ' [data-mqslot="l"]');
+      return { count: ls.length, allOpen: ls.every((l) => l.classList.contains('open')), qVal: qin ? qin.value : 'missing' };
+    }, card('l'));
+    t.ok('1-tap quick-add in State 3 adds the food to the meal with its dial open and clears the inline search box',
+      afterQuickAdd.count === 3 && afterQuickAdd.allOpen && afterQuickAdd.qVal === '', JSON.stringify(afterQuickAdd));
 
     /* the meal’s pills open the meal sheet, where food is added */
     await p.click(card('l') + ' .mtray-caps');

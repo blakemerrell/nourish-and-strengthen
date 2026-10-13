@@ -54,8 +54,8 @@ module.exports = {
     const start = await p.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray[data-mslot]')].map((c) => ({
       k: c.dataset.mslot, v: (c.className.match(/\bmv-(\d)/) || [])[1], beads: c.querySelectorAll('.mbd').length,
       skip: !!c.querySelector('[data-mskipask]'), door: !!c.querySelector('.mtray-b[data-mopen]') })));
-    t.ok('the eaten breakfast starts on Status with its four rings; Lunch, next, on Details; Dinner on Foods; the empty Snacks one row',
-      start.map((c) => c.k + (c.v || '-')).join() === 'b1,l3,d2,s-' && start[0].beads === 4 && start.slice(1).every((c) => !c.beads) &&
+    t.ok('the eaten breakfast starts on Status with its four rings; Lunch and Dinner on State 2 (Foods); the empty Snacks one row',
+      start.map((c) => c.k + (c.v || '-')).join() === 'b1,l2,d2,s-' && start[0].beads === 4 && start.slice(1).every((c) => !c.beads) &&
       await p.evaluate(() => document.querySelector('#macroSlots [data-mslot="s"]').classList.contains('mtray-empty')), JSON.stringify(start));
     t.ok('every card keeps its door to the meal, Status too', start.every((c) => c.door), JSON.stringify(start));
     t.ok('a meal anything was eaten from has no ⊘; the others do', !start[0].skip && start.slice(1).every((c) => c.skip), JSON.stringify(start));
@@ -122,7 +122,7 @@ module.exports = {
     await p.waitForTimeout(200);
     const back = await p.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray[data-mslot]')].map((c) => (c.className.match(/\bmv-(\d)/) || [])[1]).join());
     // the empty Snacks has nothing to show on either, and stays as it was drawn
-    t.ok('printing shows every meal with food on Details, and the cards go back after', paper === '3,3,3,' && back === '1,3,2,', JSON.stringify({ paper, back }));
+    t.ok('printing shows every meal with food on Details, and the cards go back after', paper === '3,3,3,' && back === '1,2,2,', JSON.stringify({ paper, back }));
 
     /* ---- rings: protein past its share stays green, fat past it amber ---- */
     const ringsOf = (sk) => p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mbd')].map((b) => (b.className.match(/rg-\w+/) || [''])[0]), card(sk));

@@ -3857,7 +3857,7 @@
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
-    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave'];
+    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mqlens', 'data-mqadd', 'data-mqslot'];
 
   function focusKey(el) {
     if (!el || el === document.body || !el.getAttribute) return null;
@@ -5564,6 +5564,37 @@
         mOpenPicker(mop.dataset.mopen, 'home');
         return;
       }
+      var mql = e.target.closest('[data-mqlens]');
+      if (mql) {
+        var qlp = mql.dataset.mqlens.split(':');
+        if (qlp[1] === 'saved') {
+          rememberOpener();
+          S.mEdit = null;
+          mOpenPicker(qlp[0], 'home');
+          S.mpSec = 'saved';
+          renderModal();
+          return;
+        }
+        (S.mCardLens = S.mCardLens || {})[qlp[0]] = qlp[1];
+        keepingFocus(renderMacros);
+        return;
+      }
+      var mqa = e.target.closest('[data-mqadd]');
+      if (mqa) {
+        var qap = mqa.dataset.mqadd.split(':');
+        var qsk = qap[0], qid = idOf(qap.slice(1).join(':'));
+        var qx = Number(mqa.dataset.mqx) || 1;
+        var qvk = mViewKey(), qidx = -1;
+        mEditDay(qvk, function (day) {
+          day[qsk] = day[qsk] || [];
+          qidx = day[qsk].length;
+          day[qsk].push({ id: qid, x: qx, eaten: mAddsEaten(qvk, qsk) });
+        });
+        if (qidx >= 0) mRefitMeal(qvk, qsk, qidx);
+        if (S.mCardQ) S.mCardQ[qsk] = '';
+        mRedraw();
+        return;
+      }
       /* The name is a door to the recipe itself. It goes through openRecipe
          like every other door, so the back gesture walks home to the day. */
       var op = e.target.closest('[data-open]');
@@ -5940,6 +5971,13 @@
 
     /* The day and the meal's sheet, both: the box lives in the sheet now. */
     var mTypedKeys = function (e) {
+      var qin = e.target.closest && e.target.closest('[data-mqslot]');
+      if (qin && e.key === 'Escape') {
+        e.preventDefault();
+        (S.mCardQ = S.mCardQ || {})[qin.dataset.mqslot] = '';
+        keepingFocus(renderMacros);
+        return;
+      }
       if (!e.target.classList || !e.target.classList.contains('mstep-in')) return;
       if (e.key === 'Enter') { e.preventDefault(); mCommitTyped(e.target); return; }
       if (e.key === 'Escape') { e.preventDefault(); S.mType = null; mRedraw(); }
@@ -5953,6 +5991,20 @@
     $('macroSlots').addEventListener('focusout', mTypedOut);
     $('modalRoot').addEventListener('keydown', mTypedKeys);
     $('modalRoot').addEventListener('focusout', mTypedOut);
+
+    $('macroSlots').addEventListener('input', function (e) {
+      var qin = e.target.closest('[data-mqslot]');
+      if (!qin) return;
+      var qsk = qin.dataset.mqslot;
+      var pos = typeof qin.selectionStart === 'number' ? qin.selectionStart : qin.value.length;
+      (S.mCardQ = S.mCardQ || {})[qsk] = qin.value;
+      renderMacros();
+      var next = document.querySelector('#macroSlots [data-mqslot="' + qsk + '"]');
+      if (next) {
+        next.focus();
+        try { next.setSelectionRange(pos, pos); } catch (err) {}
+      }
+    });
 
     $('macroSlots').addEventListener('change', function (e) {
       var c = e.target.closest('[data-meat]');

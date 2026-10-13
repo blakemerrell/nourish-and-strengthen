@@ -7012,16 +7012,34 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .mtray .mtray-go .mtray-fn { color: var(--ochre-text); font-weight: 600; }
 .mtray .mtray-go .mtray-fn:hover, .mtray .mtray-go .mtray-fn:focus-visible { color: var(--ink); }
 .mfl-amt {
-  display: grid; grid-template-columns: auto 3.6em; column-gap: 8px; align-items: baseline; align-content: center;
-  min-height: 44px; border: 0; background: none; padding: 0; margin: 0; font: inherit; color: var(--ink); text-align: right; cursor: pointer;
+  display: inline-grid; grid-template-columns: auto auto; column-gap: 0; align-items: center; align-content: center;
+  min-height: 44px; min-width: 44px; border: 0; background: none; padding: 0; margin: 0; font: inherit; color: var(--ink); text-align: right; cursor: pointer;
 }
-/* the cup, and its mL small under it; the dot between them is for words read aloud or copied */
-.mfl-amt .mtray-fm { display: flex; flex-direction: column; align-items: flex-end; justify-self: end; line-height: 1.15; white-space: nowrap; }
-.mfl-amt .mtray-fm b { display: inline-flex; align-items: center; gap: 3px; font-size: 0.875rem; font-weight: 600; }
-.mfl-amt .mtray-fm small { font-size: 0.8125rem; color: var(--note); }
-.mfl-amt .mtray-fm small i { display: none; }
+.mfl-amt.single { grid-template-columns: auto; }
+.mfl-amt.single .mtray-fm { display: none; }
+/* Unified Split Pill: kitchen/each measure on the left, weight in g on the right */
+.mfl-amt .mtray-fm {
+  display: inline-flex; flex-direction: row; align-items: baseline; justify-content: flex-end; justify-self: end; gap: 3px;
+  height: 24px; box-sizing: border-box; padding: 0 7px;
+  border: 1px solid var(--line-firm); border-right: 0; border-radius: 999px 0 0 999px;
+  background: var(--paper-soft); line-height: 22px; white-space: nowrap;
+}
+.mfl-amt.locked .mtray-fm { background: var(--ochre-soft); border-color: var(--ochre); }
+.mfl-amt .mtray-fm b { display: inline-flex; align-items: center; gap: 3px; font-size: 0.875rem; font-weight: 600; line-height: 1.15; color: var(--ink); }
+.mfl-amt .mtray-fm small { font-size: 0.8125rem; line-height: 1.15; color: var(--note); }
+.mfl-amt .mtray-fm small i { font-style: normal; }
+@media (max-width: 380px) {
+  .mfl-amt .mtray-fm small { display: none; }
+}
 .mfl-amt .mtray-fm .mcard-lk { width: 11px; height: 11px; color: var(--ochre-text); }
-.mfl-amt em { font-style: normal; font-size: 0.8125rem; color: var(--note); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mfl-amt em {
+  display: inline-flex; align-items: center; justify-content: flex-end;
+  height: 24px; box-sizing: border-box; padding: 0 7px;
+  border: 1px solid var(--line-firm); border-radius: 0 999px 999px 0; background: var(--card);
+  font-style: normal; font-size: 0.8125rem; font-weight: 600; line-height: 1.15; color: var(--note); white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.mfl-amt.single em { border-radius: 999px; background: var(--paper-soft); color: var(--ink); }
+.mfl-amt.locked em { border-color: var(--ochre); }
 /* The tick: the plate's own 30px box, drawn inside a 44px target that
    spills 7px past its column each way, so the line keeps its room and a
    thumb still gets a thumb's worth ("every control on the day is a thumb
@@ -7046,13 +7064,12 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .mfl-x { display: grid; gap: 8px; padding: 0 0 12px 10px; }
 .mfl-mac { margin-top: -4px; padding-left: 36px; font-size: 0.8125rem; line-height: 1.35; color: var(--note); }
 .mfl-mac .mitem-mac { font-size: inherit; }
-.mfl-ctl { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.mfl-ctl { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
 /* The four verbs as one row of keys, edge to edge, so a thumb between two
-   lands on one of them. 40 wide and 44 tall: at 44 square a recipe's
-   "~363 g" pushed the dial off the row on a 390 phone. */
+   lands on one of them. */
 .mfl-ics { display: inline-flex; border: 1px solid var(--line-firm); border-radius: 10px; background: var(--card); overflow: hidden; }
 .mfl-ic {
-  width: 40px; height: 44px; min-width: 0; min-height: 0; border: 0; border-left: 1px solid var(--line-soft); border-radius: 0;
+  width: 44px; height: 44px; min-width: 44px; min-height: 44px; border: 0; border-left: 1px solid var(--line-soft); border-radius: 0;
   background: none; padding: 0; margin: 0; display: grid; place-items: center; color: var(--label); cursor: pointer;
 }
 .mfl-ic:first-child { border-left: 0; }
@@ -7061,24 +7078,76 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 /* − amount +: the sheet's dial, its circles and its type. On a phone too
    narrow for both in a row it drops under the verbs, to the right. */
 .mfl-dial { margin-left: auto; display: inline-flex; align-items: center; border: 1px solid var(--line-firm); border-radius: 999px; background: var(--card); }
-.mfl-k { position: relative; width: 44px; height: 44px; min-width: 0; min-height: 0; border: 0; border-radius: 0; background: none; padding: 0; margin: 0; display: grid; place-items: center; color: var(--label); cursor: pointer; }
+.mfl-k { position: relative; width: 44px; height: 44px; min-width: 44px; min-height: 44px; border: 0; border-radius: 0; background: none; padding: 0; margin: 0; display: grid; place-items: center; color: var(--label); cursor: pointer; }
 .mfl-k::before {
   content: ''; position: absolute; left: 8px; top: 8px; width: 28px; height: 28px; box-sizing: border-box;
   border-radius: 50%; border: 1px solid var(--line-firm); background: var(--paper-soft);
 }
 .mfl-k svg { position: relative; width: 12px; height: 12px; }
 .mfl-k:disabled { opacity: 0.35; cursor: default; }
-.mfl-g { min-width: 56px; display: flex; flex-direction: column; align-items: center; line-height: 1.05; }
+.mfl-g { min-width: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; }
 .mfl-g .mstep-x {
-  min-height: 28px; border: 0; background: none; padding: 2px 4px 0; cursor: pointer; color: var(--ink);
+  min-width: 56px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
+  border: 0; background: none; padding: 2px 4px; cursor: pointer; color: var(--ink);
   font-family: var(--sans); font-size: 0.9375rem; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums;
   text-decoration: underline dotted var(--line-firm); text-underline-offset: 3px;
 }
 .mfl-dial.spent .mstep-x { font-weight: 500; color: var(--label); }
-.mfl-g small { font-size: 0.8125rem; color: var(--note); white-space: nowrap; }
+.mfl-g small { font-size: 0.8125rem; color: var(--note); white-space: nowrap; margin-top: -6px; padding-bottom: 2px; }
 .mfl-g .mitem-typing { display: inline-flex; align-items: baseline; gap: 3px; text-decoration: none; }
 .mfl-g .mstep-in { width: 4.6ch; flex: none; font-size: 0.9375rem; font-weight: 600; text-align: center; padding: 3px 0; border: 1px solid var(--ochre); border-radius: 6px; background: var(--field); color: var(--ink); }
 .mfl-g .mitem-typing i { font-style: normal; font-size: 0.8125rem; color: var(--note); }
+/* State 3 (mv-3): inline multi-food balance & quick-add food drawer */
+.mtray-add { position: relative; z-index: 1; margin-left: -46px; padding: 8px 12px 12px; border-top: 1px solid var(--line-soft); background: var(--paper-soft); display: grid; gap: 8px; }
+.mtray-s3-acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.mtray-s3-bal, .mtray-s3-cat {
+  flex: 1 1 116px; min-height: 44px; min-width: 44px; padding: 6px 10px;
+  border-radius: 9px; font: 600 0.8125rem/1.2 var(--sans);
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer;
+}
+.mtray-s3-bal { background: var(--ochre-soft); color: var(--ochre-text); border: 1px solid var(--ochre); }
+.mtray-s3-bal svg { width: 15px; height: 15px; flex: none; }
+.mtray-s3-cat { background: var(--card); color: var(--ink); border: 1px solid var(--line-firm); }
+.mtray-add-box {
+  background: var(--card); border: 1px solid var(--line-firm); border-radius: 10px;
+  padding: 8px; display: grid; gap: 7px;
+}
+.mtray-qbox {
+  display: flex; align-items: center; gap: 7px; background: var(--field);
+  border: 1px solid var(--line-firm); border-radius: 8px; padding: 6px 10px; min-height: 40px; box-sizing: border-box;
+}
+.mtray-qbox svg { width: 15px; height: 15px; color: var(--note); flex: none; }
+.mtray-qin {
+  flex: 1; min-width: 0; border: 0; background: none; outline: none; padding: 0;
+  font: 500 0.875rem/1.25 var(--sans); color: var(--ink);
+}
+.mtray-shelves { display: flex; flex-wrap: wrap; gap: 5px; }
+.mtray-shelf-chip {
+  min-height: 44px; min-width: 44px; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--line-firm); background: var(--paper-soft);
+  font: 600 0.8125rem/1.15 var(--sans); color: var(--label); cursor: pointer;
+}
+.mtray-shelf-chip.on { background: var(--ochre-soft); border-color: var(--ochre); color: var(--ochre-text); }
+.mtray-picks { display: grid; gap: 4px; }
+.mtray-pick {
+  width: 100%; min-height: 44px; min-width: 44px; box-sizing: border-box;
+  display: grid; grid-template-columns: 32px minmax(0, 1fr) auto 28px; align-items: center; gap: 6px;
+  padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line-soft); background: var(--paper-soft);
+  text-align: left; cursor: pointer; font: inherit; color: var(--ink);
+}
+.mtray-pick-lf { display: grid; place-items: center; }
+.mtray-pick-main { min-width: 0; display: grid; gap: 1px; }
+.mtray-pick-nm { font: 600 0.8125rem/1.2 var(--sans); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mtray-pick-sub { font: 500 0.8125rem/1.2 var(--sans); color: var(--note); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mtray-pick-por {
+  font: 600 0.8125rem/1.15 var(--sans); color: var(--label); background: var(--card);
+  border: 1px solid var(--line-soft); border-radius: 999px; padding: 2px 7px; white-space: nowrap;
+}
+.mtray-pick-plus {
+  width: 26px; height: 26px; border-radius: 50%; background: var(--green-soft); color: var(--green);
+  display: grid; place-items: center; font: 700 0.9375rem/1 var(--sans);
+}
+.mtray-pick-empty { margin: 0; padding: 6px 4px; font: 500 0.8125rem/1.3 var(--sans); color: var(--note); text-align: center; }
 @media (prefers-reduced-motion: no-preference) {
   .mtray-f.open .mfl-x { animation: mfl-drop 140ms ease-out; }
 }

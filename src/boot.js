@@ -1,4 +1,5 @@
-/* The worker's registration and the reload onto a new build. An inline
+/* The worker's registration and the reload onto a new build, and the
+   browser's offer to install the app, kept for Sync & sharing. An inline
    script in index.html until the content-security policy refused inline
    scripts; see src/theme.js. */
 /* Keeps the app openable with no signal. Needs a real server, so it is skipped
@@ -110,3 +111,73 @@ if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
       .catch(function () {});
   });
 }
+
+/* Installing the app from inside it: Sync & sharing → On your home screen.
+ *
+   Blake, 2026-10-12, after the repository was renamed and the app moved to
+   a new address: Chrome's ⋮ → Install said "This app is already installed —
+   open the app instead", and opening it said "Could not open app". Nothing
+   was installed at the new address (chrome://webapks had no Hive at all),
+   but two Treasure Up apps were, on the same blakemerrell.github.io. The
+   menu's install looks to be judging by the site rather than by the app's
+   own address. The page's own offer, beforeinstallprompt, is the other way
+   in and is reported to judge by the address, so it is kept here for a
+   button in the app's one sheet of settings.
+ *
+   Kept, not taken over: no preventDefault, so Chrome's own install pop-up
+   still shows when it would have. An offer can be used once; after that the
+   browser makes a new one on a later visit, or does not. The sheet is told
+   of every change with a 'hiveinstall' event on window, because app.js is
+   up before this file and cannot ask for it by name at start.
+ *
+   Never offered by Safari on an iPhone, which installs only from Share → Add
+   to Home Screen, so that is said instead. */
+window.Install = (function () {
+  'use strict';
+  var offer = null, step = '';
+  var tell = function () {
+    try { window.dispatchEvent(new window.Event('hiveinstall')); } catch (e) { /* too old to draw the sheet anyway */ }
+  };
+  addEventListener('beforeinstallprompt', function (e) {
+    offer = e;
+    if (step !== 'wait') step = '';
+    tell();
+  });
+  addEventListener('appinstalled', function () {
+    offer = null;
+    step = 'done';
+    tell();
+  });
+  function standalone() {
+    try { if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true; } catch (e) { /* no media queries */ }
+    return navigator.standalone === true;
+  }
+  function ios() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+  return {
+    /* 'app' running as the installed app; 'done' just installed; 'wait'
+       asked, not yet on the home screen; 'offer' the browser will install it
+       now; 'no' turned down this time; 'ios' Safari's own way; '' nothing
+       offered on this visit. */
+    state: function () {
+      if (standalone()) return 'app';
+      if (step) return step;
+      if (offer) return 'offer';
+      return ios() ? 'ios' : '';
+    },
+    ask: function () {
+      var o = offer;
+      if (!o) return;
+      offer = null;
+      step = 'wait';
+      tell();
+      try { o.prompt(); } catch (e) { step = ''; tell(); return; }
+      if (o.userChoice && o.userChoice.then) {
+        o.userChoice.then(function (c) {
+          if (step === 'wait' && (!c || c.outcome !== 'accepted')) { step = 'no'; tell(); }
+        }, function () { step = 'no'; tell(); });
+      }
+    }
+  };
+})();

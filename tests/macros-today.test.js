@@ -665,6 +665,22 @@ module.exports = nourish({
         return moved !== 'no hook' ? (before > 0 && after === 0) : 'no hook';
       }) === true,
       'needs a merge hook on the lab');
+    /* Blake: "if i haven't ticed eery meal and food offf, the day is still open!"
+       Unticking a meal or food on a closed day automatically reopens the day
+       and returns the primary button to Mark all complete. */
+    await closed.click('#macroFill');            // Complete the day again
+    await closed.waitForTimeout(400);
+    await closed.click('.sheet-x');
+    await closed.waitForTimeout(200);
+    await closed.click('#macroSlots [data-mdot]');
+    await closed.waitForTimeout(250);
+    t.ok('unticking a meal or food on a closed day automatically reopens the day',
+      await closed.evaluate(() => {
+        const b = document.getElementById('macroFill');
+        const doneMap = JSON.parse(localStorage.getItem('bsc.macroDone') || '{}');
+        const k = Object.keys(doneMap)[0];
+        return b.dataset.mode === 'tickall' && b.textContent === 'Mark all complete' && (!k || doneMap[k] === 0);
+      }));
     await closed.context().close();
 
     /* One tap on a spent portion hands the stepper back.

@@ -668,8 +668,8 @@
         if (!it.eaten && !it.l && pinned0.indexOf(String(it.id)) < 0) loose++;
       });
     });
-    var mode = noPlan ? 'plan' : dayDone ? 'open'
-      : !nothingToFill ? 'fill' : unticked ? 'tickall' : 'done';
+    var mode = noPlan ? 'plan' : !nothingToFill ? 'fill' : unticked ? 'tickall'
+      : dayDone ? 'open' : 'done';
     var SAY = { plan: 'Craft my plan', fill: 'Fill', tickall: 'Mark all complete',
       done: 'Complete the day', open: 'Reopen the day' };
     var TELL = {

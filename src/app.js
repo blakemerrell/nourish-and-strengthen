@@ -2999,7 +2999,11 @@
      the picker just put down ("New") — last until the next change to the
      day, whatever it is. Every change goes through here, so this is where
      they end. */
-  function mEditDay(k, fn, seed) { S.mMarks = null; return PLACING.mEditDay(k, fn, seed); }
+  function mEditDay(k, fn, seed) {
+    S.mMarks = null;
+    if (!seed && mDoneAt(k) > 0) mSetDone(k, false);
+    return PLACING.mEditDay(k, fn, seed);
+  }
   function kcalOf(t) { return PLACING.kcalOf(t); }
 
   /* src/training.js, handed what it reads of the app's and kept under its own
@@ -3070,7 +3074,10 @@
   function mSkipped(k, sk) { return DAYFLAGS.mSkipped(k, sk); }
   function mHushed(k, sig) { return DAYFLAGS.mHushed(k, sig); }
   function mSetHush(k, sig) { return DAYFLAGS.mSetHush(k, sig); }
-  function mSetSkip(k, sk, on) { return DAYFLAGS.mSetSkip(k, sk, on); }
+  function mSetSkip(k, sk, on) {
+    if (!on && mDoneAt(k) > 0) mSetDone(k, false);
+    return DAYFLAGS.mSetSkip(k, sk, on);
+  }
   function mSendOf(k) { return DAYFLAGS.mSendOf(k); }
   function mSetSend(k, v) { return DAYFLAGS.mSetSend(k, v); }
   var MDONE = DAYFLAGS.MDONE;

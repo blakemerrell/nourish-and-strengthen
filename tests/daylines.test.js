@@ -178,8 +178,8 @@ module.exports = {
       foods.length === 2 && foods[1].name === 'Eggs' && foods[1].fm === '2 whole' && foods[1].g === '100 g' &&
       foods.every((l) => l.split && l.tick && !l.open && l.h >= 44), JSON.stringify(foods));
     const verbs = (sel) => p.evaluate((s2) => [...document.querySelectorAll(s2 + ' .mtray-vbs button')].map((b) => Object.keys(b.dataset)[0]), sel);
-    t.ok('and its verbs in State 2 are drawings: + to add and ⊘ to skip (the scale waits for State 3)',
-      (await verbs(card('d'))).join() === 'mopen,mskipask', JSON.stringify(await verbs(card('d'))));
+    t.ok('and its verbs in State 2 are drawings: + to add, ↻ to try another, and ⊘ to skip (the scale waits for State 3)',
+      (await verbs(card('d'))).join() === 'mopen,mtry,mskipask', JSON.stringify(await verbs(card('d'))));
 
     /* What each ring should say, worked out here from the meal's own pills
        (have/want): within a tenth on plan, past it over, short of it still
@@ -190,7 +190,7 @@ module.exports = {
     /* Stepping Lunch from State 2 (mv-2) -> State 3 (mv-3): all foods open simultaneously + inline Quick-Add drawer */
     await p.click(card('l') + ' [data-mview]');
     await p.waitForTimeout(250);
-    t.ok('State 3 carries the scale in the header as well', (await verbs(card('l'))).join() === 'mopen,mbal,mskipask', JSON.stringify(await verbs(card('l'))));
+    t.ok('State 3 carries the scale in the header as well', (await verbs(card('l'))).join() === 'mopen,mtry,mbal,mskipask', JSON.stringify(await verbs(card('l'))));
     const s3 = await p.evaluate((sel) => {
       const c = document.querySelector(sel);
       const ls = [...c.querySelectorAll('.mtray-f')];

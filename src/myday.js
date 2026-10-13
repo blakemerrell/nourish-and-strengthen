@@ -871,7 +871,12 @@
          scale is in Details, with the amounts it moves. A meal anything was
          eaten from is not skippable: that food happened. */
       var canBal = items.some(function (it) { return !it.eaten && LIVE.BY_ID[it.id]; });
+      var pinnedIds = (M.pins || []).map(function (pn) { return String(pn.id); });
+      var canTry = onPlan && items.some(function (it) {
+        return !it.eaten && !it.l && pinnedIds.indexOf(String(it.id)) < 0 && LIVE.BY_ID[it.id];
+      });
       var verbs = (view === 1 || !onPlan ? '' : '<button class="mtray-ib" data-mopen="' + esc(sk) + '" aria-label="Add food to ' + esc(name) + '" title="Add food">' + mIcon('plus') + '</button>') +
+        (view !== 1 && canTry ? '<button class="mtray-ib" data-mtry="' + esc(sk) + '" aria-label="Try another suggestion for ' + esc(name) + '" title="Try another">' + mIcon('another') + '</button>' : '') +
         (view === 3 && canBal ? '<button class="mtray-ib" data-mbal="' + esc(sk) + '" aria-label="Balance every food on ' + esc(name) +
           ', the amounts you set included" title="Balance">' + mIcon('scales') + '</button>' : '') +
         (onPlan && !anyEaten ? '<button class="mtray-ib" data-mskipask="' + esc(sk) + '" aria-label="Skip ' + esc(name) + ' today" title="Skip today">' + mIcon('skip') + '</button>' : '');

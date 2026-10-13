@@ -324,14 +324,14 @@ module.exports = nourish({
     const firstPick = await z.evaluate(() =>
       document.querySelector('#modalRoot .mitem-name').dataset.open);
     await mealMenu(z, 'b');
-    await z.click('[data-mtry="b"]');
+    await z.click('#modalRoot [data-mtry="b"]');
     await z.waitForTimeout(250);
     const second = await z.evaluate(() =>
       document.querySelector('#modalRoot .mitem-name').dataset.open);
     t.ok('Try again swaps the plate for another one',
       second && second !== firstPick, firstPick + ' → ' + second);
     await mealMenu(z, 'b');
-    await z.click('[data-mtry="b"]');
+    await z.click('#modalRoot [data-mtry="b"]');
     await z.waitForTimeout(250);
     const third = await z.evaluate(() =>
       document.querySelector('#modalRoot .mitem-name').dataset.open);

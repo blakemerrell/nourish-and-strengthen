@@ -190,6 +190,11 @@ module.exports = {
     t.ok('Autofill drafts Snacks from the plan, there on the day, and it is a card with food on it',
       auto.length === 1 && auto[0].by === 'f' && auto[0].eaten === 0 &&
       await p.evaluate((sel) => !document.querySelector(sel).classList.contains('mtray-empty'), card('s')), JSON.stringify(auto));
+    await p.click(card('s') + ' .mtray-ib[data-mtry="s"]');
+    await p.waitForTimeout(350);
+    const auto2 = (await dayOf(p)).s || [];
+    t.ok('and once filled, the header’s ↻ beside + toggles through another suggestion on the card',
+      auto2.length === 1 && auto2[0].id !== auto[0].id, JSON.stringify({ auto, auto2 }));
 
     /* ---- the narrowest phone: one line a head, a thumb a button, no sideways scroll ---- */
     await p.setViewportSize({ width: 320, height: 760 });

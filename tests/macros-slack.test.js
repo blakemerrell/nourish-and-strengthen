@@ -209,7 +209,7 @@ module.exports = nourish({
         .every((h) => [...h.querySelectorAll('button')].every((b) =>
           b.classList.contains('mtray-b') || b.classList.contains('mday-dot') ||
           (b.classList.contains('mtray-hd') && !!(b.dataset.mview || b.dataset.mopen)) ||
-          (b.classList.contains('mtray-ib') && !!(b.dataset.mopen || b.dataset.mbal || b.dataset.mskipask)) ||
+          (b.classList.contains('mtray-ib') && !!(b.dataset.mopen || b.dataset.mtry || b.dataset.mbal || b.dataset.mskipask)) ||
           (b.classList.contains('mtray-fn') && !!(b.dataset.open || b.dataset.mfood)) ||
           (b.classList.contains('mfl-amt') && !!b.dataset.mamt)) &&
           [...h.querySelectorAll('input')].every((i) => i.classList.contains('mitem-ate') && !!i.dataset.meat))),

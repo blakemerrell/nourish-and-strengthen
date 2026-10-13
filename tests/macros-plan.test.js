@@ -708,6 +708,26 @@ module.exports = nourish({
     const modeEmpty = await modeRun(false);
     t.ok('but a meal merely left empty is still a meal to fill',
       modeEmpty === 'fill', 'mode=' + modeEmpty);
+    /* Blake, 2026-10-13: 1,335 / 1,413 kcal eaten (111/171 P, 57/61 F, 96/45 C)
+       with Dinner (148 kcal) and Snacks (25 kcal) still open and unskipped must
+       offer Fill, not "Complete the day". */
+    await modePg.evaluate(() => {
+      const p2 = (n) => (n < 10 ? '0' : '') + n;
+      const d = new Date();
+      const k = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+      localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 171, f: 61, c: 45 }));
+      localStorage.setItem('bsc.myFoods', JSON.stringify({ soFar: { name: 'Eaten so far', kcal: 1335, p: 111, f: 57, c: 96 } }));
+      localStorage.setItem('bsc.macroDays', JSON.stringify({ [k]: {
+        b: [{ id: 'f:my:soFar', x: 1, eaten: 1 }], l: [], d: [], s: [] } }));
+      localStorage.removeItem('bsc.macroSkip');
+    });
+    await modePg.reload();
+    await modePg.waitForTimeout(400);
+    await modePg.click('.tab[data-view="macros"]');
+    await modePg.waitForTimeout(300);
+    const modeCarbOver = await modePg.evaluate(() => document.getElementById('macroFill').dataset.mode);
+    t.ok('even with < 100 net kcal left after carb overshoot, open meals still asking for protein keep the button on Fill',
+      modeCarbOver === 'fill', 'mode=' + modeCarbOver);
     await modePg.context().close();
 
     /* ---- the bar's order --------------------------------------------------

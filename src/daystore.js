@@ -212,7 +212,9 @@
     var short = 4 * Math.max(0, targets.p - had.p) +
       4 * Math.max(0, targets.c - had.c) +
       9 * Math.max(0, targets.f - had.f);
-    return Math.min(short, kcalOf(targets) - (had.kcal || 0));
+    var kcalLeft = kcalOf(targets) - (had.kcal || 0);
+    if (kcalLeft <= 0 || short <= 0) return Math.min(short, kcalLeft);
+    return kcalOf(targets) >= 100 ? Math.max(100, short) : short;
   }
 
   /* Why Fill put it there, as the button that asks about it. The chip is

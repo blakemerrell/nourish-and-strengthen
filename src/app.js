@@ -4633,6 +4633,32 @@
     '</div>';
   }
 
+  /* On your home screen: installing the app from inside it, with the offer
+     the browser made on this visit (src/boot.js keeps it, and says why: the
+     ⋮ menu's install refused it as "already installed" on a site with
+     another app on it). A button only when there is an offer to take; the
+     rest is one line saying where things stand, so a phone that is never
+     offered one says so, rather than the section quietly not being there.
+     A note, not a paragraph (kit-say, not sync-p): the sheet keeps its
+     paragraphs to the two that say what is private and what is shared. */
+  function installHTML() {
+    var I = window.Install;
+    if (!I) return '';
+    var st = I.state();
+    var say = {
+      app: 'You are in the installed app.',
+      done: 'Installed. Open Hive &amp; Hearth from your home screen; it works with no signal.',
+      wait: 'Installing. It appears on your home screen in a moment.',
+      no: 'Not installed. Open the app again to be offered it again.',
+      ios: 'On an iPhone or iPad: in Safari, tap Share, then <b>Add to Home Screen</b>.',
+      '': 'This browser is not offering to install the app on this visit. If it is on your home screen already, open it from there.'
+    };
+    return '<div class="mt-div">On your home screen</div>' +
+      (st === 'offer'
+        ? '<p class="kit-say">Hive &amp; Hearth as an app of its own: on your home screen, without the browser around it, and working with no signal.</p>' +
+          '<div class="sync-row"><button class="btn-primary" data-sync="install">Install the app</button></div>'
+        : '<p class="kit-say" role="status">' + say[st] + '</p>');
+  }
   function syncHTML() {
     var st = window.Store.status;
     var configured = window.Store.configured;
@@ -4744,6 +4770,8 @@
         // said here for as long as it is so, not only in the one toast
         (window.Store.storageFull ? '<p class="sync-warn">This phone’s storage for the app is full, so changes to the plan and recipes aren’t kept on it' +
           (house ? '; they still go to the shared pantry while there’s signal.' : '. Free some space to keep them.') + '</p>' : '') +
+
+        installHTML() +
 
         /* The app's one screen of settings for the whole of it, so the
            light-or-dark choice lives here. Auto is the phone's own. */
@@ -6565,6 +6593,8 @@
        alone, so Favorites and the week were buttons that did nothing. */
     $('printPicked').addEventListener('click', pick);
 
+    // the browser's install offer arrives when it likes, often after the sheet is open
+    window.addEventListener('hiveinstall', function () { if (S.syncOpen) renderModal(); });
     window.addEventListener('resize', fitPages);
     window.addEventListener('resize', syncTabsFade);
     window.addEventListener('resize', syncStick);
@@ -7643,6 +7673,7 @@
         if (act === 'restore' && window.Store.restoreRemoved) window.Store.restoreRemoved();
         if (act === 'forgetgone' && window.Store.forgetRemoved) window.Store.forgetRemoved();
         if (act === 'theme' && window.Theme) window.Theme.set(sy.dataset.v || '');
+        if (act === 'install' && window.Install) window.Install.ask();
         /* Signed in, stopping here stops it for the account too; otherwise
            the next snapshot would put this device straight back in. */
         if (act === 'leave') {

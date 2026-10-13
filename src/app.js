@@ -4638,7 +4638,9 @@
      ⋮ menu's install refused it as "already installed" on a site with
      another app on it). A button only when there is an offer to take; the
      rest is one line saying where things stand, so a phone that is never
-     offered one says so, rather than the section quietly not being there. */
+     offered one says so, rather than the section quietly not being there.
+     A note, not a paragraph (kit-say, not sync-p): the sheet keeps its
+     paragraphs to the two that say what is private and what is shared. */
   function installHTML() {
     var I = window.Install;
     if (!I) return '';
@@ -4653,9 +4655,9 @@
     };
     return '<div class="mt-div">On your home screen</div>' +
       (st === 'offer'
-        ? '<p class="sync-p">Hive &amp; Hearth as an app of its own: on your home screen, without the browser around it, and working with no signal.</p>' +
+        ? '<p class="kit-say">Hive &amp; Hearth as an app of its own: on your home screen, without the browser around it, and working with no signal.</p>' +
           '<div class="sync-row"><button class="btn-primary" data-sync="install">Install the app</button></div>'
-        : '<p class="sync-p sync-install" role="status">' + say[st] + '</p>');
+        : '<p class="kit-say" role="status">' + say[st] + '</p>');
   }
   function syncHTML() {
     var st = window.Store.status;

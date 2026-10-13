@@ -187,7 +187,7 @@ module.exports = {
     const want = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-caps .mcap')].map((c) => ({
       want: Number(c.dataset.want), have: Number(c.querySelector('.mcap-t').childNodes[1].textContent.replace(/,/g, '')) })), card('l'));
 
-    /* Stepping Lunch from State 2 (mv-2) -> State 3 (mv-3): all foods open simultaneously + inline Quick-Add drawer */
+    /* Stepping Lunch from State 2 (mv-2) -> State 3 (mv-3): all foods open simultaneously, header carries +, ↻, ⚖, ⊘ without inline quick-add drawer */
     await p.click(card('l') + ' [data-mview]');
     await p.waitForTimeout(250);
     t.ok('State 3 carries the scale in the header as well', (await verbs(card('l'))).join() === 'mopen,mtry,mbal,mskipask', JSON.stringify(await verbs(card('l'))));
@@ -197,17 +197,15 @@ module.exports = {
       return {
         mv3: c.classList.contains('mv-3'),
         allOpen: ls.length === 2 && ls.every((l) => l.classList.contains('open') && l.querySelectorAll('[data-mstep]').length === 2),
-        hasAddBox: !!c.querySelector('.mtray-add-box [data-mqslot="l"]'),
-        hasBalBtn: !!c.querySelector('.mtray-s3-bal[data-mbal="l"]'),
-        picks: c.querySelectorAll('.mtray-pick[data-mqadd]').length
+        noAddDrawer: !c.querySelector('.mtray-add')
       };
     }, card('l'));
-    t.ok('State 3 opens all food rows simultaneously for immediate multi-food adjusting and shows the inline Quick-Add drawer',
-      s3.mv3 && s3.allOpen && s3.hasAddBox && s3.hasBalBtn && s3.picks > 0, JSON.stringify(s3));
+    t.ok('State 3 opens all food rows simultaneously for immediate multi-food adjusting without an inline quick-add drawer',
+      s3.mv3 && s3.allOpen && s3.noAddDrawer, JSON.stringify(s3));
 
     /* The scale on the card balances the meal there, on the day, and says so */
     const before = await mealOf(p, 'l');
-    await p.click(card('l') + ' .mtray-s3-bal[data-mbal="l"]');
+    await p.click(card('l') + ' [data-mbal="l"]');
     await p.waitForTimeout(300);
     const after = await mealOf(p, 'l');
     t.ok('the card’s scale balances the meal on the day, letting go of the lock, and the toast says it',
@@ -256,21 +254,7 @@ module.exports = {
       const ls = [...document.querySelectorAll(sel + ' .mtray-f')];
       return ls.length === 2 && ls.every((l) => l.classList.contains('open') && !!l.querySelector('.mfl-amt') && !!l.querySelector('input.mitem-ate'));
     }, card('l'));
-    t.ok('and once more back to State 3 (Details), all lines open with their dials and quick-add drawer', reExpanded);
-
-    /* Inline Quick-Add drawer in State 3: search and 1-tap add food directly on the card */
-    await p.click(card('l') + ' [data-mqslot="l"]');
-    await p.keyboard.type('rice');
-    await p.waitForTimeout(250);
-    await p.click(card('l') + ' .mtray-pick[data-mqadd]');
-    await p.waitForTimeout(300);
-    const afterQuickAdd = await p.evaluate((sel) => {
-      const ls = [...document.querySelectorAll(sel + ' .mtray-f')];
-      const qin = document.querySelector(sel + ' [data-mqslot="l"]');
-      return { count: ls.length, allOpen: ls.every((l) => l.classList.contains('open')), qVal: qin ? qin.value : 'missing' };
-    }, card('l'));
-    t.ok('1-tap quick-add in State 3 adds the food to the meal with its dial open and clears the inline search box',
-      afterQuickAdd.count === 3 && afterQuickAdd.allOpen && afterQuickAdd.qVal === '', JSON.stringify(afterQuickAdd));
+    t.ok('and once more back to State 3 (Details), all lines open with their dials', reExpanded);
 
     /* the meal’s pills open the meal sheet, where food is added */
     await p.click(card('l') + ' .mtray-caps');

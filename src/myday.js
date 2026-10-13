@@ -116,11 +116,26 @@
 
   var fmtK = function (n) { return Math.round(n).toLocaleString('en-US'); };
 
-  /* Millilitres beside a cup or a spoon, for eyeballing with a measuring
-     jug: "1 ½ cups · 355 mL". Read off the measure as it is printed
-     (fmtNum's eighths), so the two can never disagree. US cup and spoons. */
+  /* Millilitres for liquid foods measured by the cup or spoon, while solid
+     foods keep their metric measure in grams (Blake, 2026-10-13: "pick the
+     best measure for each. the kitchen measure... and the metric measure.
+     chicken i think should be measured in grams, and something like eggs in mL"). */
   var ML_PER = { cup: 236.6, cups: 236.6, tbsp: 14.8, tsp: 4.9 };
   var EIGHTHS = { '⅛': 0.125, '¼': 0.25, '⅜': 0.375, '½': 0.5, '⅝': 0.625, '¾': 0.75, '⅞': 0.875 };
+  var LIQUID_IDS = {
+    'f:milk': 1, 'f:evaporated_milk': 1, 'f:egg_white': 1, 'f:egg_sub': 1,
+    'f:crio_bru': 1, 'f:oil': 1, 'f:olive_oil': 1, 'f:syrup': 1, 'f:honey': 1,
+    'f:vinegar': 1, 'f:soy_sauce': 1, 'f:hot_sauce': 1, 'f:worcestershire': 1,
+    'f:ranch': 1, 'f:light_ranch': 1, 'f:tomatillo_ranch': 1, 'f:bbq_sauce': 1,
+    'f:enchilada_sauce': 1, 'f:spaghetti_sauce': 1, 'f:tomato_soup': 1,
+    'f:cream_soup_chx': 1, 'f:cream_soup_mush': 1, 'f:soup_rts': 1
+  };
+  function mIsLiquid(r) {
+    if (!r || !r.food) return false;
+    if (LIQUID_IDS[r.id]) return true;
+    if (/\b(?:ml|milliliters?|fl\s*oz|fluid)\b/i.test(String(r.unit || ''))) return true;
+    return /\b(?:milk|egg\s*whites?|liquid\s*eggs?|egg\s*substitute|cream(?!\s*cheese|\s*of\s*tartar)|half\s*(?:and|&)\s*half|kefir|shake|smoothie|juice|lemonade|limeade|soda|cola|sparkling|water|coffee|espresso|latte|tea|chocolate\s*milk|crio\s*bru|broth|stock|bouillon|soup|oil|syrup|honey|nectar|molasses|vinegar|soy\s*sauce|tamari|aminos|hot\s*sauce|sriracha|worcestershire|fish\s*sauce|oyster\s*sauce|teriyaki|ponzu|dressing|vinaigrette|ranch|bbq\s*sauce|barbecue\s*sauce|enchilada\s*sauce|pasta\s*sauce|marinara|spaghetti\s*sauce|alfredo|gravy)\b/i.test(String(r.name || ''));
+  }
   function mlOf(measure) {
     var m = /^(\d+)?\s?([⅛¼⅜½⅝¾⅞])?\s+(cups?|tbsp|tsp)$/.exec(String(measure || ''));
     if (!m || (!m[1] && !m[2])) return '';
@@ -815,7 +830,8 @@
           var kitchen = byG ? mDialMeasure(r, it.x) : mDialText(r, it.x);
           var weight = byG ? mDialText(r, it.x) : mDialMeasure(r, it.x);
           if (kitchen === weight) kitchen = '';
-          var ml = mlOf(kitchen);
+          var metric = mIsLiquid(r) ? (mlOf(kitchen) || weight.replace(/\bg$/, 'mL')) : weight;
+          if (kitchen === metric) kitchen = '';
           var name = esc(r.name);
           var door = r.food
             ? '<button class="mtray-fn" data-mfood="' + esc(String(r.id)) + '" data-mx="' + it.x + '" data-mfslot="' + esc(sk) + '" aria-label="' + name + ', the food">'
@@ -825,9 +841,9 @@
               '<span class="mfl-lf">' + mBadgeHTML(r) + '</span>' +
               door + '<span class="mfl-nm">' + name + '</span></button>' +
               '<button class="mfl-amt split-pill' + (it.l ? ' locked' : '') + (single ? ' single' : '') + '" data-mamt="' + esc(k + '|' + tag) + '" aria-expanded="' + open + '" aria-label="' + name + ', ' +
-                esc(kitchen ? kitchen + ', ' + weight : weight) + (it.l ? ', locked' : '') + '. ' + (open ? 'Close' : 'Change it') + '">' +
-                '<span class="mtray-fm sp-k"><b>' + (it.l ? LOCK_SM : '') + esc(kitchen) + '</b>' + (ml ? '<small><i> &middot; </i>' + ml + '</small>' : '') + '</span>' +
-                '<em class="num sp-g">' + esc(weight) + '</em></button>' +
+                esc(kitchen ? kitchen + ', ' + metric : metric) + (it.l ? ', locked' : '') + '. ' + (open ? 'Close' : 'Change it') + '">' +
+                '<span class="mtray-fm sp-k"><b>' + (it.l ? LOCK_SM : '') + esc(kitchen) + '</b></span>' +
+                '<em class="num sp-g">' + esc(metric) + '</em></button>' +
               '<input class="mitem-ate" type="checkbox" data-meat="' + esc(tag) + '" aria-label="Eaten, ' + name + '"' +
                 (it.eaten ? ' checked' : '') + (ahead ? ' disabled' : '') + '>' +
             '</div>';

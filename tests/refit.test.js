@@ -138,8 +138,9 @@ module.exports = {
     });
     t.ok('Done takes you back to the day', !day.open, JSON.stringify(day));
     t.ok('where the meal’s tray carries its pills: calories, protein, fat, carbs', day.caps === 4, JSON.stringify(day));
-    t.ok('and each food in the kitchen’s words first, mL beside a cup, grams after',
-      day.lines.some((l) => /cups?\s*·\s*\d+ mL\s*[\d,]+ g$/.test(l)), JSON.stringify(day.lines));
+    t.ok('and each food in the kitchen’s words first, then its single best metric measure (mL for liquid egg whites, g for solid cheese)',
+      day.lines.some((l) => /Egg whites.*cups?\s*\d+ mL$/.test(l)) &&
+      day.lines.some((l) => /Cheddar cheese.*cups?\s*[\d,]+ g$/.test(l)), JSON.stringify(day.lines));
     t.ok('no page errors along the way', errs.length === 0, errs.join(' / '));
 
     /* ---- an amount you set, and the rest re-fitting around it ---- */

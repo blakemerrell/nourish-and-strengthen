@@ -59,8 +59,8 @@ module.exports = {
         g: (l.querySelector('.mfl-amt em') || {}).textContent, tick: !!l.querySelector('input.mitem-ate[type="checkbox"]'),
         keys: l.querySelectorAll('[data-mstep]').length, h: Math.round(l.getBoundingClientRect().height) }));
     }, card('l'));
-    t.ok('each food on Lunch is a line: its name, the kitchen measure (a cup with its mL), the grams and a tick',
-      shut.length === 3 && shut[0].name === 'Chicken breasts' && shut[0].fm === '1 cup · 235 mL' && shut[0].g === '140 g' &&
+    t.ok('each food on Lunch is a line: its name, the kitchen measure, the metric measure (grams for solids) and a tick',
+      shut.length === 3 && shut[0].name === 'Chicken breasts' && shut[0].fm === '1 cup' && shut[0].g === '140 g' &&
       shut[1].fm === '1 can' && shut[1].g === '240 g' && shut.every((l) => l.tick), JSON.stringify(shut));
     t.ok('with no keys on it until it is opened, and tall enough for a thumb', shut.every((l) => l.keys === 0 && l.h >= 44), JSON.stringify(shut));
     const rec = await p.evaluate((sel) => {

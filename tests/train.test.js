@@ -4626,5 +4626,83 @@ module.exports = {
     t.ok('left alone, it gives up after half a minute: the first call and five more', m1 - m0 === 30, String(m1 - m0));
     await p.close();
     }
+
+    // ---- Collapsed Done-for-today card & Review 2x2 KPI + Front/Back Muscle Heatmap ----
+    {
+    p = await t.fresh({ viewport: { width: 390, height: 844 } });
+    await p.evaluate(() => {
+      const _ = window.Train._, now = Date.now(), day = 864e5;
+      const ms = _.build({ goal: 'grow', dpw: 4, kit: 'gym', lvl: 1, acc: 4, pri: [] });
+      ms.id = 'hm'; ms.n = 'Upper & Lower'; ms.at = now - 10 * day;
+      const wo = {};
+      let n = 0;
+      const log = (w, d, st) => {
+        const pl = _.plan(ms, w, d), id = 'h' + (n++);
+        wo[id] = { id, st, en: st + 35 * 60e3, u: 'lb', ms: ms.id, w, d, n: pl.n,
+          x: pl.x.map((x, k) => ({ e: x.e, s: Array.from({ length: x.sets }, (_, j) => ({ w: 90 + 10 * k + 5 * w, r: 10, t: st + 60e3 * (k * 5 + j + 1) })) })), sr: {}, fb: {} };
+      };
+      // Complete Week 1 (w=0, d=0..3) and log Week 2 Day 0 (w=1, d=0) TODAY
+      [0, 1, 2, 3].forEach((d) => log(0, d, now - (9 - d * 2) * day));
+      log(1, 0, now - 3600e3);
+      localStorage.setItem('bsc.train', JSON.stringify({ pr: { u: 'lb', qz: 1, lvl: 1, ld: [0, 1, 3, 4] }, act: 'hm', ms: { hm: ms }, cx: {}, ax: {}, wo }));
+      localStorage.removeItem('bsc.trainStamps'); _.reload();
+    });
+    await p.click('.tab[data-view="train"]');
+    await p.click('[data-t="sub"][data-v="block"]');
+    await p.waitForTimeout(100);
+    r = await p.evaluate(() => {
+      const c = document.getElementById('trSesh');
+      return {
+        doneCard: !!c && c.classList.contains('tr-done-card'),
+        open: !!c && c.classList.contains('is-open'),
+        title: (c && c.querySelector('.tr-title') || {}).textContent || '',
+        badge: (c && c.querySelector('.tr-dc-badge') || {}).textContent || '',
+        names: c ? c.querySelectorAll('.tr-snames li').length : -1,
+        peekBtn: !!c && !!c.querySelector('[data-t="peeknext"]')
+      };
+    });
+    t.ok('Done for today card is collapsed by default when a workout was logged today',
+      r.doneCard && !r.open && r.title === 'Done for today ✓' && /Workout logged/.test(r.badge) && r.names === 0 && r.peekBtn, JSON.stringify(r));
+    await p.click('#trSesh [data-t="peeknext"]');
+    r = await p.evaluate(() => {
+      const c = document.getElementById('trSesh');
+      return { open: !!c && c.classList.contains('is-open'), names: c ? c.querySelectorAll('.tr-snames li').length : 0, start: !!c.querySelector('[data-t="start"]') };
+    });
+    t.ok('tapping Preview expands tomorrow’s exercises and Start it anyway', r.open && r.names >= 4 && r.start, JSON.stringify(r));
+    await p.click('#trSesh [data-t="peeknext"]');
+    r = await p.evaluate(() => !!document.querySelector('#trSesh.is-open'));
+    t.ok('tapping Hide preview collapses the card back down', !r);
+
+    // Switch to Review tab and verify 2x2 KPI grid, 5-week block strip, and Front/Back Muscle Heatmap
+    await p.click('[data-t="sub"][data-v="review"]');
+    await p.waitForTimeout(100);
+    r = await p.evaluate(() => ({
+      kpiCards: document.querySelectorAll('.tr-week .tr-kpi-card').length,
+      blkWeeks: document.querySelectorAll('.tr-bprog .tr-bp-wk').length,
+      svgs: document.querySelectorAll('.tr-hm-card .tr-hm-svg').length,
+      musRows: document.querySelectorAll('.tr-hm-card .tr-mus-row').length,
+      title: (document.querySelector('.tr-hm-card .tr-title') || {}).textContent || '',
+      mids: document.querySelectorAll('.tr-hm-card .tr-hm-svg .hm-mid, .tr-hm-card .tr-hm-svg .hm-low, .tr-hm-card .tr-hm-svg .hm-hit').length
+    }));
+    t.ok('Review shows 2x2 KPI cards, 5-week block progress strip, and Front & Back SVG muscle heatmap for the active week',
+      r.kpiCards === 4 && r.blkWeeks === 5 && r.svgs === 2 && r.musRows >= 6 && /Week 2 muscle coverage/.test(r.title) && r.mids > 0, JSON.stringify(r));
+
+    await p.click('.tr-hm-card [data-t="revwk"][data-w="0"]');
+    r = await p.evaluate(() => ({
+      title: (document.querySelector('.tr-hm-card .tr-title') || {}).textContent || '',
+      hits: document.querySelectorAll('.tr-hm-card .tr-hm-svg .hm-hit').length
+    }));
+    t.ok('selecting completed Week 1 lights up the muscle heatmap at 100% plan hit',
+      /Week 1 muscle coverage/.test(r.title) && r.hits >= 6, JSON.stringify(r));
+
+    await p.click('.tr-hm-card [data-t="revwk"][data-w="4"]');
+    r = await p.evaluate(() => ({
+      title: (document.querySelector('.tr-hm-card .tr-title') || {}).textContent || '',
+      sets: [...document.querySelectorAll('.tr-hm-card .tr-mus-sets')].map((s) => s.textContent.trim())
+    }));
+    t.ok('selecting Deload week updates the muscle heatmap to Deload planned sets',
+      /Deload week muscle coverage/.test(r.title) && r.sets.length >= 6, JSON.stringify(r));
+    await p.close();
+    }
   },
 };

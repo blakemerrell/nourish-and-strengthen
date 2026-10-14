@@ -7426,3 +7426,171 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 /* The small print wraps wherever it must: no piece of it is allowed to push
    the row sideways on the narrowest phone, whatever the system font. */
 .msheet .mrow .mrow-m, .msheet .mrow .mrow-m * { white-space: normal; overflow-wrap: anywhere; }
+
+/* ---- Strengthen: collapsed Done-for-today card & Review redesign ---- */
+.tr-done-card {
+  background: color-mix(in oklab, var(--green) 7%, var(--card));
+  border-color: color-mix(in oklab, var(--green) 28%, var(--line));
+}
+.tr-dc-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+}
+.tr-dc-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: color-mix(in oklab, var(--green) 15%, var(--card));
+  color: var(--green); font-size: 0.8125rem; font-weight: 700;
+  padding: 2px 9px; border-radius: 999px;
+}
+.tr-done-card .tr-title { color: var(--green); margin-bottom: 4px; }
+.tr-dc-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  flex-wrap: wrap; padding-top: 8px; margin-top: 6px;
+  border-top: 1px solid color-mix(in oklab, var(--green) 18%, var(--line));
+}
+.tr-dc-next { font-size: 0.84375rem; color: var(--muted-2); flex: 1 1 180px; }
+.tr-dc-next b { color: var(--ink); font-weight: 600; }
+.tr-dc-peek {
+  min-height: 44px; padding: 6px 12px; border-radius: 6px;
+  border: 1px solid var(--line-firm); background: var(--card); color: var(--ink);
+  font: inherit; font-size: 0.8125rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.tr-dc-drawer {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+
+/* 2x2 KPI Card Grid inside .tr-week */
+.tr-kpi-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px; margin-top: 8px;
+}
+.tr-week .tr-kpi-card.tr-wkr {
+  display: flex; flex-direction: column; align-items: stretch; justify-content: space-between;
+  gap: 4px; padding: 10px 11px; border: 1px solid var(--line-soft);
+  border-radius: 6px; background: var(--paper-soft); min-width: 0;
+}
+.tr-kpi-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;
+}
+.tr-kpi-tag {
+  font-size: 0.8125rem; color: var(--muted); font-weight: 500;
+}
+.tr-kpi-val {
+  font-family: var(--serif); font-size: 1.25rem; font-weight: 600;
+  line-height: 1.15; color: var(--ink); font-variant-numeric: tabular-nums;
+}
+.tr-kpi-val small {
+  font-family: var(--sans); font-size: 0.8125rem; font-weight: 500; color: var(--muted-2);
+}
+.tr-kpi-sub {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px;
+  font-size: 0.8125rem; color: var(--muted-2); justify-content: flex-start;
+}
+.tr-kpi-prot { margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--line-soft); }
+
+/* 5-Week Full Block Progress Strip */
+.tr-bprog {
+  margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line-soft);
+}
+.tr-bp-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 6px; flex-wrap: wrap; margin-bottom: 6px; font-size: 0.8125rem;
+}
+.tr-bp-title { font-weight: 600; color: var(--ink); }
+.tr-bp-stat { color: var(--muted-2); font-variant-numeric: tabular-nums; }
+.tr-bp-stat b { color: var(--ink); }
+.tr-bp-track {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(54px, 1fr)); gap: 5px;
+}
+.tr-bp-wk {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 48px; padding: 5px 4px; border-radius: 5px;
+  border: 1px solid var(--line-soft); background: var(--paper-soft); color: var(--ink);
+  font: inherit; cursor: pointer; text-align: center; min-width: 0;
+}
+.tr-bp-wk.is-done {
+  background: color-mix(in oklab, var(--green) 11%, var(--card));
+  border-color: color-mix(in oklab, var(--green) 35%, var(--line));
+}
+.tr-bp-wk.is-cur {
+  border-color: var(--ochre);
+  background: color-mix(in oklab, var(--ochre) 10%, var(--card));
+}
+.tr-bp-wk.is-sel {
+  box-shadow: 0 0 0 1.5px var(--ink);
+}
+.tr-bp-lbl { font-size: 0.8125rem; font-weight: 700; line-height: 1.15; white-space: nowrap; }
+.tr-bp-wk.is-done .tr-bp-lbl { color: var(--green); }
+.tr-bp-wk.is-cur .tr-bp-lbl { color: var(--ochre-text); }
+.tr-bp-bar {
+  width: 85%; height: 4px; border-radius: 99px; background: var(--line);
+  margin: 4px auto 3px; overflow: hidden;
+}
+.tr-bp-bar i { display: block; height: 100%; background: var(--ochre); }
+.tr-bp-wk.is-done .tr-bp-bar i { background: var(--green); }
+.tr-bp-sets { font-size: 0.8125rem; color: var(--muted-2); font-variant-numeric: tabular-nums; line-height: 1.1; }
+
+/* Anatomical Front & Back Muscle Heatmap */
+.tr-hm-pills {
+  display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0;
+}
+.tr-hm-pill {
+  min-height: 44px; padding: 6px 11px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--paper-soft); color: var(--muted-2);
+  font: inherit; font-size: 0.8125rem; font-weight: 600; cursor: pointer;
+}
+.tr-hm-pill.done {
+  color: var(--green); border-color: color-mix(in oklab, var(--green) 35%, var(--line));
+}
+.tr-hm-pill.active {
+  background: var(--ink); color: var(--card); border-color: var(--ink);
+}
+.tr-hm-box {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
+  background: var(--paper-soft); border: 1px solid var(--line-soft);
+  border-radius: 6px; padding: 10px 6px 8px; margin-top: 8px; text-align: center;
+}
+.tr-hm-lbl {
+  font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--muted-2); margin-bottom: 2px;
+}
+.tr-hm-svg {
+  width: 100%; max-width: 146px; height: auto; aspect-ratio: 140 / 232;
+  display: block; margin: 0 auto;
+}
+.tr-hm-svg .hm-outline { fill: var(--paper); stroke: var(--line-firm); stroke-width: 1.2; }
+.tr-hm-svg .hm-0   { fill: color-mix(in oklab, var(--line) 55%, var(--paper)); stroke: var(--line-firm); stroke-width: 1; }
+.tr-hm-svg .hm-low { fill: color-mix(in oklab, var(--ochre) 52%, var(--card)); stroke: var(--ochre-text); stroke-width: 1; }
+.tr-hm-svg .hm-mid { fill: var(--ochre); stroke: var(--ochre-text); stroke-width: 1; }
+.tr-hm-svg .hm-hit { fill: var(--green); stroke: color-mix(in oklab, var(--green) 70%, var(--ink)); stroke-width: 1; }
+
+.tr-hm-legend {
+  display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 12px;
+  margin: 8px 0 10px; font-size: 0.8125rem; color: var(--muted-2);
+}
+.tr-hm-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.tr-hm-sw, .tr-mus-dot {
+  width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex: none;
+}
+.tr-hm-sw.hm-0, .tr-mus-dot.hm-0     { background: color-mix(in oklab, var(--line) 55%, var(--paper)); border: 1px solid var(--line-firm); box-sizing: border-box; }
+.tr-hm-sw.hm-low, .tr-mus-dot.hm-low { background: color-mix(in oklab, var(--ochre) 52%, var(--card)); }
+.tr-hm-sw.hm-mid, .tr-mus-dot.hm-mid { background: var(--ochre); }
+.tr-hm-sw.hm-hit, .tr-mus-dot.hm-hit { background: var(--green); }
+
+.tr-mus-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 12px; padding-top: 8px; border-top: 1px solid var(--line-soft);
+}
+.tr-mus-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 6px; font-size: 0.8125rem; padding: 3px 0; min-width: 0;
+}
+.tr-mus-name {
+  display: inline-flex; align-items: center; gap: 6px; font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tr-mus-sets {
+  font-variant-numeric: tabular-nums; color: var(--muted-2); font-weight: 600; white-space: nowrap;
+}
+.tr-mus-sets b { color: var(--ink); }
+.tr-mus-sets.hit, .tr-mus-sets.hit b { color: var(--green); }

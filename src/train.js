@@ -501,11 +501,14 @@
     'bird-dog': ['On hands and knees, back flat.', 'Reach one arm forward and the opposite leg back until level, and hold a moment.', 'Return and switch sides without rocking.']
   };
 
-  /* A picture or a clip of the lift, when there is one: nothing yet. Put a
-     file at art/lifts/<id>.webp (or .mp4) and name it here, and the lift's
+  /* A picture or a clip of the lift, when there is one. Put a file at
+     art/lifts/<id>.gif (or .webp / .mp4) and name it here, and the lift's
      page shows it above the steps. Your own how-to link, set on the lift's
      note, shows whether or not there is one. */
   var MEDIA = {};
+  LIB_LIST.forEach(function (ex) {
+    MEDIA[ex.id] = { src: 'art/lifts/' + ex.id + '.gif', credit: '\u00a9 Gym visual \u2014 gymvisual.com' };
+  });
 
   var EQUIP = { bb: 'Barbell', db: 'Dumbbell', mc: 'Machine', cb: 'Cable', sm: 'Smith machine', bw: 'Bodyweight' };
 
@@ -12100,7 +12103,7 @@
       e1rm: e1rm, plateMath: plateMath, review: review, merge: merge, payload: payload,
       rirFor: rirFor, nextSlot: nextSlot, prsIn: prsIn, lib: lib, SPLITS: SPLITS, MUS: MUS,
       estDay: estDay, barred: barred, KEEP_SPLITS: KEEP_SPLITS, HABITS: HABITS, weeksOf: weeksOf, nextTm: nextTm, tmOf: tmOf, outgrown: outgrown,
-      weekPlanSets: weekPlanSets, weekLoggedSets: weekLoggedSets, anatMapSVG: anatMapSVG, secMusclesOf: secMusclesOf, exRigOf: exRigOf, exAnimSVG: exAnimSVG,
+      weekPlanSets: weekPlanSets, weekLoggedSets: weekLoggedSets, anatMapSVG: anatMapSVG, secMusclesOf: secMusclesOf, exRigOf: exRigOf, exAnimSVG: exAnimSVG, MEDIA: MEDIA, exAbout: exAbout,
       recommend: recommend, PROGS: PROGS, FOCUS: FOCUS, KITS: KITS, axWeek: axWeek, defaultsPr: defaultsPr,
       MOVES: MOVES, mcScore: mcScore, sgParse: sgParse, sgMatch: sgMatch, sgGuess: sgGuess, sgList: sgList, csvRows: csvRows, ntKey: ntKey,
       LIB_LIST: LIB_LIST, slotDone: slotDone, barFor: barFor, barLabel: barLabel, onBar: onBar, liftE1: liftE1, stackHTML: stackHTML, elapsed: elapsed,

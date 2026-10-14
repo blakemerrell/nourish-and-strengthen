@@ -4820,7 +4820,7 @@ module.exports = {
     const anims = await p.evaluate(() => {
       const _ = window.Train._;
       const rigs = new Set();
-      let allValid = true;
+      let allValid = true, allMedia = true;
       _.LIB_LIST.forEach((ex) => {
         const rig = _.exRigOf(ex.id, ex);
         rigs.add(rig);
@@ -4828,11 +4828,23 @@ module.exports = {
         if (!/class="tr-ex-anim"/.test(html) || !/<animate/.test(html) || !/class="ea-mus"/.test(html) || !/class="ea-path"/.test(html)) {
           allValid = false;
         }
+        const m = _.MEDIA[ex.id];
+        const about = _.exAbout(ex.id, ex);
+        if (!m || m.src !== 'art/lifts/' + ex.id + '.gif' || !/class="tr-media"/.test(about) || !/gymvisual\.com/.test(about)) {
+          allMedia = false;
+        }
       });
-      return { count: _.LIB_LIST.length, rigCount: rigs.size, allValid };
+      return { count: _.LIB_LIST.length, rigCount: rigs.size, allValid, allMedia };
     });
-    t.ok('Every exercise in LIB_LIST (all 112 lifts) renders an in-app looping SVG biomechanical animation across all 24 movement rigs',
-      anims.count === 112 && anims.rigCount === 24 && anims.allValid, JSON.stringify(anims));
+    const fs = require('fs'), path = require('path');
+    const gifsOnDisk = anims.count === 112 && fs.readdirSync(path.join(__dirname, '..', 'art', 'lifts'))
+      .filter((f) => f.endsWith('.gif')).every((f) => {
+        const b = fs.readFileSync(path.join(__dirname, '..', 'art', 'lifts', f));
+        return b.length > 1000 && b.slice(0, 3).toString('ascii') === 'GIF';
+      });
+    t.ok('Every exercise in LIB_LIST (all 112 lifts) has a local 3D anatomical GIF in art/lifts/ and SVG fallback across all 24 movement rigs',
+      anims.count === 112 && anims.rigCount === 24 && anims.allValid && anims.allMedia && gifsOnDisk,
+      JSON.stringify(Object.assign({}, anims, { gifsOnDisk })));
 
     await p.close();
     }

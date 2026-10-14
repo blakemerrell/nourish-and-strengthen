@@ -8266,12 +8266,595 @@
     return '<div class="tr-first"><b>First time?</b> ' + how + '</div>';
   }
 
+  function exRigOf(e, ex) {
+    ex = ex || lib(e);
+    var p = ex.p || '';
+    if (e === 'cgbp') return 'bench-flat';
+    if (e === 'bench-dip') return 'dip';
+    if (e === 'diamond' || e === 'pike-pushup') return 'pushup';
+    if (e === 'calf-lp') return 'leg-press';
+    if (e === 'belt-squat') return 'squat';
+    if (p === 'incline') return 'bench-incline';
+    if (p === 'flat') return ex.q === 'bw' ? 'pushup' : 'bench-flat';
+    if (p === 'dip') return 'dip';
+    if (p === 'fly') return ex.m === 'rear' ? 'rear-delt' : 'fly';
+    if (p === 'vert') return 'vert-pull';
+    if (p === 'horiz') return 'horiz-row';
+    if (ex.m === 'back' && p === 'iso') return 'pullover';
+    if (p === 'machine') return 'leg-press';
+    if (p === 'single') return 'lunge-split';
+    if (p === 'ext') return 'leg-ext';
+    if (p === 'squat') return 'squat';
+    if (p === 'hinge') return 'hinge';
+    if (p === 'curl') return 'leg-curl';
+    if (p === 'thrust') return 'hip-thrust';
+    if (ex.m === 'glutes' && p === 'iso') return 'glute-iso';
+    if (p === 'raise') return 'lat-raise';
+    if (ex.m === 'rear') return 'rear-delt';
+    if (p === 'press') return 'ohp';
+    if (ex.m === 'chest') return ex.q === 'bw' ? 'pushup' : 'bench-flat';
+    if (ex.m === 'back') return 'horiz-row';
+    if (ex.m === 'quads') return 'squat';
+    if (ex.m === 'hams') return 'hinge';
+    if (ex.m === 'glutes') return 'hip-thrust';
+    if (ex.m === 'front') return 'ohp';
+    if (ex.m === 'side') return 'lat-raise';
+    if (ex.m === 'biceps') return 'bicep-curl';
+    if (ex.m === 'triceps') return 'tricep-ext';
+    if (ex.m === 'calves') return 'calf-raise';
+    if (ex.m === 'traps') return 'shrug';
+    if (ex.m === 'abs') return 'core';
+    return 'squat';
+  }
+
+  function exAnimSVG(e, ex) {
+    ex = ex || lib(e);
+    var rig = exRigOf(e, ex);
+    var q = ex.q || 'bb';
+    var sp = 'calcMode="spline" keyTimes="0;0.45;0.55;1" keySplines="0.4 0 0.2 1;0.2 0 0.2 1;0.4 0 0.2 1" dur="2.6s" repeatCount="indefinite"';
+    var rot = function (v0, v1) {
+      return '<animateTransform attributeName="transform" type="rotate" values="' + v0 + ';' + v1 + ';' + v1 + ';' + v0 + '" ' + sp + '/>';
+    };
+    var tr = function (v0, v1) {
+      return '<animateTransform attributeName="transform" type="translate" values="' + v0 + ';' + v1 + ';' + v1 + ';' + v0 + '" ' + sp + '/>';
+    };
+    var pulse = '<animate attributeName="opacity" values="0.45;0.95;0.95;0.45" ' + sp + '/>';
+    var propWeight = function (x, y) {
+      if (q === 'bb' || q === 'sm') {
+        return '<g transform="translate(' + x + ',' + y + ')">' +
+          '<rect x="-5" y="-13" width="10" height="26" rx="2" fill="#38bdf8" stroke="#0284c7" stroke-width="1.2"/>' +
+          '<rect x="-8" y="-9" width="3" height="18" rx="1" fill="#7dd3fc"/>' +
+          '<circle cx="0" cy="0" r="3.5" fill="#e2e8f0"/>' +
+        '</g>';
+      }
+      if (q === 'db') {
+        return '<g transform="translate(' + x + ',' + y + ')">' +
+          '<rect x="-8" y="-4" width="16" height="8" rx="2" fill="#38bdf8" stroke="#0284c7" stroke-width="1"/>' +
+          '<rect x="-10" y="-6" width="4" height="12" rx="1.5" fill="#7dd3fc"/>' +
+          '<rect x="6" y="-6" width="4" height="12" rx="1.5" fill="#7dd3fc"/>' +
+        '</g>';
+      }
+      if (q === 'cb' || q === 'mc') {
+        return '<g transform="translate(' + x + ',' + y + ')">' +
+          '<circle cx="0" cy="0" r="5" fill="#f59e0b" stroke="#fde68a" stroke-width="1.5"/>' +
+        '</g>';
+      }
+      return '';
+    };
+    var scene = '', cue = '2s control ↓ · 1s drive ↑';
+
+    if (rig === 'bench-flat') {
+      cue = '2s lower to chest · 1s press up';
+      scene =
+        '<line x1="25" y1="172" x2="295" y2="172" class="ea-floor"/>' +
+        '<rect x="68" y="132" width="136" height="10" rx="4" class="ea-bench"/>' +
+        '<rect x="82" y="142" width="8" height="30" class="ea-frame"/><rect x="184" y="142" width="8" height="30" class="ea-frame"/>' +
+        (q === 'bb' ? '<line x1="106" y1="62" x2="106" y2="172" class="ea-rack"/>' : '') +
+        '<path d="M 118 68 L 118 110" class="ea-path"/>' +
+        '<circle cx="84" cy="121" r="10" class="ea-head"/>' +
+        '<path d="M 96 125 Q 134 118 176 126 L 198 130 L 222 148 L 226 170" class="ea-limb"/>' +
+        '<ellipse cx="122" cy="119" rx="16" ry="7" class="ea-mus">' + pulse + '</ellipse>' +
+        '<g transform="translate(114,122)">' +
+          '<g>' + rot('-12 0 0', '58 0 0') +
+            '<line x1="0" y1="0" x2="0" y2="-28" class="ea-arm"/>' +
+            '<g transform="translate(0,-28)">' +
+              '<g>' + rot('12 0 0', '-58 0 0') +
+                '<line x1="0" y1="0" x2="0" y2="-26" class="ea-arm"/>' +
+                propWeight(0, -28) +
+              '</g>' +
+            '</g>' +
+          '</g>' +
+        '</g>';
+    } else if (rig === 'bench-incline') {
+      cue = '2s lower to upper chest · 1s press';
+      scene =
+        '<line x1="25" y1="172" x2="295" y2="172" class="ea-floor"/>' +
+        (q === 'sm' ? '<line x1="132" y1="36" x2="132" y2="172" class="ea-rack"/>' : '<line x1="112" y1="48" x2="112" y2="172" class="ea-rack"/>') +
+        '<path d="M 96 92 L 154 142 L 188 136" class="ea-bench-stroke"/>' +
+        '<line x1="112" y1="110" x2="112" y2="172" class="ea-frame"/><line x1="168" y1="140" x2="168" y2="172" class="ea-frame"/>' +
+        '<path d="M 132 54 L 132 98" class="ea-path"/>' +
+        '<circle cx="106" cy="84" r="10" class="ea-head"/>' +
+        '<path d="M 114 94 L 154 134 L 192 132 L 210 170" class="ea-limb"/>' +
+        '<ellipse cx="128" cy="102" rx="13" ry="7" transform="rotate(35 128 102)" class="ea-mus">' + pulse + '</ellipse>' +
+        '<g transform="translate(124,102)">' +
+          '<g>' + rot('-8 0 0', '55 0 0') +
+            '<line x1="0" y1="0" x2="4" y2="-26" class="ea-arm"/>' +
+            '<g transform="translate(4,-26)">' +
+              '<g>' + rot('8 0 0', '-55 0 0') +
+                '<line x1="0" y1="0" x2="4" y2="-24" class="ea-arm"/>' +
+                propWeight(4, -26) +
+              '</g>' +
+            '</g>' +
+          '</g>' +
+        '</g>';
+    } else if (rig === 'pushup') {
+      var isPike = e === 'pike-pushup', isInc = e === 'inc-pushup';
+      cue = '2s chest to floor · 1s press up';
+      scene =
+        '<line x1="25" y1="170" x2="295" y2="170" class="ea-floor"/>' +
+        (isInc ? '<rect x="196" y="142" width="44" height="28" rx="4" class="ea-bench"/>' : '') +
+        '<path d="M 206 112 L 206 146" class="ea-path"/>' +
+        '<g transform="translate(82,166)">' +
+          '<g>' + rot('0 0 0', isPike ? '14 0 0' : '16 0 0') +
+            (isPike
+              ? '<path d="M 0 0 L 54 -68 L 116 -26" class="ea-limb"/>' +
+                '<circle cx="126" cy="-18" r="9" class="ea-head"/>' +
+                '<ellipse cx="104" cy="-34" rx="11" ry="6" class="ea-mus">' + pulse + '</ellipse>'
+              : '<path d="M 0 0 L 66 -24 L 126 -46" class="ea-limb"/>' +
+                '<circle cx="140" cy="-51" r="9.5" class="ea-head"/>' +
+                '<ellipse cx="112" cy="-38" rx="14" ry="6" transform="rotate(-19 112 -38)" class="ea-mus">' + pulse + '</ellipse>') +
+          '</g>' +
+        '</g>' +
+        '<line x1="210" y1="' + (isInc ? '142' : '168') + '" x2="196" y2="136" class="ea-arm">' +
+          '<animate attributeName="y2" values="122;148;148;122" ' + sp + '/>' +
+        '</line>';
+    } else if (rig === 'dip') {
+      cue = '2s lower shoulders below elbows · 1s lockout';
+      scene =
+        '<line x1="25" y1="176" x2="295" y2="176" class="ea-floor"/>' +
+        '<path d="M 116 176 L 116 96 L 196 96" class="ea-frame-stroke"/>' +
+        '<path d="M 160 66 L 160 102" class="ea-path"/>' +
+        '<g>' + tr('0,0', '0,26') +
+          '<circle cx="164" cy="48" r="10" class="ea-head"/>' +
+          '<path d="M 160 60 L 148 106 L 138 140 L 122 152" class="ea-limb"/>' +
+          '<ellipse cx="158" cy="76" rx="9" ry="13" class="ea-mus">' + pulse + '</ellipse>' +
+          '<line x1="156" y1="66" x2="146" y2="96" class="ea-arm"/>' +
+        '</g>' +
+        '<circle cx="146" cy="96" r="4" fill="#f59e0b"/>';
+    } else if (rig === 'fly') {
+      cue = '2s wide stretch · 1s hug together';
+      scene =
+        '<circle cx="160" cy="48" r="11" class="ea-head"/>' +
+        '<path d="M 136 66 L 184 66 L 176 132 L 144 132 Z" class="ea-torso"/>' +
+        '<ellipse cx="149" cy="86" rx="11" ry="9" class="ea-mus">' + pulse + '</ellipse>' +
+        '<ellipse cx="171" cy="86" rx="11" ry="9" class="ea-mus">' + pulse + '</ellipse>' +
+        '<path d="M 86 88 Q 120 118 152 94" class="ea-path"/><path d="M 234 88 Q 200 118 168 94" class="ea-path"/>' +
+        '<g transform="translate(136,74)">' +
+          '<g>' + rot('-10 0 0', '-62 0 0') +
+            '<line x1="0" y1="0" x2="-46" y2="8" class="ea-arm"/>' +
+            propWeight(-50, 8) +
+          '</g>' +
+        '</g>' +
+        '<g transform="translate(184,74)">' +
+          '<g>' + rot('10 0 0', '62 0 0') +
+            '<line x1="0" y1="0" x2="46" y2="8" class="ea-arm"/>' +
+            propWeight(50, 8) +
+          '</g>' +
+        '</g>';
+    } else if (rig === 'vert-pull') {
+      var isPullup = q === 'bw' || e === 'as-pullup';
+      cue = isPullup ? '1s pull chest to bar · 2s full hang' : '1s drive elbows to ribs · 2s stretch up';
+      scene = isPullup
+        ? '<line x1="90" y1="34" x2="230" y2="34" class="ea-rack"/>' +
+          '<path d="M 160 88 L 160 52" class="ea-path"/>' +
+          '<line x1="134" y1="34" x2="144" y2="66" class="ea-arm"><animate attributeName="y2" values="76;46;46;76" ' + sp + '/></line>' +
+          '<line x1="186" y1="34" x2="176" y2="66" class="ea-arm"><animate attributeName="y2" values="76;46;46;76" ' + sp + '/></line>' +
+          '<g>' + tr('0,16', '0,-18') +
+            '<circle cx="160" cy="60" r="10" class="ea-head"/>' +
+            '<path d="M 140 74 L 180 74 L 170 126 L 150 126 Z" class="ea-torso"/>' +
+            '<ellipse cx="144" cy="94" rx="7" ry="15" class="ea-mus">' + pulse + '</ellipse>' +
+            '<ellipse cx="176" cy="94" rx="7" ry="15" class="ea-mus">' + pulse + '</ellipse>' +
+            '<line x1="153" y1="126" x2="153" y2="172" class="ea-limb"/><line x1="167" y1="126" x2="167" y2="172" class="ea-limb"/>' +
+          '</g>'
+        : '<line x1="25" y1="176" x2="295" y2="176" class="ea-floor"/>' +
+          '<path d="M 96 176 L 96 24 L 164 24" class="ea-rack"/>' +
+          '<rect x="136" y="136" width="44" height="8" rx="3" class="ea-bench"/>' +
+          '<line x1="160" y1="24" x2="160" y2="54" class="ea-cable"><animate attributeName="y2" values="46;86;86;46" ' + sp + '/></line>' +
+          '<path d="M 160 48 L 160 88" class="ea-path"/>' +
+          '<circle cx="162" cy="74" r="10" class="ea-head"/>' +
+          '<path d="M 146 88 L 178 88 L 172 136 L 152 136 Z" class="ea-torso"/>' +
+          '<ellipse cx="148" cy="106" rx="7" ry="14" class="ea-mus">' + pulse + '</ellipse>' +
+          '<ellipse cx="176" cy="106" rx="7" ry="14" class="ea-mus">' + pulse + '</ellipse>' +
+          '<g>' + tr('0,0', '0,38') +
+            '<line x1="130" y1="48" x2="190" y2="48" class="ea-bar"/>' +
+            '<line x1="134" y1="48" x2="148" y2="88" class="ea-arm"/>' +
+            '<line x1="186" y1="48" x2="176" y2="88" class="ea-arm"/>' +
+          '</g>';
+    } else if (rig === 'horiz-row') {
+      var isSeated = e === 'cb-row' || e === 'mc-row';
+      cue = '1s pull to ribs & squeeze · 2s reach';
+      scene = isSeated
+        ? '<line x1="25" y1="172" x2="295" y2="172" class="ea-floor"/>' +
+          '<rect x="82" y="64" width="12" height="108" class="ea-frame"/>' +
+          '<rect x="158" y="138" width="56" height="8" rx="3" class="ea-bench"/>' +
+          '<path d="M 118 110 L 166 110" class="ea-path"/>' +
+          '<circle cx="182" cy="70" r="10" class="ea-head"/>' +
+          '<path d="M 182 82 L 180 138 L 134 138 L 116 168" class="ea-limb"/>' +
+          '<ellipse cx="184" cy="104" rx="8" ry="15" class="ea-mus">' + pulse + '</ellipse>' +
+          '<g>' + tr('0,0', '36,0') +
+            '<line x1="94" y1="110" x2="140" y2="110" class="ea-cable"/>' +
+            '<line x1="180" y1="90" x2="140" y2="110" class="ea-arm"/>' +
+            propWeight(140, 110) +
+          '</g>'
+        : '<line x1="25" y1="172" x2="295" y2="172" class="ea-floor"/>' +
+          '<path d="M 176 142 L 154 106" class="ea-path"/>' +
+          '<circle cx="192" cy="68" r="10" class="ea-head"/>' +
+          '<path d="M 182 74 L 128 104 L 142 138 L 136 170" class="ea-limb"/>' +
+          '<ellipse cx="156" cy="88" rx="16" ry="7" transform="rotate(-28 156 88)" class="ea-mus">' + pulse + '</ellipse>' +
+          '<g transform="translate(174,80)">' +
+            '<g>' + rot('0 0 0', '38 0 0') +
+              '<line x1="0" y1="0" x2="2" y2="32" class="ea-arm"/>' +
+              '<g transform="translate(2,32)">' +
+                '<g>' + rot('0 0 0', '-55 0 0') +
+                  '<line x1="0" y1="0" x2="4" y2="28" class="ea-arm"/>' +
+                  propWeight(4, 30) +
+                '</g>' +
+              '</g>' +
+            '</g>' +
+          '</g>';
+    } else if (rig === 'pullover') {
+      cue = '2s overhead lat stretch · 1s sweep to hips';
+      scene =
+        '<line x1="25" y1="172" x2="295" y2="172" class="ea-floor"/>' +
+        '<line x1="94" y1="26" x2="94" y2="172" class="ea-rack"/>' +
+        '<path d="M 132 58 Q 112 96 148 124" class="ea-path"/>' +
+        '<circle cx="176" cy="58" r="10" class="ea-head"/>' +
+        '<path d="M 172 70 L 160 120 L 166 170" class="ea-limb"/>' +
+        '<ellipse cx="164" cy="92" rx="8" ry="15" class="ea-mus">' + pulse + '</ellipse>' +
+        '<g transform="translate(168,74)">' +
+          '<g>' + rot('0 0 0', '-64 0 0') +
+            '<line x1="0" y1="0" x2="-38" y2="-16" class="ea-arm"/>' +
+            propWeight(-40, -16) +
+          '</g>' +
+        '</g>';
+    } else if (rig === 'squat') {
+      cue = '2s sit deep between hips · 1s drive up';
+      scene =
+        '<line x1="25" y1="174" x2="295" y2="174" class="ea-floor"/>' +
+        '<line x1="118" y1="30" x2="118" y2="174" class="ea-rack"/>' +
+        '<path d="M 158 58 L 158 106" class="ea-path"/>' +
+        '<g transform="translate(162,170)">' +
+          '<line x1="-10" y1="0" x2="14" y2="0" class="ea-limb"/>' +
+          '<g>' + rot('0 0 0', '24 0 0') +
+            '<line x1="0" y1="0" x2="-4" y2="-42" class="ea-limb"/>' +
+            '<g transform="translate(-4,-42)">' +
+              '<g>' + rot('0 0 0', '-78 0 0') +
+                '<line x1="0" y1="0" x2="-6" y2="-44" class="ea-limb"/>' +
+                '<ellipse cx="-3" cy="-22" rx="7" ry="16" class="ea-mus">' + pulse + '</ellipse>' +
+                '<g transform="translate(-6,-44)">' +
+                  '<circle cx="0" cy="0" r="7" class="ea-mus">' + pulse + '</circle>' +
+                  '<g>' + rot('0 0 0', '58 0 0') +
+                    '<line x1="0" y1="0" x2="6" y2="-48" class="ea-limb"/>' +
+                    '<circle cx="10" cy="-60" r="9.5" class="ea-head"/>' +
+                    (q === 'db' ? propWeight(18, -42) : propWeight(4, -46)) +
+                  '</g>' +
+                '</g>' +
+              '</g>' +
+            '</g>' +
+          '</g>' +
+        '</g>';
+    } else if (rig === 'leg-press') {
+      cue = '2s lower sled deep · 1s press without locking';
+      scene =
+        '<line x1="25" y1="174" x2="295" y2="174" class="ea-floor"/>' +
+        '<line x1="76" y1="48" x2="210" y2="164" class="ea-rack"/>' +
+        '<path d="M 176 154 L 214 154 L 236 122" class="ea-bench-stroke"/>' +
+        '<path d="M 122 84 L 154 112" class="ea-path"/>' +
+        '<circle cx="228" cy="112" r="9.5" class="ea-head"/>' +
+        '<line x1="222" y1="122" x2="196" y2="150" class="ea-limb"/>' +
+        '<g>' + tr('0,0', '28,24') +
+          '<rect x="104" y="64" width="14" height="44" rx="3" transform="rotate(41 111 86)" fill="#38bdf8"/>' +
+          '<line x1="120" y1="92" x2="162" y2="112" class="ea-limb"/>' +
+          '<ellipse cx="176" cy="130" rx="14" ry="7" transform="rotate(35 176 130)" class="ea-mus">' + pulse + '</ellipse>' +
+        '</g>';
+    } else if (rig === 'lunge-split') {
+      cue = '2s drop back knee · 1s drive through front foot';
+      scene =
+        '<line x1="25" y1="174" x2="295" y2="174" class="ea-floor"/>' +
+        '<rect x="212" y="138" width="38" height="36" rx="4" class="ea-bench"/>' +
+        '<path d="M 152 62 L 152 98" class="ea-path"/>' +
+        '<g>' + tr('0,0', '0,26') +
+          '<circle cx="152" cy="48" r="9.5" class="ea-head"/>' +
+          '<line x1="152" y1="60" x2="152" y2="110" class="ea-limb"/>' +
+          '<ellipse cx="136" cy="124" rx="14" ry="7" transform="rotate(-25 136 124)" class="ea-mus">' + pulse + '</ellipse>' +
+          '<line x1="152" y1="110" x2="120" y2="136" class="ea-limb"/>' +
+          '<line x1="152" y1="110" x2="184" y2="144" class="ea-limb"/>' +
+          (q === 'db' ? propWeight(152, 98) : '') +
+        '</g>' +
+        '<line x1="120" y1="136" x2="116" y2="174" class="ea-limb"/>' +
+        '<line x1="184" y1="144" x2="218" y2="138" class="ea-limb"/>';
+    } else if (rig === 'leg-ext') {
+      cue = '1s kick to full quad squeeze · 2s lower';
+      scene =
+        '<line x1="25" y1="174" x2="295" y2="174" class="ea-floor"/>' +
+        '<path d="M 112 72 L 122 126 L 172 126" class="ea-bench-stroke"/>' +
+        '<line x1="132" y1="126" x2="132" y2="174" class="ea-frame"/>' +
+        '<path d="M 178 164 Q 214 156 222 124" class="ea-path"/>' +
+        '<circle cx="122" cy="58" r="10" class="ea-head"/>' +
+        '<path d="M 122 70 L 128 122 L 174 122" class="ea-limb"/>' +
+        '<ellipse cx="152" cy="117" rx="16" ry="7" class="ea-mus">' + pulse + '</ellipse>' +
+        '<g transform="translate(174,122)">' +
+          '<g>' + rot('0 0 0', '-76 0 0') +
+            '<line x1="0" y1="0" x2="4" y2="44" class="ea-limb"/>' +
+            '<circle cx="6" cy="40" r="5" fill="#f59e0b"/>' +
+          '</g>' +
+        '</g>';
+    } else if (rig === 'hinge') {
+      cue = '2s push hips back (neutral spine) · 1s lock hips';
+      scene =
+        '<line x1="25" y1="174" x2="295" y2="174" class="ea-floor"/>' +
+        '<path d="M 164 102 L 164 146" class="ea-path"/>' +
+        '<line x1="150" y1="174" x2="148" y2="136" class="ea-limb"/>' +
+        '<line x1="148" y1="136" x2="134" y2="102" class="ea-limb"/>' +
+        '<ellipse cx="136" cy="120" rx="7" ry="15" class="ea-mus">' + pulse + '</ellipse>' +
+        '<circle cx="132" cy="100" r="8" class="ea-mus">' + pulse + '</circle>' +
+        '<g transform="translate(134,102)">' +
+          '<g>' + rot('8 0 0', '66 0 0') +
+            '<line x1="0" y1="0" x2="6" y2="-48" class="ea-limb"/>' +
+            '<circle cx="10" cy="-60" r="9.5" class="ea-head"/>' +
+            '<g transform="translate(6,-44)">' +
+              '<g>' + rot('-8 0 0', '-66 0 0') +
+                '<line x1="0" y1="0" x2="4" y2="44" class="ea-arm"/>' +
+                propWeight(4, 46) +
+              '</g>' +
+            '</g>' +
+          '</g>' +
+        '</g>';
+    } else if (rig === 'leg-curl') {
+      var isSeat = e === 'seated-curl';
+      cue = '1s curl heels toward glutes · 2s stretch out';
+      scene = isSeat
+        ? '<line x1="25" y1="174" x2="295" y2="174" class="ea-floor"/>' +
+          '<path d="M 112 72 L 122 124 L 172 124" class="ea-bench-stroke"/>' +
+          '<line x1="134" y1="124" x2="134" y2="174" class="ea-frame"/>' +
+          '<path d="M 218 124 Q 212 156 176 164" class="ea-path"/>' +
+          '<circle cx="122" cy="58" r="10" class="ea-head"/>' +
+          '<path d="M 122 70 L 128 122 L 174 122" class="ea-limb"/>' +
+          '<ellipse cx="152" cy="127" rx="16" ry="6" class="ea-mus">' + pulse + '</ellipse>' +
+          '<g transform="translate(174,122)">' +
+            '<g>' + rot('-74 0 0', '0 0 0') +
+              '<line x1="0" y1="0" x2="4" y2="44" class="ea-limb"/>' +
+              '<circle cx="6" cy="40" r="5" fill="#f59e0b"/>' +
+            '</g>' +
+          '</g>'
+        : '<line x1="25" y1="174" x2="295" y2="174" class="ea-floor"/>' +
+          '<rect x="74" y="126" width="132" height="10" rx="4" class="ea-bench"/>' +
+          '<line x1="92" y1="136" x2="92" y2="174" class="ea-frame"/><line x1="186" y1="136" x2="186" y2="174" class="ea-frame"/>' +
+          '<path d="M 232 120 Q 224 84 188 78" class="ea-path"/>' +
+          '<circle cx="84" cy="114" r="9.5" class="ea-head"/>' +
+          '<line x1="96" y1="118" x2="190" y2="120" class="ea-limb"/>' +
+          '<ellipse cx="166" cy="116" rx="16" ry="6" class="ea-mus">' + pulse + '</ellipse>' +
+          '<g transform="translate(190,120)">' +
+            '<g>' + rot('0 0 0', '-82 0 0') +
+              '<line x1="0" y1="0" x2="44" y2="2" class="ea-limb"/>' +
+              '<circle cx="40" cy="-2" r="5" fill="#f59e0b"/>' +
+            '</g>' +
+          '</g>';
+    } else if (rig === 'hip-thrust') {
+      cue = '1s drive hips to tabletop & squeeze · 2s lower';
+      scene =
+        '<line x1="25" y1="172" x2="295" y2="172" class="ea-floor"/>' +
+        '<rect x="64" y="116" width="44" height="56" rx="5" class="ea-bench"/>' +
+        '<path d="M 156 146 L 156 112" class="ea-path"/>' +
+        '<circle cx="94" cy="98" r="9.5" class="ea-head"/>' +
+        '<g>' + tr('0,28', '0,0') +
+          '<line x1="104" y1="112" x2="158" y2="112" class="ea-limb"/>' +
+          '<line x1="158" y1="112" x2="204" y2="118" class="ea-limb"/>' +
+          '<ellipse cx="154" cy="116" rx="13" ry="8" class="ea-mus">' + pulse + '</ellipse>' +
+          (q !== 'bw' ? propWeight(156, 104) : '') +
+        '</g>' +
+        '<line x1="204" y1="118" x2="208" y2="172" class="ea-limb"/>';
+    } else if (rig === 'glute-iso') {
+      cue = '1s extend & squeeze glute · 2s controlled return';
+      scene =
+        '<line x1="25" y1="172" x2="295" y2="172" class="ea-floor"/>' +
+        '<line x1="110" y1="48" x2="110" y2="172" class="ea-rack"/>' +
+        '<path d="M 164 162 Q 198 152 214 122" class="ea-path"/>' +
+        '<circle cx="146" cy="58" r="9.5" class="ea-head"/>' +
+        '<path d="M 146 70 L 152 116 L 148 172" class="ea-limb"/>' +
+        '<circle cx="156" cy="114" r="9" class="ea-mus">' + pulse + '</circle>' +
+        '<g transform="translate(154,116)">' +
+          '<g>' + rot('0 0 0', '-48 0 0') +
+            '<line x1="0" y1="0" x2="8" y2="52" class="ea-limb"/>' +
+          '</g>' +
+        '</g>';
+    } else if (rig === 'lat-raise') {
+      cue = '1s sweep out to shoulder height · 2s lower';
+      scene =
+        '<line x1="25" y1="174" x2="295" y2="174" class="ea-floor"/>' +
+        '<path d="M 112 122 Q 94 94 96 68" class="ea-path"/><path d="M 208 122 Q 226 94 224 68" class="ea-path"/>' +
+        '<circle cx="160" cy="44" r="10" class="ea-head"/>' +
+        '<path d="M 138 62 L 182 62 L 174 120 L 146 120 Z" class="ea-torso"/>' +
+        '<line x1="150" y1="120" x2="148" y2="174" class="ea-limb"/><line x1="170" y1="120" x2="172" y2="174" class="ea-limb"/>' +
+        '<circle cx="134" cy="66" r="8" class="ea-mus">' + pulse + '</circle>' +
+        '<circle cx="186" cy="66" r="8" class="ea-mus">' + pulse + '</circle>' +
+        '<g transform="translate(134,66)">' +
+          '<g>' + rot('0 0 0', '78 0 0') +
+            '<line x1="0" y1="0" x2="-6" y2="48" class="ea-arm"/>' +
+            propWeight(-6, 50) +
+          '</g>' +
+        '</g>' +
+        '<g transform="translate(186,66)">' +
+          '<g>' + rot('0 0 0', '-78 0 0') +
+            '<line x1="0" y1="0" x2="6" y2="48" class="ea-arm"/>' +
+            propWeight(6, 50) +
+          '</g>' +
+        '</g>';
+    } else if (rig === 'rear-delt') {
+      cue = '1s pull wide with elbows high · 2s return';
+      scene =
+        '<line x1="25" y1="174" x2="295" y2="174" class="ea-floor"/>' +
+        '<line x1="88" y1="36" x2="88" y2="174" class="ea-rack"/>' +
+        '<path d="M 122 68 L 170 68" class="ea-path"/>' +
+        '<circle cx="176" cy="52" r="10" class="ea-head"/>' +
+        '<path d="M 176 64 L 176 120 L 172 174" class="ea-limb"/>' +
+        '<circle cx="178" cy="70" r="8.5" class="ea-mus">' + pulse + '</circle>' +
+        '<g>' + tr('0,0', '38,0') +
+          '<line x1="88" y1="68" x2="132" y2="68" class="ea-cable"/>' +
+          '<line x1="176" y1="72" x2="132" y2="68" class="ea-arm"/>' +
+          propWeight(132, 68) +
+        '</g>';
+    } else if (rig === 'ohp') {
+      cue = '1s press overhead to lockout · 2s lower to chin';
+      scene =
+        '<line x1="25" y1="174" x2="295" y2="174" class="ea-floor"/>' +
+        '<path d="M 112 76 L 112 32" class="ea-path"/><path d="M 208 76 L 208 32" class="ea-path"/>' +
+        '<circle cx="160" cy="60" r="10" class="ea-head"/>' +
+        '<path d="M 138 76 L 182 76 L 174 128 L 146 128 Z" class="ea-torso"/>' +
+        '<line x1="150" y1="128" x2="148" y2="174" class="ea-limb"/><line x1="170" y1="128" x2="172" y2="174" class="ea-limb"/>' +
+        '<circle cx="136" cy="78" r="8" class="ea-mus">' + pulse + '</circle>' +
+        '<circle cx="184" cy="78" r="8" class="ea-mus">' + pulse + '</circle>' +
+        '<g>' + tr('0,0', '0,-42') +
+          (q === 'bb' ? '<line x1="96" y1="72" x2="224" y2="72" class="ea-bar"/>' : '') +
+          '<line x1="136" y1="78" x2="116" y2="72" class="ea-arm"/>' +
+          '<line x1="184" y1="78" x2="204" y2="72" class="ea-arm"/>' +
+          propWeight(112, 72) + propWeight(208, 72) +
+        '</g>';
+    } else if (rig === 'bicep-curl') {
+      cue = '1s curl without swinging · 2s full stretch down';
+      scene =
+        '<line x1="25" y1="174" x2="295" y2="174" class="ea-floor"/>' +
+        '<path d="M 184 134 Q 204 104 182 78" class="ea-path"/>' +
+        '<circle cx="152" cy="46" r="10" class="ea-head"/>' +
+        '<path d="M 150 58 L 148 118 L 146 174" class="ea-limb"/>' +
+        '<line x1="152" y1="68" x2="154" y2="104" class="ea-arm"/>' +
+        '<ellipse cx="158" cy="86" rx="6.5" ry="12" class="ea-mus">' + pulse + '</ellipse>' +
+        '<g transform="translate(154,104)">' +
+          '<g>' + rot('0 0 0', '-112 0 0') +
+            '<line x1="0" y1="0" x2="28" y2="28" class="ea-arm"/>' +
+            propWeight(30, 30) +
+          '</g>' +
+        '</g>';
+    } else if (rig === 'tricep-ext') {
+      var isSkull = e === 'skull', isOh = e === 'cb-oh-ext' || e === 'db-oh-ext';
+      cue = '1s extend elbows to lockout · 2s controlled bend';
+      scene = isSkull
+        ? '<line x1="25" y1="172" x2="295" y2="172" class="ea-floor"/>' +
+          '<rect x="68" y="132" width="136" height="10" rx="4" class="ea-bench"/>' +
+          '<line x1="84" y1="142" x2="84" y2="172" class="ea-frame"/><line x1="184" y1="142" x2="184" y2="172" class="ea-frame"/>' +
+          '<path d="M 88 86 Q 102 62 122 68" class="ea-path"/>' +
+          '<circle cx="86" cy="120" r="10" class="ea-head"/>' +
+          '<path d="M 98 124 L 184 126 L 214 170" class="ea-limb"/>' +
+          '<line x1="116" y1="120" x2="112" y2="86" class="ea-arm"/>' +
+          '<ellipse cx="109" cy="102" rx="5.5" ry="11" class="ea-mus">' + pulse + '</ellipse>' +
+          '<g transform="translate(112,86)">' +
+            '<g>' + rot('-72 0 0', '8 0 0') +
+              '<line x1="0" y1="0" x2="4" y2="-28" class="ea-arm"/>' +
+              propWeight(4, -30) +
+            '</g>' +
+          '</g>'
+        : isOh
+        ? '<line x1="25" y1="174" x2="295" y2="174" class="ea-floor"/>' +
+          '<path d="M 136 62 Q 146 30 166 28" class="ea-path"/>' +
+          '<circle cx="160" cy="64" r="10" class="ea-head"/>' +
+          '<path d="M 158 76 L 156 126 L 154 174" class="ea-limb"/>' +
+          '<line x1="158" y1="78" x2="148" y2="44" class="ea-arm"/>' +
+          '<ellipse cx="148" cy="60" rx="6" ry="12" class="ea-mus">' + pulse + '</ellipse>' +
+          '<g transform="translate(148,44)">' +
+            '<g>' + rot('-88 0 0', '10 0 0') +
+              '<line x1="0" y1="0" x2="8" y2="-26" class="ea-arm"/>' +
+              propWeight(8, -28) +
+            '</g>' +
+          '</g>'
+        : '<line x1="25" y1="174" x2="295" y2="174" class="ea-floor"/>' +
+          '<path d="M 206 174 L 206 28 L 184 28" class="ea-rack"/>' +
+          '<path d="M 178 90 Q 184 114 166 132" class="ea-path"/>' +
+          '<circle cx="148" cy="48" r="10" class="ea-head"/>' +
+          '<path d="M 146 60 L 144 120 L 142 174" class="ea-limb"/>' +
+          '<line x1="148" y1="68" x2="152" y2="102" class="ea-arm"/>' +
+          '<ellipse cx="144" cy="84" rx="6" ry="12" class="ea-mus">' + pulse + '</ellipse>' +
+          '<g transform="translate(152,102)">' +
+            '<g>' + rot('-58 0 0', '22 0 0') +
+              '<line x1="0" y1="0" x2="26" y2="18" class="ea-arm"/>' +
+              propWeight(28, 19) +
+            '</g>' +
+          '</g>';
+    } else if (rig === 'calf-raise') {
+      cue = '2s deep heel stretch · 1s rise high onto toes';
+      scene =
+        '<line x1="25" y1="174" x2="295" y2="174" class="ea-floor"/>' +
+        '<rect x="148" y="158" width="38" height="16" rx="3" class="ea-bench"/>' +
+        '<path d="M 134 168 L 134 142" class="ea-path"/>' +
+        '<g transform="translate(162,158)">' +
+          '<g>' + rot('10 0 0', '-18 0 0') +
+            '<line x1="6" y1="0" x2="-22" y2="6" class="ea-limb"/>' +
+            '<line x1="-14" y1="2" x2="-14" y2="-56" class="ea-limb"/>' +
+            '<ellipse cx="-20" cy="-32" rx="6.5" ry="14" class="ea-mus">' + pulse + '</ellipse>' +
+            '<line x1="-14" y1="-56" x2="-14" y2="-104" class="ea-limb"/>' +
+            '<circle cx="-14" cy="-116" r="9.5" class="ea-head"/>' +
+          '</g>' +
+        '</g>';
+    } else if (rig === 'shrug') {
+      cue = '1s shrug straight to ears & hold · 2s lower';
+      scene =
+        '<line x1="25" y1="174" x2="295" y2="174" class="ea-floor"/>' +
+        '<path d="M 116 74 L 116 54" class="ea-path"/><path d="M 204 74 L 204 54" class="ea-path"/>' +
+        '<circle cx="160" cy="46" r="10" class="ea-head"/>' +
+        '<path d="M 138 68 L 182 68 L 174 124 L 146 124 Z" class="ea-torso"/>' +
+        '<line x1="150" y1="124" x2="148" y2="174" class="ea-limb"/><line x1="170" y1="124" x2="172" y2="174" class="ea-limb"/>' +
+        '<g>' + tr('0,0', '0,-12') +
+          '<ellipse cx="144" cy="62" rx="11" ry="6" transform="rotate(-22 144 62)" class="ea-mus">' + pulse + '</ellipse>' +
+          '<ellipse cx="176" cy="62" rx="11" ry="6" transform="rotate(22 176 62)" class="ea-mus">' + pulse + '</ellipse>' +
+          '<line x1="134" y1="68" x2="128" y2="118" class="ea-arm"/>' +
+          '<line x1="186" y1="68" x2="192" y2="118" class="ea-arm"/>' +
+          propWeight(128, 120) + propWeight(192, 120) +
+        '</g>';
+    } else {
+      // core ('cb-crunch', 'hang-raise', 'ab-wheel', 'crunch', etc.)
+      var isHang = e === 'hang-raise';
+      cue = '1s curl ribs & pelvis together · 2s control back';
+      scene = isHang
+        ? '<line x1="100" y1="26" x2="220" y2="26" class="ea-rack"/>' +
+          '<path d="M 176 158 Q 204 134 198 102" class="ea-path"/>' +
+          '<line x1="152" y1="26" x2="156" y2="58" class="ea-arm"/><line x1="168" y1="26" x2="164" y2="58" class="ea-arm"/>' +
+          '<circle cx="160" cy="52" r="9.5" class="ea-head"/>' +
+          '<line x1="160" y1="64" x2="160" y2="112" class="ea-limb"/>' +
+          '<ellipse cx="164" cy="94" rx="6.5" ry="13" class="ea-mus">' + pulse + '</ellipse>' +
+          '<g transform="translate(160,112)">' +
+            '<g>' + rot('0 0 0', '-78 0 0') +
+              '<line x1="0" y1="0" x2="4" y2="48" class="ea-limb"/>' +
+            '</g>' +
+          '</g>'
+        : '<line x1="25" y1="166" x2="295" y2="166" class="ea-floor"/>' +
+          '<path d="M 96 146 Q 112 118 134 114" class="ea-path"/>' +
+          '<path d="M 164 158 L 202 126 L 228 164" class="ea-limb"/>' +
+          '<ellipse cx="144" cy="148" rx="15" ry="6.5" class="ea-mus">' + pulse + '</ellipse>' +
+          '<g transform="translate(164,158)">' +
+            '<g>' + rot('0 0 0', '34 0 0') +
+              '<line x1="0" y1="0" x2="-58" y2="-4" class="ea-limb"/>' +
+              '<circle cx="-70" cy="-8" r="9.5" class="ea-head"/>' +
+            '</g>' +
+          '</g>';
+    }
+
+    return '<div class="tr-ex-anim-card" data-rig="' + esc(rig) + '">' +
+      '<div class="tr-ex-anim-head">' +
+        '<span class="tr-ex-anim-tag">● ' + esc(mname(ex.m)) + ' · ' + esc(EQUIP[ex.q] || 'Lift') + '</span>' +
+        '<span class="tr-ex-anim-cue">' + esc(cue) + '</span>' +
+      '</div>' +
+      '<svg class="tr-ex-anim" viewBox="0 0 320 190" role="img" aria-label="Animated form demonstration for ' + esc(ex.n) + '">' +
+        scene +
+      '</svg>' +
+    '</div>';
+  }
+
   function exAbout(e, ex) {
     var steps = HOWTO[e], m = MEDIA[e], link = linkOf(e), note = noteOf(e), cue = backCue(ex);
     return (m ? (m.kind === 'video'
         ? '<video class="tr-media" src="' + esc(m.src) + '" muted loop playsinline autoplay aria-label="' + esc(ex.n) + '"></video>'
         : '<img class="tr-media" src="' + esc(m.src) + '" alt="' + esc(ex.n) + '">') +
-        (m.credit ? '<div class="tr-sub">' + esc(m.credit) + '</div>' : '') : '') +
+        (m.credit ? '<div class="tr-sub">' + esc(m.credit) + '</div>' : '')
+      : exAnimSVG(e, ex)) +
       (steps ? '<ol class="tr-howto">' + steps.map(function (st) { return '<li>' + esc(st) + '</li>'; }).join('') + '</ol>'
         : '<div class="tr-note">' + (ex.own ? 'One of your own, so no steps are written for it. ' : '') + 'A how-to link on its note shows here.</div>') +
       (SAFETY[e] ? '<div class="tr-first tr-safe"><b>Safety first.</b> ' + esc(SAFETY[e]) + '</div>' : '') +
@@ -11517,7 +12100,7 @@
       e1rm: e1rm, plateMath: plateMath, review: review, merge: merge, payload: payload,
       rirFor: rirFor, nextSlot: nextSlot, prsIn: prsIn, lib: lib, SPLITS: SPLITS, MUS: MUS,
       estDay: estDay, barred: barred, KEEP_SPLITS: KEEP_SPLITS, HABITS: HABITS, weeksOf: weeksOf, nextTm: nextTm, tmOf: tmOf, outgrown: outgrown,
-      weekPlanSets: weekPlanSets, weekLoggedSets: weekLoggedSets, anatMapSVG: anatMapSVG, secMusclesOf: secMusclesOf,
+      weekPlanSets: weekPlanSets, weekLoggedSets: weekLoggedSets, anatMapSVG: anatMapSVG, secMusclesOf: secMusclesOf, exRigOf: exRigOf, exAnimSVG: exAnimSVG,
       recommend: recommend, PROGS: PROGS, FOCUS: FOCUS, KITS: KITS, axWeek: axWeek, defaultsPr: defaultsPr,
       MOVES: MOVES, mcScore: mcScore, sgParse: sgParse, sgMatch: sgMatch, sgGuess: sgGuess, sgList: sgList, csvRows: csvRows, ntKey: ntKey,
       LIB_LIST: LIB_LIST, slotDone: slotDone, barFor: barFor, barLabel: barLabel, onBar: onBar, liftE1: liftE1, stackHTML: stackHTML, elapsed: elapsed,

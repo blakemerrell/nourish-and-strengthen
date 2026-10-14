@@ -5267,6 +5267,25 @@ button.tr-card:hover { border-color: var(--line-firm); background: var(--field);
 /* ---- Strengthen: a lift's own page ---- */
 .tr-extab { margin: 12px 0 14px; }
 .tr-media { display: block; width: 100%; max-height: 260px; object-fit: contain; background: var(--field); border-radius: 6px; margin-bottom: 10px; }
+.tr-ex-anim-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; padding: 10px 12px 8px; margin-bottom: 12px; color: #f8fafc; overflow: hidden; }
+.tr-ex-anim-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; margin-bottom: 4px; font-size: 0.75rem; }
+.tr-ex-anim-tag { font-weight: 700; color: #fca5a5; letter-spacing: 0.03em; text-transform: uppercase; }
+.tr-ex-anim-cue { color: #cbd5e1; font-weight: 600; }
+.tr-ex-anim { display: block; width: 100%; max-height: 190px; height: auto; }
+.tr-ex-anim .ea-floor { stroke: #334155; stroke-width: 2.5; stroke-linecap: round; }
+.tr-ex-anim .ea-bench { fill: #334155; stroke: #475569; stroke-width: 1.2; }
+.tr-ex-anim .ea-bench-stroke { fill: none; stroke: #475569; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+.tr-ex-anim .ea-frame { fill: #1e293b; stroke: #475569; stroke-width: 1; }
+.tr-ex-anim .ea-frame-stroke { fill: none; stroke: #475569; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.tr-ex-anim .ea-rack { stroke: #475569; stroke-width: 4; stroke-linecap: round; fill: none; }
+.tr-ex-anim .ea-cable { stroke: #94a3b8; stroke-width: 2; stroke-dasharray: 2 2; }
+.tr-ex-anim .ea-bar { stroke: #cbd5e1; stroke-width: 3.5; stroke-linecap: round; }
+.tr-ex-anim .ea-path { fill: none; stroke: #f59e0b; stroke-width: 2; stroke-dasharray: 4 4; opacity: 0.75; stroke-linecap: round; }
+.tr-ex-anim .ea-head { fill: #94a3b8; stroke: #cbd5e1; stroke-width: 2; }
+.tr-ex-anim .ea-torso { fill: #475569; stroke: #94a3b8; stroke-width: 2; stroke-linejoin: round; }
+.tr-ex-anim .ea-limb { fill: none; stroke: #94a3b8; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+.tr-ex-anim .ea-arm { fill: none; stroke: #cbd5e1; stroke-width: 7.5; stroke-linecap: round; stroke-linejoin: round; }
+.tr-ex-anim .ea-mus { fill: #ef4444; stroke: #fca5a5; stroke-width: 1.5; }
 .tr-howto { margin: 4px 0 12px; padding-left: 22px; font-size: 0.90625rem; line-height: 1.5; }
 .tr-howto li { margin: 5px 0; }
 .tr-howlink { display: inline-block; margin: 0 0 12px; font-weight: 600; color: var(--ochre-text); }

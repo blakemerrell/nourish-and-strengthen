@@ -4817,6 +4817,23 @@ module.exports = {
     t.ok('Male ("m") and slender Female ("f") anatomical Front & Back muscle maps render with Primary/Secondary muscles and profile sex sync',
       anat.mOk && anat.fOk && anat.secOk && anat.autoSex, JSON.stringify(anat));
 
+    const anims = await p.evaluate(() => {
+      const _ = window.Train._;
+      const rigs = new Set();
+      let allValid = true;
+      _.LIB_LIST.forEach((ex) => {
+        const rig = _.exRigOf(ex.id, ex);
+        rigs.add(rig);
+        const html = _.exAnimSVG(ex.id, ex);
+        if (!/class="tr-ex-anim"/.test(html) || !/<animate/.test(html) || !/class="ea-mus"/.test(html) || !/class="ea-path"/.test(html)) {
+          allValid = false;
+        }
+      });
+      return { count: _.LIB_LIST.length, rigCount: rigs.size, allValid };
+    });
+    t.ok('Every exercise in LIB_LIST (all 112 lifts) renders an in-app looping SVG biomechanical animation across all 24 movement rigs',
+      anims.count === 112 && anims.rigCount === 24 && anims.allValid, JSON.stringify(anims));
+
     await p.close();
     }
   },

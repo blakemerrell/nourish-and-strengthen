@@ -56,7 +56,7 @@ module.exports = {
       const lines = [...lunch.querySelectorAll('.mtray-f')].map((x) => x.textContent);
       return { trays: tr.length, skip: document.querySelectorAll('#macroSlots .mtray-skip').length,
         skipText: (document.querySelector('.mtray-skip') || {}).textContent,
-        lines: lines, grams: lines.every((l) => / g$/.test(l)),
+        lines: lines, grams: lines.every((l) => / (g|mL)$/.test(l)),
         caps: lunch.querySelectorAll('.mtray-caps .mcap').length,
         measured: lines.filter((l) => /(cups?|tbsp|whole|lb)/.test(l)).length,
         tick: !!lunch.querySelector('.mday-dot[data-mdot="l"]'),

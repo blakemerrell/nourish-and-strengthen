@@ -3282,18 +3282,20 @@ module.exports = {
       /Personal bests start today/.test(r) && /Total lifted/.test(r) && !/Volume/.test(r), r.slice(0, 200));
     await p.close();
 
-    // the weight asked for comes with its reason, for someone new; not for anyone else
-    for (const lvl of [0, 1]) {
+    // the weight or rep target asked for comes with its reason across all lifter levels
+    for (const lvl of [0, 1, 2]) {
       p = await t.fresh();
       await seed(p, { pr: { qz: 1, lvl }, act: '', ms: {}, cx: {}, ax: {}, wo: { h1: wo('h1', '', 0, 0, 3, [{ e: 'bb-bench', s: sets(135, [10, 10, 10]) }]) } });
       await p.click('.tab[data-view="train"]');
       await p.click('[data-t="empty"]');
       await p.click('[data-t="addex"]');
       await p.click('.tr-pick[data-e="bb-bench"]');
-      r = await p.evaluate(() => { const c = document.querySelector('.tr-ex'); return { txt: c.querySelector('.tr-ex-h').textContent, first: !!c.querySelector('.tr-first'),
+      r = await p.evaluate(() => { const c = document.querySelector('.tr-ex'); return { txt: c.querySelector('.tr-ex-h').textContent,
+        ovl: !!c.querySelector('.tr-ovl.tr-ovl-w'), first: !!c.querySelector('.tr-first'),
         how: !!c.querySelector('[data-t="exhow"]'), head: c.querySelector('.tr-set-h').textContent }; });
-      if (lvl === 0) t.ok('new to lifting: “Up 5 lb — you hit the top of the range last time.”', /Up 5 lb — you hit the top of the range last time\./.test(r.txt), r.txt);
-      else t.ok('otherwise no reason line, no first-time notes on a lift you have done, and Previous', !/Up 5 lb/.test(r.txt) && !r.first && !r.how && /Previous/.test(r.head), JSON.stringify(r));
+      if (lvl === 0) t.ok('new to lifting: “Up 5 lb — you hit the top of the range last time.”', /Up 5 lb — you hit the top of the range last time\./.test(r.txt) && r.ovl, r.txt);
+      else t.ok('experienced lifters (lvl ' + lvl + ') also get the progressive overload pill while keeping Previous and hiding beginner notes',
+        /Up 5 lb — you hit the top of the range last time\./.test(r.txt) && r.ovl && !r.first && !r.how && /Previous/.test(r.head), JSON.stringify(r));
       await p.close();
     }
 

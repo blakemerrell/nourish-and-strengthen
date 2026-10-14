@@ -6844,7 +6844,7 @@
     var fresh = !x.s.some(function (s) { return s.t; });
     // someone new: plain words where the numbers need them
     var nb = T.pr.lvl === 0, nWork = x.s.filter(counts).length;
-    var wy = whyW(x);
+    var wy = whyW(x), wyk = wy ? whyWKind(x) : '';
     var ms = LIVE.ms ? T.ms[LIVE.ms] : null;
     // the reps in reserve when they are not the day's, which the header says
     var rirHere = x.rir !== null && x.rir !== undefined && !(ms && x.rir === LIVE.rir);
@@ -6879,7 +6879,7 @@
         (ASST[x.e] ? '<span class="tr-ex-m">Type the machine\u2019s help as the weight: less help is progress.</span>' : '') +
         homeNote(x, i) +
         (fresh ? efNote(x, i) : '') +
-        (wy && fresh ? '<span class="tr-ex-m">' + esc(wy) + '</span>' : '') +
+        (wy && fresh ? '<span class="tr-ex-m tr-ovl tr-ovl-' + wyk + '">' + esc(wy) + '</span>' : '') +
         (first && SAFETY[x.e] ? '<div class="tr-first tr-safe"><b>Safety first.</b> ' + esc(SAFETY[x.e]) + '</div>' : '') +
         firstTime(x) +
         (note ? '<button class="tr-exnt" data-t="note" data-e="' + esc(x.e) + '" aria-label="Your note on ' + esc(ex.n) + ': ' + esc(note) + '. Edit">' +
@@ -6946,17 +6946,31 @@
     return '<button class="tr-ea" data-t="' + t + '"' + attrs + ' aria-label="' + esc(label) + '">' + EA_ICO[ico] + '<span>' + esc(word) + '</span></button>';
   }
 
-  /* Starting out, the weight asked for comes with its reason: a number
-     that changes with no word of why reads as the app guessing. */
-  function whyW(x) {
-    if (T.pr.lvl !== 0 || x.fix || !LIVE || (x.ef && x.ef.on)) return '';
+  /* Today's progressive overload target and its reason, shown across all
+     lifter experience levels so every exercise card states today's goal. */
+  function whyWKind(x) {
+    if (x.fix || !LIVE || (x.ef && x.ef.on)) return '';
     var s = x.s.filter(function (z) { return !z.wu; })[0];
     if (!s || !fin(s.tw) || !fin(s.pw)) return '';
-    if (LIVE.dl) return 'Lighter this week on purpose: an easy week lets your body catch up.';
+    if (LIVE.dl) return 'dl';
     var d = s.tw - s.pw;
-    if (ASST[x.e] && d < 0) return fmtN(-d) + ' ' + T.pr.u + ' less help \u2014 you hit the top of the range last time.';
-    if (d > 0 && !ASST[x.e]) return 'Up ' + fmtN(d) + ' ' + T.pr.u + ' \u2014 you hit the top of the range last time.';
-    if (d === 0 && fin(s.tr) && fin(s.pr) && s.tr > s.pr) return (s.tw > 0 ? 'Same weight \u2014 aim' : 'Aim') + ' for ' + s.tr + ' reps, one more than last time.';
+    if ((ASST[x.e] && d < 0) || (d > 0 && !ASST[x.e])) return 'w';
+    if (d === 0 && fin(s.tr) && fin(s.pr) && s.tr > s.pr) return 'r';
+    if (d === 0 && fin(s.tr) && fin(s.pr) && s.tr === s.pr) return 'hold';
+    return '';
+  }
+  function whyW(x) {
+    var k = whyWKind(x);
+    if (!k) return '';
+    var s = x.s.filter(function (z) { return !z.wu; })[0];
+    if (k === 'dl') return 'Lighter this week on purpose: an easy week lets your body catch up.';
+    var d = s.tw - s.pw;
+    if (k === 'w') {
+      if (ASST[x.e] && d < 0) return fmtN(-d) + ' ' + T.pr.u + ' less help \u2014 you hit the top of the range last time.';
+      return 'Up ' + fmtN(d) + ' ' + T.pr.u + ' \u2014 you hit the top of the range last time.';
+    }
+    if (k === 'r') return (s.tw > 0 ? 'Same weight \u2014 aim' : 'Aim') + ' for ' + s.tr + ' reps, one more than last time.';
+    if (k === 'hold') return (s.tw > 0 ? 'Hold ' + fmtN(s.tw) + ' ' + T.pr.u + ' \u2014 own ' : 'Own ') + s.tr + ' reps across all sets.';
     return '';
   }
 

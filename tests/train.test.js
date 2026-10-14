@@ -553,6 +553,28 @@ module.exports = {
     t.ok('drawn, not written: a dot a protein day, food as a bar against the target, an arrow on the scale, lifts up, level and down',
       r.dots === '1101111' && r.bar === '79%' && r.arrow === '▼1' && /^▲1 ●1 ▼0$/.test(r.lifts), JSON.stringify(r));
     t.ok('and in few words', r.words < 260, String(r.words));
+    // Recomp note when weight is flat on a cut while 2+ lifts climb
+    const climbing = [[20, 'bb-bench', 200, 8], [6, 'bb-bench', 215, 8], [13, 'bb-row', 180, 8], [3, 'bb-row', 195, 8]];
+    r = await reads(W({ kcal: 1900, w: { now: 200, n: 7, was: 200, m: 7 } }), CUT, climbing);
+    t.ok('flat scale on a cut with 2+ lifts climbing notes body recomposition',
+      r.length === 1 && /trading fat for muscle/.test(r[0].d), JSON.stringify(r));
+    // Cut Strength-Loss Guard when losing >= 1%/wk AND lifts are slipping
+    await reads(W({ kcal: 1800, target: 1900, w: { now: 196, n: 7, was: 200, m: 7 } }), CUT, falling);
+    await c.evaluate(() => { localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 190, f: 60, c: 150 })); window.Train._.draw(); });
+    r = await c.evaluate(() => {
+      const ck = window.Train._.checkin();
+      const btn = document.querySelector('.tr-str-guard-btn[data-t="chkguard"]');
+      return { conf: ck.conf, guard: ck.guard, hasBtn: !!btn, btnKcal: btn ? Number(btn.getAttribute('data-kcal')) : 0 };
+    });
+    t.ok('Cut Strength-Loss Guard triggers when losing >= 1%/wk with slipping lifts and offers +150 kcal buffer',
+      r.conf && r.conf.score === 100 && r.guard && r.guard.addKcal === 150 && r.hasBtn && r.btnKcal === 2050, JSON.stringify(r));
+    await c.click('.tr-str-guard-btn[data-t="chkguard"]');
+    r = await c.evaluate(() => ({
+      okBadge: !!document.querySelector('.tr-str-guard-ok'),
+      targs: JSON.parse(localStorage.getItem('bsc.macroTargets') || '{}')
+    }));
+    t.ok('clicking Cut Strength-Loss Guard buffers daily calorie target and confirms in place',
+      r.okBadge && (r.targs.p * 4 + r.targs.f * 9 + r.targs.c * 4) >= 2040, JSON.stringify(r));
     /* This week is on the morning card, which is Today's weigh-in now: the
        sheet holds Nourish's own card, unfolded the way a thumb unfolds it. */
     await c.click('.tab[data-view="today"]');

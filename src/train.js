@@ -4976,32 +4976,30 @@
         var C = window.AudioContext || window.webkitAudioContext;
         if (C) AC = new C();
       }
+      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* not on this browser */ }
       if (AC && AC.state === 'suspended') AC.resume();
     } catch (e) { AC = null; }
   }
-  /* The end of a rest has to be heard over music in your ears: three
-     bursts of a high two-note call, about a second and a half, in a tone
-     with an edge (a square wave, its harshest top taken off) rather than a
-     soft sine that music swallows. Two notes a sixth apart read as an alarm,
-     not as part of the song. */
+  /* A singing bowl / gong at the end of a rest (the same bronze bowl from
+     TreasureUp's meditation timer: E-flat 155.56 Hz with four inharmonic
+     partials, each doubled a hair apart so it shimmers as it rings out). */
+  var BOWL_HZ = 155.56;
   function ring() {
     try { if (navigator.vibrate) navigator.vibrate([300, 120, 300, 120, 300]); } catch (e) { /* not on this device */ }
     if (!AC || !T.pr.snd) return;
     try {
-      var lp = AC.createBiquadFilter();
-      lp.type = 'lowpass'; lp.frequency.value = 4000;
-      lp.connect(AC.destination);
-      [0, 0.5, 1.0].forEach(function (burst) {
-        [[1047, 0], [1319, 0.17]].forEach(function (n) {
-          var o = AC.createOscillator(), g = AC.createGain(), t0 = AC.currentTime + burst + n[1];
-          o.type = 'square';
-          o.frequency.value = n[0];
-          g.gain.setValueAtTime(0.0001, t0);
-          g.gain.exponentialRampToValueAtTime(0.5, t0 + 0.01);
-          g.gain.setValueAtTime(0.5, t0 + 0.11);
-          g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.15);
-          o.connect(g); g.connect(lp);
-          o.start(t0); o.stop(t0 + 0.16);
+      var t = AC.currentTime + 0.03, out = AC.createGain();
+      out.gain.value = 0.3; out.connect(AC.destination);
+      [[1, 1, 16], [2.76, 0.55, 10], [5.4, 0.24, 6], [8.93, 0.1, 3.5]].forEach(function (p) {
+        var r = p[0], amp = p[1], dec = p[2];
+        [-0.5, 0.5].forEach(function (d) {
+          var o = AC.createOscillator(), g = AC.createGain();
+          o.frequency.value = BOWL_HZ * r + d * r;
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(amp / 2, t + 0.012);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+          o.connect(g); g.connect(out);
+          o.start(t); o.stop(t + dec + 0.1);
         });
       });
     } catch (e) { /* no sound: the bar and the buzz still say it */ }
@@ -9856,8 +9854,8 @@
         chips('s-ri', p.ri, [[60, '1:00'], [75, '1:15'], [90, '1:30'], [120, '2:00']]) + '</div>' +
       '<div class="tr-q"><div class="tr-ql">Rest between paired sets</div>' +
         chips('s-rp', p.rp, [[45, '0:45'], [60, '1:00'], [75, '1:15'], [90, '1:30']]) + '</div>' +
-      '<div class="tr-q"><div class="tr-ql">When rest is up</div>' + chips('s-snd', p.snd, [[1, 'Beep and buzz'], [0, 'Buzz only']]) +
-        '<div class="tr-note">Tap Beep and buzz to hear it. When a rest ends it calls again every 6 seconds until you touch the screen, for up to half a minute, while the app is on screen.</div></div>' +
+      '<div class="tr-q"><div class="tr-ql">When rest is up</div>' + chips('s-snd', p.snd, [[1, 'Gong and buzz'], [0, 'Buzz only']]) +
+        '<div class="tr-note">Tap Gong and buzz to hear the singing bowl. When a rest ends it rings again every 6 seconds until you touch the screen, for up to half a minute, while the app is on screen.</div></div>' +
       '<div class="tr-q"><div class="tr-ql">When you finish</div>' + chips('s-yay', p.yay, [[1, 'Chime and confetti'], [0, 'Just the summary']]) + '</div>' +
       '<div class="tr-q"><div class="tr-ql">Your weight on pull-up and dip days</div>' + chips('s-nobw', p.nobw, [[0, 'Ask when it\u2019s needed'], [1, 'Don\u2019t ask']]) +
         '<div class="tr-hint">Asked only when there\u2019s no weigh-in from the last week to go on. Saved, it\u2019s the day\u2019s weigh-in on Nourish too.</div></div>' +

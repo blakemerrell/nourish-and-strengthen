@@ -4600,10 +4600,10 @@ module.exports = {
     await openSettings(p);
     await p.click('[data-t="s-snd"][data-v="0"]');
     await p.click('[data-t="s-snd"][data-v="1"]');
-    r = await p.evaluate(() => ({ n: window.__notes.length, span: Math.max(...window.__notes.map((x) => x.b)), sq: window.__notes.every((x) => x.type === 'square'),
-      hi: Math.min(...window.__notes.map((x) => x.f)), say: /Tap Beep and buzz to hear it/.test(document.querySelector('.tr-sheet').textContent) }));
-    t.ok('choosing Beep and buzz plays it: three bursts of a high two-note call, about a second and a half, and says so',
-      r.n === 6 && r.span > 1.2 && r.span < 2 && r.sq && r.hi >= 1000 && r.say, JSON.stringify(r));
+    r = await p.evaluate(() => ({ n: window.__notes.length, span: Math.max(...window.__notes.map((x) => x.b)), sine: window.__notes.every((x) => x.type === 'sine'),
+      lo: Math.round(Math.min(...window.__notes.map((x) => x.f))), say: /Tap Gong and buzz to hear/.test(document.querySelector('.tr-sheet').textContent) }));
+    t.ok('choosing Gong and buzz plays the singing bowl gong: four detuned partial pairs (8 oscillators) from 155 Hz, and says so',
+      r.n === 8 && r.span > 15 && r.sine && r.lo === 155 && r.say, JSON.stringify(r));
     await p.close();
 
     // ---- a rest's end calls again until you touch the screen ----
@@ -4644,12 +4644,12 @@ module.exports = {
     await p.clock.runFor(13000);
     const r3 = await notes();
     t.ok('a rest’s end calls, calls again six seconds on, and a touch on the screen stops it',
-      r1 - r0 === 6 && r2 - r1 === 6 && r3 === r2 && !(await p.evaluate(() => window.Train._.ringing())), JSON.stringify([r0, r1, r2, r3]));
+      r1 - r0 === 8 && r2 - r1 === 8 && r3 === r2 && !(await p.evaluate(() => window.Train._.ringing())), JSON.stringify([r0, r1, r2, r3]));
     await p.evaluate(() => window.Train._.ringRest());
     const m0 = await notes();
     await p.clock.runFor(60000);
     const m1 = await notes();
-    t.ok('left alone, it gives up after half a minute: the first call and five more', m1 - m0 === 30, String(m1 - m0));
+    t.ok('left alone, it gives up after half a minute: the first call and five more', m1 - m0 === 40, String(m1 - m0));
     await p.close();
     }
 

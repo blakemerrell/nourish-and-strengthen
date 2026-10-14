@@ -7521,6 +7521,333 @@
     if (planned <= 0 || logged >= planned) return 'hm-hit';
     return (logged / planned) >= 0.5 ? 'hm-mid' : 'hm-low';
   }
+  function mirrorD(d) {
+    return d.replace(/([MLCQZ])\s*([^MLCQZ]*)/gi, function (_, cmd, args) {
+      var nums = args.trim() ? args.trim().split(/[\s,]+/).map(Number) : [];
+      var out = [];
+      for (var i = 0; i < nums.length; i += 2) {
+        out.push((200 - nums[i]) + ' ' + nums[i + 1]);
+      }
+      return cmd + (out.length ? ' ' + out.join(' ') : '');
+    });
+  }
+  function pairPath(cls, d) {
+    return '<path class="' + cls + '" d="' + d + '"/><path class="' + cls + '" d="' + mirrorD(d) + '"/>';
+  }
+  function anatGrp(m, cls, bellies, seams, fibers) {
+    var inner = bellies.map(function (d) { return pairPath('belly', d); }).join('') +
+      (seams || []).map(function (d) { return pairPath('seam', d); }).join('') +
+      (fibers || []).map(function (d) { return pairPath('fiber', d); }).join('');
+    return '<g data-mus="' + m + '" class="tr-hm-grp ' + cls + '">' + inner + '</g>';
+  }
+  function sexNow() {
+    if (T.pr && (T.pr.sex === 'f' || T.pr.sex === 'm')) return T.pr.sex;
+    var mp = readLS('bsc.macroProfile');
+    return mp && mp.sex === 'f' ? 'f' : 'm';
+  }
+  function anatMapSVG(clsMap, sexOpt) {
+    var s = sexOpt === 'f' || sexOpt === 'm' ? sexOpt : sexNow();
+    var cOf = function (k, fb) { return clsMap[k] || (fb && clsMap[fb]) || 'hm-0'; };
+    var deltF = clsMap.side || clsMap.front || clsMap.chest || 'hm-0';
+    var deltB = clsMap.rear || clsMap.side || clsMap.back || 'hm-0';
+    var trapC = clsMap.traps || clsMap.back || 'hm-0';
+    var gluteC = clsMap.glutes || clsMap.quads || clsMap.hams || 'hm-0';
+    var foreF = clsMap.fore || clsMap.biceps || 'hm-0';
+    var foreB = clsMap.fore || clsMap.triceps || 'hm-0';
+    var frontInner, backInner;
+    if (s === 'f') {
+      frontInner =
+        '<path class="b-shell" d="' +
+          'M 100 5 C 92 5 90 12 94 15 C 84 17 79 27 81 39 C 78 39 78 46 81 51 L 83 51 C 84 56 87 60 89 62 L 88 76 ' +
+          'C 77 81 66 84 58 86 C 49 88 45 97 45 112 C 45 119 45 124 46 128 ' +
+          'C 42 138 40 150 41 162 C 35 174 32 188 32 206 L 33 222 ' +
+          'C 29 228 28 235 30 240 C 33 244 39 244 43 241 C 46 238 47 234 45 229 C 47 229 48 225 46 220 L 42 212 ' +
+          'C 46 196 50 179 53 163 C 56 151 58 138 58 125 ' +
+          'C 62 140 69 151 73 162 C 71 174 64 186 60 200 ' +
+          'C 57 214 57 230 59 246 C 58 266 61 286 68 303 C 70 307 72 307 74 305 ' +
+          'C 73 314 73 322 75 330 C 68 344 68 364 73 384 C 76 396 78 408 79 420 ' +
+          'L 77 425 C 71 429 62 432 60 435 C 59 438 66 439 76 439 C 82 439 86 438 88 436 C 90 433 87 427 86 420 ' +
+          'C 87 408 89 394 91 380 C 93 362 92 344 88 330 C 89 321 89 313 88 306 C 91 294 92 274 92 252 C 92 242 95 234 100 232 ' +
+          'C 105 234 108 242 108 252 C 108 274 109 294 112 306 C 111 313 111 321 112 330 C 108 344 107 362 109 380 C 111 394 113 408 114 420 ' +
+          'C 113 427 110 433 112 436 C 114 438 118 439 124 439 C 134 439 141 438 140 435 C 138 432 129 429 123 425 L 121 420 ' +
+          'C 122 408 124 396 127 384 C 132 364 132 344 125 330 C 127 322 127 314 126 305 C 128 307 130 307 132 303 ' +
+          'C 139 286 142 266 141 246 C 143 230 143 214 140 200 C 136 186 129 174 127 162 C 131 151 138 140 142 125 ' +
+          'C 142 138 144 151 147 163 C 150 179 154 196 158 212 L 154 220 C 152 225 153 229 155 229 C 153 234 154 238 157 241 ' +
+          'C 161 244 167 244 170 240 C 172 235 171 228 167 222 L 168 206 C 168 188 165 174 159 162 C 160 150 158 138 154 128 ' +
+          'C 155 124 155 119 155 112 C 155 97 151 88 142 86 C 134 84 123 81 112 76 L 111 62 C 113 60 116 56 117 51 L 119 51 ' +
+          'C 122 46 122 39 119 39 C 121 27 116 17 106 15 C 110 12 108 5 100 5 Z"/>' +
+        pairPath('b-line', 'M 94 15 C 96 16 98 16 100 16 M 83 51 C 86 60 92 67 100 68 M 76 304 C 76 298 84 298 84 304 C 84 311 76 311 76 304 M 32 231 C 35 233 40 232 42 228 M 31 236 C 35 239 40 237 43 233 M 80 314 L 81 418') +
+        anatGrp('traps', trapC, [
+          'M 89 62 C 91 70 94 78 97 86 L 93 86 C 90 78 88 70 88 64 Z',
+          'M 96 68 L 100 68 L 100 86 L 97 86 Z',
+          'M 88 73 L 66 85 C 74 86 83 86 92 86 Z'
+        ], [], ['M 69 84 L 91 81']) +
+        anatGrp('side', deltF, [
+          'M 66 85 C 56 85 48 91 45 103 C 46 112 50 119 54 121 C 57 109 61 96 66 85 Z',
+          'M 49 91 C 45 97 44 108 46 125 C 49 123 52 120 54 121 C 50 113 47 102 49 91 Z'
+        ], [], ['M 58 89 C 53 98 51 108 52 118']) +
+        anatGrp('chest', cOf('chest'), [
+          'M 100 87 L 87 86 C 74 85 64 89 57 102 C 54 113 57 125 65 131 C 74 137 88 136 97 128 L 100 122 Z'
+        ], ['M 58 115 C 63 129 79 133 94 125'], [
+          'M 64 93 Q 81 96 99 91', 'M 60 101 Q 79 105 99 99', 'M 58 109 Q 78 114 99 106', 'M 63 120 Q 80 124 98 115'
+        ]) +
+        anatGrp('biceps', cOf('biceps'), [
+          'M 54 121 C 48 123 44 133 43 148 C 44 157 48 162 52 162 C 57 154 59 140 58 125 Z',
+          'M 46 125 C 42 135 40 147 41 160 L 44 152 C 44 143 45 134 46 125 Z'
+        ], ['M 49 124 C 48 137 48 150 49 161'], []) +
+        anatGrp('fore', foreF, [
+          'M 43 151 C 36 162 32 178 32 202 L 35 216 L 39 212 C 39 192 42 172 46 162 Z',
+          'M 46 162 C 42 173 39 192 39 212 L 42 212 C 46 196 50 179 53 163 C 50 165 48 164 46 162 Z'
+        ], [], ['M 39 162 C 35 178 34 194 36 212']) +
+        anatGrp('abs', cOf('abs'), [
+          'M 64 131 C 70 136 77 137 84 136 L 84 202 C 76 192 71 177 73 162 C 69 152 65 142 64 131 Z',
+          'M 99 125 L 88 132 L 84 142 L 99 144 Z',
+          'M 84 144 L 99 146 L 99 160 L 84 158 Z',
+          'M 84 160 L 99 162 L 99 176 L 84 174 Z',
+          'M 84 176 L 99 178 L 99 220 C 92 214 86 198 84 176 Z'
+        ], [], ['M 67 142 L 82 148', 'M 70 153 L 83 159', 'M 73 165 L 83 172']) +
+        anatGrp('quads', cOf('quads'), [
+          'M 71 172 C 77 188 87 210 99 222 L 99 232 C 95 234 92 242 92 252 C 92 274 91 294 88 305 C 85 308 82 306 81 299 C 79 295 75 295 73 299 C 71 305 69 306 67 302 C 61 285 58 265 59 246 C 57 230 57 214 60 200 C 64 187 69 178 71 172 Z'
+        ], [
+          'M 69 182 C 77 212 86 240 92 260', 'M 69 200 C 65 236 68 272 74 296',
+          'M 73 202 C 80 230 84 254 83 272 C 80 280 78 289 77 296', 'M 83 268 C 88 264 91 268 91 276'
+        ], [
+          'M 75 212 L 76 290', 'M 75 230 L 70 246', 'M 75 248 L 69 264',
+          'M 75 230 L 80 246', 'M 76 248 L 81 264', 'M 62 238 C 59 260 61 282 67 298'
+        ]) +
+        anatGrp('calves', cOf('calves'), [
+          'M 75 330 C 68 344 68 364 73 384 L 79 402 C 80 378 80 356 79 332 Z',
+          'M 81 332 L 88 330 C 92 344 93 362 91 380 L 85 394 C 82 376 82 356 81 332 Z'
+        ], ['M 76 331 C 74 352 75 374 78 392'], [
+          'M 71 342 C 69 358 70 372 74 384', 'M 87 338 C 90 352 89 368 86 382'
+        ]);
+      backInner =
+        '<path class="b-shell" d="' +
+          'M 100 5 C 92 5 90 12 94 15 C 84 17 79 27 81 39 C 78 39 78 46 81 51 L 83 51 L 87 72 ' +
+          'C 76 79 65 83 58 86 C 49 88 45 97 46 112 C 42 124 40 139 41 156 ' +
+          'C 35 168 32 185 32 204 L 33 222 C 29 228 28 235 30 240 C 33 244 39 244 43 241 C 46 238 47 234 45 229 C 47 229 48 225 46 220 L 42 212 ' +
+          'C 46 196 50 179 53 163 C 56 151 58 138 58 125 ' +
+          'C 62 139 68 151 72 162 C 69 174 62 186 58 200 C 54 216 54 232 59 246 ' +
+          'C 58 266 61 288 69 306 C 65 318 64 334 67 350 C 70 370 75 392 78 416 ' +
+          'L 74 427 C 70 432 69 437 74 438 C 79 439 85 439 88 436 C 90 433 87 426 86 416 ' +
+          'C 88 394 90 374 92 350 C 94 334 92 318 87 306 C 91 292 92 270 92 250 L 100 240 ' +
+          'L 108 250 C 108 270 109 292 113 306 C 108 318 106 334 108 350 C 110 374 112 394 114 416 ' +
+          'C 113 426 110 433 112 436 C 115 439 121 439 126 438 C 131 437 130 432 126 427 L 122 416 ' +
+          'C 125 392 130 370 133 350 C 136 334 135 318 131 306 C 139 288 142 266 141 246 ' +
+          'C 146 232 146 216 142 200 C 138 186 131 174 128 162 C 132 151 138 139 142 125 ' +
+          'C 142 138 144 151 147 163 C 150 179 154 196 158 212 L 154 220 C 152 225 153 229 155 229 C 153 234 154 238 157 241 ' +
+          'C 161 244 167 244 170 240 C 172 235 171 228 167 222 L 168 204 C 168 185 165 168 159 156 ' +
+          'C 160 139 158 124 154 112 C 155 97 151 88 142 86 C 135 83 124 79 113 72 L 117 51 L 119 51 ' +
+          'C 122 46 122 39 119 39 C 121 27 116 17 106 15 C 110 12 108 5 100 5 Z"/>' +
+        pairPath('b-line', 'M 94 15 C 96 16 98 16 100 16 M 85 48 C 90 53 95 54 100 52 M 32 231 C 35 233 40 232 42 228 M 31 236 C 35 239 40 237 43 233 M 79 360 L 80 424 M 83 360 L 83 424') +
+        anatGrp('traps', trapC, [
+          'M 90 52 C 88 63 81 74 66 84 C 73 92 78 102 81 111 L 100 144 L 100 52 Z'
+        ], [], ['M 88 62 L 99 66', 'M 83 73 L 99 77', 'M 71 85 Q 86 89 99 86', 'M 77 97 L 99 100']) +
+        '<path class="b-tendon" d="M 100 65 L 94 74 L 100 83 L 106 74 Z"/>' +
+        anatGrp('rear', deltB, [
+          'M 66 84 C 53 85 46 95 46 112 C 52 110 60 103 72 95 Z'
+        ], [], ['M 56 88 C 50 95 48 102 48 109']) +
+        anatGrp('back', cOf('back'), [
+          'M 70 95 L 81 111 L 69 118 C 65 111 63 102 70 95 Z',
+          'M 58 120 C 65 121 73 118 81 111 L 100 144 L 87 164 C 79 161 74 161 72 162 C 68 150 62 136 58 120 Z'
+        ], [], ['M 63 126 Q 79 132 95 140', 'M 66 138 Q 80 144 92 153', 'M 69 150 L 88 161']) +
+        '<path class="b-tendon" d="M 100 140 L 87 164 L 91 186 L 100 190 L 109 186 L 113 164 Z"/>' +
+        '<path class="b-line" d="M 100 140 L 100 190"/>' +
+        anatGrp('abs', cOf('abs'), [
+          'M 72 162 C 78 162 85 166 90 175 L 89 187 C 79 187 68 192 60 198 C 63 186 69 174 72 162 Z'
+        ], [], ['M 70 173 L 88 180']) +
+        anatGrp('triceps', cOf('triceps'), [
+          'M 46 112 C 42 124 40 139 41 156 C 45 158 50 157 53 160 C 56 150 58 137 58 123 C 54 118 50 114 46 112 Z'
+        ], ['M 51 114 C 48 126 46 138 45 150', 'M 45 146 C 49 150 53 146 56 138'], ['M 44 122 C 42 132 42 142 43 150']) +
+        anatGrp('fore', foreB, [
+          'M 41 156 C 35 168 32 185 32 204 L 33 220 L 42 212 C 46 196 50 179 53 160 C 49 157 45 158 41 156 Z'
+        ], ['M 46 159 C 41 176 39 194 39 214'], []) +
+        anatGrp('glutes', gluteC, [
+          'M 60 198 C 68 192 79 187 89 187 L 100 190 L 100 240 C 88 252 69 250 59 244 C 54 230 54 214 60 198 Z'
+        ], ['M 70 192 C 63 206 60 224 61 243'], ['M 68 205 Q 84 205 99 209', 'M 65 217 Q 82 219 99 221', 'M 63 230 Q 81 234 99 233']) +
+        anatGrp('hams', cOf('hams'), [
+          'M 59 244 C 69 250 88 252 100 240 L 92 250 C 92 270 91 292 87 306 L 78 313 L 69 306 C 61 288 58 266 59 244 Z'
+        ], ['M 78 248 C 78 270 75 290 69 306', 'M 78 294 C 85 282 89 264 90 248'], [
+          'M 71 254 C 69 272 69 288 70 302', 'M 84 252 C 84 268 82 282 79 292'
+        ]) +
+        anatGrp('calves', cOf('calves'), [
+          'M 69 306 L 78 313 L 78 356 C 72 360 67 355 65 346 C 63 334 65 318 69 306 Z',
+          'M 78 313 L 87 306 C 92 318 94 334 92 346 C 90 356 84 360 78 356 Z',
+          'M 66 348 C 69 356 74 359 77 357 C 77 376 78 396 79 414 L 77 414 C 74 394 69 370 66 348 Z',
+          'M 92 348 C 89 357 84 360 80 357 L 84 382 C 88 370 90 358 92 348 Z'
+        ], [], ['M 71 316 C 67 328 67 342 72 352', 'M 85 314 C 89 326 89 342 84 354']);
+    } else {
+      frontInner =
+        '<path class="b-shell" d="' +
+          'M 100 6 C 84 6 76 19 77 35 C 73 35 72 45 76 51 L 79 51 C 80 55 81 58 82 60 L 80 73 ' +
+          'C 68 79 57 84 46 87 C 30 89 23 102 23 118 C 23 125 25 130 26 133 ' +
+          'C 18 141 14 152 16 165 C 7 174 4 188 8 206 L 13 226 ' +
+          'C 8 232 5 241 8 248 C 11 253 22 254 29 251 C 34 248 36 242 34 236 C 37 236 38 231 35 225 L 28 214 ' +
+          'C 35 198 41 181 43 166 C 48 156 52 142 51 130 ' +
+          'C 51 145 55 158 60 168 C 59 179 60 189 63 196 ' +
+          'C 55 202 52 216 54 232 C 46 254 45 282 52 302 C 55 307 59 307 62 305 ' +
+          'C 61 314 62 323 65 330 C 55 344 55 366 63 386 C 67 398 71 410 72 420 ' +
+          'L 70 425 C 62 429 49 432 47 435 C 46 438 55 439 68 439 C 77 439 83 438 86 436 C 88 433 85 427 84 420 ' +
+          'C 86 408 90 394 93 380 C 96 362 95 344 89 330 C 91 320 92 312 91 306 C 96 298 97 282 95 268 L 100 252 ' +
+          'L 105 268 C 103 282 104 298 109 306 C 108 312 109 320 111 330 C 105 344 104 362 107 380 C 110 394 114 408 116 420 ' +
+          'C 115 427 112 433 114 436 C 117 438 123 439 132 439 C 145 439 154 438 153 435 C 151 432 138 429 130 425 L 128 420 ' +
+          'C 129 410 133 398 137 386 C 145 366 145 344 135 330 C 138 323 139 314 138 305 C 141 307 145 307 148 302 ' +
+          'C 155 282 154 254 146 232 C 148 216 145 202 137 196 C 140 189 141 179 140 168 C 145 158 149 145 149 130 ' +
+          'C 148 142 152 156 157 166 C 159 181 165 198 172 214 L 165 225 C 162 231 163 236 166 236 C 164 242 166 248 171 251 ' +
+          'C 178 254 189 253 192 248 C 195 241 192 232 187 226 L 192 206 C 196 188 193 174 184 165 C 186 152 182 141 174 133 ' +
+          'C 175 130 177 125 177 118 C 177 102 170 89 154 87 C 143 84 132 79 120 73 L 118 60 C 119 58 120 55 121 51 L 124 51 ' +
+          'C 128 45 127 35 123 35 C 124 19 116 6 100 6 Z"/>' +
+        pairPath('b-line', 'M 79 51 C 82 62 90 69 100 70 M 70 304 C 70 296 81 296 81 304 C 81 313 70 313 70 304 M 13 235 C 18 238 25 236 28 231 M 12 242 C 18 245 26 243 29 238 M 20 227 C 24 229 28 233 30 239 M 76 314 L 77 418') +
+        anatGrp('traps', trapC, [
+          'M 82 59 C 86 69 92 78 96 87 L 90 87 C 84 78 81 69 80 61 Z',
+          'M 94 69 L 100 70 L 100 88 L 96 87 Z',
+          'M 80 68 L 54 84 C 66 85 77 86 88 86 Z'
+        ], [], ['M 83 64 L 93 85', 'M 64 81 L 84 76']) +
+        anatGrp('back', cOf('back'), [
+          'M 51 128 C 51 144 55 157 60 168 L 67 156 C 62 146 58 136 55 130 Z'
+        ], [], ['M 53 140 L 62 150', 'M 55 150 L 64 158']) +
+        anatGrp('side', deltF, [
+          'M 58 86 C 44 85 33 92 28 105 C 30 115 36 122 41 124 C 44 110 50 96 58 86 Z',
+          'M 33 92 C 25 98 22 110 25 129 C 30 126 36 123 41 124 C 35 115 30 104 33 92 Z'
+        ], [], ['M 48 89 C 40 98 37 109 39 121', 'M 41 92 C 34 101 32 111 35 121', 'M 29 101 C 26 110 26 119 29 126']) +
+        anatGrp('chest', cOf('chest'), [
+          'M 100 88 L 82 86 C 64 85 52 89 43 104 C 41 115 45 126 53 131 C 65 138 84 138 96 130 L 100 124 Z'
+        ], [], ['M 52 93 Q 76 96 99 91', 'M 46 101 Q 73 105 99 98', 'M 44 109 Q 72 114 99 106', 'M 45 117 Q 72 123 99 114', 'M 49 125 Q 74 131 98 122']) +
+        anatGrp('biceps', cOf('biceps'), [
+          'M 41 124 C 32 126 24 136 23 152 C 24 162 30 168 36 168 C 44 160 49 146 48 130 Z',
+          'M 25 129 C 18 139 14 151 16 164 L 23 155 C 23 145 24 136 25 129 Z'
+        ], ['M 34 126 C 31 140 31 154 33 167'], ['M 28 134 C 26 145 26 155 29 164', 'M 41 129 C 40 142 39 154 37 165']) +
+        anatGrp('fore', foreF, [
+          'M 23 154 C 12 164 5 180 8 204 L 15 222 L 21 216 C 21 194 24 174 30 165 Z',
+          'M 30 165 C 24 176 20 196 21 216 L 28 214 C 35 198 41 181 43 166 C 38 169 33 168 30 165 Z'
+        ], [], ['M 18 162 C 11 178 10 196 14 216', 'M 24 166 C 17 182 16 198 18 216', 'M 35 168 C 30 184 26 200 24 214']) +
+        anatGrp('abs', cOf('abs'), [
+          'M 55 131 C 64 136 72 137 76 136 L 77 206 C 69 198 63 186 60 168 C 56 156 54 144 55 131 Z',
+          'M 99 126 L 82 134 L 77 144 L 99 146 Z',
+          'M 77 146 L 99 148 L 99 163 L 77 161 Z',
+          'M 77 163 L 99 165 L 99 179 L 77 177 Z',
+          'M 77 179 L 99 181 L 99 224 C 90 218 81 202 77 179 Z'
+        ], [], ['M 56 139 L 75 147', 'M 57 149 L 76 158', 'M 59 160 L 76 170', 'M 61 172 L 76 184', 'M 86 184 L 88 214']) +
+        anatGrp('quads', cOf('quads'), [
+          'M 63 194 C 75 207 88 220 99 226 L 99 252 L 95 268 C 97 283 96 298 91 305 C 86 309 80 307 78 299 C 75 294 69 295 66 299 C 61 305 55 307 52 302 C 45 282 46 254 54 232 C 52 216 55 202 63 194 Z'
+        ], [
+          'M 63 195 C 74 222 86 248 95 268', 'M 68 199 C 78 224 89 246 96 262',
+          'M 54 230 C 58 220 61 210 63 202', 'M 63 208 C 57 242 61 274 68 297',
+          'M 67 209 C 76 234 82 256 81 272 C 76 280 73 289 72 296',
+          'M 81 268 C 88 262 93 266 95 274', 'M 77 208 L 95 256', 'M 85 216 L 98 244'
+        ], [
+          'M 69 218 L 71 290', 'M 69 228 L 62 244', 'M 69 242 L 61 258', 'M 70 256 L 63 272', 'M 70 270 L 65 284',
+          'M 69 228 L 76 244', 'M 70 242 L 78 258', 'M 70 256 L 78 272',
+          'M 53 242 C 48 264 49 284 55 300', 'M 84 274 C 90 280 92 292 88 302'
+        ]) +
+        anatGrp('calves', cOf('calves'), [
+          'M 65 330 C 55 344 55 366 63 388 L 73 406 C 76 382 76 356 75 332 Z',
+          'M 77 332 L 89 330 C 95 344 96 362 92 380 L 83 398 C 79 380 78 356 77 332 Z'
+        ], ['M 68 331 C 65 352 66 374 70 396', 'M 82 332 C 85 352 85 372 82 392'], [
+          'M 60 342 C 57 358 59 374 65 388', 'M 72 340 L 72 396', 'M 89 338 C 93 352 92 368 87 384'
+        ]);
+      backInner =
+        '<path class="b-shell" d="' +
+          'M 100 6 C 84 6 76 19 77 35 C 73 35 72 45 76 51 L 79 51 L 80 68 ' +
+          'C 68 76 57 81 46 84 C 30 86 23 100 24 116 C 18 128 14 144 16 160 ' +
+          'C 7 172 4 188 8 206 L 13 226 C 8 232 5 241 8 248 C 11 253 22 254 29 251 C 34 248 36 242 34 236 C 37 236 38 231 35 225 L 28 214 ' +
+          'C 35 198 40 180 43 164 C 48 154 50 138 49 124 ' +
+          'C 54 140 60 156 62 168 C 58 180 57 192 57 204 C 52 216 53 230 58 242 ' +
+          'C 54 264 56 288 63 308 C 56 320 53 336 56 352 C 61 372 68 394 71 416 ' +
+          'L 67 427 C 62 432 61 437 67 438 C 73 439 81 439 85 436 C 88 433 85 426 84 416 ' +
+          'C 86 394 90 374 93 352 C 96 336 93 318 86 306 C 92 292 96 270 97 246 L 100 238 ' +
+          'L 103 246 C 104 270 108 292 114 306 C 107 318 104 336 107 352 C 110 374 114 394 116 416 ' +
+          'C 115 426 112 433 115 436 C 119 439 127 439 133 438 C 139 437 138 432 133 427 L 129 416 ' +
+          'C 132 394 139 372 144 352 C 147 336 144 320 137 308 C 144 288 146 264 142 242 ' +
+          'C 147 230 148 216 143 204 C 143 192 142 180 138 168 C 140 156 146 140 151 124 ' +
+          'C 150 138 152 154 157 164 C 160 180 165 198 172 214 L 165 225 C 162 231 163 236 166 236 C 164 242 166 248 171 251 ' +
+          'C 178 254 189 253 192 248 C 195 241 192 232 187 226 L 192 206 C 196 188 193 172 184 160 ' +
+          'C 186 144 182 128 176 116 C 177 100 170 86 154 84 C 143 81 132 76 120 68 L 121 51 L 124 51 ' +
+          'C 128 45 127 35 123 35 C 124 19 116 6 100 6 Z"/>' +
+        pairPath('b-line', 'M 80 48 C 86 52 93 52 100 50 M 13 235 C 18 238 25 236 28 231 M 12 242 C 18 245 26 243 29 238 M 74 362 L 75 424 M 79 362 L 79 424') +
+        anatGrp('traps', trapC, [
+          'M 88 49 C 85 60 76 72 56 82 C 66 92 72 104 76 114 L 100 152 L 100 49 Z'
+        ], [], ['M 86 58 L 99 64', 'M 78 69 L 99 75', 'M 62 82 Q 82 88 99 84', 'M 69 94 Q 85 100 99 96', 'M 75 108 Q 88 114 99 110', 'M 83 124 L 99 128']) +
+        '<path class="b-tendon" d="M 100 62 L 92 73 L 100 84 L 108 73 Z"/>' +
+        anatGrp('rear', deltB, [
+          'M 56 82 C 38 82 24 96 24 116 C 34 113 46 105 64 96 Z'
+        ], [], ['M 46 86 C 37 93 31 102 30 112', 'M 53 89 C 44 96 39 103 38 110']) +
+        anatGrp('back', cOf('back'), [
+          'M 62 95 L 76 112 L 60 120 C 55 112 52 102 62 95 Z',
+          'M 48 103 L 60 120 C 51 124 44 124 39 118 C 39 111 43 106 48 103 Z',
+          'M 49 122 C 57 123 67 120 76 112 L 100 152 L 83 174 C 72 169 65 168 62 168 C 59 156 54 140 49 122 Z'
+        ], [], ['M 57 104 L 72 111', 'M 44 112 L 56 119', 'M 52 128 Q 74 134 94 144', 'M 55 140 Q 75 147 91 158', 'M 59 152 Q 73 159 86 168']) +
+        '<path class="b-tendon" d="M 100 148 L 83 173 L 88 196 L 100 200 L 112 196 L 117 173 Z"/>' +
+        '<path class="b-line" d="M 100 148 L 100 200"/>' +
+        anatGrp('abs', cOf('abs'), [
+          'M 62 168 C 71 168 80 172 87 182 L 85 196 C 74 196 63 200 57 204 C 57 190 59 178 62 168 Z'
+        ], [], ['M 61 178 L 84 186', 'M 59 190 L 82 194']) +
+        anatGrp('triceps', cOf('triceps'), [
+          'M 24 116 C 18 128 14 144 16 160 C 23 162 34 161 43 164 C 48 154 50 138 49 124 L 39 118 C 39 111 43 106 48 103 C 39 108 31 113 24 116 Z'
+        ], ['M 36 112 C 30 124 26 140 25 154', 'M 25 150 C 32 155 40 150 46 140', 'M 17 156 L 25 150'], [
+          'M 22 124 C 19 134 18 144 19 153', 'M 35 118 C 33 130 32 142 33 151', 'M 42 120 C 41 130 40 138 39 146'
+        ]) +
+        anatGrp('fore', foreB, [
+          'M 16 160 C 7 172 4 188 8 206 L 13 224 L 28 214 C 35 198 40 180 43 164 C 34 161 23 162 16 160 Z'
+        ], ['M 24 162 C 16 180 14 198 16 218', 'M 33 162 C 26 180 22 198 22 216'], ['M 14 174 C 10 188 10 202 12 216']) +
+        anatGrp('glutes', gluteC, [
+          'M 57 204 C 63 200 74 196 85 196 L 100 200 L 100 238 C 88 248 70 246 58 242 C 53 230 52 216 57 204 Z'
+        ], ['M 68 198 C 61 210 59 224 60 241'], ['M 66 208 Q 83 208 99 212', 'M 63 218 Q 82 220 99 222', 'M 61 229 Q 80 232 99 232']) +
+        anatGrp('hams', cOf('hams'), [
+          'M 58 242 C 70 246 88 248 100 238 L 97 246 C 96 270 92 292 86 306 L 75 314 L 63 308 C 56 288 54 264 58 242 Z'
+        ], ['M 76 245 C 76 268 71 290 63 308', 'M 76 294 C 85 282 91 264 92 243', 'M 63 244 C 59 266 60 288 65 306'], [
+          'M 69 250 C 67 268 66 286 66 302', 'M 83 248 C 83 264 80 280 77 292'
+        ]) +
+        anatGrp('calves', cOf('calves'), [
+          'M 63 308 L 75 314 L 74 360 C 66 364 59 359 56 350 C 53 336 56 320 63 308 Z',
+          'M 75 314 L 86 306 C 93 318 96 336 93 350 C 90 360 82 365 74 360 Z',
+          'M 56 352 C 60 360 67 364 73 362 C 71 380 73 398 75 414 L 71 414 C 68 394 61 372 56 352 Z',
+          'M 93 352 C 89 361 82 365 77 362 L 82 386 C 87 374 91 362 93 352 Z'
+        ], [], ['M 65 316 C 59 328 59 344 65 356', 'M 84 314 C 90 326 90 344 83 358']);
+    }
+    return {
+      sex: s,
+      front: '<svg class="tr-hm-svg" data-sex="' + s + '" viewBox="0 0 200 445" aria-hidden="true" focusable="false">' + frontInner + '</svg>',
+      back: '<svg class="tr-hm-svg" data-sex="' + s + '" viewBox="0 0 200 445" aria-hidden="true" focusable="false">' + backInner + '</svg>'
+    };
+  }
+  function secMusclesOf(ex) {
+    if (!ex) return [];
+    if (ex.k === 'i') {
+      if (ex.m === 'rear') return ['traps', 'back'];
+      if (ex.id === 'cb-upright') return ['traps'];
+      if (ex.id === 'back-ext') return ['hams', 'back'];
+      if (ex.id === 'ab-wheel' || ex.id === 'hang-raise') return ['front'];
+      return [];
+    }
+    if (ex.m === 'chest') return ['front', 'triceps'];
+    if (ex.m === 'front') return ['side', 'triceps'];
+    if (ex.m === 'back') return ex.p === 'vert' ? ['biceps', 'rear'] : ['biceps', 'rear', 'traps'];
+    if (ex.m === 'quads') return ['glutes', 'hams', 'calves'];
+    if (ex.m === 'hams') return ['glutes', 'back', 'traps'];
+    if (ex.m === 'glutes') return ['hams', 'quads'];
+    if (ex.m === 'triceps') return ['chest', 'front'];
+    return [];
+  }
+  function exMuscleMap(ex) {
+    if (!ex || !ex.m) return '';
+    var sec = secMusclesOf(ex), cmap = { fore: 'hm-0' };
+    sec.forEach(function (k) { cmap[k] = 'hm-sec'; });
+    cmap[ex.m] = 'hm-pri';
+    if (ex.m === 'front' && !cmap.side) cmap.side = 'hm-pri';
+    var figs = anatMapSVG(cmap);
+    var secSay = sec.map(function (k) { return mnameP(k); }).join(', ');
+    return '<div class="tr-ex-mmap" role="img" aria-label="Muscles trained by ' + esc(ex.n) + '">' +
+      '<div class="tr-hm-box tr-ex-hm-box">' +
+        '<div class="tr-hm-col"><div class="tr-hm-lbl">Front</div>' + figs.front + '</div>' +
+        '<div class="tr-hm-col"><div class="tr-hm-lbl">Back</div>' + figs.back + '</div>' +
+      '</div>' +
+      '<div class="tr-hm-legend tr-ex-hm-leg" aria-hidden="true">' +
+        '<span><i class="tr-hm-sw hm-pri"></i> <b>Primary:</b> ' + esc(mnameP(ex.m)) + '</span>' +
+        (secSay ? '<span><i class="tr-hm-sw hm-sec"></i> <b>Also:</b> ' + esc(secSay) + '</span>' : '') +
+      '</div>' +
+    '</div>';
+  }
   function muscleMapCard(r) {
     var ms = active();
     var small = r.keep || r.base || r.str;
@@ -7545,11 +7872,7 @@
 
     var clsMap = {};
     mList.forEach(function (x) { clsMap[x.k] = x.cls; });
-    var cOf = function (k, fb) { return clsMap[k] || (fb && clsMap[fb]) || 'hm-0'; };
-    var deltF = clsMap.side || clsMap.front || clsMap.chest || 'hm-0';
-    var deltB = clsMap.rear || clsMap.side || clsMap.back || 'hm-0';
-    var trapC = clsMap.traps || clsMap.back || 'hm-0';
-    var gluteC = clsMap.glutes || clsMap.quads || clsMap.hams || 'hm-0';
+    var figs = anatMapSVG(clsMap);
 
     var wkTitle = ms ? (selW >= acc && !steady(ms) ? 'Deload week muscle coverage' : 'Week ' + (selW + 1) + ' muscle coverage')
       : (r.n ? r.n + ' workout' + (r.n === 1 ? '' : 's') + ' this week' : 'This week\u2019s muscle coverage');
@@ -7582,68 +7905,8 @@
       '<div class="tr-note tr-vkey">' + esc(vkeyText) + '</div>' +
       pills +
       '<div class="tr-hm-box" role="img" aria-label="Front and back muscle progress map">' +
-        '<div class="tr-hm-col">' +
-          '<div class="tr-hm-lbl">Front</div>' +
-          '<svg class="tr-hm-svg" viewBox="0 0 140 232" aria-hidden="true" focusable="false">' +
-            '<g class="hm-outline">' +
-              '<ellipse cx="70" cy="18" rx="10" ry="12"/>' +
-              '<path d="M64 29 L76 29 L77 36 L63 36 Z"/>' +
-              '<path d="M25 84 C21 94 18 106 17 115 C16 119 21 121 24 116 C28 107 32 96 34 86 Z"/>' +
-              '<path d="M115 84 C119 94 122 106 123 115 C124 119 119 121 116 116 C112 107 108 96 106 86 Z"/>' +
-              '<ellipse cx="56" cy="162" rx="7" ry="6"/>' +
-              '<ellipse cx="84" cy="162" rx="7" ry="6"/>' +
-              '<path d="M49 214 L59 214 L61 224 L46 224 Z"/>' +
-              '<path d="M81 214 L91 214 L94 224 L79 224 Z"/>' +
-            '</g>' +
-            '<path data-mus="traps" d="M49 38 C55 34 61 33 63 33 L63 38 Z" class="' + trapC + '"/>' +
-            '<path data-mus="traps" d="M91 38 C85 34 79 33 77 33 L77 38 Z" class="' + trapC + '"/>' +
-            '<path data-mus="side" d="M48 38 C38 39 32 46 31 56 C35 59 42 57 46 50 Z" class="' + deltF + '"/>' +
-            '<path data-mus="side" d="M92 38 C102 39 108 46 109 56 C105 59 98 57 94 50 Z" class="' + deltF + '"/>' +
-            '<path data-mus="chest" d="M47 38 L69 38 L69 61 C61 63 50 61 46 52 Z" class="' + cOf('chest') + '"/>' +
-            '<path data-mus="chest" d="M93 38 L71 38 L71 61 C79 63 90 61 94 52 Z" class="' + cOf('chest') + '"/>' +
-            '<path data-mus="back" d="M46 54 L51 62 L52 82 C48 76 46 65 46 54 Z" class="' + cOf('back') + '"/>' +
-            '<path data-mus="back" d="M94 54 L89 62 L88 82 C92 76 94 65 94 54 Z" class="' + cOf('back') + '"/>' +
-            '<path data-mus="biceps" d="M31 58 C27 65 26 75 26 83 L35 85 C38 77 41 67 43 57 Z" class="' + cOf('biceps') + '"/>' +
-            '<path data-mus="biceps" d="M109 58 C113 65 114 75 114 83 L105 85 C102 77 99 67 97 57 Z" class="' + cOf('biceps') + '"/>' +
-            '<path data-mus="abs" d="M52 63 L88 63 L85 103 L55 103 Z" class="' + cOf('abs') + '"/>' +
-            '<line x1="70" y1="63" x2="70" y2="102" stroke="var(--paper-soft)" stroke-width="1.3"/>' +
-            '<line x1="54" y1="75" x2="86" y2="75" stroke="var(--paper-soft)" stroke-width="1.1"/>' +
-            '<line x1="55" y1="87" x2="85" y2="87" stroke="var(--paper-soft)" stroke-width="1.1"/>' +
-            '<path data-mus="quads" d="M52 105 L68 105 C69 124 66 144 62 156 L49 156 C45 140 46 120 52 105 Z" class="' + cOf('quads') + '"/>' +
-            '<path data-mus="quads" d="M88 105 L72 105 C71 124 74 144 78 156 L91 156 C95 140 94 120 88 105 Z" class="' + cOf('quads') + '"/>' +
-            '<path data-mus="calves" d="M49 168 L61 168 C63 182 60 199 58 213 L50 213 C47 199 46 182 49 168 Z" class="' + cOf('calves') + '"/>' +
-            '<path data-mus="calves" d="M91 168 L79 168 C77 182 80 199 82 213 L90 213 C93 199 94 182 91 168 Z" class="' + cOf('calves') + '"/>' +
-          '</svg>' +
-        '</div>' +
-        '<div class="tr-hm-col">' +
-          '<div class="tr-hm-lbl">Back</div>' +
-          '<svg class="tr-hm-svg" viewBox="0 0 140 232" aria-hidden="true" focusable="false">' +
-            '<g class="hm-outline">' +
-              '<ellipse cx="70" cy="18" rx="10" ry="12"/>' +
-              '<path d="M64 29 L76 29 L77 35 L63 35 Z"/>' +
-              '<path d="M25 84 C21 94 18 106 17 115 C16 119 21 121 24 116 C28 107 32 96 34 86 Z"/>' +
-              '<path d="M115 84 C119 94 122 106 123 115 C124 119 119 121 116 116 C112 107 108 96 106 86 Z"/>' +
-              '<ellipse cx="56" cy="162" rx="7" ry="6"/>' +
-              '<ellipse cx="84" cy="162" rx="7" ry="6"/>' +
-              '<path d="M49 214 L59 214 L61 224 L46 224 Z"/>' +
-              '<path d="M81 214 L91 214 L94 224 L79 224 Z"/>' +
-            '</g>' +
-            '<path data-mus="traps" d="M70 32 L90 38 L70 64 L50 38 Z" class="' + trapC + '"/>' +
-            '<path data-mus="rear" d="M48 38 C38 39 32 46 31 55 C36 58 43 55 47 48 Z" class="' + deltB + '"/>' +
-            '<path data-mus="rear" d="M92 38 C102 39 108 46 109 55 C104 58 97 55 93 48 Z" class="' + deltB + '"/>' +
-            '<path data-mus="back" d="M47 47 L68 64 L66 90 L52 84 C47 73 45 59 47 47 Z" class="' + cOf('back') + '"/>' +
-            '<path data-mus="back" d="M93 47 L72 64 L74 90 L88 84 C93 73 95 59 93 47 Z" class="' + cOf('back') + '"/>' +
-            '<path data-mus="triceps" d="M31 57 C27 65 26 75 26 83 L35 85 C38 77 41 67 43 56 Z" class="' + cOf('triceps') + '"/>' +
-            '<path data-mus="triceps" d="M109 57 C113 65 114 75 114 83 L105 85 C102 77 99 67 97 56 Z" class="' + cOf('triceps') + '"/>' +
-            '<path data-mus="back" d="M55 86 L85 86 L83 101 L57 101 Z" class="' + cOf('back') + '"/>' +
-            '<path data-mus="glutes" d="M53 102 L69 102 L69 122 C58 124 48 117 53 102 Z" class="' + gluteC + '"/>' +
-            '<path data-mus="glutes" d="M87 102 L71 102 L71 122 C82 124 92 117 87 102 Z" class="' + gluteC + '"/>' +
-            '<path data-mus="hams" d="M50 123 L68 123 C68 137 65 148 62 156 L49 156 C46 145 47 133 50 123 Z" class="' + cOf('hams') + '"/>' +
-            '<path data-mus="hams" d="M90 123 L72 123 C72 137 75 148 78 156 L91 156 C94 145 93 133 90 123 Z" class="' + cOf('hams') + '"/>' +
-            '<path data-mus="calves" d="M48 168 L61 168 C64 181 61 198 58 213 L50 213 C46 198 44 181 48 168 Z" class="' + cOf('calves') + '"/>' +
-            '<path data-mus="calves" d="M92 168 L79 168 C76 181 79 198 82 213 L90 213 C94 198 96 181 92 168 Z" class="' + cOf('calves') + '"/>' +
-          '</svg>' +
-        '</div>' +
+        '<div class="tr-hm-col"><div class="tr-hm-lbl">Front</div>' + figs.front + '</div>' +
+        '<div class="tr-hm-col"><div class="tr-hm-lbl">Back</div>' + figs.back + '</div>' +
       '</div>' +
       '<div class="tr-hm-legend" aria-hidden="true">' +
         '<span><i class="tr-hm-sw hm-0"></i> 0%</span>' +
@@ -7991,6 +8254,7 @@
       (link ? '<a class="tr-howlink" href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">Watch how it\u2019s done \u2197</a>'
         : '<a class="tr-howlink" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(ex.n + ' how to') +
           '" target="_blank" rel="noopener noreferrer">Find a video on YouTube \u2197</a>') +
+      exMuscleMap(ex) +
       '<dl class="tr-dl">' +
         '<dt>Trains</dt><dd>' + esc(mname(ex.m)) + '</dd>' +
         '<dt>Kit</dt><dd>' + esc(EQUIP[ex.q] || '') + ' \u00b7 ' + (ex.k === 'c' ? 'compound' : 'isolation') + '</dd>' +
@@ -11211,7 +11475,7 @@
       e1rm: e1rm, plateMath: plateMath, review: review, merge: merge, payload: payload,
       rirFor: rirFor, nextSlot: nextSlot, prsIn: prsIn, lib: lib, SPLITS: SPLITS, MUS: MUS,
       estDay: estDay, barred: barred, KEEP_SPLITS: KEEP_SPLITS, HABITS: HABITS, weeksOf: weeksOf, nextTm: nextTm, tmOf: tmOf, outgrown: outgrown,
-      weekPlanSets: weekPlanSets, weekLoggedSets: weekLoggedSets,
+      weekPlanSets: weekPlanSets, weekLoggedSets: weekLoggedSets, anatMapSVG: anatMapSVG, secMusclesOf: secMusclesOf,
       recommend: recommend, PROGS: PROGS, FOCUS: FOCUS, KITS: KITS, axWeek: axWeek, defaultsPr: defaultsPr,
       MOVES: MOVES, mcScore: mcScore, sgParse: sgParse, sgMatch: sgMatch, sgGuess: sgGuess, sgList: sgList, csvRows: csvRows, ntKey: ntKey,
       LIB_LIST: LIB_LIST, slotDone: slotDone, barFor: barFor, barLabel: barLabel, onBar: onBar, liftE1: liftE1, stackHTML: stackHTML, elapsed: elapsed,

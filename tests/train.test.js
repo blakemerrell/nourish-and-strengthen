@@ -4776,6 +4776,25 @@ module.exports = {
       audit.strChestMatch && audit.priKept && audit.w1Empty === 0 && audit.w0WithAdhoc === audit.w0Base + 2 && audit.tmStable && audit.puOutgrown,
       JSON.stringify(audit));
 
+    const anat = await p.evaluate(() => {
+      const _ = window.Train._;
+      const mFig = _.anatMapSVG({ chest: 'hm-pri', triceps: 'hm-sec' }, 'm');
+      const fFig = _.anatMapSVG({ glutes: 'hm-pri', hams: 'hm-sec' }, 'f');
+      const secBench = _.secMusclesOf(_.lib('bb-bench'));
+      localStorage.setItem('bsc.macroProfile', JSON.stringify({ sex: 'f' }));
+      const autoF = _.anatMapSVG({ chest: 'hm-hit' });
+      localStorage.setItem('bsc.macroProfile', JSON.stringify({ sex: 'm' }));
+      const autoM = _.anatMapSVG({ chest: 'hm-hit' });
+      return {
+        mOk: mFig.sex === 'm' && /data-sex="m"/.test(mFig.front) && /data-mus="chest"[^>]*hm-pri/.test(mFig.front) && /data-mus="triceps"[^>]*hm-sec/.test(mFig.back),
+        fOk: fFig.sex === 'f' && /data-sex="f"/.test(fFig.back) && /data-mus="glutes"[^>]*hm-pri/.test(fFig.back) && /data-mus="hams"[^>]*hm-sec/.test(fFig.back),
+        secOk: secBench.includes('front') && secBench.includes('triceps'),
+        autoSex: autoF.sex === 'f' && autoM.sex === 'm'
+      };
+    });
+    t.ok('Male ("m") and slender Female ("f") anatomical Front & Back muscle maps render with Primary/Secondary muscles and profile sex sync',
+      anat.mOk && anat.fOk && anat.secOk && anat.autoSex, JSON.stringify(anat));
+
     await p.close();
     }
   },

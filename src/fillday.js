@@ -20,6 +20,7 @@
   var mBalanceDay = app.mBalanceDay;
   var mDayTargets = app.mDayTargets;
   var mEditDay = app.mEditDay;
+  var mExtOk = app.mExtOk;
   var mFamilyIds = app.mFamilyIds;
   var mFillRoom = app.mFillRoom;
   var mNever = app.mNever;
@@ -236,7 +237,7 @@
           /* What the neighbouring days have not already used — but only while
              that leaves something to choose from. A meal left empty to avoid a
              repeat is a worse answer than the repeat. */
-          inSec = inSec.filter(function (r) { return !mNever(r.id); });
+          inSec = inSec.filter(function (r) { return (!r.ext || mExtOk()) && !mNever(r.id); });
           var fresh = inSec.filter(function (r) { return !near[r.id]; });
           var pool = fresh.length ? fresh : inSec;
           var ranked = mRank(pool, day, targets, s).filter(function (e) { return e.score !== null; });

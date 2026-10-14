@@ -228,8 +228,7 @@
   function mWhyOf(it) {
     if (it.by !== 'f') return '';
     if (MWHY[it.why]) return it.why;
-    var r = LIVE.BY_ID[it.id];
-    return r && !r.food ? 'pick' : '';
+    return LIVE.BY_ID[it.id] ? 'pick' : '';
   }
   function mWhyChip(it, tag) {
     var w = mWhyOf(it);

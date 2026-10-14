@@ -660,9 +660,14 @@
        leaves it alone, so it must not count toward "there is something to
        sweep". The test caught this by locking one. */
     var unticked = 0, loose = 0;
+    var pinsOf = {};
     slots.list.forEach(function (s0) {
-      var pinned0 = (s0.pins || []).map(function (pn) { return String(pn.id); });
-      (day[s0.k] || []).forEach(function (it) {
+      pinsOf[s0.k] = (s0.pins || []).map(function (pn) { return String(pn.id); });
+    });
+    Object.keys(day).forEach(function (sk) {
+      var pinned0 = pinsOf[sk] || [];
+      (day[sk] || []).forEach(function (it) {
+        if (!LIVE.BY_ID[it.id]) return;
         if (!it.eaten) unticked++;
         // what the sweep would take: not eaten, not locked, not pinned
         if (!it.eaten && !it.l && pinned0.indexOf(String(it.id)) < 0) loose++;

@@ -225,14 +225,19 @@
          question nobody asked — and would quietly hand Rebalance something
          to move on a meal that was deliberately pinned down. */
       if (had && keep.length === had) return;
-      /* Whatever is being swapped out is out. The cursor starts at the top of
-         a list the removed plate has just rejoined, so the first press could
-         hand you back the very thing you pressed it to be rid of — "not that
-         one" answered with that one. */
+      /* Whatever is being swapped out is out. We also remember every plate
+         already rejected during this meal's Try-again run so pressing it a
+         second time after Fill picked rank #3 walks forward rather than
+         oscillating back to rank #3. */
       var dropped = (day[sk] || []).filter(function (it) {
         return keep.indexOf(it) < 0;
-      }).map(function (it) { return it.id; });
-      day[sk] = keep;
+      }).map(function (it) { return String(it.id); });
+      var tries = (S.mTry[cursorKey] === undefined ? -1 : S.mTry[cursorKey]) + 1;
+      S.mTried = S.mTried || {};
+      var tried = tries === 0 ? [] : (S.mTried[cursorKey] || []).slice();
+      dropped.forEach(function (id) { if (tried.indexOf(id) < 0) tried.push(id); });
+      var probe = Object.assign({}, day);
+      probe[sk] = keep;
       /* Ten presses is not exhaustion — a lunch has forty-odd recipes to walk
          and the cursor wraps long before you run out. It is disagreement.
          You have said "not that one" ten times, which is the clearest signal
@@ -242,20 +247,25 @@
          It stays open for the rest of the day on that meal, and says so on
          the card — a roast beef breakfast arriving unannounced reads as a
          bug rather than as an answer to what you asked for. */
-      var tries = (S.mTry[cursorKey] === undefined ? -1 : S.mTry[cursorKey]) + 1;
-      /* The repeat guard Fill uses, so "not that one" does not answer with
-         yesterday's dinner — unless it is all that is left to offer. */
       var near = mNearIds(k);
       var pool0 = mMealPool(srec, tries >= MTRY_WIDE - 1).filter(function (r) {
-        return !mOnDay(day, r.id) && dropped.indexOf(r.id) < 0 && !mNever(r.id);
+        return !mOnDay(probe, r.id) && dropped.indexOf(String(r.id)) < 0 && !mNever(r.id);
       });
       var fresh = pool0.filter(function (r) { return !near[r.id]; });
       var pool = fresh.length ? fresh : pool0;
 
-      var ranked = mRank(pool, day, targets, srec).filter(function (e) { return e.score !== null; });
+      var ranked = mRank(pool, probe, targets, srec).filter(function (e) { return e.score !== null; });
       if (!ranked.length) return;
+      var unseen = ranked.filter(function (e) { return tried.indexOf(String(e.r.id)) < 0; });
+      if (!unseen.length) {
+        tried = dropped.slice();
+        unseen = ranked;
+      }
+      var pick = unseen[0];
+      tried.push(String(pick.r.id));
+      S.mTried[cursorKey] = tried;
       S.mTry[cursorKey] = tries;
-      var pick = ranked[tries % ranked.length];
+      day[sk] = keep.slice();
       /* The machine's pick, marked as the machine's: without `by` it read as
          placed by hand, and Fill never sized it again. */
       day[sk].push({ id: pick.r.id, x: pick.x, eaten: 0, by: 'f' });

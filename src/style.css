@@ -4718,6 +4718,29 @@ button.tr-card:hover { border-color: var(--line-firm); background: var(--field);
 }
 .tr-ex-n:hover { text-decoration: underline; }
 .tr-ex-m { display: block; font-size: 0.8125rem; color: var(--muted-2); margin-top: 2px; }
+.tr-ovl {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 6px; padding: 4px 10px; border-radius: 6px;
+  font-size: 0.78125rem; font-weight: 600; line-height: 1.35;
+  color: var(--ink); background: var(--paper-soft); border: 1px solid var(--line-firm);
+}
+.tr-ovl::before { font-size: 0.72rem; line-height: 1; flex-shrink: 0; }
+.tr-ovl-w {
+  background: color-mix(in oklab, var(--green) 11%, var(--card));
+  border-color: color-mix(in oklab, var(--green) 32%, var(--line-firm));
+}
+.tr-ovl-w::before { content: "▲"; color: var(--green); }
+.tr-ovl-r {
+  background: color-mix(in oklab, var(--dial-over) 11%, var(--card));
+  border-color: color-mix(in oklab, var(--dial-over) 32%, var(--line-firm));
+}
+.tr-ovl-r::before { content: "▲"; color: var(--dial-over); }
+.tr-ovl-hold {
+  background: color-mix(in oklab, var(--ochre) 12%, var(--card));
+  border-color: color-mix(in oklab, var(--ochre) 34%, var(--line-firm));
+}
+.tr-ovl-hold::before { content: "●"; color: var(--ochre-text); }
+.tr-ovl-dl::before { content: "▽"; color: var(--muted-2); }
 .tr-set {
   display: grid; grid-template-columns: 30px minmax(0, 1fr) 72px 60px 44px;
   gap: 6px; align-items: center; padding: 4px 0; border-radius: 3px;

@@ -112,12 +112,33 @@ module.exports = {
     await p.context().close();
 
     /* ---- every meal eaten ---- */
-    p = await at(t, ((R) => ({ b: [{ id: R[0].id, x: 1, eaten: 1 }], l: [{ id: R[1].id, x: 1, eaten: 1 }],
+    p = await at(t, ((R) => ({ b: [{ id: R[0].id, x: 1, eaten: 1 }, { id: R[4].id, x: 1, eaten: 1 }], l: [{ id: R[1].id, x: 1, eaten: 1 }],
       d: [{ id: R[2].id, x: 1, eaten: 1 }], s: [{ id: R[3].id, x: 1, eaten: 1 }] })));
     p.on('pageerror', (e) => errs.push(e.message));
     s = await read(p);
     t.ok('all four eaten: one green line, nothing left open, the numbers still there',
       s.fold === 'Breakfast, lunch, dinner and snacks eaten' && s.open.length === 0 && s.bars.length === 2, JSON.stringify(s));
+    /* N4: deleting one of two eaten items on Breakfast keeps bsc.macroDone[k] set because all remaining slots/items are still eaten. */
+    await p.click('.tab[data-view="macros"]');
+    await p.waitForTimeout(250);
+    await p.click('#macroFill');
+    await p.waitForTimeout(200);
+    await p.goBack();
+    await p.waitForTimeout(150);
+    await p.click('[data-mview="b"]');
+    await p.waitForTimeout(150);
+    await p.click('[data-mamt$="|b:1"]');
+    await p.waitForTimeout(150);
+    await p.click('[data-mdel="b:1"]');
+    await p.waitForTimeout(200);
+    const stillClosed = await p.evaluate(() => {
+      const days = JSON.parse(localStorage.getItem('bsc.macroDays') || '{}');
+      const done = JSON.parse(localStorage.getItem('bsc.macroDone') || '{}');
+      const k = Object.keys(days)[0];
+      return { closed: !!(done[k] > 0), bLen: ((days[k] || {}).b || []).length };
+    });
+    t.ok('deleting an extra eaten item when every meal remains 100% eaten keeps the day closed (N4)',
+      stillClosed.closed && stillClosed.bLen === 1, JSON.stringify(stillClosed));
     await p.context().close();
 
     /* ---- nothing planned ---- */
@@ -146,6 +167,22 @@ module.exports = {
     });
     t.ok('and Fill my day fills today in Nourish, even with Nourish left on yesterday',
       filled.macros && filled.today > 0 && filled.yesterday === 0, JSON.stringify(filled));
+
+    /* N2: pressing Try another repeatedly on Breakfast never oscillates back to an already-rejected recipe. */
+    const readB0 = () => p.evaluate(() => {
+      const days = JSON.parse(localStorage.getItem('bsc.macroDays') || '{}');
+      const d = days[Object.keys(days)[0]] || {};
+      return ((d.b || [])[0] || {}).id;
+    });
+    const b0 = await readB0();
+    await p.click('[data-mtry="b"]');
+    await p.waitForTimeout(200);
+    const b1 = await readB0();
+    await p.click('[data-mtry="b"]');
+    await p.waitForTimeout(200);
+    const b2 = await readB0();
+    t.ok('Try another advances through distinct suggestions without oscillating A -> B -> A (N2)',
+      b0 && b1 && b2 && b0 !== b1 && b1 !== b2 && b0 !== b2, JSON.stringify([b0, b1, b2]));
     await p.context().close();
 
     t.ok('no page errors', errs.length === 0, errs.join(' | '));

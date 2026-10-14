@@ -1919,6 +1919,8 @@ module.exports = {
         es: window.Train._.state().LIVE.x.map((x) => x.e).join() }));
       t.ok('a swipe that starts on the handle scrolls the page and moves nothing',
         !mid && !r.on && r.es === g1.es.join() && r.sy > g1.sy + 40, JSON.stringify({ mid, r, was: { sy: Math.round(g1.sy), es: g1.es.join() } }));
+      await touch('touchStart', 2, 2);
+      await touch('touchEnd');
       const n = g1.es.length, g2 = await at(n - 1);
       await touch('touchStart', g2.x, g2.y);
       await q.waitForFunction(() => document.getElementById('view-train').classList.contains('tr-reo'), null, { timeout: 2000 }).catch(() => {});
@@ -4643,7 +4645,8 @@ module.exports = {
       };
       // Complete Week 1 (w=0, d=0..3) and log Week 2 Day 0 (w=1, d=0) TODAY
       [0, 1, 2, 3].forEach((d) => log(0, d, now - (9 - d * 2) * day));
-      log(1, 0, now - 3600e3);
+      const todayStart = new Date(now).setHours(0, 0, 1, 0);
+      log(1, 0, Math.max(todayStart, now - 3600e3));
       localStorage.setItem('bsc.train', JSON.stringify({ pr: { u: 'lb', qz: 1, lvl: 1, ld: [0, 1, 3, 4] }, act: 'hm', ms: { hm: ms }, cx: {}, ax: {}, wo }));
       localStorage.removeItem('bsc.trainStamps'); _.reload();
     });
@@ -4702,6 +4705,75 @@ module.exports = {
     }));
     t.ok('selecting Deload week updates the muscle heatmap to Deload planned sets',
       /Deload week muscle coverage/.test(r.title) && r.sets.length >= 6, JSON.stringify(r));
+
+    const audit = await p.evaluate(() => {
+      const _ = window.Train._;
+      // S3: str block weekPlanSets uses waveSets count (3) for main lifts
+      const strMs = _.build({ prog: 'waves', dpw: 4, min: 60, kit: 'gym', lvl: 1, acc: 4, pri: [] });
+      const strPlan = _.weekPlanSets(strMs, 0);
+      let directChest = 0;
+      strMs.days.forEach((day, d) => {
+        _.plan(strMs, 0, d).x.forEach((s) => {
+          const ex = _.lib(s.e);
+          if (ex && ex.m === 'chest') directChest += s.sets;
+        });
+      });
+      // S4: fitDay protects priority muscles under tight 30-min cap
+      const priMs = _.build({ prog: 'grow', dpw: 3, min: 30, kit: 'gym', lvl: 1, acc: 4, pri: ['biceps', 'calves'] });
+      const priMuscles = new Set();
+      priMs.days.forEach((d) => d.s.forEach((s) => {
+        const ex = _.lib(s.e);
+        if (ex) priMuscles.add(ex.m);
+      }));
+      // S1 & S2: weekLoggedSets does not leak Week 1 into unstarted Week 2, and counts ad-hoc workouts in week window
+      const now = Date.now();
+      const w0Start = now - 8 * 864e5;
+      strMs.id = 'm_s12';
+      strMs.n = 'Strength Wave';
+      strMs.at = w0Start;
+      const wo = {
+        w0a: { id: 'w0a', u: 'lb', ms: 'm_s12', w: 0, d: 0, st: w0Start + 1000, en: w0Start + 3600000, x: [{ e: 'bb-bench', s: [{ w: 185, r: 5 }, { w: 185, r: 5 }, { w: 185, r: 5 }] }] },
+        w0b: { id: 'w0b', u: 'lb', ms: 'm_s12', w: 0, d: 1, st: w0Start + 864e5, en: w0Start + 864e5 + 3600000, x: [{ e: 'bb-squat', s: [{ w: 225, r: 5 }] }] },
+        w0c: { id: 'w0c', u: 'lb', ms: 'm_s12', w: 0, d: 2, st: w0Start + 2 * 864e5, en: w0Start + 2 * 864e5 + 3600000, x: [{ e: 'ohp', s: [{ w: 115, r: 5 }] }] },
+        w0d: { id: 'w0d', u: 'lb', ms: 'm_s12', w: 0, d: 3, st: w0Start + 3 * 864e5, en: w0Start + 3 * 864e5 + 3600000, x: [{ e: 'dl', s: [{ w: 275, r: 5 }] }] },
+      };
+      const loadWo = (wMap) => {
+        localStorage.setItem('bsc.train', JSON.stringify({ pr: { u: 'lb', qz: 1, lvl: 1, ld: [0, 1, 3, 4] }, act: 'm_s12', ms: { m_s12: strMs }, cx: {}, ax: {}, wo: wMap }));
+        localStorage.removeItem('bsc.trainStamps');
+        _.reload();
+      };
+      loadWo(wo);
+      const w1Empty = _.weekLoggedSets(strMs, 1).tot;
+      const w0Base = _.weekLoggedSets(strMs, 0).tot;
+      // Add an ad-hoc workout inside Week 1 window (after w0a)
+      wo.adhoc = { id: 'adhoc', u: 'lb', ms: '', st: w0Start + 4 * 864e5, en: w0Start + 4 * 864e5 + 2000000, x: [{ e: 'bb-bench', s: [{ w: 185, r: 8 }, { w: 185, r: 8 }] }] };
+      loadWo(wo);
+      const w0WithAdhoc = _.weekLoggedSets(strMs, 0).tot;
+      // S5: tmOf ignores later weeks (w > 0) of the same block
+      const baseTm = _.tmOf(strMs, 'bb-bench');
+      wo.w2big = { id: 'w2big', u: 'lb', ms: 'm_s12', w: 2, d: 0, st: now - 1000, en: now, x: [{ e: 'bb-bench', s: [{ w: 250, r: 8 }] }] };
+      loadWo(wo);
+      const afterW2Tm = _.tmOf(strMs, 'bb-bench');
+      // S7: outgrown ignores warm-up sets (wu: 1)
+      loadWo({
+        pu1: { id: 'pu1', u: 'lb', ms: 'm_s12', w: 0, d: 0, st: now - 3 * 864e5, en: now - 3 * 864e5 + 1000, x: [{ e: 'pullup', s: [{ w: 0, r: 5, wu: 1 }, { w: 0, r: 12 }, { w: 0, r: 12 }] }] },
+        pu2: { id: 'pu2', u: 'lb', ms: 'm_s12', w: 1, d: 0, st: now - 1 * 864e5, en: now - 1 * 864e5 + 1000, x: [{ e: 'pullup', s: [{ w: 0, r: 5, wu: 1 }, { w: 0, r: 12 }, { w: 0, r: 12 }] }] },
+      });
+      const puOutgrown = !!_.outgrown('pullup');
+      return {
+        strChestMatch: strPlan.byMus.chest === directChest,
+        priKept: priMuscles.has('biceps') && priMuscles.has('calves'),
+        w1Empty,
+        w0Base,
+        w0WithAdhoc,
+        tmStable: baseTm === afterW2Tm && baseTm > 0,
+        puOutgrown
+      };
+    });
+    t.ok('audit S1-S7: weekPlanSets matches main-lift wave sets, fitDay preserves pri muscles, weekLoggedSets isolates weeks & includes ad-hoc sets, tmOf freezes baseline TM, and outgrown ignores warm-ups',
+      audit.strChestMatch && audit.priKept && audit.w1Empty === 0 && audit.w0WithAdhoc === audit.w0Base + 2 && audit.tmStable && audit.puOutgrown,
+      JSON.stringify(audit));
+
     await p.close();
     }
   },

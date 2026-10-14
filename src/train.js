@@ -1836,7 +1836,8 @@
       var first = ms && woFor(ms, 0, d);
       var fx = first && exIn(first, ex.id);
       var ft = fx && fx.s.filter(counts).length ? (ASST[ex.id] ? leastHelp : topSet)(fx.s.filter(counts), first.u) : null;
-      var fw = ft ? ft.w : top.w * 0.9;
+      if (ft && fin(ft.w)) return { tw: ft.w > 0 ? roundTo(ft.w, step) : 0, tr: ex.rr[0], prev: prev };
+      var fw = ASST[ex.id] ? top.w * 1.1 : top.w * 0.9;
       return { tw: fw > 0 ? roundTo(fw, step) : top.w, tr: ex.rr[0], prev: prev };
     }
     if (ex.q === 'bw' && !(top.w > 0)) return { tw: 0, tr: top.r + 1, prev: prev };
@@ -2225,10 +2226,11 @@
   }
 
   /* The best estimated max for an exercise over the last `days` days. */
-  function recentE1(e, days) {
+  function recentE1(e, days, msId) {
     var from = Date.now() - days * DAY_MS, best = 0;
     ix().list.forEach(function (wo) {
       if (wo.st < from || wo.dl) return;
+      if (msId && wo.ms === msId && wo.w > 0) return;
       var x = exIn(wo, e);
       if (x) best = Math.max(best, bestE1(x.s.filter(counts), wo.u));
     });
@@ -2244,7 +2246,7 @@
   function tmOf(ms, e) {
     var v = ms.tm && fin(ms.tm[e]) && ms.tm[e] > 0 ? conv(ms.tm[e], ms.tu) : null;
     if (v) return v;
-    var e1 = recentE1(e, 84);
+    var e1 = recentE1(e, 84, ms && ms.id);
     return e1 > 0 ? roundTo(e1 * 0.9, inc(lib(e))) : null;
   }
 
@@ -2309,7 +2311,8 @@
      a swap away from the one below. */
   function outgrown(e) {
     var lp = lastPerf(e), top = lib(e).rr[1];
-    return !!lp && lp.s.every(function (s) { return s.r >= top && !(s.w > 0); });
+    var work = lp ? lp.s.filter(counts) : [];
+    return work.length > 0 && work.every(function (s) { return s.r >= top && !(s.w > 0); });
   }
   function rung(e) {
     var cur = e, guard = 6;
@@ -2848,19 +2851,23 @@
         break;
       }
     });
-    var trim = function (kind) {
+    var isPri = function (sl) { return (pri || []).indexOf(musOf(sl.e)) >= 0; };
+    var trim = function (kind, allowPri) {
       day.s.forEach(function (sl) {
-        if (!sl.m && estDay(day) > min && lib(sl.e).k === kind && sl.n > 2) sl.n = 2;
+        if (!sl.m && (allowPri || !isPri(sl)) && estDay(day) > min && lib(sl.e).k === kind && sl.n > 2) sl.n = 2;
       });
     };
-    trim('i');
-    trim('c');
+    trim('i', false);
+    trim('c', false);
+    trim('i', true);
+    trim('c', true);
     var guard = 20;
     while (estDay(day) > min && day.s.length > 3 && guard--) {
       var at = -1;
       for (var k = day.s.length - 1; k >= 0 && at < 0; k--) {
-        if (!day.s[k].m && (pri || []).indexOf(musOf(day.s[k].e)) < 0 && lib(day.s[k].e).k === 'i') at = k;
+        if (!day.s[k].m && !isPri(day.s[k]) && lib(day.s[k].e).k === 'i') at = k;
       }
+      if (at < 0) for (k = day.s.length - 1; k >= 0 && at < 0; k--) if (!day.s[k].m && !isPri(day.s[k])) at = k;
       if (at < 0) for (k = day.s.length - 1; k >= 0 && at < 0; k--) if (!day.s[k].m) at = k;
       if (at < 0) break;
       var gone = day.s.splice(at, 1)[0];
@@ -3752,12 +3759,15 @@
     return out;
   }
   function weekPlanSets(ms, w) {
-    var sf = setsFor(ms, Math.min(w, weeksOf(ms) - 1));
+    var wc = Math.min(w, weeksOf(ms) - 1);
+    var sf = setsFor(ms, wc), dl = !steady(ms) && wc >= accOf(ms);
     var byMus = {}, tot = 0;
     ms.days.forEach(function (day, d) {
       if (day.ez) return;
       day.s.forEach(function (s, i) {
-        var n = (sf.sets[d] && sf.sets[d][i]) || 0;
+        var n = s.m
+          ? (ms.goal === 'str' ? (dl ? 3 : ((WAVES[ms.wave] || WAVES[10])[Math.min(wc, 2)] || [3])[0]) : (dl ? 2 : 4))
+          : ((sf.sets[d] && sf.sets[d][i]) || 0);
         var m = musOf(s.e);
         byMus[m] = (byMus[m] || 0) + n;
         tot += n;
@@ -3767,9 +3777,23 @@
   }
   function weekLoggedSets(ms, w) {
     var byMus = {}, tot = 0, wos = 0;
-    ix().list.forEach(function (wo) {
-      if (wo.ms !== ms.id || wo.w !== w) return;
-      wos++;
+    var list = ix().list, starts = {};
+    list.forEach(function (wo) {
+      if (wo.ms === ms.id && fin(wo.w) && wo.w >= 0) {
+        if (starts[wo.w] === undefined || wo.st < starts[wo.w]) starts[wo.w] = wo.st;
+      }
+    });
+    var from = starts[w], to = Infinity;
+    if (from !== undefined) {
+      Object.keys(starts).map(Number).forEach(function (wk) {
+        if (wk > w && starts[wk] < to) to = starts[wk];
+      });
+    }
+    list.forEach(function (wo) {
+      var inBlock = wo.ms === ms.id && wo.w === w;
+      var adHoc = !wo.ms && !wo.dl && from !== undefined && wo.st >= from && wo.st < to;
+      if (!inBlock && !adHoc) return;
+      if (inBlock) wos++;
       wo.x.forEach(function (x) {
         var n = x.s.filter(counts).length;
         if (!n) return;
@@ -4441,6 +4465,7 @@
     if (LIVE) return;
     phaseKeep(ms, w);
     setLive(liveFromPlan(ms, w, d));
+    S.planOpen = false; S.peekNext = false; S.revWk = null;
     S.sub = 'block';
     draw();
     wake();
@@ -5072,6 +5097,7 @@
     if (LSBAD['bsc.train']) LIVE = null;
     else setLive(null);
     stopWake();
+    S.planOpen = false; S.peekNext = false; S.revWk = null;
     /* And My Day hears about it. Its "trained today" tick moves where the
        day's carbohydrate lands, and it used to be a thing you had to
        remember to press after the gym. The workout is the press. */
@@ -7492,11 +7518,6 @@
       var pw = weekPlanSets(ms, selW), lw = weekLoggedSets(ms, selW);
       planBy = pw.byMus;
       logBy = lw.byMus;
-      /* If the user also logged workouts outside the block during the review
-         window when viewing the active week, fold their sets in so nothing is lost. */
-      if (selW === curW && !lw.tot && r.rows.length) {
-        r.rows.forEach(function (row) { logBy[row.k] = (logBy[row.k] || 0) + row.sets; });
-      }
     } else {
       r.rows.forEach(function (row) {
         logBy[row.k] = row.sets;
@@ -9078,6 +9099,7 @@
     stamp('ms', ms.id);
     stamp('act');
     S.draft = null; S.opt = null; S.browse = false; S.lib = false;
+    S.sel = null; S.planOpen = false; S.peekNext = false; S.revWk = null;
     draw();
     scrollTop();
   }
@@ -10071,7 +10093,7 @@
         if (!T.ms[did] || (LIVE && LIVE.ms === did)) return;
         delete T.ms[did];
         stamp('ms', did);
-        if (T.act === did) { T.act = ''; stamp('act'); }
+        if (T.act === did) { T.act = ''; stamp('act'); S.sel = null; S.planOpen = false; S.peekNext = false; S.revWk = null; }
         S.hb = ''; S.hbSel = null; S.hbRen = '';
         draw(); scrollTop();
       };
@@ -10216,6 +10238,7 @@
       }
       T.act = '';
       stamp('act');
+      S.sel = null; S.planOpen = false; S.peekNext = false; S.revWk = null;
       draw(); scrollTop(); return;
     }
 
@@ -10327,6 +10350,7 @@
         } else {
           T.act = '';
           stamp('act');
+          S.sel = null; S.planOpen = false; S.peekNext = false; S.revWk = null;
         }
         draw();
       };
@@ -11148,6 +11172,7 @@
     startToday: function () {
       var ms = active(), nx = ms && nextSlot(ms);
       if (!ms || !nx || LIVE || isEz(ms, nx.d)) return false;
+      S.sel = null;
       startPlanned(ms, nx.w, nx.d);
       return true;
     },
@@ -11171,7 +11196,8 @@
       build: build, plan: plan, setsFor: setsFor, feedback: feedback, target: target,
       e1rm: e1rm, plateMath: plateMath, review: review, merge: merge, payload: payload,
       rirFor: rirFor, nextSlot: nextSlot, prsIn: prsIn, lib: lib, SPLITS: SPLITS, MUS: MUS,
-      estDay: estDay, barred: barred, KEEP_SPLITS: KEEP_SPLITS, HABITS: HABITS, weeksOf: weeksOf, nextTm: nextTm,
+      estDay: estDay, barred: barred, KEEP_SPLITS: KEEP_SPLITS, HABITS: HABITS, weeksOf: weeksOf, nextTm: nextTm, tmOf: tmOf, outgrown: outgrown,
+      weekPlanSets: weekPlanSets, weekLoggedSets: weekLoggedSets,
       recommend: recommend, PROGS: PROGS, FOCUS: FOCUS, KITS: KITS, axWeek: axWeek, defaultsPr: defaultsPr,
       MOVES: MOVES, mcScore: mcScore, sgParse: sgParse, sgMatch: sgMatch, sgGuess: sgGuess, sgList: sgList, csvRows: csvRows, ntKey: ntKey,
       LIB_LIST: LIB_LIST, slotDone: slotDone, barFor: barFor, barLabel: barLabel, onBar: onBar, liftE1: liftE1, stackHTML: stackHTML, elapsed: elapsed,

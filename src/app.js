@@ -2999,10 +2999,20 @@
      the picker just put down ("New") — last until the next change to the
      day, whatever it is. Every change goes through here, so this is where
      they end. */
+  function mAllSlotsDone(k) {
+    var d = mDay(k);
+    if (!mDayDone(d)) return false;
+    return mReadSlots().list.every(function (s) {
+      if (mSkipped(k, s.k)) return true;
+      var items = (d[s.k] || []).filter(function (it) { return !!LIVE.BY_ID[it.id]; });
+      return items.length > 0 && items.every(function (it) { return !!it.eaten; });
+    });
+  }
   function mEditDay(k, fn, seed) {
     S.mMarks = null;
-    if (!seed && mDoneAt(k) > 0) mSetDone(k, false);
-    return PLACING.mEditDay(k, fn, seed);
+    var res = PLACING.mEditDay(k, fn, seed);
+    if (!seed && mDoneAt(k) > 0 && !mAllSlotsDone(k)) mSetDone(k, false);
+    return res;
   }
   function kcalOf(t) { return PLACING.kcalOf(t); }
 
@@ -3075,8 +3085,9 @@
   function mHushed(k, sig) { return DAYFLAGS.mHushed(k, sig); }
   function mSetHush(k, sig) { return DAYFLAGS.mSetHush(k, sig); }
   function mSetSkip(k, sk, on) {
-    if (!on && mDoneAt(k) > 0) mSetDone(k, false);
-    return DAYFLAGS.mSetSkip(k, sk, on);
+    var res = DAYFLAGS.mSetSkip(k, sk, on);
+    if (!on && mDoneAt(k) > 0 && !mAllSlotsDone(k)) mSetDone(k, false);
+    return res;
   }
   function mSendOf(k) { return DAYFLAGS.mSendOf(k); }
   function mSetSend(k, v) { return DAYFLAGS.mSetSend(k, v); }
@@ -3469,7 +3480,7 @@
 
   /* src/fillday.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var FILLDAY = window.HiveParts.fillday({ MDAYS: MDAYS, dayKey: dayKey, fmtNum: fmtNum, keyDate: keyDate, mBalanceDay: mBalanceDay, mDayTargets: mDayTargets, mEditDay: mEditDay, mFamilyIds: mFamilyIds, mFillRoom: mFillRoom, mNever: mNever, mRank: mRank, mReadSlots: mReadSlots, mSideUp: mSideUp, mSkipped: mSkipped, mSlotClosed: mSlotClosed, mSlotSecs: mSlotSecs, mSlotSpokenFor: mSlotSpokenFor, mSlotsForRecipe: mSlotsForRecipe, mTopUp: mTopUp, mViewKey: mViewKey, renderMacros: renderMacros, LIVE: LIVE });
+  var FILLDAY = window.HiveParts.fillday({ MDAYS: MDAYS, dayKey: dayKey, fmtNum: fmtNum, keyDate: keyDate, mBalanceDay: mBalanceDay, mDayTargets: mDayTargets, mEditDay: mEditDay, mExtOk: mExtOk, mFamilyIds: mFamilyIds, mFillRoom: mFillRoom, mNever: mNever, mRank: mRank, mReadSlots: mReadSlots, mSideUp: mSideUp, mSkipped: mSkipped, mSlotClosed: mSlotClosed, mSlotSecs: mSlotSecs, mSlotSpokenFor: mSlotSpokenFor, mSlotsForRecipe: mSlotsForRecipe, mTopUp: mTopUp, mViewKey: mViewKey, renderMacros: renderMacros, LIVE: LIVE });
   function mOnDay(day, id) { return FILLDAY.mOnDay(day, id); }
   function mNearIds(k) { return FILLDAY.mNearIds(k); }
   function mCookScale(x, servN) { return FILLDAY.mCookScale(x, servN); }

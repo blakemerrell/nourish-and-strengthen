@@ -400,9 +400,10 @@
     return '<div class="mt-div">Everything else</div>' + rows.map(function (e) {
       var r = e.r, x0 = mDefaultX(r);
       var xx = S.mpBasket[r.id] !== undefined ? S.mpBasket[r.id] : x0;
+      var src = r.id && String(r.id).indexOf('f:my:') === 0 ? 'Yours' : r.food ? 'Food' : 'Recipe';
       return mpRowHTML(r, x0,
-        '<span class="mp-src">' + (r.food ? 'Yours' : 'Recipe') + '</span> &times;' + fmtNum(xx) +
-        (r.food ? ' ' + esc(r.unit) : '') + ' &middot; ' + mMacLine(r, xx, true),
+        '<span class="mp-src">' + src + '</span> &times;' + fmtNum(xx) +
+        (r.food ? ' ' + esc(r.unit) : '') + ' &middot; ' + mMacLine(r, xx, S.mpBasket[r.id] === undefined),
         e.score !== null && e.score !== undefined ? e.x : null);
     }).join('');
   }
@@ -637,8 +638,11 @@
       });
     }
     keys.forEach(function (k) {
+      if (k > today) return;
       var day = MDAYS[k] || {};
-      Object.keys(day).forEach(function (sk) { (day[sk] || []).forEach(take); });
+      Object.keys(day).forEach(function (sk) {
+        (day[sk] || []).forEach(take);
+      });
     });
     if (!out.length) return '';
     return '<div class="mt-div">Recent</div>' + out.map(function (e) {

@@ -107,7 +107,7 @@
     var fit = fitText !== undefined && fitText !== null ? fitText
       : (mDialG(r) ? esc(mDialText(r, x)) + (meas ? ' &middot; ' + esc(meas) : '')
         : r.food ? esc(mPortionText(r, x)) : '&times;' + fmtNum(x)) + ' &middot; ' +
-        mMacLine(r, x, true) + mSaltNote(r, x);
+        mMacLine(r, x, !inB) + mSaltNote(r, x);
     return '<div class="mpick-wrap' + (inB ? ' in' : '') + '">' +
       '<button class="mpick-row" data-mpick="' + esc(String(r.id)) + '" data-mpx="' + x + '"' +
         ' aria-pressed="' + (inB ? 'true' : 'false') + '">' +
@@ -120,7 +120,7 @@
             /* The badge sits with the NAME, not out on the row's edge: it is
                a fact about this dish at this portion, and a column of its own
                would have to be reserved on every row that cannot earn it. */
-            (mClosesIt(r, x) ? ' <span class="mp-closes">closes</span>' : '') +
+            (!inB && mClosesIt(r, x) ? ' <span class="mp-closes">closes</span>' : '') +
           '</span>' +
           '<span class="mp-fit">' + fit + '</span>' +
         '</span>' +
@@ -143,6 +143,7 @@
       var day = MDAYS[k] || {};
       Object.keys(day).forEach(function (sk) {
         (day[sk] || []).forEach(function (it) {
+          if ((it.by === 'f' || it.why) && !it.eaten && !it.l) return;
           if (out[it.id] === undefined && it.x > 0) out[it.id] = it.x;
         });
       });

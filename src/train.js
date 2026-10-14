@@ -3704,8 +3704,14 @@
     var sets = wos.reduce(function (n, wo) {
       return n + wo.x.reduce(function (a, x) { return a + x.s.filter(counts).length; }, 0);
     }, 0);
+    var fDays = nw && fin(nw.days) ? nw.days : 0;
+    var wDays = nw && nw.w && fin(nw.w.n) ? nw.w.n : 0;
+    var confScore = Math.min(100, Math.round(Math.min(7, fDays) / 7 * 60 + Math.min(7, wDays) / 7 * 40));
+    var confLvl = fDays >= 5 && wDays >= 4 ? 'high' : fDays >= 3 && wDays >= 2 ? 'med' : 'low';
     var c = { from: from, to: to, nw: nw, n: wos.length, sets: sets, prog: progress(now), ph: phaseNow(),
-      today: trainedOn(keyAgo(0)) };
+      today: trainedOn(keyAgo(0)),
+      conf: { score: confScore, level: confLvl, days: fDays, weighs: wDays },
+      guard: null, recomp: null };
     c.reads = chkReads(c);
     return c;
   }
@@ -3727,6 +3733,13 @@
     var cut = under !== null && lb > 0 ? under * 7 / 3500 / lb >= 0.0025 : !!c.ph && c.ph.r >= 0.0025;
     var p = c.prog, slip = p.lifts.filter(function (l) { return l.ch < -0.03; }).map(function (l) { return lib(l.e).n; });
     var falling = p.n >= 2 && (p.fall.length > 0 || (p.down > p.up && p.down >= 2));
+    if (loss !== null && loss >= 0.01 && falling) {
+      var baseK = nw && nw.target > 0 ? nw.target : nw && nw.kcal > 0 ? nw.kcal : 2000;
+      c.guard = { loss: loss, down: p.down, n: p.n, slips: slip.length ? slip.slice(0, 2) : ['Lifts'], addKcal: 150, targetKcal: baseK + 150 };
+    }
+    if (cut && loss !== null && Math.abs(loss) <= 0.002 && p.n >= 2 && p.up >= 2 && p.up > p.down) {
+      c.recomp = { up: p.up, n: p.n };
+    }
     if (loss !== null && loss >= 0.01 && (plan === null || loss > plan + 0.0025)) {
       var more = lb ? Math.round((loss - Math.max(plan || 0, 0.0075)) * lb * 3500 / 7 / 50) * 50 : 0;
       look.push({ h: 'Losing fast: ▼' + pctSay(loss) + ' this week',
@@ -3752,7 +3765,8 @@
     if (nw && nw.days > 0 && nw.days < 4) look.push({ h: 'Only ' + nw.days + ' of 7 days logged', d: 'Calories are a partial picture' });
     look.slice(0, 2).forEach(function (r) { out.push({ st: 'look', h: r.h, d: r.d }); });
     if (!out.length) {
-      out.push(cut && p.n >= 2 && p.held === p.n ? { st: 'good', h: 'Strength held on a cut', d: 'The cut is costing fat, not muscle' }
+      out.push(c.recomp ? { st: 'good', h: 'Strength up on ' + p.up + ' of ' + p.n + ' lifts', d: 'Scale is flat on a cut while strength climbs — trading fat for muscle' }
+        : cut && p.n >= 2 && p.held === p.n ? { st: 'good', h: 'Strength held on a cut', d: 'The cut is costing fat, not muscle' }
         : p.up >= 2 && p.up > p.down ? { st: 'good', h: 'Strength up on ' + p.up + ' of ' + p.n + ' lifts', d: 'Keep going' }
         : { st: 'good', h: 'On track', d: 'Nothing to change' });
     }
@@ -3849,7 +3863,9 @@
     var c = checkin(), nw = c.nw, w = nw && nw.w, p = c.prog, ms = active();
     var md = function (k) { var d = new Date(k + 'T12:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
     var html = '<div class="tr-card tr-week" aria-label="This week">' +
-      '<div class="tr-eyebrow">This week · ' + esc(md(c.from)) + '–' + esc(md(c.to)) + '</div>' +
+      '<div class="tr-eyebrow">This week · ' + esc(md(c.from)) + '–' + esc(md(c.to)) +
+        '<span class="tr-chk-conf is-' + c.conf.level + '" aria-label="Check-in data confidence: ' + c.conf.score + '% (' + c.conf.days + ' of 7 food days, ' + c.conf.weighs + ' of 7 weigh-ins)">● ' + c.conf.score + '%</span>' +
+      '</div>' +
       '<div class="tr-kpi-grid">';
 
     // 1. Weight KPI
@@ -3906,6 +3922,14 @@
       '<ul class="tr-chk-r">' + c.reads.map(function (r) {
         return '<li class="tr-chk-' + r.st + '"><b>' + esc(r.h) + '</b>' + (r.d ? '<span>' + esc(r.d) + '</span>' : '') + '</li>';
       }).join('') + '</ul>' +
+      (c.guard
+        ? '<div class="tr-str-guard" role="region" aria-label="Cut strength-loss guard">' +
+            '<div class="tr-str-guard-txt"><b>Strength-Loss Guard:</b> Losing ' + pctSay(c.guard.loss) + '/wk with ' + esc(c.guard.slips.join(', ')) + ' slipping. Add +' + c.guard.addKcal + ' kcal/day to spare muscle.</div>' +
+            (S.guardDone === c.guard.targetKcal
+              ? '<span class="tr-str-guard-ok">✓ Buffered to ' + fmtBig(c.guard.targetKcal) + ' kcal/day</span>'
+              : '<button type="button" class="tr-str-guard-btn" data-t="chkguard" data-kcal="' + c.guard.targetKcal + '">Buffer to ' + fmtBig(c.guard.targetKcal) + ' kcal (+' + c.guard.addKcal + ')</button>') +
+          '</div>'
+        : '') +
       blockProgStrip(ms) +
     '</div>';
     return html;
@@ -10426,6 +10450,24 @@
     if (t === 'planopen') { S.planOpen = !S.planOpen; draw(); return; }
     if (t === 'peeknext') { S.peekNext = !S.peekNext; if (!S.peekNext) S.planOpen = false; draw(); return; }
     if (t === 'revwk') { S.revWk = num('data-w'); draw(); return; }
+    if (t === 'chkguard') {
+      var gk = num('data-kcal');
+      if (gk > 0) {
+        var gh = hive(), gok = gh && gh.setKcal ? gh.setKcal(gk) : false;
+        if (!gok) {
+          try {
+            var gt = JSON.parse(localStorage.getItem('bsc.macroTargets') || '{}');
+            var curK = (gt.p || 0) * 4 + (gt.f || 0) * 9 + (gt.c || 0) * 4;
+            if (curK > 0) {
+              gt.c = Math.max(0, Math.round((gt.c || 0) + (gk - curK) / 4));
+              localStorage.setItem('bsc.macroTargets', JSON.stringify(gt));
+            }
+          } catch (e) { /* private mode */ }
+        }
+        S.guardDone = gk;
+      }
+      draw(); return;
+    }
     if (t === 'ldcancel') { S.ldOpen = false; S.ldDraft = null; draw(); return; }
     if (t === 'ldpick') {
       var dr = (S.ldDraft || []).slice(), di = Number(v), at = dr.indexOf(di);

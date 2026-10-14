@@ -8500,6 +8500,15 @@
       mWriteWeight(k, n);
       if (S.view === 'macros') renderMacros();
       return { ok: true, lb: n };
+    },
+    setKcal: function (want) {
+      var n = Math.round(Number(want));
+      var t = mReadTargets(), now = kcalOf(t);
+      if (!(n > 0) || !now) return false;
+      var pr = mReadProfile(), sp = mSplitKcal(n, t, pr);
+      mWriteTargets({ p: sp.p, f: sp.f, c: sp.c, auto: 0, set: todayKey() });
+      if (S.view === 'macros') renderMacros();
+      return true;
     }
   };
 

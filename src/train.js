@@ -3751,45 +3751,139 @@
     }
     return out;
   }
-  /* The week, at the top of the Review: numbers and pictures, few words.
+  function weekPlanSets(ms, w) {
+    var sf = setsFor(ms, Math.min(w, weeksOf(ms) - 1));
+    var byMus = {}, tot = 0;
+    ms.days.forEach(function (day, d) {
+      if (day.ez) return;
+      day.s.forEach(function (s, i) {
+        var n = (sf.sets[d] && sf.sets[d][i]) || 0;
+        var m = musOf(s.e);
+        byMus[m] = (byMus[m] || 0) + n;
+        tot += n;
+      });
+    });
+    return { byMus: byMus, tot: tot };
+  }
+  function weekLoggedSets(ms, w) {
+    var byMus = {}, tot = 0, wos = 0;
+    ix().list.forEach(function (wo) {
+      if (wo.ms !== ms.id || wo.w !== w) return;
+      wos++;
+      wo.x.forEach(function (x) {
+        var n = x.s.filter(counts).length;
+        if (!n) return;
+        var m = musOf(x.e);
+        byMus[m] = (byMus[m] || 0) + n;
+        tot += n;
+      });
+    });
+    return { byMus: byMus, tot: tot, wos: wos };
+  }
+  function blockProgStrip(ms) {
+    if (!ms) return '';
+    var W = weeksOf(ms), acc = accOf(ms), nx = nextSlot(ms);
+    var curW = nx ? nx.w : Math.max(0, W - 1);
+    var selW = fin(S.revWk) && S.revWk >= 0 && S.revWk < W ? S.revWk : curW;
+    var sk = Array.isArray(ms.sk) ? ms.sk : [];
+    var lCols = liftCols(ms), dpw = lCols.length || ms.days.length;
+    var totSesh = W * dpw, doneSesh = 0;
+    var pills = [];
+    for (var w = 0; w < W; w++) {
+      var wDone = 0;
+      for (var d = 0; d < ms.days.length; d++) {
+        if (ms.days[d].ez) continue;
+        if (slotDone(ms, w, d) || sk.indexOf(w + ':' + d) >= 0) { wDone++; doneSesh++; }
+      }
+      var plW = weekPlanSets(ms, w), lgW = weekLoggedSets(ms, w);
+      var isDl = w >= acc && !steady(ms);
+      var lbl = isDl ? 'Deload' : 'Wk ' + (w + 1);
+      var pctW = dpw ? Math.min(100, Math.round(wDone / dpw * 100)) : 0;
+      var stCls = wDone >= dpw ? ' is-done' : w === curW ? ' is-cur' : '';
+      if (w === selW) stCls += ' is-sel';
+      var meta = wDone >= dpw ? (lgW.tot || plW.tot) + ' sets'
+        : (w === curW && lgW.tot > 0) ? lgW.tot + '/' + plW.tot
+        : plW.tot + ' sets';
+      pills.push('<button type="button" class="tr-bp-wk' + stCls + '" data-t="revwk" data-w="' + w + '" aria-pressed="' + (w === selW) + '">' +
+        '<span class="tr-bp-lbl">' + lbl + (wDone >= dpw ? ' ✓' : '') + '</span>' +
+        '<span class="tr-bp-bar"><i style="width:' + pctW + '%"></i></span>' +
+        '<span class="tr-bp-sets">' + meta + '</span></button>');
+    }
+    var blkPct = totSesh ? Math.round(doneSesh / totSesh * 100) : 0;
+    return '<div class="tr-bprog" aria-label="Full block progress">' +
+      '<div class="tr-bp-head">' +
+        '<span class="tr-bp-title">' + esc(ms.n) + ' · ' + esc(wkName(ms, curW)) + '</span>' +
+        '<span class="tr-bp-stat"><b>' + doneSesh + ' / ' + totSesh + '</b> workouts · ' + blkPct + '%</span>' +
+      '</div>' +
+      '<div class="tr-bp-track">' + pills.join('') + '</div>' +
+    '</div>';
+  }
+
+  /* The week, at the top of the Review: 2x2 KPI cards + block progress strip.
      Nourish's This week lands here too. */
   function weekCard() {
-    var c = checkin(), nw = c.nw, w = nw && nw.w, p = c.prog;
+    var c = checkin(), nw = c.nw, w = nw && nw.w, p = c.prog, ms = active();
     var md = function (k) { var d = new Date(k + 'T12:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
-    var row = function (k, t, v, x) {
-      return '<div class="tr-wkr tr-wkr-' + k + '"><span class="tr-wkl">' + t + '</span><span class="tr-wkv">' + v + '</span>' +
-        (x ? '<span class="tr-wkx">' + x + '</span>' : '') + '</div>';
-    };
     var html = '<div class="tr-card tr-week" aria-label="This week">' +
-      '<div class="tr-eyebrow">This week · ' + esc(md(c.from)) + '–' + esc(md(c.to)) + '</div>';
-    // weight: the week's average, the change, and whether it is the pace planned
+      '<div class="tr-eyebrow">This week · ' + esc(md(c.from)) + '–' + esc(md(c.to)) + '</div>' +
+      '<div class="tr-kpi-grid">';
+
+    // 1. Weight KPI
     if (w && w.now > 0) {
       var d = w.was > 0 ? w.now - w.was : null, pl = nw && fin(nw.plan) ? nw.plan : null;
       var ok = d === null || pl === null ? '' : Math.abs(-d / w.was - pl) <= 0.0025 ? ' tr-ok' : ' tr-off';
-      html += row('w', 'Weight', '<b>' + fmtN(w.now) + '</b> lb',
-        (d === null ? '' : '<span class="tr-wka' + ok + '">' + (d <= 0 ? '▼' : '▲') + fmtN(Math.abs(d)) + '</span>') +
-        (pl !== null && Math.abs(pl) >= 0.001 ? '<span class="tr-wkm">plan ' + (pl > 0 ? '▼' : '▲') + pctSay(pl) + '/wk</span>' : ''));
-    } else html += row('w', 'Weight', '<span class="tr-wkm">no weigh-ins</span>', '');
-    // food: a bar of eaten against the day's target, and maintenance beside it
-    if (nw && nw.days) {
-      var tg = nw.target || 0, frac = tg ? Math.min(1, nw.kcal / tg) : 0, near = tg && Math.abs(nw.kcal / tg - 1) <= 0.1;
-      html += row('f', 'Food', '<b>' + fmtBig(nw.kcal) + '</b> kcal',
-        (tg ? '<span class="tr-wkbar' + (near ? ' tr-ok' : ' tr-off') + '" role="img" aria-label="' + fmtBig(nw.kcal) + ' of ' + fmtBig(tg) + ' target">' +
-          '<i style="width:' + Math.round(frac * 100) + '%"></i></span><span class="tr-wkm">of ' + fmtBig(tg) + '</span>' : ''));
-    } else html += row('f', 'Food', '<span class="tr-wkm">nothing logged</span>', '');
-    // protein: a dot a day, filled where it reached 90% of target
-    if (nw && nw.pDays) {
-      var dots = (Array.isArray(nw.pd) ? nw.pd : []).map(function (h) { return '<i class="' + (h ? 'on' : '') + '"></i>'; }).join('');
-      html += row('p', 'Protein', '<b>' + nw.hit + '</b> of ' + nw.pDays + ' days',
-        (dots ? '<span class="tr-wkdots" role="img" aria-label="' + nw.hit + ' of ' + nw.pDays + ' days at target">' + dots + '</span>' : '') +
-        '<span class="tr-wkm">' + nw.p + ' g avg</span>');
+      html += '<div class="tr-kpi-card tr-wkr tr-wkr-w">' +
+        '<div class="tr-kpi-top"><span class="tr-wkl">Weight</span><span class="tr-kpi-tag">7d avg</span></div>' +
+        '<div class="tr-kpi-val tr-wkv"><b>' + fmtN(w.now) + '</b> <small>lb</small></div>' +
+        '<div class="tr-kpi-sub tr-wkx">' +
+          (d === null ? '' : '<span class="tr-wka' + ok + '">' + (d <= 0 ? '▼' : '▲') + fmtN(Math.abs(d)) + '</span>') +
+          (pl !== null && Math.abs(pl) >= 0.001 ? '<span class="tr-wkm">plan ' + (pl > 0 ? '▼' : '▲') + pctSay(pl) + '/wk</span>' : '') +
+        '</div></div>';
+    } else {
+      html += '<div class="tr-kpi-card tr-wkr tr-wkr-w">' +
+        '<div class="tr-kpi-top"><span class="tr-wkl">Weight</span><span class="tr-kpi-tag">7d avg</span></div>' +
+        '<div class="tr-kpi-val tr-wkv"><span class="tr-wkm">no weigh-ins</span></div></div>';
     }
-    html += row('t', 'Training', '<b>' + c.n + '</b> session' + (c.n === 1 ? '' : 's'), '<span class="tr-wkm">' + c.sets + ' hard sets</span>');
-    html += row('s', 'Lifts', p.n ? '<span class="tr-up">▲' + p.up + '</span> <span class="tr-lv">●' + p.flat + '</span> <span class="tr-dn">▼' + p.down + '</span>'
-      : '<span class="tr-wkm">not enough yet</span>', p.n ? '<span class="tr-wkm">4 weeks</span>' : '');
-    html += '<ul class="tr-chk-r">' + c.reads.map(function (r) {
-      return '<li class="tr-chk-' + r.st + '"><b>' + esc(r.h) + '</b>' + (r.d ? '<span>' + esc(r.d) + '</span>' : '') + '</li>';
-    }).join('') + '</ul></div>';
+
+    // 2. Food & Protein KPI
+    var dots = nw && nw.pDays && Array.isArray(nw.pd) ? nw.pd.map(function (h) { return '<i class="' + (h ? 'on' : '') + '"></i>'; }).join('') : '';
+    var tg = nw && nw.days ? (nw.target || 0) : 0, frac = tg ? Math.min(1, nw.kcal / tg) : 0, near = tg && Math.abs(nw.kcal / tg - 1) <= 0.1;
+    html += '<div class="tr-kpi-card tr-wkr tr-wkr-f">' +
+      '<div class="tr-kpi-top"><span class="tr-wkl">Food</span>' + (nw && nw.pDays ? '<span class="tr-wkl">Protein</span>' : '<span class="tr-kpi-tag">7d avg</span>') + '</div>' +
+      (nw && nw.days
+        ? '<div class="tr-kpi-val tr-wkv"><b>' + fmtBig(nw.kcal) + '</b> <small>kcal</small></div>' +
+          (tg ? '<div class="tr-kpi-sub tr-wkx"><span class="tr-wkbar' + (near ? ' tr-ok' : ' tr-off') + '" role="img" aria-label="' + fmtBig(nw.kcal) + ' of ' + fmtBig(tg) + ' target">' +
+            '<i style="width:' + Math.round(frac * 100) + '%"></i></span><span class="tr-wkm">of ' + fmtBig(tg) + '</span></div>' : '')
+        : '<div class="tr-kpi-val tr-wkv"><span class="tr-wkm">nothing logged</span></div>') +
+      (nw && nw.pDays
+        ? '<div class="tr-kpi-sub tr-kpi-prot"><span class="tr-wkv"><b>' + nw.hit + '</b>/' + nw.pDays + 'd</span> ' +
+            (dots ? '<span class="tr-wkdots" role="img" aria-label="' + nw.hit + ' of ' + nw.pDays + ' days at target">' + dots + '</span>' : '') +
+            '<span class="tr-wkm">' + nw.p + 'g</span></div>'
+        : '') +
+    '</div>';
+
+    // 3. Training KPI
+    html += '<div class="tr-kpi-card tr-wkr tr-wkr-t">' +
+      '<div class="tr-kpi-top"><span class="tr-wkl">Training</span><span class="tr-kpi-tag">7 days</span></div>' +
+      '<div class="tr-kpi-val tr-wkv"><b>' + c.n + '</b> <small>session' + (c.n === 1 ? '' : 's') + '</small></div>' +
+      '<div class="tr-kpi-sub tr-wkx"><span class="tr-wkm">' + c.sets + ' hard sets</span></div>' +
+    '</div>';
+
+    // 4. Lifts KPI
+    html += '<div class="tr-kpi-card tr-wkr tr-wkr-s">' +
+      '<div class="tr-kpi-top"><span class="tr-wkl">Lifts</span><span class="tr-kpi-tag">4 weeks</span></div>' +
+      (p.n
+        ? '<div class="tr-kpi-val"><span class="tr-up">▲ ' + p.up + '</span> <small>up</small></div>' +
+          '<div class="tr-kpi-sub tr-wkv"><span class="tr-up">▲' + p.up + '</span> <span class="tr-lv">●' + p.flat + '</span> <span class="tr-dn">▼' + p.down + '</span></div>'
+        : '<div class="tr-kpi-val tr-wkv"><span class="tr-wkm">not enough yet</span></div>') +
+    '</div>';
+
+    html += '</div>' +
+      '<ul class="tr-chk-r">' + c.reads.map(function (r) {
+        return '<li class="tr-chk-' + r.st + '"><b>' + esc(r.h) + '</b>' + (r.d ? '<span>' + esc(r.d) + '</span>' : '') + '</li>';
+      }).join('') + '</ul>' +
+      blockProgStrip(ms) +
+    '</div>';
     return html;
   }
 
@@ -5223,11 +5317,28 @@
       (rest ? 'Start it anyway' : 'Start workout') + '</button>';
     var body = (S.planOpen ? planList(p, ms) : seshChips(seshNums(ms, nx.w, nx.d, p, false)) + seshNames(p) + mcLine(p));
     if (rest) {
+      if (did) {
+        var peek = !!(S.peekNext || S.planOpen);
+        var sets0 = p.x.map(function (x) { return x.sets; });
+        var tot0 = sets0.reduce(function (a, b) { return a + b; }, 0);
+        var mins0 = estDay(ms.days[nx.d], sets0);
+        return '<div id="trSesh" class="tr-card tr-next tr-sesh tr-restday tr-done-card' + (peek ? ' is-open' : '') + '">' +
+          '<div class="tr-dc-top">' +
+            '<div class="tr-eyebrow">Today · ' + wk + '</div>' +
+            '<span class="tr-dc-badge">✓ Workout logged</span>' +
+          '</div>' +
+          '<div class="tr-title">Done for today ✓</div>' +
+          '<div class="tr-dc-foot">' +
+            '<div class="tr-dc-next">Up next: <b>' + esc(p.n) + '</b> ' + esc(dueSay(due)) + ' · ~' + mins0 + ' min · ' + p.x.length + ' exercise' + (p.x.length === 1 ? '' : 's') + ' · ' + tot0 + ' set' + (tot0 === 1 ? '' : 's') + '</div>' +
+            '<button type="button" class="tr-dc-peek" data-t="peeknext" aria-expanded="' + peek + '">' + (peek ? 'Hide preview ▴' : 'Preview ' + esc(dueSay(due)) + ' ▾') + '</button>' +
+          '</div>' +
+          (peek ? '<div class="tr-dc-drawer">' + body + '<div class="tr-acts">' + start + planBtn + '</div></div>' : '') +
+        '</div>';
+      }
       return '<div id="trSesh" class="tr-card tr-next tr-sesh tr-restday">' +
         '<div class="tr-eyebrow">Today · ' + wk + '</div>' +
-        '<div class="tr-title">' + (did ? 'Done for today ✓' : 'Rest day') + '</div>' +
-        '<div class="tr-sub">Next: <b>' + esc(p.n) + '</b> ' + esc(dueSay(due)) + '.' +
-          (did ? '' : ' Muscles grow in the rest between sessions.') + '</div>' +
+        '<div class="tr-title">Rest day</div>' +
+        '<div class="tr-sub">Next: <b>' + esc(p.n) + '</b> ' + esc(dueSay(due)) + '. Muscles grow in the rest between sessions.</div>' +
         body +
         '<div class="tr-acts">' + start + planBtn + '</div>' +
       '</div>';
@@ -7365,57 +7476,174 @@
   /* -------------------------------------------------------------- review */
   var ICON = { good: '✓', look: '!', info: 'i' };
   var WORD = { good: 'On track', look: 'Worth a look', info: 'For information' };
+  function hmCls(logged, planned) {
+    if (logged <= 0) return 'hm-0';
+    if (planned <= 0 || logged >= planned) return 'hm-hit';
+    return (logged / planned) >= 0.5 ? 'hm-mid' : 'hm-low';
+  }
+  function muscleMapCard(r) {
+    var ms = active();
+    var small = r.keep || r.base || r.str;
+    var W = ms ? weeksOf(ms) : 0, acc = ms ? accOf(ms) : 0, nx = ms ? nextSlot(ms) : null;
+    var curW = ms ? (nx ? nx.w : Math.max(0, W - 1)) : 0;
+    var selW = ms ? (fin(S.revWk) && S.revWk >= 0 && S.revWk < W ? S.revWk : curW) : 0;
+    var planBy = {}, logBy = {};
+    if (ms) {
+      var pw = weekPlanSets(ms, selW), lw = weekLoggedSets(ms, selW);
+      planBy = pw.byMus;
+      logBy = lw.byMus;
+      /* If the user also logged workouts outside the block during the review
+         window when viewing the active week, fold their sets in so nothing is lost. */
+      if (selW === curW && !lw.tot && r.rows.length) {
+        r.rows.forEach(function (row) { logBy[row.k] = (logBy[row.k] || 0) + row.sets; });
+      }
+    } else {
+      r.rows.forEach(function (row) {
+        logBy[row.k] = row.sets;
+        planBy[row.k] = small ? 3 : Math.max(4, row.mev || 6);
+      });
+    }
+    var mList = MUSCLES.filter(function (m) { return (planBy[m.k] || 0) > 0 || (logBy[m.k] || 0) > 0; }).map(function (m) {
+      var lg = logBy[m.k] || 0, pl = planBy[m.k] || (lg > 0 ? lg : 0);
+      return { k: m.k, n: m.n, lg: lg, pl: pl, cls: hmCls(lg, pl), pct: pl ? lg / pl : (lg ? 1 : 0) };
+    }).sort(function (a, b) { return (b.pct - a.pct) || (b.pl - a.pl); });
+
+    var clsMap = {};
+    mList.forEach(function (x) { clsMap[x.k] = x.cls; });
+    var cOf = function (k, fb) { return clsMap[k] || (fb && clsMap[fb]) || 'hm-0'; };
+    var deltF = clsMap.side || clsMap.front || clsMap.chest || 'hm-0';
+    var deltB = clsMap.rear || clsMap.side || clsMap.back || 'hm-0';
+    var trapC = clsMap.traps || clsMap.back || 'hm-0';
+    var gluteC = clsMap.glutes || clsMap.quads || clsMap.hams || 'hm-0';
+
+    var wkTitle = ms ? (selW >= acc && !steady(ms) ? 'Deload week muscle coverage' : 'Week ' + (selW + 1) + ' muscle coverage')
+      : (r.n ? r.n + ' workout' + (r.n === 1 ? '' : 's') + ' this week' : 'This week\u2019s muscle coverage');
+    var vkeyText = r.keep ? 'Heat-mapped to your weekly plan (3 or more hard sets, enough to keep strength).'
+      : r.base ? 'Heat-mapped to your weekly plan (3 or more hard sets, plenty while you are new).'
+      : r.str ? (r.cond ? 'Heat-mapped to your weekly plan (3 or more hard sets beside the circuits).' : 'Heat-mapped to your weekly plan (3 or more hard sets around the main lifts).')
+      : ms ? 'Heat-mapped to your ' + (selW >= acc && !steady(ms) ? 'Deload' : 'Week ' + (selW + 1)) + ' planned sets (volume climbs week over week, then drops on Deload).'
+      : 'Heat-mapped to your weekly target sets (10\u201320 sets, where the evidence is strongest).';
+
+    var pills = '';
+    if (ms) {
+      var sk = Array.isArray(ms.sk) ? ms.sk : [], lCols = liftCols(ms), dpw = lCols.length || ms.days.length;
+      var ps = [];
+      for (var w = 0; w < W; w++) {
+        var wd = 0;
+        for (var d = 0; d < ms.days.length; d++) {
+          if (!ms.days[d].ez && (slotDone(ms, w, d) || sk.indexOf(w + ':' + d) >= 0)) wd++;
+        }
+        var isDl = w >= acc && !steady(ms);
+        var pLbl = (isDl ? 'Deload' : 'Wk ' + (w + 1)) + (wd >= dpw ? ' ✓' : w === curW ? ' (Now)' : '');
+        ps.push('<button type="button" class="tr-hm-pill' + (w === selW ? ' active' : '') + (wd >= dpw ? ' done' : '') +
+          '" data-t="revwk" data-w="' + w + '" aria-pressed="' + (w === selW) + '">' + pLbl + '</button>');
+      }
+      pills = '<div class="tr-hm-pills" role="group" aria-label="Select block week">' + ps.join('') + '</div>';
+    }
+
+    return '<div class="tr-card tr-hm-card">' +
+      '<div class="tr-eyebrow">Weekly muscle volume · sets logged vs. planned</div>' +
+      '<div class="tr-title">' + esc(wkTitle) + '</div>' +
+      '<div class="tr-note tr-vkey">' + esc(vkeyText) + '</div>' +
+      pills +
+      '<div class="tr-hm-box" role="img" aria-label="Front and back muscle progress map">' +
+        '<div class="tr-hm-col">' +
+          '<div class="tr-hm-lbl">Front</div>' +
+          '<svg class="tr-hm-svg" viewBox="0 0 140 232" aria-hidden="true" focusable="false">' +
+            '<g class="hm-outline">' +
+              '<ellipse cx="70" cy="18" rx="10" ry="12"/>' +
+              '<path d="M64 29 L76 29 L77 36 L63 36 Z"/>' +
+              '<path d="M25 84 C21 94 18 106 17 115 C16 119 21 121 24 116 C28 107 32 96 34 86 Z"/>' +
+              '<path d="M115 84 C119 94 122 106 123 115 C124 119 119 121 116 116 C112 107 108 96 106 86 Z"/>' +
+              '<ellipse cx="56" cy="162" rx="7" ry="6"/>' +
+              '<ellipse cx="84" cy="162" rx="7" ry="6"/>' +
+              '<path d="M49 214 L59 214 L61 224 L46 224 Z"/>' +
+              '<path d="M81 214 L91 214 L94 224 L79 224 Z"/>' +
+            '</g>' +
+            '<path data-mus="traps" d="M49 38 C55 34 61 33 63 33 L63 38 Z" class="' + trapC + '"/>' +
+            '<path data-mus="traps" d="M91 38 C85 34 79 33 77 33 L77 38 Z" class="' + trapC + '"/>' +
+            '<path data-mus="side" d="M48 38 C38 39 32 46 31 56 C35 59 42 57 46 50 Z" class="' + deltF + '"/>' +
+            '<path data-mus="side" d="M92 38 C102 39 108 46 109 56 C105 59 98 57 94 50 Z" class="' + deltF + '"/>' +
+            '<path data-mus="chest" d="M47 38 L69 38 L69 61 C61 63 50 61 46 52 Z" class="' + cOf('chest') + '"/>' +
+            '<path data-mus="chest" d="M93 38 L71 38 L71 61 C79 63 90 61 94 52 Z" class="' + cOf('chest') + '"/>' +
+            '<path data-mus="back" d="M46 54 L51 62 L52 82 C48 76 46 65 46 54 Z" class="' + cOf('back') + '"/>' +
+            '<path data-mus="back" d="M94 54 L89 62 L88 82 C92 76 94 65 94 54 Z" class="' + cOf('back') + '"/>' +
+            '<path data-mus="biceps" d="M31 58 C27 65 26 75 26 83 L35 85 C38 77 41 67 43 57 Z" class="' + cOf('biceps') + '"/>' +
+            '<path data-mus="biceps" d="M109 58 C113 65 114 75 114 83 L105 85 C102 77 99 67 97 57 Z" class="' + cOf('biceps') + '"/>' +
+            '<path data-mus="abs" d="M52 63 L88 63 L85 103 L55 103 Z" class="' + cOf('abs') + '"/>' +
+            '<line x1="70" y1="63" x2="70" y2="102" stroke="var(--paper-soft)" stroke-width="1.3"/>' +
+            '<line x1="54" y1="75" x2="86" y2="75" stroke="var(--paper-soft)" stroke-width="1.1"/>' +
+            '<line x1="55" y1="87" x2="85" y2="87" stroke="var(--paper-soft)" stroke-width="1.1"/>' +
+            '<path data-mus="quads" d="M52 105 L68 105 C69 124 66 144 62 156 L49 156 C45 140 46 120 52 105 Z" class="' + cOf('quads') + '"/>' +
+            '<path data-mus="quads" d="M88 105 L72 105 C71 124 74 144 78 156 L91 156 C95 140 94 120 88 105 Z" class="' + cOf('quads') + '"/>' +
+            '<path data-mus="calves" d="M49 168 L61 168 C63 182 60 199 58 213 L50 213 C47 199 46 182 49 168 Z" class="' + cOf('calves') + '"/>' +
+            '<path data-mus="calves" d="M91 168 L79 168 C77 182 80 199 82 213 L90 213 C93 199 94 182 91 168 Z" class="' + cOf('calves') + '"/>' +
+          '</svg>' +
+        '</div>' +
+        '<div class="tr-hm-col">' +
+          '<div class="tr-hm-lbl">Back</div>' +
+          '<svg class="tr-hm-svg" viewBox="0 0 140 232" aria-hidden="true" focusable="false">' +
+            '<g class="hm-outline">' +
+              '<ellipse cx="70" cy="18" rx="10" ry="12"/>' +
+              '<path d="M64 29 L76 29 L77 35 L63 35 Z"/>' +
+              '<path d="M25 84 C21 94 18 106 17 115 C16 119 21 121 24 116 C28 107 32 96 34 86 Z"/>' +
+              '<path d="M115 84 C119 94 122 106 123 115 C124 119 119 121 116 116 C112 107 108 96 106 86 Z"/>' +
+              '<ellipse cx="56" cy="162" rx="7" ry="6"/>' +
+              '<ellipse cx="84" cy="162" rx="7" ry="6"/>' +
+              '<path d="M49 214 L59 214 L61 224 L46 224 Z"/>' +
+              '<path d="M81 214 L91 214 L94 224 L79 224 Z"/>' +
+            '</g>' +
+            '<path data-mus="traps" d="M70 32 L90 38 L70 64 L50 38 Z" class="' + trapC + '"/>' +
+            '<path data-mus="rear" d="M48 38 C38 39 32 46 31 55 C36 58 43 55 47 48 Z" class="' + deltB + '"/>' +
+            '<path data-mus="rear" d="M92 38 C102 39 108 46 109 55 C104 58 97 55 93 48 Z" class="' + deltB + '"/>' +
+            '<path data-mus="back" d="M47 47 L68 64 L66 90 L52 84 C47 73 45 59 47 47 Z" class="' + cOf('back') + '"/>' +
+            '<path data-mus="back" d="M93 47 L72 64 L74 90 L88 84 C93 73 95 59 93 47 Z" class="' + cOf('back') + '"/>' +
+            '<path data-mus="triceps" d="M31 57 C27 65 26 75 26 83 L35 85 C38 77 41 67 43 56 Z" class="' + cOf('triceps') + '"/>' +
+            '<path data-mus="triceps" d="M109 57 C113 65 114 75 114 83 L105 85 C102 77 99 67 97 56 Z" class="' + cOf('triceps') + '"/>' +
+            '<path data-mus="back" d="M55 86 L85 86 L83 101 L57 101 Z" class="' + cOf('back') + '"/>' +
+            '<path data-mus="glutes" d="M53 102 L69 102 L69 122 C58 124 48 117 53 102 Z" class="' + gluteC + '"/>' +
+            '<path data-mus="glutes" d="M87 102 L71 102 L71 122 C82 124 92 117 87 102 Z" class="' + gluteC + '"/>' +
+            '<path data-mus="hams" d="M50 123 L68 123 C68 137 65 148 62 156 L49 156 C46 145 47 133 50 123 Z" class="' + cOf('hams') + '"/>' +
+            '<path data-mus="hams" d="M90 123 L72 123 C72 137 75 148 78 156 L91 156 C94 145 93 133 90 123 Z" class="' + cOf('hams') + '"/>' +
+            '<path data-mus="calves" d="M48 168 L61 168 C64 181 61 198 58 213 L50 213 C46 198 44 181 48 168 Z" class="' + cOf('calves') + '"/>' +
+            '<path data-mus="calves" d="M92 168 L79 168 C76 181 79 198 82 213 L90 213 C94 198 96 181 92 168 Z" class="' + cOf('calves') + '"/>' +
+          '</svg>' +
+        '</div>' +
+      '</div>' +
+      '<div class="tr-hm-legend" aria-hidden="true">' +
+        '<span><i class="tr-hm-sw hm-0"></i> 0%</span>' +
+        '<span><i class="tr-hm-sw hm-low"></i> 1\u201349%</span>' +
+        '<span><i class="tr-hm-sw hm-mid"></i> 50\u201399%</span>' +
+        '<span><i class="tr-hm-sw hm-hit"></i> Plan hit ✓</span>' +
+      '</div>' +
+      (mList.length ? '<div class="tr-mus-grid" role="table" aria-label="Sets logged versus planned per muscle">' +
+        mList.map(function (m) {
+          var hit = m.cls === 'hm-hit';
+          return '<div class="tr-mus-row" role="row">' +
+            '<span class="tr-mus-name" role="rowheader"><i class="tr-mus-dot ' + m.cls + '"></i>' + esc(m.n) + '</span>' +
+            '<span class="tr-mus-sets' + (hit ? ' hit' : '') + '" role="cell"><b>' + m.lg + '</b> / ' + m.pl + (hit ? ' ✓' : '') + '</span>' +
+          '</div>';
+        }).join('') + '</div>' : '') +
+      (r.n ? '' : '<div class="tr-acts">' + goBtn() + '</div>') +
+    '</div>';
+  }
   function reviewHTML() {
     var r = review();
-    /* Keeping is drawn on its own scale: a band from three sets up, and no
-       RP landmarks, which are about growing. */
-    var small = r.keep || r.base || r.str;
-    var max = small ? Math.max(12, r.rows.reduce(function (m, x) { return Math.max(m, x.sets); }, 0) + 1)
-      : Math.max(26, r.rows.reduce(function (m, x) { return Math.max(m, x.sets, x.mrv); }, 0));
-    var band = small ? [3, max - 3] : [10, 20];
-    var pct = function (v) { return (100 * v / max).toFixed(2) + '%'; };
     var done = S.flash2 ? '<div class="tr-note tr-flash2" role="status">' + esc(S.flash2) + '</div>' : '';
     S.flash2 = '';
-    var html = done + weekCard() + '<div class="tr-card">' +
-      '<div class="tr-eyebrow">' + esc(r.label) + '</div>' +
-      '<div class="tr-title">' + r.n + ' workout' + (r.n === 1 ? '' : 's') + ', held against the research</div>' +
-      '<div class="tr-note">Every line below is a rule with a source. It grades what can be measured from your log and says so when something cannot be.</div>' +
-      // a week with nothing in it has nothing to grade, and one way to fix that
-      (r.n ? '' : '<div class="tr-acts">' + goBtn() + '</div>');
-    if (r.rows.length) {
-      html += '<div class="tr-vbars" role="table" aria-label="Hard sets per muscle this week">' +
-        '<div class="tr-vkey" aria-hidden="true"><span class="tr-vk-band"></span> ' +
-          (r.keep ? '3 or more hard sets, enough to keep strength' : r.base ? '3 or more hard sets, plenty while you are new'
-            : r.str ? (r.cond ? '3 or more hard sets beside the circuits' : '3 or more hard sets around the main lifts')
-            : '10\u201320 sets, where the evidence is strongest' +
-          '<span class="tr-vk-tick"></span> RP\u2019s MEV and MRV') + '</div>' +
-        r.rows.map(function (row) {
-          return '<div class="tr-vrow" role="row" title="' + esc(row.n + ': ' + row.sets + ' sets on ' + row.days +
-            ' day' + (row.days === 1 ? '' : 's') + ' · MEV ' + row.mev + ' · MRV ' + row.mrv) + '">' +
-            '<span class="tr-vn" role="rowheader">' + esc(row.n) + '</span>' +
-            '<span class="tr-vt" role="cell">' +
-              '<span class="tr-vband" style="left:' + pct(band[0]) + ';width:' + pct(band[1] - band[0]) + '"></span>' +
-              (!small && row.mev ? '<span class="tr-vtick" style="left:' + pct(row.mev) + '"></span>' : '') +
-              (!small ? '<span class="tr-vtick" style="left:' + pct(row.mrv) + '"></span>' : '') +
-              (row.sets ? '<span class="tr-vbar" style="width:' + pct(row.sets) + '"></span>' : '') +
-            '</span>' +
-            '<span class="tr-vv" role="cell">' + row.sets + '</span>' +
-          '</div>';
-        }).join('') + '</div>';
-    }
-    html += '</div>';
-    /* Each check is a headline, and opens to its reasoning and sources on a
-       tap: read top to bottom, the paragraphs were a page of prose for what
-       is mostly "on track". */
+    var html = done + weekCard() + muscleMapCard(r);
     var ckOpen = S.ck || {};
-    html += r.checks.map(function (c) {
+    var ordered = r.checks.slice().sort(function (a, b) {
+      var rank = { look: 0, info: 1, good: 2 };
+      return (rank[a.st] || 1) - (rank[b.st] || 1);
+    });
+    html += ordered.map(function (c) {
       var open = !!ckOpen[c.t];
       return '<div class="tr-card tr-check tr-' + c.st + (open ? ' open' : '') + '">' +
         '<button class="tr-ck-h" data-t="ckopen" data-v="' + esc(c.t) + '" aria-expanded="' + open + '">' +
           '<span class="tr-ck-i" aria-hidden="true">' + ICON[c.st] + '</span>' +
           '<span class="tr-ck-t">' + esc(c.t) + '</span><span class="tr-ck-w">' + WORD[c.st] + '</span>' +
           '<span class="tr-ck-c" aria-hidden="true">' + (open ? '\u2212' : '+') + '</span></button>' +
-        // what to do about it, in view without opening the reasons
         (c.fix && c.st === 'look' ? '<div class="tr-ck-fix"><button class="ghost" data-t="' + c.fix.t + '"' + c.fix.a + '>' + esc(c.fix.say) + '</button></div>' : '') +
         (open ? '<div class="tr-ck-b">' + esc(c.b) + '</div>' +
           (c.refs.length ? '<div class="tr-ck-r">' + c.refs.map(function (k) {
@@ -9896,6 +10124,8 @@
       draw(); return;
     }
     if (t === 'planopen') { S.planOpen = !S.planOpen; draw(); return; }
+    if (t === 'peeknext') { S.peekNext = !S.peekNext; if (!S.peekNext) S.planOpen = false; draw(); return; }
+    if (t === 'revwk') { S.revWk = num('data-w'); draw(); return; }
     if (t === 'ldcancel') { S.ldOpen = false; S.ldDraft = null; draw(); return; }
     if (t === 'ldpick') {
       var dr = (S.ldDraft || []).slice(), di = Number(v), at = dr.indexOf(di);

@@ -62,7 +62,7 @@
       (undo ? '<button type="button" ' + (attr || 'data-mallow') + '="' + esc(String(undo)) + '">Undo</button>' : '');
     el.hidden = false;
     /* A tap on the message itself (not its Undo) puts it away early. */
-    el.onclick = function (ev) { if (!ev.target.closest('[data-mallow], [data-pwundo]')) el.hidden = true; };
+    el.onclick = function (ev) { if (!ev.target.closest('[data-mallow], [data-pwundo], [data-mmoveundo], [data-mexplodeundo]')) el.hidden = true; };
     /* Emptied first, so the same words twice are two announcements. */
     var say = $('mToastSay');
     if (say) {

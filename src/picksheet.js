@@ -92,12 +92,12 @@
     S.mpSwap = null;
     S.mMenu = '';
     S.mType = null;
-    /* A meal with food on it opens on its foods, up in the page and ready
-       to dial (myday.js, sheetOnHTML): tapping lunch on the day is most
-       often to change what is on it. Blake, 2026-10-08: "the foods that I
-       have in my basket are collapsed and it's really hard to edit them."
-       An empty meal opens on the list, since adding is all there is to do. */
-    S.mTrayOpen = (mDay(mViewKey())[S.macroPick.slot] || []).length > 0;
+    /* Open on the meal's foods when there are some (myday.js, sheetOnHTML):
+       opening a meal from the day is coming to edit what is on it (2026-10-08).
+       Since 2026-10-15, S.mTrayOpen starts true on empty meals too so the
+       first food tapped onto the meal lands straight in the anchored top
+       plate card rather than collapsing into the bottom strip first. */
+    S.mTrayOpen = true;
     pushSheet({ m: 1 });
     renderModal();
   }
@@ -126,10 +126,9 @@
   function macroPickerHTML() {
     var sk = S.macroPick.slot;
     var P = mMealSheetParts(sk);
-    /* .mpq while a word is in the search: the foods up in the page step
-       aside for the results, and the tray's chips stand in for them
-       (style.css). The input handler (app.js) keeps it in step as you type,
-       without a redraw. */
+    /* .mpq marks when a word is in the search (app.js keeps it in step as
+       you type, without a redraw). Since 2026-10-15 .msh-on stays anchored
+       at the top even while .mpq is set, unless collapsed with [data-mtray="0"]. */
     var wrap = function (inner) {
       return '<div class="scrim no-print" data-close="1">' +
         '<div class="sheet mp-sheet msheet' + (String(S.mpQuery || '').trim() ? ' mpq' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(P.name) + '">' +

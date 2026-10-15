@@ -112,10 +112,8 @@ module.exports = {
     t.ok('a banana closes most of the carbs, and the meal lands near its calories without running over them',
       pl3.c[0] >= pl3.c[1] * 0.75 && pl3.k[0] <= pl3.k[1] * 1.03 && pl3.k[0] >= pl3.k[1] * 0.85, JSON.stringify(pl3));
 
-    await p.click('#modalRoot .msh-trn');
-    await p.waitForTimeout(300);
     let rows = await gramsOf(p);
-    t.ok('the tray’s count puts the rows up in the page, with their dials', rows.length === 3 && rows.every((r) => r.g > 0), JSON.stringify(rows));
+    t.ok('the plate card is open at the top of the page, with each food’s dial', rows.length === 3 && rows.every((r) => r.g > 0), JSON.stringify(rows));
     t.ok('no food past a plateful', rows.every((r) => r.g <= 400), JSON.stringify(rows));
 
     await p.click('#modalRoot .msh-on [data-mstep="l:1:up"]');
@@ -147,8 +145,6 @@ module.exports = {
     ({ p, errs } = await sheet(t));
     await tap(p, 'egg white', 'f:egg_white');
     await tap(p, 'greek yogurt', 'f:greek_yogurt');
-    await p.click('#modalRoot .msh-trn');
-    await p.waitForTimeout(300);
     const yBefore = (await gramsOf(p))[1].g;
     await p.click('#modalRoot .msh-on [data-mtype="l:0"]');
     await p.waitForTimeout(200);

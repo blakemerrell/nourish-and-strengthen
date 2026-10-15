@@ -228,9 +228,11 @@ module.exports = nourish({
     await jumpPg.evaluate(() => { document.querySelector('.scrim').scrollTop = 300; });
     await jumpPg.waitForTimeout(200);
     const target = await jumpPg.evaluate(() => {
+      const findEl = document.querySelector('#modalRoot .msh-find');
+      const minTop = Math.max(250, findEl ? findEl.getBoundingClientRect().bottom + 4 : 250);
       const w = [...document.querySelectorAll('#modalRoot .mpick-wrap')]
         .find((x) => !x.classList.contains('in') &&
-          x.getBoundingClientRect().top > 250 && x.getBoundingClientRect().bottom < 560);
+          x.getBoundingClientRect().top > minTop && x.getBoundingClientRect().bottom < 560);
       if (!w) return null;
       const r = w.querySelector('.mpick-row').getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + 12, id: w.querySelector('.mpick-row').dataset.mpick };
@@ -305,8 +307,10 @@ module.exports = nourish({
       });
       await barPg2.waitForTimeout(200);
       const box = await barPg2.evaluate(() => {
+        const findEl = document.querySelector('#modalRoot .msh-find');
+        const minTop = Math.max(260, findEl ? findEl.getBoundingClientRect().bottom + 4 : 260);
         const w = [...document.querySelectorAll('#mpList .mpick-wrap:not(.in)')]
-          .find((x) => x.getBoundingClientRect().top > 260 &&
+          .find((x) => x.getBoundingClientRect().top > minTop &&
             x.getBoundingClientRect().bottom < window.innerHeight - 90);
         if (!w) return null;
         const r = w.querySelector('.mpick-row').getBoundingClientRect();
@@ -442,13 +446,13 @@ module.exports = nourish({
       'lens=foods');
     /* And the way back out survives a lens with nothing in it. Press a food
        shelf while the lens says "Every recipe" and you have asked for a
-       recipe that is a vegetable: the band used to return nothing and take
+       recipe that is a single-food macro shelf: the band used to return nothing and take
        the lens with it, leaving no way to undo what emptied the list. */
     const stranded = await sortWhen(async () => {
       await railPg2.selectOption('#mpSec', 'all');
       await railPg2.waitForTimeout(400);
       await railPg2.evaluate(() => {
-        const ch = document.querySelector('.mp-shelf[data-mpshelf="veg"]');
+        const ch = document.querySelector('.mp-shelf[data-mpshelf="protein"]');
         if (ch) ch.click();
       });
     });

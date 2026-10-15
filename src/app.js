@@ -7228,10 +7228,6 @@
           S.mMarks = { k: pk, sk: psk, was: mRefitMeal(pk, psk, at2), fresh: mpFresh(at2, pid), snap: null };
         }
         if (S.mAmt && S.mAmt !== '*') S.mAmt = '';
-        /* The list stays where you were reading it. The scroll position is
-           kept by the redraw, but the meal's own list above the picker just
-           grew (or shrank) a row, which moves everything under it — so the
-           row you tapped is put back under your finger. */
         var pSel = '#mpList [data-mpick="' + String(pid).replace(/"/g, '') + '"]';
         var pBefore = (document.querySelector(pSel) || pel).getBoundingClientRect().top;
         renderMacros();

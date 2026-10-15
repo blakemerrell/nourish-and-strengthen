@@ -101,9 +101,11 @@ module.exports = {
     const head = await p.evaluate(() => (document.querySelector('#mpList .mt-div-for') || {}).textContent || '');
     t.ok('Fits best names the pills still empty', /carbs/.test(head) && !/fat/.test(head), head);
 
-    const shut = await p.evaluate(() => ({ n: (document.querySelector('.msh-trn b') || {}).textContent,
-      chips: [...document.querySelectorAll('.msh-chip .msh-chn')].map((c) => c.textContent) }));
-    t.ok('the tray, shut, counts the foods and shows them newest first', shut.n === '2' && shut.chips[0] === 'Cheddar cheese' && shut.chips[1] === 'Egg whites', JSON.stringify(shut));
+    const onTop = await p.evaluate(() => ({
+      sub: (document.querySelector('#modalRoot .msh-on .msh-trt small') || {}).textContent || '',
+      rows: [...document.querySelectorAll('#modalRoot .msh-on .mrow .mrow-nm')].map((c) => c.textContent),
+    }));
+    t.ok('the plate card at the top counts the foods and shows both rows', /2 foods/.test(onTop.sub) && onTop.rows[0] === 'Egg whites' && onTop.rows[1] === 'Cheddar cheese', JSON.stringify(onTop));
 
     await tap(p, 'banana', 'f:banana');
     const pl3 = await pills(p);

@@ -229,41 +229,30 @@ module.exports = {
     t.ok('and the tray stays pinned along the bottom, Balance and Done under the thumb', Math.abs(trayAt) <= 2 &&
       !!(await p.$('#modalRoot .msh-tray .msh-bal')) && !!(await p.$('#modalRoot .msh-tray .msh-done')), String(trayAt));
 
-    /* Typing in the search keeps the plate card anchored at the top without
-       flopping to the bottom strip; explicitly collapsing [data-mtray="0"]
-       sends it to the bottom chips and tapping a chip brings it back up. */
+    /* Typing in the search keeps the plate card anchored at the top in .msh-top,
+       and there is no collapsible bottom basket (.msh-trc or [data-mtray]). */
     await p.fill('#mpFind', 'egg');
     await p.waitForTimeout(300);
     const whileTyping = await p.evaluate(() => {
-      const on = document.querySelector('#modalRoot .msh-on');
+      const on = document.querySelector('#modalRoot .msh-top .msh-on');
       return {
         on: !!on && getComputedStyle(on).display !== 'none',
-        strip: getComputedStyle(document.querySelector('#modalRoot .msh-tray .msh-trc')).display !== 'none',
+        strip: !!document.querySelector('#modalRoot .msh-tray .msh-trc'),
+        mtrayBtn: !!document.querySelector('#modalRoot [data-mtray]'),
       };
     });
-    t.ok('typing in the search keeps the plate card anchored at the top without flopping to the bottom strip',
-      whileTyping.on && !whileTyping.strip, JSON.stringify(whileTyping));
-    await p.click('#modalRoot .msh-on [data-mtray="0"]');
+    t.ok('typing in the search keeps the plate card anchored in the sticky top header with no bottom basket strip or collapse toggle',
+      whileTyping.on && !whileTyping.strip && !whileTyping.mtrayBtn, JSON.stringify(whileTyping));
+    await p.fill('#mpFind', '');
     await p.waitForTimeout(250);
-    const typing = await p.evaluate(() => ({ on: !!document.querySelector('#modalRoot .msh-on'),
-      strip: getComputedStyle(document.querySelector('#modalRoot .msh-tray .msh-trc')).display !== 'none',
-      chips: document.querySelectorAll('#modalRoot .msh-tray .msh-chip').length }));
-    t.ok('collapsing the plate card puts the foods in the tray\u2019s chips, one a food', !typing.on && typing.strip &&
-      typing.chips > 0, JSON.stringify(typing));
-    await p.click('#modalRoot .msh-tray .msh-chip');
-    await p.waitForTimeout(300);
-    const back = await p.evaluate(() => {
-      const on = document.querySelector('#modalRoot .msh-on');
-      return { on: !!on && getComputedStyle(on).display !== 'none', q: document.getElementById('mpFind').value,
-        top: document.querySelector('#modalRoot .scrim').scrollTop };
-    });
-    t.ok('and a chip brings them back up, the word cleared, the sheet at its top', back.on && back.q === '' && back.top === 0, JSON.stringify(back));
+    await p.evaluate(() => { const s = document.querySelector('#modalRoot .scrim'); s.scrollTop = 0; });
+    await p.waitForTimeout(150);
 
     /* With the foods up in the page a food added from the list lands above
        it, and the list must not slide under the thumb that added it. */
     // a row not already put on this visit, which a second tap would take back off
-    const fresh = '#mpList .mpick-wrap:not(.in) [data-mpick]';
-    await p.evaluate((sel) => document.querySelector(sel).scrollIntoView({ block: 'center' }), fresh);
+    const fresh = '#mpList [data-mpick="f:egg"]';
+    await p.evaluate(() => { document.querySelector('#modalRoot .scrim').scrollTop = 60; });
     await p.waitForTimeout(200);
     const listAt = () => p.evaluate(() => ({ y: Math.round(document.getElementById('mpList').getBoundingClientRect().top),
       n: document.querySelectorAll('#modalRoot .msh-on .mrow').length, s: document.querySelector('#modalRoot .scrim').scrollTop }));

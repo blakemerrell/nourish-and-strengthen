@@ -131,7 +131,7 @@ module.exports = nourish({
       const d = JSON.parse(localStorage.getItem('bsc.macroDays') || '{}');
       const day = d[Object.keys(d).sort().pop()] || {};
       return { plates: (day.d || []).length, chips: document.querySelectorAll('#modalRoot .msh-tray .msh-chip').length,
-        rows: document.querySelectorAll('#modalRoot .msh-tray .mrow').length };
+        rows: document.querySelectorAll('#modalRoot .msh-on .mrow, #modalRoot .msh-tray .mrow').length };
     });
     t.ok('each tap puts its food on the meal there and then, in the tray under the picker',
       tapped.plates === 3 && (tapped.chips === 3 || tapped.rows === 3), JSON.stringify(tapped));
@@ -913,8 +913,7 @@ module.exports = nourish({
     t.ok('an empty meal’s tray opens to a sheet with something to do on it',
       await deadFold.evaluate(() => {
         const sc = document.querySelector('#modalRoot .msheet');
-        // it says so in the tray along the bottom ("Tap a food above to put it here")
-        return !!sc && !!sc.querySelector('.msh-tray .msh-none') && !!sc.querySelector('#mpFind') &&
+        return !!sc && !!(sc.querySelector('.msh-on-empty') || sc.querySelector('.msh-tray .msh-none')) && !!sc.querySelector('#mpFind') &&
           sc.querySelectorAll('#mpList [data-mpick]').length > 0;
       }));
 

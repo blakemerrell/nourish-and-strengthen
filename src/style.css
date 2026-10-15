@@ -7418,18 +7418,26 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
    stays anchored at the top even while typing in #mpFind, and only swaps to
    the bottom chip strip when explicitly collapsed via [data-mtray="0"]. */
 .msh-on {
-  margin: 4px -4px 8px;
+  margin: 6px 0 2px;
   padding: 6px 6px 6px;
   background: var(--hint);
   border: 1.5px solid var(--line-firm);
   border-radius: 12px;
 }
+.msh-on.msh-on-empty {
+  padding: 5px 8px;
+}
+.msh-on.msh-on-empty .msh-trh { padding: 0; }
 .msh-on .msh-trh { padding: 2px 2px 6px; }
 .msh-on .mrows {
   border-top: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+.msh-on:not(:has(.mrow-menu)) .mrows {
+  max-height: 25vh;
+  overflow-y: auto;
 }
 .msh-on .mrows .mrow {
   background: var(--card);
@@ -7441,12 +7449,21 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .msh-on .mrows .mrow.fresh { background: var(--tint-green); }
 .msh-on .mrows .mrow.moved, .msh-on .mrows .mrow.swapping { background: var(--ochre-soft); border-color: var(--ochre); }
 .msheet .msh-tray.open .msh-trc { display: none; }
-.mp-shelf.emo:not(.counted):not(#u#u) { padding: 0; width: 44px; }
-@media (max-width: 430px) {
-  .mp-shelf:not(.on) .mp-shl { display: none; }
-  .mp-shelf:has(.mp-shl):not(.on):not(.counted):not(#u#u) { padding: 0; width: 44px; }
+.mp-shelves {
+  gap: 4px;
+  -webkit-mask-image: none;
+  mask-image: none;
 }
-.msh-acts { display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; padding: 10px 12px 0; }
+.mp-shelf:not(#u#u) {
+  flex: 1 1 auto;
+  min-width: 44px;
+  padding: 0 7px;
+  font-size: 0.78125rem;
+  gap: 3px;
+  white-space: nowrap;
+}
+.mp-shelf i { font-size: 0.875rem; }
+.msh-acts { display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; padding: 6px 12px 0; }
 .msh-bal {
   min-height: 50px; margin: 0; border-radius: 11px; border: 1px solid var(--line-firm); background: var(--card); color: var(--ink);
   font-weight: 600; font-size: 0.96875rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;

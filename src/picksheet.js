@@ -158,9 +158,9 @@
        mid-session, an old value read back from anywhere — and neither
        should be an error. */
     var body = mpHomeBodyHTML();
-    return wrap(
-      // the meal's foods, when they are up: under the pills, over the search
-      (P.on || '') +
+    return '<div class="scrim no-print" data-close="1">' +
+      '<div class="sheet mp-sheet msheet' + (String(S.mpQuery || '').trim() ? ' mpq' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(P.name) + '">' +
+      '<div class="msh-top">' + P.head + (P.stick || '') + (P.on || '') + '</div>' +
       /* The camera sits INSIDE the field rather than beside it. As a flex
          sibling it drops onto its own row on every phone. */
       '<div class="mp-stick msh-find">' +
@@ -177,7 +177,7 @@
       '<div id="mpList">' + body + '</div>' +
       '<button class="mpick-row mpick-new" data-mpnew="1">' +
         '<span class="mp-body"><span class="mp-name">&#43; Type it in yourself</span></span></button>' +
-      P.tray);
+      P.tray + '</div></div>';
   }
 
   return { mNextMeal: mNextMeal, mOpenPicker: mOpenPicker, macroPickerHTML: macroPickerHTML };

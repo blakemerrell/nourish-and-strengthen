@@ -194,14 +194,18 @@ module.exports = {
     const s3 = await p.evaluate((sel) => {
       const c = document.querySelector(sel);
       const ls = [...c.querySelectorAll('.mtray-f')];
+      const gap = ls.length >= 2 ? Math.round(ls[1].getBoundingClientRect().top - ls[0].getBoundingClientRect().bottom) : 0;
+      const bordered = ls.every((l) => parseFloat(getComputedStyle(l).borderBottomWidth) >= 1 && parseFloat(getComputedStyle(l).borderTopWidth) >= 1);
       return {
         mv3: c.classList.contains('mv-3'),
         allOpen: ls.length === 2 && ls.every((l) => l.classList.contains('open') && l.querySelectorAll('[data-mstep]').length === 2),
-        noAddDrawer: !c.querySelector('.mtray-add')
+        noAddDrawer: !c.querySelector('.mtray-add'),
+        gap: gap,
+        bordered: bordered
       };
     }, card('l'));
-    t.ok('State 3 opens all food rows simultaneously for immediate multi-food adjusting without an inline quick-add drawer',
-      s3.mv3 && s3.allOpen && s3.noAddDrawer, JSON.stringify(s3));
+    t.ok('State 3 opens all food rows simultaneously with clear visual separation between foods and no inline quick-add drawer',
+      s3.mv3 && s3.allOpen && s3.noAddDrawer && s3.gap >= 6 && s3.bordered, JSON.stringify(s3));
 
     /* The scale on the card balances the meal there, on the day, and says so */
     const before = await mealOf(p, 'l');

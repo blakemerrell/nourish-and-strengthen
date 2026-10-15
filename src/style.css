@@ -7108,10 +7108,15 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 #macroSlots .mfl-r .mitem-ate:checked::before { background: var(--green); border-color: var(--green); }
 /* Open: the line keeps its place, tinted the width of the card, and its
    controls come up under it. */
-.mtray-f.open { background: var(--hint); margin-right: -12px; padding-right: 12px; box-shadow: inset 3px 0 0 var(--ochre); }
+.mtray-f.open {
+  background: var(--hint); margin-right: -12px; padding-right: 12px;
+  border-top: 1px solid var(--line-firm); border-bottom: 1px solid var(--line-firm);
+  box-shadow: inset 3px 0 0 var(--ochre);
+}
+.mtray-f.open + .mtray-f.open { margin-top: 8px; }
 .mtray-f.open::before, .mtray-f.open + .mtray-f::before { border-top-color: transparent; }
 .mtray-f.open .mtray-fm b { color: var(--ochre-text); }
-.mfl-x { display: grid; gap: 8px; padding: 0 0 12px 10px; }
+.mfl-x { display: grid; gap: 6px; padding: 0 0 10px 10px; }
 .mfl-mac { margin-top: -4px; padding-left: 36px; font-size: 0.8125rem; line-height: 1.35; color: var(--note); }
 .mfl-mac .mitem-mac { font-size: inherit; }
 .mfl-ctl { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }

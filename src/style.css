@@ -7682,3 +7682,49 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 }
 .tr-mus-sets b { color: var(--ink); }
 .tr-mus-sets.hit, .tr-mus-sets.hit b { color: var(--green); }
+
+/* ---- Exercise card complete & collapsed KPI summary row ---- */
+.tr-ex-done-b, .tr-ex-open-b {
+  float: right; margin: -2px 0 4px 8px;
+  padding: 5px 11px; min-height: 30px;
+  border-radius: 99px; border: 1px solid var(--line-firm);
+  background: var(--paper-soft); color: var(--ink);
+  font: inherit; font-size: 0.8125rem; font-weight: 600; line-height: 1.1;
+  cursor: pointer; white-space: nowrap;
+}
+.tr-ex-done-b:hover, .tr-ex-open-b:hover { border-color: var(--green); }
+.tr-ex-done-b.is-ready {
+  background: var(--green); color: var(--on-green); border-color: var(--green);
+}
+.tr-ex-open-b {
+  color: var(--green);
+  background: color-mix(in oklab, var(--green) 11%, var(--card));
+  border-color: color-mix(in oklab, var(--green) 36%, var(--line-firm));
+}
+.tr-ex.tr-ex-tuck {
+  padding-top: 11px; padding-bottom: 11px;
+  border-left: 3px solid var(--green);
+}
+.tr-ex.tr-ex-tuck .tr-ex-h { margin-bottom: 0; }
+.tr-ex-kpis {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  width: 100%; margin-top: 7px; padding: 8px 11px;
+  border-radius: 6px; border: 1px solid var(--line-soft);
+  background: var(--paper-soft); color: var(--ink);
+  font: inherit; text-align: left; cursor: pointer; min-height: 44px;
+}
+.tr-ex-kpis:hover { border-color: var(--line-firm); }
+.tr-ex-kpi-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 3px 0;
+  font-size: 0.8125rem; line-height: 1.35; font-variant-numeric: tabular-nums;
+}
+.tr-ex-kpi { color: var(--muted-2); }
+.tr-ex-kpi b { color: var(--ink); font-weight: 650; }
+.tr-ex-kpi + .tr-ex-kpi::before {
+  content: "\00b7"; margin: 0 7px; color: var(--muted); font-weight: 400;
+}
+.tr-ex-kpi-pr, .tr-ex-kpi-pr b { color: var(--ochre-text); font-weight: 650; }
+.tr-ex-sets-line {
+  font-size: 0.8125rem; color: var(--muted);
+  font-variant-numeric: tabular-nums; line-height: 1.35;
+}

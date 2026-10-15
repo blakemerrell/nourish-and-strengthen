@@ -4752,7 +4752,7 @@
   function tick(xi, si, sure) {
     var x = LIVE.x[xi], s = x && x.s[si];
     if (!s) return;
-    if (s.t) { s.t = 0; saveLive(); draw(); return; }
+    if (s.t) { s.t = 0; delete x.done; saveLive(); draw(); return; }
     var w = numIn(s.w), r = numIn(s.r), g = ghost(xi, si), miss = s.ty === 'm';
     if (w === null && g.w === null && onBody(x.e)) w = 0;
     /* A slipped finger, ticked, was a record, confetti and next week's
@@ -4778,6 +4778,7 @@
       return;
     }
     s.w = w; s.r = r; s.t = Date.now();
+    delete x.open;
     S.need = null;
     var more = LIVE.x.some(function (y) { return y.s.some(function (z) { return !z.t; }); });
     /* In a pair, the rest after a set is the short one: the other half goes
@@ -6821,9 +6822,102 @@
       ', below the 5\u201330 range the growth research backs. A little lighter is the surer bet.';
   }
 
+  function exMovedOn(xi) {
+    var x = LIVE && LIVE.x[xi];
+    if (!x || x.cc) return false;
+    var work = x.s.filter(function (s) { return !s.wu; });
+    if (!work.length || !work.every(function (s) { return s.t; })) return false;
+    var p = partner(xi), mate = p >= 0 ? LIVE.x[p] : null;
+    if (mate) {
+      var mwork = mate.s.filter(function (s) { return !s.wu; });
+      if (!mwork.length || !mwork.every(function (s) { return s.t; })) return false;
+    }
+    var last = 0;
+    x.s.forEach(function (s) { if (s.t > last) last = s.t; });
+    if (mate) mate.s.forEach(function (s) { if (s.t > last) last = s.t; });
+    if (!last) return false;
+    for (var k = 0; k < LIVE.x.length; k++) {
+      if (k === xi || k === p) continue;
+      var y = LIVE.x[k];
+      for (var j = 0; j < y.s.length; j++) {
+        if (y.s[j].t > last) return true;
+      }
+    }
+    return false;
+  }
+
+  function exTucked(x, xi) {
+    if (!x || !x.s.some(function (s) { return s.t; })) return false;
+    if (x.done) return true;
+    if (x.open) return false;
+    return exMovedOn(xi);
+  }
+
+  function fmtSetCompact(s, e) {
+    var w = numIn(s.w), r = numIn(s.r);
+    if (w === null) w = 0;
+    if (r === null) r = 0;
+    var wStr = onBody(e) ? (w > 0 ? '+' + fmtN(w) : 'BW')
+      : ASST[e] ? fmtN(w) + ' help'
+      : fmtN(w);
+    var tag = s.wu ? 'W ' : s.ty === 'd' ? 'D ' : s.ty === 'f' ? 'F ' : s.ty === 'm' ? 'M ' : '';
+    return tag + wStr + '\u00d7' + r;
+  }
+
+  function exKpiHTML(x, i) {
+    var ex = lib(x.e), u = (LIVE && LIVE.u) || T.pr.u;
+    var doneAll = x.s.filter(function (s) { return s.t; });
+    var doneWork = doneAll.filter(counts);
+    var doneWu = doneAll.filter(function (s) { return s.wu; });
+    var workNorm = doneWork.map(function (s) { return { w: numIn(s.w) || 0, r: numIn(s.r) || 0 }; });
+    var kpis = [];
+    if (doneWork.length) {
+      kpis.push('<span class="tr-ex-kpi"><b>' + doneWork.length + '</b> set' + (doneWork.length === 1 ? '' : 's') + '</span>');
+    } else if (doneWu.length) {
+      kpis.push('<span class="tr-ex-kpi"><b>' + doneWu.length + '</b> warm-up' + (doneWu.length === 1 ? '' : 's') + '</span>');
+    }
+    var best = workNorm.length ? (ASST[x.e] ? leastHelp(workNorm, u) : topSet(workNorm, u)) : null;
+    if (best) {
+      var bwStr = onBody(x.e) ? (best.w > 0 ? '+' + fmtN(best.w) + ' ' + u : 'BW')
+        : ASST[x.e] ? fmtN(best.w) + ' ' + u + ' help'
+        : fmtN(best.w) + ' ' + u;
+      kpis.push('<span class="tr-ex-kpi">Best <b>' + esc(bwStr + ' \u00d7 ' + best.r) + '</b></span>');
+    }
+    var vol = workNorm.reduce(function (sum, s) { return sum + Math.max(0, s.w) * s.r; }, 0);
+    var repsTot = workNorm.reduce(function (sum, s) { return sum + s.r; }, 0);
+    if (!ASST[x.e] && vol > 0) {
+      kpis.push('<span class="tr-ex-kpi"><b>' + fmtBig(vol) + ' ' + u + '</b> vol</span>');
+    } else if (repsTot > 0) {
+      kpis.push('<span class="tr-ex-kpi"><b>' + repsTot + '</b> reps</span>');
+    }
+    var prHit = workNorm.length && LIVE ? beats(records(x.e, LIVE.st), workNorm, u, x.e, woBw(LIVE)) : '';
+    if (prHit) {
+      kpis.push('<span class="tr-ex-kpi tr-ex-kpi-pr">\ud83e\udd47 <b>PR</b> \u00b7 ' + esc(prHit) + '</span>');
+    }
+    var setsLine = doneAll.map(function (s) { return fmtSetCompact(s, x.e); }).join(' \u00b7 ');
+    return '<button type="button" class="tr-ex-kpis" data-t="exopen" data-x="' + i + '" aria-label="' + esc(ex.n + ' completed summary. Tap to expand sets') + '">' +
+      '<span class="tr-ex-kpi-row">' + kpis.join('') + '</span>' +
+      (setsLine ? '<span class="tr-ex-sets-line">' + esc(setsLine) + '</span>' : '') +
+    '</button>';
+  }
+
   function exCard(x, i, label, mv) {
     var ex = lib(x.e);
     var rq = !!T.pr.rq;
+    var nb = T.pr.lvl === 0;
+    if (exTucked(x, i)) {
+      return '<div class="tr-card tr-ex tr-ex-tuck' + (label ? ' tr-paired' : '') + (rq ? ' tr-rq' : '') + '" data-xi="' + i + '">' +
+        (mv ? '<button class="tr-grip" data-x="' + i + '" aria-label="Move ' + esc(ex.n) + (label && !x.cc ? ' and its pair' : '') +
+          ': hold and drag, or use the arrow keys">' + EA_ICO.grip + '</button>' : '') +
+        '<div class="tr-ex-h">' +
+          (label ? '<span class="tr-pair" aria-label="' + (x.cc ? 'Station ' : 'Pair ') + label + '">' + label + '</span>' : '') +
+          '<button class="tr-ex-n" data-t="exopen" data-x="' + i + '">' + esc(ex.n) + '</button>' +
+          '<span class="tr-fmw" id="trfm-' + i + '">' + fmHTML(i) + '</span>' +
+          '<button type="button" class="tr-ex-open-b" data-t="exopen" data-x="' + i + '" aria-label="Reopen ' + esc(ex.n) + ' sets">\u2713 Done \u00b7 Edit \u25be</button>' +
+        '</div>' +
+        exKpiHTML(x, i) +
+      '</div>';
+    }
     var pl = onBar(ex) ? T.pr.pl : 'off';
     var nx = nextSet(x);
     var note = noteOf(x.e);
@@ -6871,8 +6965,7 @@
     }).join('');
     // nothing ticked yet on this lift: the notes for before the first set
     var fresh = !x.s.some(function (s) { return s.t; });
-    // someone new: plain words where the numbers need them
-    var nb = T.pr.lvl === 0, nWork = x.s.filter(counts).length;
+    var nWork = x.s.filter(counts).length;
     var wy = whyW(x), wyk = wy ? whyWKind(x) : '';
     var ms = LIVE.ms ? T.ms[LIVE.ms] : null;
     // the reps in reserve when they are not the day's, which the header says
@@ -6881,12 +6974,15 @@
     var barHere = onBar(ex) && (barSet(x.e) || barAt(x.e) !== T.pr.bar);
     var first = fresh && (nb || newLift(x.e));
     var armed = S.arm === 'rm:' + i, nDone = x.s.filter(function (z) { return z.t; }).length;
+    var workSets = x.s.filter(function (z) { return !z.wu; });
+    var allWorkDone = workSets.length > 0 && workSets.every(function (z) { return z.t; });
     return '<div class="tr-card tr-ex' + (label ? ' tr-paired' : '') + (rq ? ' tr-rq' : '') + '" data-xi="' + i + '">' +
       /* Hold it and every card folds to its name, to be dragged where it
          goes, the way Strong does it; the arrow keys move it a place. */
       (mv ? '<button class="tr-grip" data-x="' + i + '" aria-label="Move ' + esc(ex.n) + (label && !x.cc ? ' and its pair' : '') +
         ': hold and drag, or use the arrow keys">' + EA_ICO.grip + '</button>' : '') +
       '<div class="tr-ex-h">' +
+        (nDone > 0 ? '<button type="button" class="tr-ex-done-b' + (allWorkDone ? ' is-ready' : '') + '" data-t="exdone" data-x="' + i + '" aria-label="Mark ' + esc(ex.n) + ' complete and collapse">\u2713 Done</button>' : '') +
         (label ? '<span class="tr-pair" aria-label="' + (x.cc ? 'Station ' : 'Pair ') + label + '">' + label + '</span>' : '') +
         // new to lifting, the name opens how it is done
         '<button class="tr-ex-n" data-t="' + (nb ? 'exhow' : 'exsheet') + '" data-e="' + esc(x.e) + '">' + esc(ex.n) + '</button>' +
@@ -11327,10 +11423,27 @@
       });
       saveLive(); draw(); return;
     }
+    if (t === 'exdone' && LIVE) {
+      var xd0 = LIVE.x[num('data-x')];
+      if (xd0 && xd0.s.some(function (z) { return z.t; })) {
+        xd0.done = 1; delete xd0.open;
+        saveLive(); draw();
+      }
+      return;
+    }
+    if (t === 'exopen' && LIVE) {
+      var xo0 = LIVE.x[num('data-x')];
+      if (xo0) {
+        xo0.open = 1; delete xo0.done;
+        saveLive(); draw();
+      }
+      return;
+    }
     if (t === 'addset') {
       var xa = LIVE.x[num('data-x')];
       var ls = xa.s[xa.s.length - 1] || {};
       xa.s.push({ w: '', r: '', t: 0, tw: ls.tw, tr: ls.tr, pw: ls.pw, pr: ls.pr });
+      delete xa.done;
       remapPrev(xa);
       saveLive(); draw(); return;
     }

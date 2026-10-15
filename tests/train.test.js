@@ -4860,6 +4860,58 @@ module.exports = {
       anims.count === 112 && anims.rigCount === 24 && anims.allValid && anims.allMedia && anims.ohpPriOk && anims.fallbackOk && gifsOnDisk,
       JSON.stringify(Object.assign({}, anims, { ids: anims.ids.length, gifsOnDisk })));
 
+    // ---- Exercise card ✓ Done collapse & crisp KPI summary row ----
+    await p.close();
+    p = await t.fresh();
+    await seed(p, { pr: { qz: 1, u: 'lb' }, act: '', ms: {}, cx: {}, ax: {}, wo: {
+      prev1: wo('prev1', '', -1, -1, 3, [
+        { e: 'bb-bench', s: [{ w: 185, r: 8 }, { w: 185, r: 8 }, { w: 185, r: 8 }] },
+        { e: 'bb-row', s: [{ w: 155, r: 8 }, { w: 155, r: 8 }] }
+      ])
+    } });
+    await p.click('.tab[data-view="train"]');
+    await p.click('[data-t="empty"]');
+    await p.click('[data-t="addex"]');
+    await p.click('.tr-pick[data-e="bb-bench"]');
+    await p.click('[data-t="addex"]');
+    await p.click('.tr-pick[data-e="bb-row"]');
+    await p.fill('#trw-0-0', '195'); await p.fill('#trr-0-0', '8');
+    await p.click('[data-t="tick"][data-x="0"][data-s="0"]');
+    await p.fill('#trw-0-1', '185'); await p.fill('#trr-0-1', '8');
+    await p.click('[data-t="tick"][data-x="0"][data-s="1"]');
+    // Stop early after 2 of 3 sets and tap ✓ Done in header
+    await p.click('[data-t="exdone"][data-x="0"]');
+    r = await p.evaluate(() => {
+      const c = document.querySelector('.tr-ex[data-xi="0"]');
+      return {
+        tucked: c && c.classList.contains('tr-ex-tuck'),
+        kpiTxt: (c && c.querySelector('.tr-ex-kpi-row') || {}).textContent || '',
+        setsTxt: (c && c.querySelector('.tr-ex-sets-line') || {}).textContent || '',
+        fmTxt: (c && c.querySelector('#trfm-0') || {}).textContent || ''
+      };
+    });
+    t.ok('tapping ✓ Done collapses an exercise early into a crisp KPI summary row with sets, best set, volume, PR medal, and set breakdown',
+      r.tucked && /2 sets/.test(r.kpiTxt) && /Best 195 lb × 8/.test(r.kpiTxt) && /3,040 lb vol/.test(r.kpiTxt) && /PR · heaviest/.test(r.kpiTxt) && r.setsTxt === '195×8 · 185×8' && /▲3%/.test(r.fmTxt),
+      JSON.stringify(r));
+    // Reopen via KPI row, finish set 3, and verify auto-collapse when moving to next exercise
+    await p.click('.tr-ex[data-xi="0"] .tr-ex-kpis');
+    await p.fill('#trw-0-2', '185'); await p.fill('#trr-0-2', '8');
+    await p.click('[data-t="tick"][data-x="0"][data-s="2"]');
+    const readyCls = await p.evaluate(() => (document.querySelector('[data-t="exdone"][data-x="0"]') || {}).className || '');
+    await p.fill('#trw-1-0', '155'); await p.fill('#trr-1-0', '8');
+    await p.click('[data-t="tick"][data-x="1"][data-s="0"]');
+    r = await p.evaluate((readyCls) => {
+      const c0 = document.querySelector('.tr-ex[data-xi="0"]');
+      return {
+        ready: /is-ready/.test(readyCls),
+        autoTucked: c0 && c0.classList.contains('tr-ex-tuck'),
+        sets3: (c0 && c0.querySelector('.tr-ex-sets-line') || {}).textContent || ''
+      };
+    }, readyCls);
+    t.ok('finishing all working sets turns ✓ Done green and auto-collapses the exercise once a set on the next lift is ticked',
+      r.ready && r.autoTucked && r.sets3 === '195×8 · 185×8 · 185×8',
+      JSON.stringify(r));
+
     await p.close();
     }
   },

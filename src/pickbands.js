@@ -682,10 +682,7 @@
       if (k > today) return;
       var day = MDAYS[k] || {};
       Object.keys(day).forEach(function (sk) {
-        (day[sk] || []).forEach(function (it) {
-          if (k === viewK && sk === slot && S.mpBasket[it.id] === undefined) return;
-          take(it);
-        });
+        (day[sk] || []).forEach(take);
       });
     });
     if (!out.length) return '';

@@ -114,6 +114,7 @@
      Drawn before Fits best and marked into `shown`, so a food that closes the
      meal is never offered again further down at a different portion. */
   function mpComboHTML(shown) {
+    if (S.mpSec === 'foods' || S.mpShelf) return '';
     var k = mViewKey();
     var gap = mComboGap(k);
     if (!gap) return '';

@@ -696,7 +696,7 @@ module.exports = nourish({
 
     /* Composed with the box, which is the whole reason it is a filter. */
     await railPg.evaluate(() => {
-      const v = document.querySelector('[data-mpshelf="veg"]');
+      const v = document.querySelector('[data-mpshelf="carb"]');
       if (v && v.getAttribute('aria-pressed') !== 'true') v.click();
     });
     await railPg.waitForTimeout(300);
@@ -722,17 +722,10 @@ module.exports = nourish({
     t.ok('and typing after pressing one keeps both the caret and the chip',
       await railPg.evaluate(() => document.activeElement.id === 'mpFind' &&
         document.activeElement.selectionStart === 3 &&
-        (document.querySelector('.mp-shelf.on') || {}).dataset.mpshelf === 'veg'));
+        (document.querySelector('.mp-shelf.on') || {}).dataset.mpshelf === 'carb'));
 
-    /* A recipe used to be unshelvable: mShelfKey returned '' for anything
-       without a food flag, which was all 316 of them, so every macro chip
-       would have hidden the whole book.
-     *
-       ASSERTED ON A MACRO CHIP, never the Recipes one. Recipes filters on
-       `!r.food` and never asks mShelfKey at all, so it stays green with the
-       shelving reverted — I wrote it that way first and only found out by
-       mutating the fix back in. A dish under 🥩 is the thing that cannot
-       happen unless a recipe can be shelved. */
+    /* The three macro pills (🥩 Protein, 🥑 Fats, 🍚 Carbs) filter single
+       foods by dominant macro calorie share, while 🍲 Recipes filters dishes. */
     await railPg.evaluate(() => {
       const i = document.getElementById('mpFind');
       i.value = '';
@@ -741,11 +734,10 @@ module.exports = nourish({
       if (p2) p2.click();
     });
     await railPg.waitForTimeout(400);
-    t.ok('and a recipe can sit on a macro shelf, not just a single food',
+    t.ok('and a macro shelf holds single foods by dominant macro',
       await railPg.evaluate(() => {
         const rows = [...document.querySelectorAll('#mpList .mpick-wrap .mpick-row')];
-        /* A dish, not a food: food ids are prefixed, recipe ids are numbers. */
-        return rows.some((r) => !/^f:/.test(r.dataset.mpick));
+        return rows.length > 0 && rows.every((r) => /^f:/.test(r.dataset.mpick));
       }),
       await railPg.evaluate(() => [...document.querySelectorAll('#mpList .mpick-wrap .mpick-row')]
         .map((r) => r.dataset.mpick).join(',')));

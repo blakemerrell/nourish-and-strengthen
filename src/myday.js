@@ -501,43 +501,25 @@
      stays anchored at the top even while typing in #mpFind, and only folds
      into the bottom chip strip when explicitly collapsed via [data-mtray="0"]. */
   function sheetOnHTML(M, rows) {
-    if (!S.mTrayOpen) return '';
     var n = 0;
     M.items.forEach(function (it) { if (LIVE.BY_ID[it.id]) n++; });
-    if (!n) return '';
+    if (!n) {
+      return '<section class="msh-on msh-on-empty no-print" aria-label="On ' + esc(M.name) + '">' +
+        '<div class="msh-trh"><span class="msh-trt"><b>On ' + esc(M.name) + '</b><small class="num">0 foods &middot; Tap a food below to add it</small></span></div>' +
+        '</section>';
+    }
     return '<section class="msh-on no-print" aria-label="On ' + esc(M.name) + '">' +
       '<div class="msh-trh"><span class="msh-trt"><b>On ' + esc(M.name) + '</b><small class="num">' +
-        n + (n === 1 ? ' food' : ' foods') + ' &middot; ' + fmtK(M.sub.kcal) + ' kcal</small></span>' +
-        '<button class="msh-i" data-mtray="0" aria-expanded="true" aria-label="Put the foods on ' + esc(M.name) + ' away, to the bottom">' + I_DOWN + '</button></div>' +
+        n + (n === 1 ? ' food' : ' foods') + ' &middot; ' + fmtK(M.sub.kcal) + ' kcal</small></span></div>' +
       rows + '</section>';
   }
 
-  /* The tray along the bottom: Balance and Done, and over them the meal's
-     foods as a strip of chips, newest first, each with its amount, ↑ or ↓
-     when the last re-fit moved it and a lock when you set it. A chip, the
-     count or the arrow puts the foods up in the page (sheetOnHTML), where
-     they are edited; the strip itself is hidden while they are up there
-     (.open, style.css). */
-  function sheetTrayHTML(M, mk) {
-    var sk = M.sk, open = !!S.mTrayOpen;
-    var live = [];
-    M.items.forEach(function (it, i) { if (LIVE.BY_ID[it.id]) live.push(i); });
-    var n = live.length;
-    var said = n + (n === 1 ? ' food' : ' foods') + ' &middot; ' + fmtK(M.sub.kcal) + ' kcal';
-    var chips = live.slice().reverse().map(function (i) {
-      var it = M.items[i], r = LIVE.BY_ID[it.id], was = mk.was[i];
-      var arrow = was === undefined ? '' : it.x > was ? '&uarr;' : '&darr;';
-      return '<button class="msh-chip' + (mk.fresh[i] ? ' fresh' : '') + '" data-mtray="1" aria-label="' + esc(r.name) + ', ' +
-          esc(mDialText(r, it.x)) + '. Show the foods on ' + esc(M.name) + '">' +
-        '<span class="msh-chn">' + esc(r.name) + '</span>' +
-        '<span class="msh-chg num">' + (it.l ? LOCK_SM : '') + esc(mDialText(r, it.x)) + (arrow ? '<em>' + arrow + '</em>' : '') + '</span></button>';
-    }).join('');
-    var body = '<div class="msh-trc">' +
-        '<button class="msh-trn" data-mtray="1" aria-expanded="false" aria-label="' + said.replace('&middot;', 'and') + ' on ' + esc(M.name) + '. Show them">' +
-          '<b class="num">' + n + '</b><small>' + (n === 1 ? 'food' : 'foods') + '</small></button>' +
-        '<span class="msh-chips">' + (chips || '<span class="msh-none">Tap a food above to put it here.</span>') + '</span>' +
-        '<button class="msh-i" data-mtray="1" aria-expanded="false" aria-label="Show the foods on ' + esc(M.name) + '">' + I_UP + '</button></div>';
-    return '<div class="msh-tray no-print' + (open && n ? ' open' : '') + '">' + body +
+  /* The tray along the bottom: Balance and Done only (no bottom basket or
+     collapse/expand flip-flopping). */
+  function sheetTrayHTML(M) {
+    var sk = M.sk, n = 0;
+    M.items.forEach(function (it) { if (LIVE.BY_ID[it.id]) n++; });
+    return '<div class="msh-tray open no-print">' +
       '<div class="msh-acts">' +
         '<button class="msh-bal" data-mbal="' + esc(sk) + '"' + (n ? '' : ' disabled') +
           ' aria-label="Balance every food on ' + esc(M.name) + ', the amounts you set included">' + mIcon('scales') + 'Balance</button>' +

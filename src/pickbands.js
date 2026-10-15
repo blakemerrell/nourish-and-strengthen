@@ -91,44 +91,37 @@
    *
      Not persisted. A shelf is a thought you are having about this meal, not a
      setting; the sheet opens showing everything, the way it always has. */
+  var MP_PILLS = [
+    ['protein', '\uD83E\uDD69', 'Protein'],
+    ['fat',     '\uD83E\uDD51', 'Fats'],
+    ['carb',    '\uD83C\uDF5A', 'Carbs']
+  ];
+  function mpMacroDomKey(r) {
+    if (!r || !r.food) return '';
+    var m = r.macro || {};
+    var pk = (m.p || 0) * 4, fk = (m.f || 0) * 9, ck = (m.c || 0) * 4;
+    if (pk <= 0 && fk <= 0 && ck <= 0) {
+      var sk = mShelfKey(r);
+      return (sk === 'protein' || sk === 'fat' || sk === 'carb') ? sk : 'carb';
+    }
+    if (pk >= fk && pk >= ck) return 'protein';
+    if (fk >= pk && fk >= ck) return 'fat';
+    return 'carb';
+  }
   function mpShelfOK(r) {
     if (!S.mpShelf) return true;
     if (S.mpShelf === 'recipes') return !r.food;
+    if (S.mpShelf === 'protein' || S.mpShelf === 'fat' || S.mpShelf === 'carb') {
+      return !!r.food && mpMacroDomKey(r) === S.mpShelf;
+    }
     return mShelfKey(r) === S.mpShelf;
   }
 
-  /* Only the shelves that would actually find something, counted over the
-     pool this meal can see. An 🫒 Oils chip that filters to one row is worse
-     than no chip: it looks like the app has nothing, when what it has is one
-     oil. Counted rather than assumed, because the pool moves — the
-     storehouse-only pool and the shop-anywhere pool are different books. */
-  /* Which recipes, and in what order. Two selects, on the band divider.
-   *
-     The section vocabulary is the one the Recipes tab speaks, and it answers
-     a different question from the shelf rail: the rail is macros, this is
-     sections and books. "On the family's plan" has no chip equivalent at all
-     and would simply have been lost. */
-  /* An order is a question you have about a long list.
-   *
-     The mockup puts it plainly: sorts only appear on Recipes, because a shelf
-     of nine vegetables does not need one. Both places that decide this read
-     the same function, because a sort control that is hidden while the list
-     is still sorted by it is an invisible setting steering what you see —
-     which is the exact shape of half the bugs this app has had.
-   *
-     "Recipes" here means what you are browsing, not a mode: the Single foods
-     lens is a list of foods, and so is any macro shelf. Pressing 🍲 is
-     browsing recipes and keeps its order. */
   function mpSortsOn() {
     return !(S.mpSec === 'foods' || (S.mpShelf && S.mpShelf !== 'recipes'));
   }
   function mpSortNow() { return mpSortsOn() ? S.mpSort : 'fit'; }
 
-  /* The meals you saved (Save meal, in a meal's ⋯): kept to yourself, a
-     food that remembers its parts; shared, a recipe on Ours written from a
-     meal rather than by hand, so with no steps. Blake, 2026-10-11, of an
-     empty meal on the day: "add food, plan meal, create meal" — Saved meals
-     is the way to the last of those from there (myday.js, emptyHTML). */
   function mpSavedMeals() {
     var out = [];
     LIVE.MFOODS.forEach(function (r) { if (r.parts && r.parts.length) out.push(r); });
@@ -146,14 +139,6 @@
         (fam.length ? '<option value="family"' + (S.mpSec === 'family' ? ' selected' : '') +
           '>On the family\u2019s plan (' + fam.length + ')</option>' : '') +
         '<option value="all"' + (S.mpSec === 'all' ? ' selected' : '') + '>Every recipe</option>' +
-        /* Restored after being cut for the shelf rail, which turned out not to
-           do this job. A macro chip narrows to things that are MOSTLY that
-           macro and then ranks them by fit — and for a main meal a dish fits
-           better than a spoonful, so pressing 🥩 gives ten recipes and one
-           tin of tuna. That is the right answer to "what protein should I
-           eat" and the wrong answer to "let me see the plain foods", which is
-           a question about kind, not macro. The rail cannot ask it: it is the
-           same axis as "Every recipe", which is why it belongs here. */
         '<option value="foods"' + (S.mpSec === 'foods' ? ' selected' : '') + '>Single foods</option>' +
         (saved || S.mpSec === 'saved' ? '<option value="saved"' + (S.mpSec === 'saved' ? ' selected' : '') + '>Saved meals</option>' : '') +
         (function () {
@@ -179,29 +164,19 @@
         : '') + '</span>';
   }
 
-  var MSHELF_MIN = 3;
   function mpShelvesHTML() {
     if (!S.macroPick) return '';
     var slot = null;
     mReadSlots().list.forEach(function (sl) { if (sl.k === S.macroPick.slot) slot = sl; });
     if (!slot) return '';
-    /* Typed, the rail counts.
-     *
-       The chips were built from the whole pool whatever was in the box, so a
-       search left a row of shelves describing a list that was no longer on
-       screen — and the one question you have while typing is WHERE the hits
-       are. Narrowed by the query, each chip says how many of them it holds,
-       and MSHELF_MIN steps aside: three is the floor for a shelf worth
-       offering on a resting screen, and two hits for a word you just typed is
-       worth knowing about. */
     var q = mpQ();
-    var n = {}, anyRecipe = false, total = 0, cooked = 0;
+    var n = { protein: 0, fat: 0, carb: 0 }, anyRecipe = false, total = 0, cooked = 0;
     mMealPool(slot, true).forEach(function (r) {
-      if (!r.food) anyRecipe = anyRecipe || !q;   // the chip exists if the pool has any
+      if (!r.food) anyRecipe = anyRecipe || !q;
       if (q && !mpMatches(r, q)) return;
       total++;
       if (!r.food) { anyRecipe = true; cooked++; return; }
-      var k = mShelfKey(r);
+      var k = mpMacroDomKey(r);
       if (k) n[k] = (n[k] || 0) + 1;
     });
     var tag = function (c) {
@@ -210,42 +185,22 @@
     var chips = '<button class="mp-shelf' + (S.mpShelf ? '' : ' on') +
       '" data-mpshelf="" aria-pressed="' + (S.mpShelf ? 'false' : 'true') + '">All' +
       tag(total) + '</button>';
-    var macroPrimary = { protein: 1, fat: 1, carb: 1 };
-    /* Spelled out on phones with room (>= 376px) and when active (.on) so the
-       primary macro priority (Protein, Fats, Carbs, Recipes) is explicit;
-       collapsed to emoji via .mp-shl at <= 375px when unselected so all five
-       primary chips fit a 284px rail on a 320px phone without pushing Carbs
-       or Recipes off-screen (see 2026-10-08 note on the 89px Recipes chip). */
-    var addRecipeChip = function () {
-      if (anyRecipe || S.mpShelf === 'recipes') {
-        chips += '<button class="mp-shelf' + (q ? ' counted' : '') +
-          (S.mpShelf === 'recipes' ? ' on' : '') +
-          '" data-mpshelf="recipes" aria-pressed="' + (S.mpShelf === 'recipes' ? 'true' : 'false') +
-          '" aria-label="Recipes' + (q ? ', ' + cooked + ' of them' : '') +
-          '"><i>\uD83C\uDF72</i><span class="mp-shl"> Recipes</span>' + tag(cooked) + '</button>';
-      }
-    };
-    var recipePlaced = false;
-    LIVE.MSHELF.forEach(function (sh) {
-      if (!macroPrimary[sh[0]] && !recipePlaced) {
-        addRecipeChip();
-        recipePlaced = true;
-      }
+    MP_PILLS.forEach(function (sh) {
       var c = n[sh[0]] || 0;
-      /* The chip you are standing on never leaves, even at nought. Dropping
-         it took away the only way to un-press the thing that emptied the
-         list — press 🥦, type a word no vegetable answers to, and both the
-         rows and the chip were gone. A zero is a real answer: this shelf has
-         none of what you typed. */
-      if (c < (q ? 1 : MSHELF_MIN) && S.mpShelf !== sh[0]) return;
-      var isMacro = !!macroPrimary[sh[0]];
-      chips += '<button class="mp-shelf' + (isMacro ? '' : ' emo') + (q ? ' counted' : '') +
+      if (q && c < 1 && S.mpShelf !== sh[0]) return;
+      chips += '<button class="mp-shelf' + (q ? ' counted' : '') +
         (S.mpShelf === sh[0] ? ' on' : '') +
         '" data-mpshelf="' + sh[0] + '" aria-pressed="' + (S.mpShelf === sh[0] ? 'true' : 'false') +
         '" aria-label="' + esc(sh[2]) + (q ? ', ' + c + ' of them' : '') +
-        '"><i>' + sh[1] + '</i>' + (isMacro ? '<span class="mp-shl"> ' + esc(sh[2]) + '</span>' : '') + tag(c) + '</button>';
+        '"><i>' + sh[1] + '</i><span class="mp-shl"> ' + esc(sh[2]) + '</span>' + tag(c) + '</button>';
     });
-    if (!recipePlaced) addRecipeChip();
+    if (anyRecipe || S.mpShelf === 'recipes') {
+      chips += '<button class="mp-shelf' + (q ? ' counted' : '') +
+        (S.mpShelf === 'recipes' ? ' on' : '') +
+        '" data-mpshelf="recipes" aria-pressed="' + (S.mpShelf === 'recipes' ? 'true' : 'false') +
+        '" aria-label="Recipes' + (q ? ', ' + cooked + ' of them' : '') +
+        '"><i>\uD83C\uDF72</i><span class="mp-shl"> Recipes</span>' + tag(cooked) + '</button>';
+    }
     return '<div class="mp-shelves" id="mpShelves">' + chips + '</div>';
   }
   function mpMatches(r, qs) {
@@ -579,11 +534,11 @@
        with the top ten is answering the shortlist question again. The old
        Recipes screen showed forty for exactly this reason and it went out
        with the mode. */
-    if (S.mpSec === 'foods') {
-      /* Stable: the fit order is kept inside each group, and the condiments
-         simply move below the foods. */
+    if (S.mpSec === 'foods' || (S.mpShelf && S.mpShelf !== 'recipes')) {
+      /* Stable: the fit/macro order is kept inside each group, and the
+         condiments simply move below the foods. */
       var eats = [], cond = [];
-      ranked.forEach(function (e) { ((e.r.eat || e.r.side) ? eats : cond).push(e); });
+      ranked.forEach(function (e) { ((!e.r.food || e.r.eat || e.r.side) ? eats : cond).push(e); });
       ranked = eats.concat(cond);
     }
     /* Anything already in the basket stays on screen, outside the cap.

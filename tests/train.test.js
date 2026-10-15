@@ -2489,12 +2489,12 @@ module.exports = {
     r = await p.evaluate(() => window.Train._.state().LIVE.rs);
     t.ok('and no rest before a drop set', r === null, JSON.stringify(r));
     r = await p.evaluate(() => [...document.querySelectorAll('.tr-rdiv-b')].map((b) => b.textContent).join(','));
-    t.ok('the rest between sets is drawn where it is not the lift’s own: a minute after a warm-up, none before a drop set', r === '1:00,no rest', r);
+    t.ok('the rest between sets is drawn between working sets (and none before a drop set), not after warm-ups', r === '3:00,no rest', r);
     await p.click('.tr-ex-m [data-t="restpick"]');
     await p.click('[data-t="restset"][data-v="120"]');
     r = await p.evaluate(() => ({ live: window.Train._.state().LIVE.x[0].rest, kept: window.Train._.state().T.pr.rests.nbbbench,
       div: [...document.querySelectorAll('.tr-rdiv-b')].map((b) => b.textContent).join(','), meta: document.querySelector('.tr-ex-m').textContent }));
-    t.ok('a lift’s rest can be its own, and it is remembered', r.live === 120 && r.kept && r.kept.s === 120 && r.div === '1:00,no rest' && /rest 2:00/.test(r.meta), JSON.stringify(r));
+    t.ok('a lift’s rest can be its own, and it is remembered', r.live === 120 && r.kept && r.kept.s === 120 && r.div === '2:00,no rest' && /rest 2:00/.test(r.meta), JSON.stringify(r));
     r = await p.evaluate(() => [...document.querySelectorAll('#trpl-0-1 .tr-stk-p')].map((b) => b.className).join('|'));
     t.ok('plates are coloured the way competition plates are: a 45 blue, a 25 green', /pl-lb-45/.test(r) && /pl-lb-25/.test(r), r);
     await p.fill('#trw-0-3', '135'); await p.fill('#trr-0-3', '6');

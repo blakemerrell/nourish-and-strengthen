@@ -6861,12 +6861,11 @@
       // always drawn, empty unless a weight leaves the set under five reps; typing fills it
       '<div class="tr-lo" id="trlo-' + i + '-' + j + '" aria-live="polite">' + (j === lf.j ? esc(lf.t) : '') + '</div>' +
       /* The rest that follows this set, between it and the next, the way
-         Strong draws it — only where it is not the lift's own rest, which the
-         line under the name already says: a minute after a warm-up, none
-         before a drop set. A pair says its rest once, under the name. Tap it
-         to change the lift's rest. */
+         Strong draws it — between working sets (or none before a drop set),
+         while warm-ups stay unsplit. A pair says its rest once, under the
+         name. Tap it to change the lift's rest. */
       // a circuit's next set on this machine is a round away: its rests are said under the name
-      (j < x.s.length - 1 && !x.cc && (x.s[j + 1].ty === 'd' || (!mate && restAfter(i, j) !== x.rest)) ? '<div class="tr-rdiv"><button class="tr-rdiv-b" data-t="restpick" data-e="' + esc(x.e) + '" aria-label="Rest after this set: ' +
+      (j < x.s.length - 1 && !x.cc && !s.wu && (x.s[j + 1].ty === 'd' || !mate) ? '<div class="tr-rdiv"><button class="tr-rdiv-b" data-t="restpick" data-e="' + esc(x.e) + '" aria-label="Rest after this set: ' +
         (x.s[j + 1].ty === 'd' ? 'none, a drop set follows' : clock(restAfter(i, j))) + '. Change the rest for ' + esc(ex.n) + '">' +
         (x.s[j + 1].ty === 'd' ? 'no rest' : clock(restAfter(i, j))) + '</button></div>' : '');
     }).join('');

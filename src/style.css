@@ -4928,7 +4928,7 @@ button.tr-card:hover { border-color: var(--line-firm); background: var(--field);
   .tr-view { padding-left: 12px; padding-right: 12px; }
   .tr-card { padding: 14px; }
   .tr-ex { padding: 12px 10px 8px; }
-  .tr-set { grid-template-columns: 24px minmax(0, 1fr) 64px 52px 42px; gap: 5px; }
+  .tr-set { grid-template-columns: 30px minmax(0, 1fr) 62px 50px 42px; gap: 5px; }
   .tr-recs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tr-rest-in { padding: 10px 14px; }
   .tr-rest-btn { padding: 7px 9px; }
@@ -5164,9 +5164,9 @@ button.tr-card:hover { border-color: var(--line-firm); background: var(--field);
 .tr-ez .tr-sub { margin-top: 4px; line-height: 1.5; }
 .tr-dday.tr-ez .tr-sub { font-size: 0.8125rem; }
 @media (max-width: 560px) {
-  .tr-rq .tr-set { grid-template-columns: 24px minmax(0, 1fr) 60px 48px 44px 40px; gap: 4px; }
-  .tr-set.tr-eds { grid-template-columns: 26px 68px 56px 40px; }
-  .tr-rq .tr-set.tr-eds { grid-template-columns: 26px 68px 56px 48px 40px; }
+  .tr-rq .tr-set { grid-template-columns: 30px minmax(0, 1fr) 58px 46px 44px 40px; gap: 5px; }
+  .tr-set.tr-eds { grid-template-columns: 30px 68px 56px 40px; }
+  .tr-rq .tr-set.tr-eds { grid-template-columns: 30px 68px 56px 48px 40px; }
 }
 /* Bringing in from Strong: each exercise, what it became, and a way to change it. */
 .tr-sgl { border-top: 1px solid var(--line); margin-top: 8px; }

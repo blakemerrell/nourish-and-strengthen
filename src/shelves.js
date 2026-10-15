@@ -40,11 +40,11 @@
      through to whichever macro carries its calories. */
   var MSHELF = [
     ['protein', '\uD83E\uDD69', 'Protein'],
+    ['fat',     '\uD83E\uDD51', 'Fats'],
+    ['carb',    '\uD83C\uDF5A', 'Carbs'],
     ['veg',     '\uD83E\uDD66', 'Veggies'],
     ['fruit',   '\uD83C\uDF4E', 'Fruit'],
     ['starch',  '\uD83E\uDD56', 'Starch'],
-    ['carb',    '\uD83C\uDF5A', 'Carbs'],
-    ['fat',     '\uD83E\uDD51', 'Fats'],
     ['dairy',   '\uD83E\uDDC0', 'Dairy'],
     ['oil',     '\uD83E\uDED2', 'Oils'],
   ];

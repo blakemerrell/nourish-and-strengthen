@@ -210,17 +210,27 @@
     var chips = '<button class="mp-shelf' + (S.mpShelf ? '' : ' on') +
       '" data-mpshelf="" aria-pressed="' + (S.mpShelf ? 'false' : 'true') + '">All' +
       tag(total) + '</button>';
-    if (anyRecipe || S.mpShelf === 'recipes') {
-      /* An emoji like the rest. Spelled out it was 89 px — a third of a
-         320 px rail for one chip, which bought five of the nine a place
-         behind the fade. The pot is as legible as the carrot beside it. */
-      chips += '<button class="mp-shelf emo' + (q ? ' counted' : '') +
-        (S.mpShelf === 'recipes' ? ' on' : '') +
-        '" data-mpshelf="recipes" aria-pressed="' + (S.mpShelf === 'recipes' ? 'true' : 'false') +
-        '" aria-label="Recipes' + (q ? ', ' + cooked + ' of them' : '') +
-        '"><i>\uD83C\uDF72</i>' + tag(cooked) + '</button>';
-    }
+    var macroPrimary = { protein: 1, fat: 1, carb: 1 };
+    /* Spelled out on phones with room (>= 376px) and when active (.on) so the
+       primary macro priority (Protein, Fats, Carbs, Recipes) is explicit;
+       collapsed to emoji via .mp-shl at <= 375px when unselected so all five
+       primary chips fit a 284px rail on a 320px phone without pushing Carbs
+       or Recipes off-screen (see 2026-10-08 note on the 89px Recipes chip). */
+    var addRecipeChip = function () {
+      if (anyRecipe || S.mpShelf === 'recipes') {
+        chips += '<button class="mp-shelf' + (q ? ' counted' : '') +
+          (S.mpShelf === 'recipes' ? ' on' : '') +
+          '" data-mpshelf="recipes" aria-pressed="' + (S.mpShelf === 'recipes' ? 'true' : 'false') +
+          '" aria-label="Recipes' + (q ? ', ' + cooked + ' of them' : '') +
+          '"><i>\uD83C\uDF72</i><span class="mp-shl"> Recipes</span>' + tag(cooked) + '</button>';
+      }
+    };
+    var recipePlaced = false;
     LIVE.MSHELF.forEach(function (sh) {
+      if (!macroPrimary[sh[0]] && !recipePlaced) {
+        addRecipeChip();
+        recipePlaced = true;
+      }
       var c = n[sh[0]] || 0;
       /* The chip you are standing on never leaves, even at nought. Dropping
          it took away the only way to un-press the thing that emptied the
@@ -228,12 +238,14 @@
          rows and the chip were gone. A zero is a real answer: this shelf has
          none of what you typed. */
       if (c < (q ? 1 : MSHELF_MIN) && S.mpShelf !== sh[0]) return;
-      chips += '<button class="mp-shelf emo' + (q ? ' counted' : '') +
+      var isMacro = !!macroPrimary[sh[0]];
+      chips += '<button class="mp-shelf' + (isMacro ? '' : ' emo') + (q ? ' counted' : '') +
         (S.mpShelf === sh[0] ? ' on' : '') +
         '" data-mpshelf="' + sh[0] + '" aria-pressed="' + (S.mpShelf === sh[0] ? 'true' : 'false') +
         '" aria-label="' + esc(sh[2]) + (q ? ', ' + c + ' of them' : '') +
-        '"><i>' + sh[1] + '</i>' + tag(c) + '</button>';
+        '"><i>' + sh[1] + '</i>' + (isMacro ? '<span class="mp-shl"> ' + esc(sh[2]) + '</span>' : '') + tag(c) + '</button>';
     });
+    if (!recipePlaced) addRecipeChip();
     return '<div class="mp-shelves" id="mpShelves">' + chips + '</div>';
   }
   function mpMatches(r, qs) {
@@ -241,6 +253,15 @@
     if (!mpShelfOK(r)) return false;
     if (!qs) return true;
     return r.food ? searchScore(r.name, qs) >= 0 : !!matchRank(r, qs);
+  }
+
+  function mpMacroShare(r, sh) {
+    var m = (r && r.macro) || {};
+    var kcal = Math.max(m.kcal || ((m.p || 0) * 4 + (m.f || 0) * 9 + (m.c || 0) * 4), 1);
+    if (sh === 'protein') return ((m.p || 0) * 4) / kcal;
+    if (sh === 'fat') return ((m.f || 0) * 9) / kcal;
+    if (sh === 'carb') return ((m.c || 0) * 4) / kcal;
+    return 0;
   }
 
   function mpKnownIds() {
@@ -310,27 +331,34 @@
     }).join('');
   }
 
-  /* What you starred, first, when you have typed something.
+  /* What you starred, first, both when typing and when browsing a macro shelf.
    *
-     Blake, 2026-10-08: typing a food, "the USDA search is mostly what I see
-     and it's almost all junk and what I'd rather see are the foods that are
-     in my favorites. Recents in my pantry and then finally USDA food at the
-     very bottom." The star only ever lifted a row inside the Foods band
-     (mpHitRank's first group), so a starred recipe sat in Everything else
-     under a screen of other things. Foods and recipes both, ranked by the
-     word. Only with a query: the resting list already opens on what you
-     reach for. */
+     Blake, 2026-10-08 & 2026-10-15: "my first priority is to find proteins I
+     like. and then I find fats, then I find carbs. and I would like to see
+     the best sources of those macros first. my favs, then most recommended
+     from my actual pantry, then it can show the rest." */
   function mpFavsHTML(shown) {
     var q = mpQ();
-    if (!q || !S.macroPick) return '';
+    if (!S.macroPick) return '';
+    if (!q && !S.mpShelf) return '';
     var hits = [];
-    var look = function (r, i) {
-      if (shown[r.id] || !mIsFav(r) || !mpMatches(r, q)) return;
-      var rk = mpHitRank(r, q);
-      if (rk >= 0) hits.push({ r: r, rk: rk, i: i });
-    };
-    LIVE.MFOODS.forEach(look);
-    LIVE.RECIPES.forEach(function (r, i) { look(r, LIVE.MFOODS.length + i); });
+    if (!q) {
+      var slot = null;
+      mReadSlots().list.forEach(function (sl) { if (sl.k === S.macroPick.slot) slot = sl; });
+      if (!slot) return '';
+      mMealPool(slot, true).forEach(function (r, i) {
+        if (shown[r.id] || !mIsFav(r) || !mpMatches(r, '')) return;
+        hits.push({ r: r, rk: (r.food ? 0 : 1) - mpMacroShare(r, S.mpShelf) * 0.5, i: i });
+      });
+    } else {
+      var look = function (r, i) {
+        if (shown[r.id] || !mIsFav(r) || !mpMatches(r, q)) return;
+        var rk = mpHitRank(r, q);
+        if (rk >= 0) hits.push({ r: r, rk: rk, i: i });
+      };
+      LIVE.MFOODS.forEach(look);
+      LIVE.RECIPES.forEach(function (r, i) { look(r, LIVE.MFOODS.length + i); });
+    }
     hits.sort(function (a, b) { return a.rk - b.rk || a.i - b.i; });
     var rows = hits.slice(0, 6).map(function (h) { return h.r; });
     if (!rows.length) return '';
@@ -514,6 +542,11 @@
         var ok = pool.filter(function (r) { return !skip[r.id] && mpMatches(r, q); });
         var fd = [], rc = [], out = [];
         ok.forEach(function (r) { (r.food ? fd : rc).push(r); });
+        if (!q && (S.mpShelf === 'protein' || S.mpShelf === 'fat' || S.mpShelf === 'carb')) {
+          var byShare = function (a, b) { return mpMacroShare(b, S.mpShelf) - mpMacroShare(a, S.mpShelf); };
+          fd.sort(byShare);
+          rc.sort(byShare);
+        }
         for (var i = 0; i < Math.max(fd.length, rc.length); i++) {
           if (fd[i]) out.push({ r: fd[i], x: 1 });
           if (rc[i]) out.push({ r: rc[i], x: 1 });
@@ -521,7 +554,9 @@
         return out;
       })();
     /* An order is a lens, not a different picker: every row keeps the portion
-       the fit worked out, whatever order they arrive in. */
+       the fit worked out, whatever order they arrive in. On the primary macro
+       shelves (Protein, Fats, Carbs), rank by macro share of calories so the
+       purest sources of that macro lead before mixed dishes. */
     var order = mpSortNow();
     if (order === 'protein') {
       ranked.sort(function (a, b) {
@@ -529,15 +564,21 @@
       });
     } else if (order === 'healthy') {
       ranked.sort(function (a, b) { return (b.r.score || 0) - (a.r.score || 0); });
+    } else if (planned && !q && (S.mpShelf === 'protein' || S.mpShelf === 'fat' || S.mpShelf === 'carb')) {
+      ranked.sort(function (a, b) {
+        return mpMacroShare(b.r, S.mpShelf) - mpMacroShare(a.r, S.mpShelf);
+      });
     }
-    /* Ten while the lens is where it opens, forty once it has been moved.
+    /* Ten while the lens is where it opens, forty once it or a shelf chip has
+       been chosen.
      *
        Ten is the right length for "here are the best fits" — a shortlist you
-       read rather than a catalogue you scroll. But choosing a lens is asking
-       a different question: "Single foods" or "Sunday Feasts" is somebody
-       going to look through a shelf, and answering that with the top ten is
-       answering the shortlist question again. The old Recipes screen showed
-       forty for exactly this reason and it went out with the mode. */
+       read rather than a catalogue you scroll. But choosing a lens or a shelf
+       is asking a different question: "Single foods", "Protein", or "Sunday
+       Feasts" is somebody going to look through a shelf, and answering that
+       with the top ten is answering the shortlist question again. The old
+       Recipes screen showed forty for exactly this reason and it went out
+       with the mode. */
     if (S.mpSec === 'foods') {
       /* Stable: the fit order is kept inside each group, and the condiments
          simply move below the foods. */
@@ -562,7 +603,7 @@
     ranked.forEach(function (e) {
       (S.mpBasket[e.r.id] !== undefined ? held : offer).push(e);
     });
-    ranked = offer.slice(0, S.mpSec === 'meal' ? 10 : 40).concat(held);
+    ranked = offer.slice(0, S.mpSec === 'meal' && !S.mpShelf ? 10 : 40).concat(held);
     /* An empty band still draws its divider, because the divider is where the
        lens and the order live and they are the way back out.
      *
@@ -641,7 +682,10 @@
       if (k > today) return;
       var day = MDAYS[k] || {};
       Object.keys(day).forEach(function (sk) {
-        (day[sk] || []).forEach(take);
+        (day[sk] || []).forEach(function (it) {
+          if (k === viewK && sk === slot && S.mpBasket[it.id] === undefined) return;
+          take(it);
+        });
       });
     });
     if (!out.length) return '';

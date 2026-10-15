@@ -113,6 +113,8 @@
   var I_PLUS = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2v8M2 6h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   var I_UP = ICO('<path d="M6 15l6-6 6 6"/>');
   var I_DOWN = ICO('<path d="M6 9l6 6 6-6"/>');
+  var I_MOVE = ICO('<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>');
+  var I_EXPLODE = ICO('<path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/><path d="M3 3l6 6M21 3l-6 6M3 21l6-6M21 21l-6-6"/>');
 
   var fmtK = function (n) { return Math.round(n).toLocaleString('en-US'); };
 
@@ -355,10 +357,21 @@
     var pinned = M.pins.some(function (p) { return p.id === it.id; });
     var was = mk.was[i], fresh = !!mk.fresh[i];
     var spent = it.eaten && S.mEdit !== tag;
-    var menuOpen = S.mMenu === tag;
+    var moveOpen = S.mMenu === 'move:' + tag;
+    var menuOpen = S.mMenu === tag || moveOpen;
+    var isSavedMeal = !!(r.parts && r.parts.some(function (pt) { return LIVE.BY_ID[pt.id]; }));
     var sg = !r.food && mServeG(r);
     var measure = mDialMeasure(r, it.x);
     var dialU = mDialG(r) ? 'g' : mDialUnit(r);
+    var destSlots = mReadSlots().list.filter(function (sl) {
+      return sl.k !== sk && !mSkipped(M.k, sl.k);
+    });
+    var destHTML = '';
+    if (moveOpen) {
+      destHTML = destSlots.map(function (sl) {
+        return '<button class="mfood-mi mmoveto" role="menuitem" data-mmoveto="' + tag + ':' + esc(sl.k) + '">' + I_MOVE + esc(sl.n) + '</button>';
+      }).join('');
+    }
     return '<div class="mitem mfood mrow' + (it.eaten ? ' eaten' : '') + (it.l ? ' held' : '') +
         (was !== undefined ? ' moved' : fresh ? ' fresh' : '') + (S.mpSwap && S.mpSwap.slot === sk && S.mpSwap.i === i ? ' swapping' : '') + '">' +
       (S.mpSwap && S.mpSwap.slot === sk && S.mpSwap.i === i
@@ -396,15 +409,19 @@
       // the why and Weigh the batch open the row's full width, under it
       mWhyStrip(it, tag) + mBatchStrip(r, it, tag) +
       (menuOpen ? '<div class="mfood-menu mrow-menu no-print" role="menu">' +
-        '<button class="mfood-mi mlock" role="menuitem" data-mlock="' + tag + '" aria-pressed="' + (it.l ? 'true' : 'false') + '">' +
-          (it.l ? I_OPEN + 'Let it move' : I_LOCK + 'Lock the amount') + '</button>' +
-        '<button class="mfood-mi mswap" role="menuitem" data-mswap="' + tag + '">' + I_SWAP + 'Swap</button>' +
-        '<button class="mfood-mi mpin" role="menuitem" data-mpin="' + tag + '" aria-pressed="' + (pinned ? 'true' : 'false') + '" aria-label="' +
-          (pinned ? 'Unpin from ' + esc(M.name) : 'Pin to ' + esc(M.name) + ' every day') + '">' + I_PIN + (pinned ? 'Unpin' : 'Pin to ' + esc(M.name)) + '</button>' +
-        (mCanFav(r) ? '<button class="mfood-mi mfav" role="menuitem" data-mfav="' + esc(String(r.id)) + '" aria-pressed="' + (mIsFav(r) ? 'true' : 'false') + '">' +
-          I_STAR + (mIsFav(r) ? 'Remove from favourites' : 'Favourite') + '</button>' : '') +
-        (sg ? '<button class="mfood-mi" role="menuitem" data-mbatch="' + tag + '">' + I_WEIGH + 'Weigh the batch</button>' : '') +
-        '<button class="mfood-mi mdel" role="menuitem" data-mdel="' + tag + '" aria-label="Remove ' + esc(r.name) + '">' + I_BIN + 'Remove</button>' +
+        (moveOpen ? destHTML :
+          '<button class="mfood-mi mlock" role="menuitem" data-mlock="' + tag + '" aria-pressed="' + (it.l ? 'true' : 'false') + '">' +
+            (it.l ? I_OPEN + 'Let it move' : I_LOCK + 'Lock the amount') + '</button>' +
+          '<button class="mfood-mi mswap" role="menuitem" data-mswap="' + tag + '">' + I_SWAP + 'Swap</button>' +
+          (destSlots.length ? '<button class="mfood-mi mmove" role="menuitem" data-mmove="' + tag + '">' + I_MOVE + 'Move to&hellip;</button>' : '') +
+          (isSavedMeal ? '<button class="mfood-mi mexplode" role="menuitem" data-mexplode="' + tag + '">' + I_EXPLODE + 'Explode into foods</button>' : '') +
+          '<button class="mfood-mi mpin" role="menuitem" data-mpin="' + tag + '" aria-pressed="' + (pinned ? 'true' : 'false') + '" aria-label="' +
+            (pinned ? 'Unpin from ' + esc(M.name) : 'Pin to ' + esc(M.name) + ' every day') + '">' + I_PIN + (pinned ? 'Unpin' : 'Pin to ' + esc(M.name)) + '</button>' +
+          (mCanFav(r) ? '<button class="mfood-mi mfav" role="menuitem" data-mfav="' + esc(String(r.id)) + '" aria-pressed="' + (mIsFav(r) ? 'true' : 'false') + '">' +
+            I_STAR + (mIsFav(r) ? 'Remove from favourites' : 'Favourite') + '</button>' : '') +
+          (sg ? '<button class="mfood-mi" role="menuitem" data-mbatch="' + tag + '">' + I_WEIGH + 'Weigh the batch</button>' : '') +
+          '<button class="mfood-mi mdel" role="menuitem" data-mdel="' + tag + '" aria-label="Remove ' + esc(r.name) + '">' + I_BIN + 'Remove</button>'
+        ) +
       '</div>' : '') +
     '</div>';
   }
@@ -477,11 +494,12 @@
      So the rows are part of the page again, where a phone scrolls a box it
      is typing into above the keyboard, and a meal with food on it opens on
      them (picksheet.js). What the tray was for on the 5th still holds while
-     you look for something to add: a word in the search hides this and the
-     tray's strip of chips shows the same foods along the bottom (the
-     .mpq class, app.js), and a chip brings them back up here. Drawn only
-     while open; the strip in the tray is drawn either way and hidden by
-     CSS while this shows, so typing can swap them without a redraw. */
+     you look for something to add: a word in the search used to hide this
+     and swap in the tray's strip of chips along the bottom (the .mpq class,
+     app.js), and a chip brought them back up here. Since 2026-10-15 (Blake:
+     "feels like I am flopping all over to adjust my foods"), the plate card
+     stays anchored at the top even while typing in #mpFind, and only folds
+     into the bottom chip strip when explicitly collapsed via [data-mtray="0"]. */
   function sheetOnHTML(M, rows) {
     if (!S.mTrayOpen) return '';
     var n = 0;
@@ -499,7 +517,7 @@
      when the last re-fit moved it and a lock when you set it. A chip, the
      count or the arrow puts the foods up in the page (sheetOnHTML), where
      they are edited; the strip itself is hidden while they are up there
-     and nothing has been typed (.open, style.css). */
+     (.open, style.css). */
   function sheetTrayHTML(M, mk) {
     var sk = M.sk, open = !!S.mTrayOpen;
     var live = [];

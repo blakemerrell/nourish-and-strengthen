@@ -3875,7 +3875,7 @@
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
-    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave'];
+    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave'];
 
   function focusKey(el) {
     if (!el || el === document.body || !el.getAttribute) return null;
@@ -5754,6 +5754,73 @@
       }
       if (e.target.closest('[data-mswapx]')) { S.mpSwap = null; renderModal(); return; }
 
+      var mv = e.target.closest('[data-mmove]');
+      if (mv) {
+        S.mMenu = 'move:' + mv.dataset.mmove;
+        mRedraw();
+        return;
+      }
+      var mvt = e.target.closest('[data-mmoveto]');
+      if (mvt) {
+        var mp2 = mvt.dataset.mmoveto.split(':'); // fromSlot : index : toSlot
+        var mvk = mViewKey(), fromSk = mp2[0], fromIdx = Number(mp2[1]), toSk = mp2[2];
+        var movedItem = null, fromSnap = null, toSnap = null;
+        S.mMenu = '';
+        S.mAmt = '';
+        mEditDay(mvk, function (day) {
+          var arr = day[fromSk] || [];
+          if (!arr[fromIdx]) return;
+          fromSnap = JSON.parse(JSON.stringify(arr));
+          toSnap = JSON.parse(JSON.stringify(day[toSk] || []));
+          movedItem = arr.splice(fromIdx, 1)[0];
+          day[toSk] = day[toSk] || [];
+          day[toSk].push(movedItem);
+        });
+        if (movedItem) {
+          mpForget(fromSk, fromIdx);
+          var mwas1 = mRefitMeal(mvk, fromSk);
+          if (S.macroPick && S.macroPick.slot === fromSk) S.mMarks = { k: mvk, sk: fromSk, was: mwas1, fresh: {}, snap: null };
+          var mvr = BY_ID[movedItem.id];
+          var mslots = mReadSlots(), destName = (mslots.names || {})[toSk] || 'Meal';
+          mslots.list.forEach(function (sl) { if (sl.k === toSk && sl.n) destName = sl.n; });
+          S.mLastMove = { k: mvk, fromSk: fromSk, toSk: toSk, fromSnap: fromSnap, toSnap: toSnap };
+          mToast('Moved ' + esc(mvr ? mvr.name : 'food') + ' to ' + esc(destName) + '.', '1', 'data-mmoveundo');
+        }
+        mRedraw();
+        return;
+      }
+      var exp = e.target.closest('[data-mexplode]');
+      if (exp) {
+        var ep = exp.dataset.mexplode.split(':'); // slot : index
+        var evk = mViewKey(), esk = ep[0], eidx = Number(ep[1]);
+        var exItem = (mDay(evk)[esk] || [])[eidx];
+        var exRec = exItem && BY_ID[exItem.id];
+        S.mMenu = '';
+        S.mAmt = '';
+        var liveParts = (exRec && exRec.parts ? exRec.parts : []).filter(function (pt) { return !!BY_ID[pt.id]; });
+        if (exItem && liveParts.length) {
+          var newItems = liveParts.map(function (pt) {
+            var px = Math.round((Number(pt.x) || 1) * (Number(exItem.x) || 1) * 1000) / 1000;
+            var obj = { id: pt.id, x: px || 1, eaten: exItem.eaten ? 1 : 0 };
+            if (exItem.l) obj.l = 1;
+            return obj;
+          });
+          var exSnap = null;
+          mEditDay(evk, function (day) {
+            var earr = day[esk] || [];
+            if (!earr[eidx]) return;
+            exSnap = JSON.parse(JSON.stringify(earr));
+            Array.prototype.splice.apply(earr, [eidx, 1].concat(newItems));
+          });
+          if (exSnap) {
+            S.mLastExplode = { k: evk, sk: esk, snap: exSnap };
+            mToast('Exploded ' + esc(exRec.name) + ' into ' + newItems.length + ' foods.', '1', 'data-mexplodeundo');
+          }
+        }
+        mRedraw();
+        return;
+      }
+
       var keep = e.target.closest('[data-mkeep]');
       if (keep) {
         S.keepMeal = keep.dataset.mkeep;
@@ -5790,7 +5857,7 @@
       var fm = e.target.closest('[data-mfmenu], [data-mmenu]');
       if (fm) {
         var want = fm.dataset.mfmenu || ('meal:' + fm.dataset.mmenu);
-        S.mMenu = S.mMenu === want ? '' : want;
+        S.mMenu = (S.mMenu === want || S.mMenu === 'move:' + want) ? '' : want;
         mRedraw();
         return;
       }
@@ -8532,6 +8599,35 @@
     if (tx) tx.hidden = !open;
   });
   document.addEventListener('click', function (e) {
+    var mvu = e.target.closest && e.target.closest('[data-mmoveundo]');
+    if (mvu && S.mLastMove) {
+      var lm = S.mLastMove;
+      S.mLastMove = null;
+      S.mMarks = { k: '', sk: '', was: {}, fresh: {}, snap: null };
+      mEditDay(lm.k, function (day) {
+        day[lm.fromSk] = lm.fromSnap || [];
+        day[lm.toSk] = lm.toSnap || [];
+      });
+      var tt1 = $('mToast');
+      if (tt1) tt1.hidden = true;
+      if (S.macroPick) renderModal();
+      if (S.view === 'macros') renderMacros();
+      return;
+    }
+    var exu = e.target.closest && e.target.closest('[data-mexplodeundo]');
+    if (exu && S.mLastExplode) {
+      var le = S.mLastExplode;
+      S.mLastExplode = null;
+      S.mMarks = { k: '', sk: '', was: {}, fresh: {}, snap: null };
+      mEditDay(le.k, function (day) {
+        day[le.sk] = le.snap || [];
+      });
+      var tt2 = $('mToast');
+      if (tt2) tt2.hidden = true;
+      if (S.macroPick) renderModal();
+      if (S.view === 'macros') renderMacros();
+      return;
+    }
     var al = e.target.closest('[data-mallow]');
     if (!al) return;
     var aid = al.dataset.mallow;

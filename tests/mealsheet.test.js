@@ -125,7 +125,7 @@ module.exports = {
     await p.click('#modalRoot [data-mfmenu="l:5"]');
     await p.waitForTimeout(250);
     const menu = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrow-menu .mfood-mi')].map((b) => b.textContent.trim()));
-    t.ok('⋯ on a food holds Lock, Swap, Pin, Favourite and Remove', menu.join('|') === 'Lock the amount|Swap|Pin to Lunch|Favourite|Remove', JSON.stringify(menu));
+    t.ok('⋯ on a food holds Lock, Swap, Move to…, Pin, Favourite and Remove', menu.join('|') === 'Lock the amount|Swap|Move to\u2026|Pin to Lunch|Favourite|Remove', JSON.stringify(menu));
     await p.click('#modalRoot .mrow-menu [data-mlock="l:5"]');
     await p.waitForTimeout(250);
     t.ok('Lock holds the avocado, and the menu closes', (await mealOf(p, 'l'))[5].l === 1 &&
@@ -175,10 +175,17 @@ module.exports = {
       await p.click('#modalRoot [data-mpick="f:banana"]');
       await p.waitForTimeout(400);
       const d1 = await mealOf(p, 'd');
-      const on = await p.evaluate(() => ({ pressed: (document.querySelector('#modalRoot [data-mpick="f:banana"]') || {}).getAttribute('aria-pressed'),
-        row: [...document.querySelectorAll('#modalRoot .mrows .mrow')].some((r) => /Banana/i.test(r.textContent) && r.classList.contains('fresh')) }));
-      t.ok('a tap puts it on dinner at once, at what you had last time, marked New in the tray',
-        d1.length === n0 + 1 && d1[d1.length - 1].id === 'f:banana' && d1[d1.length - 1].x === 1 && on.pressed === 'true' && on.row, JSON.stringify({ d1, on }));
+      const on = await p.evaluate(() => {
+        const freshRow = [...document.querySelectorAll('#modalRoot .mrows .mrow')].find((r) => /Banana/i.test(r.textContent) && r.classList.contains('fresh'));
+        const otherRow = [...document.querySelectorAll('#modalRoot .mrows .mrow')].find((r) => !r.classList.contains('fresh'));
+        return {
+          pressed: (document.querySelector('#modalRoot [data-mpick="f:banana"]') || {}).getAttribute('aria-pressed'),
+          row: !!freshRow,
+          freshTint: !!freshRow && !!otherRow && getComputedStyle(freshRow).backgroundColor !== getComputedStyle(otherRow).backgroundColor,
+        };
+      });
+      t.ok('a tap puts it on dinner at once, at what you had last time, marked New and tinted in the tray',
+        d1.length === n0 + 1 && d1[d1.length - 1].id === 'f:banana' && d1[d1.length - 1].x === 1 && on.pressed === 'true' && on.row && on.freshTint, JSON.stringify({ d1, on }));
       await p.click('#modalRoot [data-mpick="f:banana"]');
       await p.waitForTimeout(400);
       t.ok('a second tap takes it back off', (await mealOf(p, 'd')).length === n0);
@@ -222,17 +229,27 @@ module.exports = {
     t.ok('and the tray stays pinned along the bottom, Balance and Done under the thumb', Math.abs(trayAt) <= 2 &&
       !!(await p.$('#modalRoot .msh-tray .msh-bal')) && !!(await p.$('#modalRoot .msh-tray .msh-done')), String(trayAt));
 
-    /* A word in the search sends the foods down to the tray's chips, so the
-       results get the screen (Blake, 2026-10-05: the foods "at the bottom" while
-       picking); a chip brings them back up, the word gone. */
+    /* Typing in the search keeps the plate card anchored at the top without
+       flopping to the bottom strip; explicitly collapsing [data-mtray="0"]
+       sends it to the bottom chips and tapping a chip brings it back up. */
     await p.fill('#mpFind', 'egg');
     await p.waitForTimeout(300);
-    const typing = await p.evaluate(() => ({ on: getComputedStyle(document.querySelector('#modalRoot .msh-on')).display !== 'none',
+    const whileTyping = await p.evaluate(() => {
+      const on = document.querySelector('#modalRoot .msh-on');
+      return {
+        on: !!on && getComputedStyle(on).display !== 'none',
+        strip: getComputedStyle(document.querySelector('#modalRoot .msh-tray .msh-trc')).display !== 'none',
+      };
+    });
+    t.ok('typing in the search keeps the plate card anchored at the top without flopping to the bottom strip',
+      whileTyping.on && !whileTyping.strip, JSON.stringify(whileTyping));
+    await p.click('#modalRoot .msh-on [data-mtray="0"]');
+    await p.waitForTimeout(250);
+    const typing = await p.evaluate(() => ({ on: !!document.querySelector('#modalRoot .msh-on'),
       strip: getComputedStyle(document.querySelector('#modalRoot .msh-tray .msh-trc')).display !== 'none',
-      chips: document.querySelectorAll('#modalRoot .msh-tray .msh-chip').length,
-      rows: document.querySelectorAll('#modalRoot .msh-on .mrow').length }));
-    t.ok('a word in the search puts the foods away to the tray\u2019s chips, one a food', !typing.on && typing.strip && typing.rows > 0 &&
-      typing.chips === typing.rows, JSON.stringify(typing));
+      chips: document.querySelectorAll('#modalRoot .msh-tray .msh-chip').length }));
+    t.ok('collapsing the plate card puts the foods in the tray\u2019s chips, one a food', !typing.on && typing.strip &&
+      typing.chips > 0, JSON.stringify(typing));
     await p.click('#modalRoot .msh-tray .msh-chip');
     await p.waitForTimeout(300);
     const back = await p.evaluate(() => {
@@ -363,6 +380,79 @@ module.exports = {
     const quiet = (a) => a.length === 4 && a.every((x) => !/none|left/i.test(x.shown) && /—$/.test(x.shown) && x.heard === 'none left' && x.dashed);
     t.ok('a meal with nothing left is one quiet row on the day: no pills, and no target to aim at', !!onTray && onTray.empty && !onTray.pills && !onTray.aim, JSON.stringify(onTray));
     t.ok('and the same in its sheet, the words kept for a screen reader', quiet(onSheet), JSON.stringify(onSheet));
+
+    /* ---- Move to… and Explode into foods (with Undo) ---- */
+    await sp.click('#modalRoot .msheet .msh-done');
+    await sp.waitForTimeout(300);
+    await sp.evaluate(() => {
+      const d = JSON.parse(localStorage.getItem('bsc.macroDays'));
+      d['2026-10-06'].b = [
+        { id: 'f:greek_yogurt', x: 1, eaten: 0, by: 'fill' },
+        { id: 'f:oats', x: 1, eaten: 0, by: 'fill' },
+      ];
+      localStorage.setItem('bsc.macroDays', JSON.stringify(d));
+    });
+    await sp.reload();
+    await sp.waitForTimeout(600);
+    await sp.click('.tab[data-view="macros"]');
+    await sp.waitForTimeout(400);
+    await sp.evaluate(() => document.querySelector('[data-mopen="b"]').click());
+    await sp.waitForTimeout(400);
+    await sp.click('#modalRoot .msh-h [data-mmenu="b"]');
+    await sp.waitForTimeout(200);
+    await sp.click('#modalRoot .msh-menu [data-mkeep="b"]');
+    await sp.waitForTimeout(300);
+    await sp.fill('#mkName', 'Morning Bowl');
+    await sp.click('[data-mkdo="mine"]');
+    await sp.waitForTimeout(400);
+    const railOrder = await sp.evaluate(() =>
+      [...document.querySelectorAll('#mpShelves [data-mpshelf]')].slice(0, 5).map((b) => b.dataset.mpshelf));
+    t.ok('the shelf rail leads with All, Protein, Fats, Carbs, Recipes in macro-priority order',
+      railOrder.join(',') === ',protein,fat,carb,recipes', JSON.stringify(railOrder));
+    const savedBefore = await sp.evaluate(() => JSON.parse(localStorage.getItem('bsc.macroDays'))['2026-10-06'].b);
+    await sp.click('#modalRoot [data-mfmenu="b:0"]');
+    await sp.waitForTimeout(200);
+    t.ok('Save meal collapses the two breakfast foods into one saved meal row with Explode into foods in its ⋯ menu',
+      savedBefore.length === 1 && !!(await sp.$('#modalRoot .mrow-menu [data-mexplode="b:0"]')), JSON.stringify(savedBefore));
+    await sp.click('#modalRoot .mrow-menu [data-mexplode="b:0"]');
+    await sp.waitForTimeout(350);
+    const exploded = await sp.evaluate(() => JSON.parse(localStorage.getItem('bsc.macroDays'))['2026-10-06'].b.map((x) => x.id));
+    t.ok('Explode breaks the saved meal back into its individual foods on the plate',
+      exploded.join() === 'f:greek_yogurt,f:oats', JSON.stringify(exploded));
+    await sp.click('#mToast [data-mexplodeundo]');
+    await sp.waitForTimeout(350);
+    const unexploded = await sp.evaluate(() => JSON.parse(localStorage.getItem('bsc.macroDays'))['2026-10-06'].b);
+    t.ok('and Undo restores the grouped saved meal identically',
+      JSON.stringify(unexploded) === JSON.stringify(savedBefore), JSON.stringify({ savedBefore, unexploded }));
+    /* Explode it again so we have two foods on Breakfast, then Move one to Evening Snack
+       and verify Undo restores both the moved food (including its properties) and the
+       refitted sibling food on Breakfast, with no undefined values in the day. */
+    await sp.click('#modalRoot [data-mfmenu="b:0"]');
+    await sp.waitForTimeout(200);
+    await sp.click('#modalRoot .mrow-menu [data-mexplode="b:0"]');
+    await sp.waitForTimeout(350);
+    const beforeMove = await sp.evaluate(() => JSON.parse(localStorage.getItem('bsc.macroDays'))['2026-10-06'].b);
+    await sp.click('#modalRoot [data-mfmenu="b:0"]');
+    await sp.waitForTimeout(200);
+    await sp.click('#modalRoot .mrow-menu [data-mmove="b:0"]');
+    await sp.waitForTimeout(200);
+    await sp.click('#modalRoot .mrow-menu [data-mmoveto="b:0:e"]');
+    await sp.waitForTimeout(350);
+    const moved = await sp.evaluate(() => {
+      const d = JSON.parse(localStorage.getItem('bsc.macroDays'))['2026-10-06'];
+      return { b: d.b || [], e: d.e || [] };
+    });
+    t.ok('Move to… moves the plate to Evening Snack and re-fits the remaining food on Breakfast',
+      moved.b.length === 1 && moved.e.length === 1 && moved.b[0].x !== beforeMove[1].x, JSON.stringify({ beforeMove, moved }));
+    await sp.click('#mToast [data-mmoveundo]');
+    await sp.waitForTimeout(350);
+    const unmoved = await sp.evaluate(() => {
+      const d = JSON.parse(localStorage.getItem('bsc.macroDays'))['2026-10-06'];
+      return { b: d.b || [], e: d.e || [] };
+    });
+    t.ok('and Undo puts the moved plate back on Breakfast and restores the sibling to its pre-move portion',
+      unmoved.b.length === 2 && unmoved.e.length === 0 && JSON.stringify(unmoved.b) === JSON.stringify(beforeMove),
+      JSON.stringify({ beforeMove, unmoved }));
     await sp.context().close();
 
     t.ok('no page errors', errs.length === 0, errs.join(' | '));

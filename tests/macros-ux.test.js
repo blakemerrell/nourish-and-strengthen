@@ -382,9 +382,6 @@ module.exports = nourish({
       await search('egg');
       await pg.click('#mpList .mpick-row[data-mpick="f:egg"]');
       await pg.waitForTimeout(300);
-      // a word in the search keeps the meal's foods down in the tray's chips; a chip brings them up to dial
-      await pg.click('#modalRoot .msh-tray .msh-chip');
-      await pg.waitForTimeout(300);
       const eggAt = async () => ((await stored(WED)).d || []).findIndex((it) => it.id === 'f:egg');
       const ei = await eggAt();
       const eggX = async () => (((await stored(WED)).d || [])[ei] || {}).x;

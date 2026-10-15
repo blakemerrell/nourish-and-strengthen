@@ -336,6 +336,7 @@ const FOODS = {
   turkey_bacon:     { ext: 1, eat: 1, zone: 'protein', kcal: 368, p: 29.5, c: 4.2, f: 25.9, na: 2020, fib: 0, g: { oz: 28.35, each: 7, slice: 7 }, def: { qty: 2, unit: 'slice' }, label: 'Turkey bacon', note: 'cooked, because that is the form eaten \u2014 so the slice is the COOKED 7 g one, not the 14 g it went into the pan as. Two slices carry 283 mg of sodium; the Zone table rates it Best on its macros alone' },
   canadian_bacon:   { ext: 1, eat: 1, zone: 'protein', kcal: 146, p: 28.3, c: 1.8, f: 2.8, na: 993, fib: 0, g: { oz: 28.35, each: 28, slice: 28 }, def: { qty: 2, unit: 'slice' }, label: 'Canadian bacon', note: 'cooked. Very lean and very salty — no lever flag for the same reason as the deli turkey' },
   ground_beef_lean: { ext: 1, zone: 'protein', kcal: 152, p: 20.8, c: 0, f: 7, na: 66, fib: 0, g: { lb: 453.6, oz: 28.35, cup: 225 }, def: { qty: 4, unit: 'oz' }, label: 'Lean ground beef', note: '93/7, raw; the storehouse ground beef above is 90/10' },
+  ground_beef_96_4: { ext: 1, eat: 1, lever: 1, zone: 'protein', kcal: 121, p: 21.6, c: 0, f: 4, na: 65, fib: 0, g: { lb: 453.6, oz: 28.35, cup: 225 }, def: { qty: 4, unit: 'oz' }, label: 'Extra lean ground beef (96/4)', note: '96/4, raw; clean protein lever for macro meal prep' },
   greek_yogurt:     { ext: 1, shelf: 'dairy', eat: 1, lever: 1, zone: 'protein', kcal: 73, p: 10, c: 3.9, f: 1.9, na: 34, fib: 0, g: { cup: 245, tbsp: 15, oz: 28.35 }, def: { qty: 0.5, unit: 'cup' }, label: 'Greek yogurt', note: 'plain, low-fat' },
   plain_yogurt:     { ext: 1, shelf: 'dairy', eat: 1, zone: 'protein', kcal: 63, p: 5.3, c: 7, f: 1.6, na: 70, fib: 0, g: { cup: 245, tbsp: 15 }, def: { qty: 0.5, unit: 'cup' }, label: 'Plain yogurt', note: 'low-fat, unsweetened — the vanilla one above carries the sugar' },
   egg_sub:          { ext: 1, shelf: 'dairy', eat: 1, lever: 1, zone: 'protein', kcal: 48, p: 10, c: 2, f: 0, na: 199, fib: 0, g: { cup: 245, tbsp: 15, oz: 28.35 }, def: { qty: 0.25, unit: 'cup' }, label: 'Egg substitute', note: 'liquid, fat free' },
@@ -400,6 +401,9 @@ const FOODS = {
   /* ---- a grain. No flags, like the oats and rice above it: dry weight, and
      not a thing you eat as it comes. */
   barley:       { ext: 1, starch: 1, zone: 'carbohydrate', kcal: 352, p: 9.9, c: 77.7, f: 1.2, na: 9, fib: 15.6, g: { cup: 200, lb: 453.6, oz: 28.35 }, def: { qty: 0.25, unit: 'cup' }, label: 'Pearl barley', note: 'dry, as the recipes would state it' },
+  /* Cooked jasmine rice, eaten as it comes (like rice_cooked above), so a
+     search for "jasmine" finds the cooked carb lever. */
+  rice_jasmine: { ext: 1, starch: 1, eat: 1, lever: 1, zone: 'carbohydrate', kcal: 129, p: 2.7, c: 28.2, f: 0.3, na: 1, fib: 0.4, g: { cup: 158, oz: 28.35, lb: 453.6 }, def: { qty: 1, unit: 'cup' }, label: 'Jasmine rice', note: 'cooked, unsalted; 1 cup = 158 g' },
 
   /* ---- the Mexican shelf, 2026-09-26. Two raw ingredients the storehouse
      does not carry, then five things the Copycat Shelf makes and other
@@ -624,6 +628,8 @@ const ALIASES = {
   'chicken broth': 'broth', 'beef broth': 'broth', 'chicken stock': 'broth', 'beef stock': 'broth',
   'broth': 'broth',
   'tater tots': 'tater_tots', 'tater tot': 'tater_tots', 'frozen tater tots': 'tater_tots',
+  '96/4 ground beef': 'ground_beef_96_4', 'extra lean ground beef': 'ground_beef_96_4',
+  'jasmine rice': 'rice_jasmine', 'cooked jasmine rice': 'rice_jasmine',
 };
 
 /*
@@ -667,7 +673,7 @@ const SPICE_NAMES = {
    are deliberately absent — those ARE breakfast. */
 const NOT_AT_BREAKFAST = [
   'tuna', 'chicken_breast', 'chicken_canned', 'cooked_beef', 'roast_beef_deli',
-  'beef_frank', 'turkey_deli', 'turkey_breast',
+  'beef_frank', 'turkey_deli', 'turkey_breast', 'ground_beef_96_4', 'rice_jasmine',
   'salmon', 'cod', 'halibut', 'tilapia', 'tuna_steak', 'trout', 'haddock',
   'snapper', 'mackerel', 'catfish', 'sardines', 'shrimp', 'crab', 'lobster',
   'scallops', 'clams', 'calamari',

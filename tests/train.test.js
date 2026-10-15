@@ -4821,7 +4821,9 @@ module.exports = {
       const _ = window.Train._;
       const rigs = new Set();
       let allValid = true, allMedia = true;
+      const ids = [];
       _.LIB_LIST.forEach((ex) => {
+        ids.push(ex.id);
         const rig = _.exRigOf(ex.id, ex);
         rigs.add(rig);
         const html = _.exAnimSVG(ex.id, ex);
@@ -4834,17 +4836,29 @@ module.exports = {
           allMedia = false;
         }
       });
-      return { count: _.LIB_LIST.length, rigCount: rigs.size, allValid, allMedia };
+      // Verify front-delt primary exercises (bb-ohp) highlight side shoulder polygon as hm-pri
+      const ohpMap = _.exMuscleMap(_.lib('bb-ohp'));
+      const ohpPriOk = /data-mus="side"[^>]*hm-pri/.test(ohpMap);
+      // Verify offline/error fallback swaps .tr-media img for .tr-ex-anim-card
+      const holder = document.createElement('div');
+      holder.innerHTML = _.exAbout('bb-bench', _.lib('bb-bench'));
+      document.body.appendChild(holder);
+      const img = holder.querySelector('img.tr-media');
+      if (img) img.dispatchEvent(new Event('error'));
+      const fallbackOk = !!holder.querySelector('.tr-ex-anim-card') && !holder.querySelector('img.tr-media');
+      holder.remove();
+      return { count: _.LIB_LIST.length, ids, rigCount: rigs.size, allValid, allMedia, ohpPriOk, fallbackOk };
     });
     const fs = require('fs'), path = require('path');
-    const gifsOnDisk = anims.count === 112 && fs.readdirSync(path.join(__dirname, '..', 'art', 'lifts'))
-      .filter((f) => f.endsWith('.gif')).every((f) => {
-        const b = fs.readFileSync(path.join(__dirname, '..', 'art', 'lifts', f));
-        return b.length > 1000 && b.slice(0, 3).toString('ascii') === 'GIF';
-      });
-    t.ok('Every exercise in LIB_LIST (all 112 lifts) has a local 3D anatomical GIF in art/lifts/ and SVG fallback across all 24 movement rigs',
-      anims.count === 112 && anims.rigCount === 24 && anims.allValid && anims.allMedia && gifsOnDisk,
-      JSON.stringify(Object.assign({}, anims, { gifsOnDisk })));
+    const gifsOnDisk = anims.count === 112 && anims.ids.every((id) => {
+      const fp = path.join(__dirname, '..', 'art', 'lifts', id + '.gif');
+      if (!fs.existsSync(fp)) return false;
+      const b = fs.readFileSync(fp);
+      return b.length > 1000 && b.slice(0, 3).toString('ascii') === 'GIF';
+    });
+    t.ok('Every exercise in LIB_LIST (all 112 lifts) has a local 3D anatomical GIF in art/lifts/, offline SVG error fallback, and primary shoulder highlight on OHP',
+      anims.count === 112 && anims.rigCount === 24 && anims.allValid && anims.allMedia && anims.ohpPriOk && anims.fallbackOk && gifsOnDisk,
+      JSON.stringify(Object.assign({}, anims, { ids: anims.ids.length, gifsOnDisk })));
 
     await p.close();
     }

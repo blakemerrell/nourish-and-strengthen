@@ -8460,6 +8460,7 @@
         w: { now: now.avg, n: now.n, was: was.avg, m: was.n },
         days: f.days, kcal: f.days ? Math.round(f.kcal / f.days) : null,
         target: f.tn ? Math.round(f.tk / f.tn) : base || null,
+        curTarget: base || null,
         p: f.pDays ? Math.round(f.p / f.pDays) : null, tp: f.pDays ? Math.round(f.tp / f.pDays) : null,
         // a day each, oldest first: 1 where protein reached nine-tenths of target
         hit: f.hit, pDays: f.pDays, pd: f.pd,

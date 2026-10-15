@@ -4802,6 +4802,11 @@ module.exports = {
       const _ = window.Train._;
       const mFig = _.anatMapSVG({ chest: 'hm-pri', triceps: 'hm-sec' }, 'm');
       const fFig = _.anatMapSVG({ glutes: 'hm-pri', hams: 'hm-sec' }, 'f');
+      const wk3Fig = _.anatMapSVG({
+        front: 'hm-hit', chest: 'hm-hit', side: 'hm-hit', triceps: 'hm-hit', abs: 'hm-hit',
+        back: 'hm-mid', biceps: 'hm-mid', calves: 'hm-mid', quads: 'hm-low', hams: 'hm-low',
+        glutes: 'hm-0', rear: 'hm-0', traps: 'hm-0'
+      }, 'm');
       const secBench = _.secMusclesOf(_.lib('bb-bench'));
       localStorage.setItem('bsc.macroProfile', JSON.stringify({ sex: 'f' }));
       const autoF = _.anatMapSVG({ chest: 'hm-hit' });
@@ -4810,12 +4815,14 @@ module.exports = {
       return {
         mOk: mFig.sex === 'm' && /data-sex="m"/.test(mFig.front) && /data-mus="chest"[^>]*hm-pri/.test(mFig.front) && /data-mus="triceps"[^>]*hm-sec/.test(mFig.back),
         fOk: fFig.sex === 'f' && /data-sex="f"/.test(fFig.back) && /data-mus="glutes"[^>]*hm-pri/.test(fFig.back) && /data-mus="hams"[^>]*hm-sec/.test(fFig.back),
+        wk3Ok: /data-mus="rear"[^>]*hm-hit/.test(wk3Fig.back) && /data-mus="traps"[^>]*hm-mid/.test(wk3Fig.back) &&
+          /data-mus="fore"[^>]*hm-mid/.test(wk3Fig.front) && /data-mus="fore"[^>]*hm-mid/.test(wk3Fig.back),
         secOk: secBench.includes('front') && secBench.includes('triceps'),
         autoSex: autoF.sex === 'f' && autoM.sex === 'm'
       };
     });
     t.ok('Male ("m") and slender Female ("f") anatomical Front & Back muscle maps render with Primary/Secondary muscles and profile sex sync',
-      anat.mOk && anat.fOk && anat.secOk && anat.autoSex, JSON.stringify(anat));
+      anat.mOk && anat.fOk && anat.wk3Ok && anat.secOk && anat.autoSex, JSON.stringify(anat));
 
     const anims = await p.evaluate(() => {
       const _ = window.Train._;

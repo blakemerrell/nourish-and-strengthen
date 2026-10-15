@@ -3736,9 +3736,15 @@
     var cut = under !== null && lb > 0 ? under * 7 / 3500 / lb >= 0.0025 : !!c.ph && c.ph.r >= 0.0025;
     var p = c.prog, slip = p.lifts.filter(function (l) { return l.ch < -0.03; }).map(function (l) { return lib(l.e).n; });
     var falling = p.n >= 2 && (p.fall.length > 0 || (p.down > p.up && p.down >= 2));
-    if (loss !== null && loss >= 0.01 && falling) {
-      var baseK = nw && nw.target > 0 ? nw.target : nw && nw.kcal > 0 ? nw.kcal : 2000;
-      c.guard = { loss: loss, down: p.down, n: p.n, slips: slip.length ? slip.slice(0, 2) : ['Lifts'], addKcal: 150, targetKcal: baseK + 150 };
+    var fDays = c.conf ? c.conf.days : (nw && fin(nw.days) ? nw.days : 0);
+    if (loss !== null && loss >= 0.01 && falling && fDays > 0) {
+      var savedG = readLS('bsc.trainGuard');
+      var prevDone = (savedG && savedG.to === c.to && savedG.kcal > 0) ? savedG.kcal : (S.guardDone > 0 ? S.guardDone : 0);
+      var baseK = nw && nw.curTarget > 0 ? nw.curTarget : nw && nw.target > 0 ? nw.target : nw && nw.kcal > 0 ? nw.kcal : 0;
+      if (prevDone > 0 || baseK > 0) {
+        var tk = prevDone > 0 ? prevDone : baseK + 150;
+        c.guard = { loss: loss, down: p.down, n: p.n, slips: slip.length ? slip.slice(0, 2) : ['Lifts'], addKcal: 150, targetKcal: tk, done: prevDone === tk };
+      }
     }
     if (cut && loss !== null && Math.abs(loss) <= 0.002 && p.n >= 2 && p.up >= 2 && p.up > p.down) {
       c.recomp = { up: p.up, n: p.n };
@@ -3782,9 +3788,7 @@
     ms.days.forEach(function (day, d) {
       if (day.ez) return;
       day.s.forEach(function (s, i) {
-        var n = s.m
-          ? (ms.goal === 'str' ? (dl ? 3 : ((WAVES[ms.wave] || WAVES[10])[Math.min(wc, 2)] || [3])[0]) : (dl ? 2 : 4))
-          : ((sf.sets[d] && sf.sets[d][i]) || 0);
+        var n = s.m ? mainPlan(ms, s, wc, d, dl).sets : ((sf.sets[d] && sf.sets[d][i]) || 0);
         var m = musOf(s.e);
         byMus[m] = (byMus[m] || 0) + n;
         tot += n;
@@ -3928,7 +3932,7 @@
       (c.guard
         ? '<div class="tr-str-guard" role="region" aria-label="Cut strength-loss guard">' +
             '<div class="tr-str-guard-txt"><b>Strength-Loss Guard:</b> Losing ' + pctSay(c.guard.loss) + '/wk with ' + esc(c.guard.slips.join(', ')) + ' slipping. Add +' + c.guard.addKcal + ' kcal/day to spare muscle.</div>' +
-            (S.guardDone === c.guard.targetKcal
+            (c.guard.done || S.guardDone === c.guard.targetKcal
               ? '<span class="tr-str-guard-ok">✓ Buffered to ' + fmtBig(c.guard.targetKcal) + ' kcal/day</span>'
               : '<button type="button" class="tr-str-guard-btn" data-t="chkguard" data-kcal="' + c.guard.targetKcal + '">Buffer to ' + fmtBig(c.guard.targetKcal) + ' kcal (+' + c.guard.addKcal + ')</button>') +
           '</div>'
@@ -4976,7 +4980,7 @@
         var C = window.AudioContext || window.webkitAudioContext;
         if (C) AC = new C();
       }
-      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* not on this browser */ }
+      try { if (navigator.audioSession) navigator.audioSession.type = 'transient'; } catch (e) { /* not on this browser */ }
       if (AC && AC.state === 'suspended') AC.resume();
     } catch (e) { AC = null; }
   }
@@ -4988,9 +4992,10 @@
     try { if (navigator.vibrate) navigator.vibrate([300, 120, 300, 120, 300]); } catch (e) { /* not on this device */ }
     if (!AC || !T.pr.snd) return;
     try {
+      if (AC.state === 'suspended') AC.resume();
       var t = AC.currentTime + 0.03, out = AC.createGain();
-      out.gain.value = 0.3; out.connect(AC.destination);
-      [[1, 1, 16], [2.76, 0.55, 10], [5.4, 0.24, 6], [8.93, 0.1, 3.5]].forEach(function (p) {
+      out.gain.value = 0.45; out.connect(AC.destination);
+      [[1, 1, 16], [2.76, 0.65, 10], [5.4, 0.32, 6], [8.93, 0.14, 3.5]].forEach(function (p) {
         var r = p[0], amp = p[1], dec = p[2];
         [-0.5, 0.5].forEach(function (d) {
           var o = AC.createOscillator(), g = AC.createGain();
@@ -7601,16 +7606,20 @@
           'C 161 244 167 244 170 240 C 172 235 171 228 167 222 L 168 206 C 168 188 165 174 159 162 C 160 150 158 138 154 128 ' +
           'C 155 124 155 119 155 112 C 155 97 151 88 142 86 C 134 84 123 81 112 76 L 111 62 C 113 60 116 56 117 51 L 119 51 ' +
           'C 122 46 122 39 119 39 C 121 27 116 17 106 15 C 110 12 108 5 100 5 Z"/>' +
-        pairPath('b-line', 'M 94 15 C 96 16 98 16 100 16 M 83 51 C 86 60 92 67 100 68 M 76 304 C 76 298 84 298 84 304 C 84 311 76 311 76 304 M 32 231 C 35 233 40 232 42 228 M 31 236 C 35 239 40 237 43 233 M 80 314 L 81 418') +
+        pairPath('b-line', 'M 94 15 C 96 16 98 16 100 16 M 83 51 C 86 60 92 67 100 68 M 66 85 C 78 85 90 86 100 86 M 76 304 C 76 298 84 298 84 304 C 84 311 76 311 76 304 M 32 231 C 35 233 40 232 42 228 M 31 236 C 35 239 40 237 43 233 M 80 314 L 81 418') +
+        '<path class="b-line" d="M 100 86 L 100 216"/>' +
         anatGrp('traps', trapC, [
           'M 89 62 C 91 70 94 78 97 86 L 93 86 C 90 78 88 70 88 64 Z',
           'M 96 68 L 100 68 L 100 86 L 97 86 Z',
           'M 88 73 L 66 85 C 74 86 83 86 92 86 Z'
-        ], [], ['M 69 84 L 91 81']) +
+        ], [], ['M 90 66 L 95 85', 'M 69 84 L 91 81']) +
+        anatGrp('back', cOf('back'), [
+          'M 58 125 C 60 137 64 147 68 156 L 71 148 C 67 140 64 132 62 126 Z'
+        ], [], ['M 60 134 L 66 141', 'M 62 143 L 68 149']) +
         anatGrp('side', deltF, [
           'M 66 85 C 56 85 48 91 45 103 C 46 112 50 119 54 121 C 57 109 61 96 66 85 Z',
           'M 49 91 C 45 97 44 108 46 125 C 49 123 52 120 54 121 C 50 113 47 102 49 91 Z'
-        ], [], ['M 58 89 C 53 98 51 108 52 118']) +
+        ], [], ['M 58 89 C 53 98 51 108 52 118', 'M 52 93 C 48 102 47 111 49 120']) +
         anatGrp('chest', cOf('chest'), [
           'M 100 87 L 87 86 C 74 85 64 89 57 102 C 54 113 57 125 65 131 C 74 137 88 136 97 128 L 100 122 Z'
         ], ['M 58 115 C 63 129 79 133 94 125'], [
@@ -7619,18 +7628,18 @@
         anatGrp('biceps', cOf('biceps'), [
           'M 54 121 C 48 123 44 133 43 148 C 44 157 48 162 52 162 C 57 154 59 140 58 125 Z',
           'M 46 125 C 42 135 40 147 41 160 L 44 152 C 44 143 45 134 46 125 Z'
-        ], ['M 49 124 C 48 137 48 150 49 161'], []) +
+        ], ['M 49 124 C 48 137 48 150 49 161'], ['M 46 132 C 45 142 45 151 47 159', 'M 53 128 C 53 139 52 149 51 158']) +
         anatGrp('fore', foreF, [
           'M 43 151 C 36 162 32 178 32 202 L 35 216 L 39 212 C 39 192 42 172 46 162 Z',
           'M 46 162 C 42 173 39 192 39 212 L 42 212 C 46 196 50 179 53 163 C 50 165 48 164 46 162 Z'
-        ], [], ['M 39 162 C 35 178 34 194 36 212']) +
+        ], ['M 42 162 C 38 178 37 195 38 212'], ['M 39 162 C 35 178 34 194 36 212', 'M 47 166 C 43 180 41 196 40 210']) +
         anatGrp('abs', cOf('abs'), [
           'M 64 131 C 70 136 77 137 84 136 L 84 202 C 76 192 71 177 73 162 C 69 152 65 142 64 131 Z',
           'M 99 125 L 88 132 L 84 142 L 99 144 Z',
           'M 84 144 L 99 146 L 99 160 L 84 158 Z',
           'M 84 160 L 99 162 L 99 176 L 84 174 Z',
           'M 84 176 L 99 178 L 99 220 C 92 214 86 198 84 176 Z'
-        ], [], ['M 67 142 L 82 148', 'M 70 153 L 83 159', 'M 73 165 L 83 172']) +
+        ], [], ['M 67 142 L 82 148', 'M 70 153 L 83 159', 'M 73 165 L 83 172', 'M 90 182 L 91 210']) +
         anatGrp('quads', cOf('quads'), [
           'M 71 172 C 77 188 87 210 99 222 L 99 232 C 95 234 92 242 92 252 C 92 274 91 294 88 305 C 85 308 82 306 81 299 C 79 295 75 295 73 299 C 71 305 69 306 67 302 C 61 285 58 265 59 246 C 57 230 57 214 60 200 C 64 187 69 178 71 172 Z'
         ], [
@@ -7667,26 +7676,27 @@
         pairPath('b-line', 'M 94 15 C 96 16 98 16 100 16 M 85 48 C 90 53 95 54 100 52 M 32 231 C 35 233 40 232 42 228 M 31 236 C 35 239 40 237 43 233 M 79 360 L 80 424 M 83 360 L 83 424') +
         anatGrp('traps', trapC, [
           'M 90 52 C 88 63 81 74 66 84 C 73 92 78 102 81 111 L 100 144 L 100 52 Z'
-        ], [], ['M 88 62 L 99 66', 'M 83 73 L 99 77', 'M 71 85 Q 86 89 99 86', 'M 77 97 L 99 100']) +
+        ], [], ['M 88 62 L 99 66', 'M 83 73 L 99 77', 'M 71 85 Q 86 89 99 86', 'M 77 97 L 99 100', 'M 82 110 L 99 114']) +
         '<path class="b-tendon" d="M 100 65 L 94 74 L 100 83 L 106 74 Z"/>' +
         anatGrp('rear', deltB, [
           'M 66 84 C 53 85 46 95 46 112 C 52 110 60 103 72 95 Z'
-        ], [], ['M 56 88 C 50 95 48 102 48 109']) +
+        ], [], ['M 56 88 C 50 95 48 102 48 109', 'M 62 91 C 56 97 53 103 52 109']) +
         anatGrp('back', cOf('back'), [
           'M 70 95 L 81 111 L 69 118 C 65 111 63 102 70 95 Z',
+          'M 58 103 L 69 118 C 62 121 57 120 54 115 C 54 109 56 105 58 103 Z',
           'M 58 120 C 65 121 73 118 81 111 L 100 144 L 87 164 C 79 161 74 161 72 162 C 68 150 62 136 58 120 Z'
-        ], [], ['M 63 126 Q 79 132 95 140', 'M 66 138 Q 80 144 92 153', 'M 69 150 L 88 161']) +
+        ], [], ['M 66 103 L 78 110', 'M 63 126 Q 79 132 95 140', 'M 66 138 Q 80 144 92 153', 'M 69 150 L 88 161']) +
         '<path class="b-tendon" d="M 100 140 L 87 164 L 91 186 L 100 190 L 109 186 L 113 164 Z"/>' +
         '<path class="b-line" d="M 100 140 L 100 190"/>' +
         anatGrp('abs', cOf('abs'), [
           'M 72 162 C 78 162 85 166 90 175 L 89 187 C 79 187 68 192 60 198 C 63 186 69 174 72 162 Z'
-        ], [], ['M 70 173 L 88 180']) +
+        ], [], ['M 70 173 L 88 180', 'M 66 184 L 86 189']) +
         anatGrp('triceps', cOf('triceps'), [
           'M 46 112 C 42 124 40 139 41 156 C 45 158 50 157 53 160 C 56 150 58 137 58 123 C 54 118 50 114 46 112 Z'
-        ], ['M 51 114 C 48 126 46 138 45 150', 'M 45 146 C 49 150 53 146 56 138'], ['M 44 122 C 42 132 42 142 43 150']) +
+        ], ['M 51 114 C 48 126 46 138 45 150', 'M 45 146 C 49 150 53 146 56 138'], ['M 44 122 C 42 132 42 142 43 150', 'M 52 120 C 51 130 50 139 49 146']) +
         anatGrp('fore', foreB, [
           'M 41 156 C 35 168 32 185 32 204 L 33 220 L 42 212 C 46 196 50 179 53 160 C 49 157 45 158 41 156 Z'
-        ], ['M 46 159 C 41 176 39 194 39 214'], []) +
+        ], ['M 46 159 C 41 176 39 194 39 214'], ['M 38 168 C 35 182 34 196 35 212']) +
         anatGrp('glutes', gluteC, [
           'M 60 198 C 68 192 79 187 89 187 L 100 190 L 100 240 C 88 252 69 250 59 244 C 54 230 54 214 60 198 Z'
         ], ['M 70 192 C 63 206 60 224 61 243'], ['M 68 205 Q 84 205 99 209', 'M 65 217 Q 82 219 99 221', 'M 63 230 Q 81 234 99 233']) +
@@ -7722,7 +7732,8 @@
           'C 178 254 189 253 192 248 C 195 241 192 232 187 226 L 192 206 C 196 188 193 174 184 165 C 186 152 182 141 174 133 ' +
           'C 175 130 177 125 177 118 C 177 102 170 89 154 87 C 143 84 132 79 120 73 L 118 60 C 119 58 120 55 121 51 L 124 51 ' +
           'C 128 45 127 35 123 35 C 124 19 116 6 100 6 Z"/>' +
-        pairPath('b-line', 'M 79 51 C 82 62 90 69 100 70 M 70 304 C 70 296 81 296 81 304 C 81 313 70 313 70 304 M 13 235 C 18 238 25 236 28 231 M 12 242 C 18 245 26 243 29 238 M 20 227 C 24 229 28 233 30 239 M 76 314 L 77 418') +
+        pairPath('b-line', 'M 79 51 C 82 62 90 69 100 70 M 58 86 C 72 86 88 87 100 87 M 70 304 C 70 296 81 296 81 304 C 81 313 70 313 70 304 M 13 235 C 18 238 25 236 28 231 M 12 242 C 18 245 26 243 29 238 M 20 227 C 24 229 28 233 30 239 M 76 314 L 77 418') +
+        '<path class="b-line" d="M 100 87 L 100 220"/>' +
         anatGrp('traps', trapC, [
           'M 82 59 C 86 69 92 78 96 87 L 90 87 C 84 78 81 69 80 61 Z',
           'M 94 69 L 100 70 L 100 88 L 96 87 Z',
@@ -7737,7 +7748,7 @@
         ], [], ['M 48 89 C 40 98 37 109 39 121', 'M 41 92 C 34 101 32 111 35 121', 'M 29 101 C 26 110 26 119 29 126']) +
         anatGrp('chest', cOf('chest'), [
           'M 100 88 L 82 86 C 64 85 52 89 43 104 C 41 115 45 126 53 131 C 65 138 84 138 96 130 L 100 124 Z'
-        ], [], ['M 52 93 Q 76 96 99 91', 'M 46 101 Q 73 105 99 98', 'M 44 109 Q 72 114 99 106', 'M 45 117 Q 72 123 99 114', 'M 49 125 Q 74 131 98 122']) +
+        ], ['M 46 116 C 53 131 74 136 94 127'], ['M 52 93 Q 76 96 99 91', 'M 46 101 Q 73 105 99 98', 'M 44 109 Q 72 114 99 106', 'M 45 117 Q 72 123 99 114', 'M 49 125 Q 74 131 98 122']) +
         anatGrp('biceps', cOf('biceps'), [
           'M 41 124 C 32 126 24 136 23 152 C 24 162 30 168 36 168 C 44 160 49 146 48 130 Z',
           'M 25 129 C 18 139 14 151 16 164 L 23 155 C 23 145 24 136 25 129 Z'
@@ -7859,7 +7870,7 @@
     var sec = secMusclesOf(ex), cmap = { fore: 'hm-0' };
     sec.forEach(function (k) { cmap[k] = 'hm-sec'; });
     cmap[ex.m] = 'hm-pri';
-    if (ex.m === 'front' && !cmap.side) cmap.side = 'hm-pri';
+    if (ex.m === 'front') cmap.side = 'hm-pri';
     var figs = anatMapSVG(cmap);
     var secSay = sec.map(function (k) { return mnameP(k); }).join(', ');
     return '<div class="tr-ex-mmap" role="img" aria-label="Muscles trained by ' + esc(ex.n) + '">' +
@@ -8838,6 +8849,9 @@
           '</g>';
     }
 
+    var still = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if (still) scene = scene.replace(/repeatCount="indefinite"/g, 'repeatCount="0"');
+
     return '<div class="tr-ex-anim-card" data-rig="' + esc(rig) + '">' +
       '<div class="tr-ex-anim-head">' +
         '<span class="tr-ex-anim-tag">● ' + esc(mname(ex.m)) + ' · ' + esc(EQUIP[ex.q] || 'Lift') + '</span>' +
@@ -8852,8 +8866,8 @@
   function exAbout(e, ex) {
     var steps = HOWTO[e], m = MEDIA[e], link = linkOf(e), note = noteOf(e), cue = backCue(ex);
     return (m ? (m.kind === 'video'
-        ? '<video class="tr-media" src="' + esc(m.src) + '" muted loop playsinline autoplay aria-label="' + esc(ex.n) + '"></video>'
-        : '<img class="tr-media" src="' + esc(m.src) + '" alt="' + esc(ex.n) + '">') +
+        ? '<video class="tr-media" data-e="' + esc(e) + '" src="' + esc(m.src) + '" muted loop playsinline autoplay aria-label="' + esc(ex.n) + '"></video>'
+        : '<img class="tr-media" data-e="' + esc(e) + '" src="' + esc(m.src) + '" alt="' + esc(ex.n) + '">') +
         (m.credit ? '<div class="tr-sub">' + esc(m.credit) + '</div>' : '')
       : exAnimSVG(e, ex)) +
       (steps ? '<ol class="tr-howto">' + steps.map(function (st) { return '<li>' + esc(st) + '</li>'; }).join('') + '</ol>'
@@ -11049,6 +11063,7 @@
           } catch (e) { /* private mode */ }
         }
         S.guardDone = gk;
+        writeLS('bsc.trainGuard', { to: checkin().to, kcal: gk });
       }
       draw(); return;
     }
@@ -11954,6 +11969,17 @@
         tick(Number(el.getAttribute('data-x')), Number(el.getAttribute('data-s')));
       }
     });
+    document.addEventListener('error', function (e) {
+      var el = e.target;
+      if (!el || !el.classList || !el.classList.contains('tr-media')) return;
+      var exId = el.getAttribute('data-e');
+      if (!exId) return;
+      var sub = el.nextElementSibling;
+      if (sub && sub.classList && sub.classList.contains('tr-sub')) sub.remove();
+      var wrap = document.createElement('div');
+      wrap.innerHTML = exAnimSVG(exId, lib(exId));
+      if (wrap.firstElementChild) el.replaceWith(wrap.firstElementChild);
+    }, true);
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) return;
       if (newDay()) { wake(); render(); return; }
@@ -12101,7 +12127,7 @@
       e1rm: e1rm, plateMath: plateMath, review: review, merge: merge, payload: payload,
       rirFor: rirFor, nextSlot: nextSlot, prsIn: prsIn, lib: lib, SPLITS: SPLITS, MUS: MUS,
       estDay: estDay, barred: barred, KEEP_SPLITS: KEEP_SPLITS, HABITS: HABITS, weeksOf: weeksOf, nextTm: nextTm, tmOf: tmOf, outgrown: outgrown,
-      weekPlanSets: weekPlanSets, weekLoggedSets: weekLoggedSets, anatMapSVG: anatMapSVG, secMusclesOf: secMusclesOf, exRigOf: exRigOf, exAnimSVG: exAnimSVG, MEDIA: MEDIA, exAbout: exAbout,
+      weekPlanSets: weekPlanSets, weekLoggedSets: weekLoggedSets, anatMapSVG: anatMapSVG, secMusclesOf: secMusclesOf, exMuscleMap: exMuscleMap, exRigOf: exRigOf, exAnimSVG: exAnimSVG, MEDIA: MEDIA, exAbout: exAbout,
       recommend: recommend, PROGS: PROGS, FOCUS: FOCUS, KITS: KITS, axWeek: axWeek, defaultsPr: defaultsPr,
       MOVES: MOVES, mcScore: mcScore, sgParse: sgParse, sgMatch: sgMatch, sgGuess: sgGuess, sgList: sgList, csvRows: csvRows, ntKey: ntKey,
       LIB_LIST: LIB_LIST, slotDone: slotDone, barFor: barFor, barLabel: barLabel, onBar: onBar, liftE1: liftE1, stackHTML: stackHTML, elapsed: elapsed,
@@ -12113,7 +12139,7 @@
       checkin: checkin, chkReads: chkReads, dueSay: dueSay, phaseNow: phaseNow, phaseAt: phaseAt, capAt: capAt, phaseCap: phaseCap, phaseLine: phaseLine, phaseReset: function () { phLive.t = 0; },
       dropWo: dropWo, fitSay: fitSay, yearOf: yearOf, woCsv: woCsv, imDate: imDate, snapHome: snapHome, homeLoads: homeLoads, plateHave: plateHave, counts: counts, tick: tick, yr: function () { return YR; }, lsFull: function () { return LSFULL; },
       state: function () { return { T: T, TS: TS, LIVE: LIVE, S: S }; },
-      reload: function () { T = loadT(); TS = loadTS(); PRSEEN = prSeen(); MSSEEN = msSeenAll(); LIVE = readLS(LS_LIVE); REV++; phLive.t = 0; }
+      reload: function () { T = loadT(); TS = loadTS(); PRSEEN = prSeen(); MSSEEN = msSeenAll(); LIVE = readLS(LS_LIVE); if (!readLS('bsc.trainGuard')) S.guardDone = 0; REV++; phLive.t = 0; }
     }
   };
 })();

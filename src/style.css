@@ -5268,7 +5268,7 @@ button.tr-card:hover { border-color: var(--line-firm); background: var(--field);
 .tr-extab { margin: 12px 0 14px; }
 .tr-media { display: block; width: 100%; max-height: 220px; object-fit: contain; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 6px; margin-bottom: 6px; }
 .tr-ex-anim-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; padding: 10px 12px 8px; margin-bottom: 12px; color: #f8fafc; overflow: hidden; }
-.tr-ex-anim-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; margin-bottom: 4px; font-size: 0.75rem; }
+.tr-ex-anim-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; margin-bottom: 4px; font-size: 0.8125rem; }
 .tr-ex-anim-tag { font-weight: 700; color: #fca5a5; letter-spacing: 0.03em; text-transform: uppercase; }
 .tr-ex-anim-cue { color: #cbd5e1; font-weight: 600; }
 .tr-ex-anim { display: block; width: 100%; max-height: 190px; height: auto; }
@@ -5301,13 +5301,13 @@ button.tr-card:hover { border-color: var(--line-firm); background: var(--field);
 /* The week at the top of the Review: a row each, the number first and a
    picture beside it, then at most two notes of a few words each. */
 .tr-week .tr-eyebrow { margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.tr-chk-conf { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; background: var(--paper-soft); color: var(--muted); }
+.tr-chk-conf { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.04em; background: var(--paper-soft); color: var(--muted); }
 .tr-chk-conf.is-high { background: rgba(34, 197, 94, 0.14); color: var(--green); }
 .tr-chk-conf.is-med { background: rgba(217, 119, 6, 0.14); color: var(--ochre-text); }
 .tr-chk-conf.is-low { background: var(--paper-soft); color: var(--muted); }
 .tr-str-guard { margin-top: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(217, 119, 6, 0.35); background: rgba(217, 119, 6, 0.08); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
 .tr-str-guard-txt { font-size: 0.84375rem; line-height: 1.4; flex: 1 1 220px; color: var(--ink); }
-.tr-str-guard-btn { background: var(--ink); color: var(--paper); border: 0; border-radius: 6px; padding: 6px 12px; font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.tr-str-guard-btn { background: var(--ink); color: var(--paper); border: 0; border-radius: 6px; min-height: 44px; padding: 8px 14px; font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .tr-str-guard-ok { font-size: 0.8125rem; font-weight: 700; color: var(--green); white-space: nowrap; }
 .tr-wkr { display: grid; grid-template-columns: 70px auto 1fr; align-items: center; gap: 4px 10px; padding: 8px 0; border-top: 1px solid var(--line-soft); font-size: 0.875rem; }
 .tr-week .tr-eyebrow + .tr-wkr { border-top: 0; }

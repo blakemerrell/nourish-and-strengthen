@@ -424,10 +424,11 @@ self.addEventListener('fetch', function (e) {
   }
 
   var key = url.pathname + url.search;
+  var isArt = IS_ART[key] || url.pathname.indexOf('/art/lifts/') >= 0;
 
   /* Unbuilt: the network first for everything, and the cache for no signal. */
   if (DEV) {
-    var into = IS_ART[key] ? ART : CACHE;
+    var into = isArt ? ART : CACHE;
     e.respondWith(netOrKept(
       fetch(req, { cache: 'no-cache' }).then(function (res) {
         if (res && res.status === 200 && res.type === 'basic') {
@@ -444,7 +445,7 @@ self.addEventListener('fetch', function (e) {
   /* A picture or a typeface: from its own cache, which is named for exactly
      these bytes, so there is nothing to go and check. Fetched and kept only
      when the install missed it. */
-  if (IS_ART[key]) {
+  if (isArt) {
     e.respondWith(caches.open(ART).then(function (c) {
       return c.match(req).then(function (hit) {
         return hit || fetch(req).then(function (res) {

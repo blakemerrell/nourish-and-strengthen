@@ -5356,6 +5356,20 @@
      can't miss. On a rest day it says so, and when the next one is, with a
      quiet way to start it anyway. The full plan, weights and reasons, is a
      tap away. */
+  /* A workout of your own, on any day, with a block running or not.
+   *
+     Blake, 2026-10-16: he did one exercise of the morning's session and
+     saved it, and that evening wanted to train again, with an exercise of
+     his own. Saving had made the day done, the card under the calendar
+     offered only the next session, and the empty workout ("Just log a
+     workout", where Make your own lives behind + Add an exercise) was only
+     offered with no block at all. So it is on every one of these cards. A
+     workout started this way belongs to no block (ms ''), so it moves
+     nothing in the plan. */
+  function emptyLnk() {
+    return LIVE ? '' : '<button class="tr-lnk" data-t="empty">Start an empty workout</button>';
+  }
+
   function todayHTML(ms, nx) {
     if (!nx) return doneHTML(ms);
     var wk = wkName(ms, nx.w);
@@ -5390,6 +5404,7 @@
             '<button type="button" class="tr-dc-peek" data-t="peeknext" aria-expanded="' + peek + '">' + (peek ? 'Hide preview ▴' : 'Preview ' + esc(dueSay(due)) + ' ▾') + '</button>' +
           '</div>' +
           (peek ? '<div class="tr-dc-drawer">' + body + '<div class="tr-acts">' + start + planBtn + '</div></div>' : '') +
+          (LIVE ? '' : '<div class="tr-acts tr-dc-own">' + emptyLnk() + '</div>') +
         '</div>';
       }
       return '<div id="trSesh" class="tr-card tr-next tr-sesh tr-restday">' +
@@ -5397,7 +5412,7 @@
         '<div class="tr-title">Rest day</div>' +
         '<div class="tr-sub">Next: <b>' + esc(p.n) + '</b> ' + esc(dueSay(due)) + '. Muscles grow in the rest between sessions.</div>' +
         body +
-        '<div class="tr-acts">' + start + planBtn + '</div>' +
+        '<div class="tr-acts">' + start + planBtn + emptyLnk() + '</div>' +
       '</div>';
     }
     return '<div id="trSesh" class="tr-card tr-next tr-sesh">' +
@@ -5406,7 +5421,7 @@
       body +
       restNote(p) +
       start +
-      '<div class="tr-acts tr-next-a">' + planBtn + skip + '</div>' +
+      '<div class="tr-acts tr-next-a">' + planBtn + skip + emptyLnk() + '</div>' +
     '</div>';
   }
 
@@ -5844,7 +5859,7 @@
           (l.ch > 0 ? '+' : '−') + Math.abs(Math.round(l.ch * 100)) + '% est. max</span></li>';
       }).join('') + '</ul>' : '') +
       doneNext(ms) +
-      '<div class="tr-acts"><button class="btn-primary" data-t="again">Build the next block</button></div>' +
+      '<div class="tr-acts"><button class="btn-primary" data-t="again">Build the next block</button>' + emptyLnk() + '</div>' +
     '</div>';
   }
 
@@ -9125,7 +9140,7 @@
     if (!wo) { S.ed = null; return false; }
     var bad = '';
     var x = E.x.map(function (x) {
-      var out = { e: x.e, s: [] };
+      var out = { e: x.e, s: [], nu: x.nu };
       if (fin(x.pq)) out.pq = x.pq;
       x.s.forEach(function (s) {
         // a missed attempt keeps its weight with no reps; any other empty set goes
@@ -9145,8 +9160,21 @@
         out.s.push(o);
       });
       return out;
-    }).filter(function (x) { return x.s.length; });
+    });
     if (bad) { E.err = 'A set of ' + bad + ' has a number that could not be read. Fix it or take it out.'; return false; }
+    /* An exercise with no reps in it went without a word. Blake, 2026-10-16:
+       Edit, + Add an exercise, Make your own, Save, and the exercise he had
+       just made was not in the workout. A lift added here comes with one
+       empty set, so saving before typing its reps lost it. Now one added
+       in this edit says so, and taking it out is its Remove. One that was
+       already in the workout still drops out when its reps are cleared:
+       that is a way of taking it out (tests/train.test.js). */
+    var bare = x.filter(function (z) { return z.nu && !z.s.length; });
+    if (bare.length) {
+      E.err = lib(bare[0].e).n + ' has no reps yet. Type the weight and reps of a set, or take it out with Remove.';
+      return false;
+    }
+    x = x.filter(function (z) { delete z.nu; return z.s.length; });
     /* Times left as they were keep their seconds: the boxes only hold
        minutes, and a short workout read back through them would end in the
        minute it started. */
@@ -9962,7 +9990,7 @@
       openSheet({ k: 'strong', eyebrow: 'Import', title: 'From ' + (S.sg.app || 'your file') });
       return;
     } else if (sh.mode === 'eadd' && S.ed && T.wo[S.ed.id]) {
-      S.ed.x.push({ e: e, s: [{ w: '', r: '', q: '', o: null }] });
+      S.ed.x.push({ e: e, s: [{ w: '', r: '', q: '', o: null }], nu: 1 });
       openSheet({ k: 'wo', id: S.ed.id, eyebrow: 'Workout', title: 'Workout' });
       return;
     }

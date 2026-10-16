@@ -7160,13 +7160,20 @@
            a tap on any row does, and the sheet comes back with it ticked. */
         if (S.newFood.back && S.macroPick) {
           var nk = mViewKey(), nsk = S.macroPick.slot, nid = 'f:my:' + fkey, nat = -1, nfe = mAddsEaten(nk, nsk);
+          /* At the servings you gave it, Kept, with the rest of the meal
+             re-fitting around it. A tapped row goes on at what fits and
+             balances with the others (#103); one you have just typed in
+             comes with its amount said, and balancing it away undid that:
+             1½ servings asked for went on as 1, a packet's one serving as a
+             quarter (tests/scanlabel.test.js). Kept is what the − / + and a
+             typed amount leave too. */
           mEditDay(nk, function (day) {
             var list = (day[nsk] = day[nsk] || []);
-            list.push({ id: nid, x: nx, eaten: nfe });
+            list.push({ id: nid, x: nx, eaten: nfe, l: 1 });
             nat = list.length - 1;
           });
           S.mpAt[nid] = nat;
-          S.mMarks = { k: nk, sk: nsk, was: mRefitMeal(nk, nsk, undefined, false, nat), fresh: mpFresh(nat, nid), snap: null };
+          S.mMarks = { k: nk, sk: nsk, was: mRefitMeal(nk, nsk, nat, false, nat), fresh: mpFresh(nat, nid), snap: null };
           S.mpBasket[nid] = ((mDay(nk)[nsk] || [])[nat] || {}).x || nx;
           S.newFood = null;
           S.mpMode = 'home';

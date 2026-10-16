@@ -413,7 +413,13 @@ module.exports = nourish({
       await search('egg');
       const eggRow = (await rows()).find((r) => r.id === 'f:egg');
       const chips = await pg.evaluate(() => document.querySelectorAll('#mpList [data-mpfit], #mpList .mp-fitx').length);
-      t.ok('a food you had yesterday is offered at what you had: six eggs', eggRow && eggRow.x === 6, JSON.stringify(eggRow));
+      /* Blake, 2026-10-16, choosing between them: a tap puts a food on at
+         what fits the meal, and the meal balances around it (#103) — last
+         time's amount only where nothing fits. So yesterday's six eggs are
+         offered at what fits dinner, like any other food. */
+      const eggFit = await pg.evaluate(() => window.__macroLab.mealFit('d', 'f:egg'));
+      t.ok('a food you had yesterday is offered at what fits this meal, not at what you had',
+        eggRow && eggFit > 0 && Math.abs(eggRow.x - eggFit) < 1e-6, JSON.stringify({ eggRow, eggFit }));
       t.ok('with no chip beside it: what fits is what a tap does now', chips === 0, String(chips));
       await search('banana');
       const ban = (await rows()).find((r) => r.id === 'f:banana');
@@ -425,7 +431,7 @@ module.exports = nourish({
       await pg.waitForTimeout(300);
       await homeDay(pg);
       const eggsOn = ((await stored(WED)).d || []).filter((it) => it.id === 'f:egg');
-      t.ok('one tap puts the six eggs down, and they stay at six', eggsOn.length === 1 && eggsOn[0].x === 6,
+      t.ok('one tap puts the eggs down once, at an amount the meal balanced to', eggsOn.length === 1 && eggsOn[0].x > 0 && !eggsOn[0].l,
         JSON.stringify(eggsOn));
       /* A lean food never logged, on a meal of its own: the row offers what
          fits Snacks, and the tap puts down exactly that. (A lean one, because

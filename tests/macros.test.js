@@ -680,7 +680,8 @@ module.exports = nourish({
         if (!tray || tray.querySelectorAll('.mtray-f').length !== 2) return false;
         b.click();
         await new Promise((r) => setTimeout(r, 300));
-        return document.querySelectorAll('#modalRoot .msheet .msh-tray .msh-chip').length === 2;
+        // its foods as rows in the pinned On box; the chip strip along the bottom went in #102
+        return document.querySelectorAll('#modalRoot .msheet .msh-top .msh-on .mrows .mrow').length === 2;
       }), await p.evaluate(() => {
         const b = document.querySelector('#macroSlots [data-mopen="s"]');
         const tr = b && b.closest('.mtray');

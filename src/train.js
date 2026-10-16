@@ -6949,10 +6949,10 @@
         (mv ? '<button class="tr-grip" data-x="' + i + '" aria-label="Move ' + esc(ex.n) + (label && !x.cc ? ' and its pair' : '') +
           ': hold and drag, or use the arrow keys">' + EA_ICO.grip + '</button>' : '') +
         '<div class="tr-ex-h">' +
+          '<button type="button" class="tr-ex-open-b" data-t="exopen" data-x="' + i + '" aria-label="Reopen ' + esc(ex.n) + ' sets">\u2713 Done</button>' +
           (label ? '<span class="tr-pair" aria-label="' + (x.cc ? 'Station ' : 'Pair ') + label + '">' + label + '</span>' : '') +
           '<button class="tr-ex-n" data-t="exopen" data-x="' + i + '">' + esc(ex.n) + '</button>' +
           '<span class="tr-fmw" id="trfm-' + i + '">' + fmHTML(i) + '</span>' +
-          '<button type="button" class="tr-ex-open-b" data-t="exopen" data-x="' + i + '" aria-label="Reopen ' + esc(ex.n) + ' sets">\u2713 Done \u00b7 Edit \u25be</button>' +
         '</div>' +
         exKpiHTML(x, i) +
       '</div>';

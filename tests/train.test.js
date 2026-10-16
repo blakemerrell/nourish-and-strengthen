@@ -4890,15 +4890,21 @@ module.exports = {
     await p.click('[data-t="exdone"][data-x="0"]');
     r = await p.evaluate(() => {
       const c = document.querySelector('.tr-ex[data-xi="0"]');
+      const n = c && c.querySelector('.tr-ex-n');
+      const b = c && c.querySelector('.tr-ex-open-b');
+      const nr = n && n.getBoundingClientRect();
+      const br = b && b.getBoundingClientRect();
       return {
         tucked: c && c.classList.contains('tr-ex-tuck'),
+        doneTxt: (b || {}).textContent || '',
+        sameLine: !!(nr && br && Math.abs(br.top - nr.top) < 12),
         kpiTxt: (c && c.querySelector('.tr-ex-kpi-row') || {}).textContent || '',
         setsTxt: (c && c.querySelector('.tr-ex-sets-line') || {}).textContent || '',
         fmTxt: (c && c.querySelector('#trfm-0') || {}).textContent || ''
       };
     });
     t.ok('tapping ✓ Done collapses an exercise early into a crisp KPI summary row with sets, best set, volume, PR medal, and set breakdown',
-      r.tucked && /2 sets/.test(r.kpiTxt) && /Best 195 lb × 8/.test(r.kpiTxt) && /3,040 lb vol/.test(r.kpiTxt) && /PR · heaviest/.test(r.kpiTxt) && r.setsTxt === '195×8 · 185×8' && /▲3%/.test(r.fmTxt),
+      r.tucked && r.doneTxt === '✓ Done' && r.sameLine && /2 sets/.test(r.kpiTxt) && /Best 195 lb × 8/.test(r.kpiTxt) && /3,040 lb vol/.test(r.kpiTxt) && /PR · heaviest/.test(r.kpiTxt) && r.setsTxt === '195×8 · 185×8' && /▲3%/.test(r.fmTxt),
       JSON.stringify(r));
     // Reopen via KPI row, finish set 3, and verify auto-collapse when moving to next exercise
     await p.click('.tr-ex[data-xi="0"] .tr-ex-kpis');

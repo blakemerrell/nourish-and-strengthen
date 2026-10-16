@@ -7735,8 +7735,8 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 
 /* ---- Exercise card complete & collapsed KPI summary row ---- */
 .tr-ex-done-b, .tr-ex-open-b {
-  float: right; margin: -2px 0 4px 8px;
-  padding: 5px 11px; min-height: 30px;
+  float: right; margin: -2px 0 4px 6px;
+  padding: 4px 9px; min-height: 30px;
   border-radius: 99px; border: 1px solid var(--line-firm);
   background: var(--paper-soft); color: var(--ink);
   font: inherit; font-size: 0.8125rem; font-weight: 600; line-height: 1.1;
@@ -7756,6 +7756,10 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   border-left: 3px solid var(--green);
 }
 .tr-ex.tr-ex-tuck .tr-ex-h { margin-bottom: 0; }
+.tr-ex.tr-ex-tuck > .tr-grip ~ .tr-ex-h { padding-left: 28px; }
+.tr-ex.tr-ex-tuck .tr-ex-n { margin-right: 5px; font-size: 0.9375rem; }
+.tr-ex.tr-ex-tuck .tr-fmw { margin-left: 0; }
+.tr-ex.tr-ex-tuck .tr-fm { padding: 1px 6px; }
 .tr-ex-kpis {
   display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
   width: 100%; margin-top: 7px; padding: 8px 11px;

@@ -109,6 +109,43 @@ module.exports = {
       saved.cx && saved.inWo, JSON.stringify({ saved, steps }));
     await q.context().close();
 
+    /* Redo: the morning's workout, from its page, again, as an extra one at
+       today's weights. Blake: "go into a history, and can restart a workout
+       based on an old one that i did". */
+    const r = await t.fresh({ viewport: { width: 390, height: 844 } });
+    r.on('pageerror', (e) => errs.push(e.message));
+    await r.clock.setFixedTime(MORNING_DONE);
+    await r.reload();
+    await r.waitForTimeout(600);
+    await r.evaluate(SETUP);
+    await r.reload();
+    await r.waitForTimeout(900);
+    if (!(await r.$('#view-train:not(.hide)'))) { await r.click('.tab[data-view="train"]'); await r.waitForTimeout(400); }
+    // History, as a person gets there: its tab, then the workout's row
+    await r.click('#view-train [data-t="sub"][data-v="history"]');
+    await r.waitForTimeout(300);
+    // with a block, History opens on Blocks; Workouts lists each one
+    if (await r.$('#view-train [data-t="hview"][data-v="wo"]')) { await r.click('#view-train [data-t="hview"][data-v="wo"]'); await r.waitForTimeout(300); }
+    const rows = await r.evaluate(() => [...document.querySelectorAll('#view-train [data-t="wosheet"]')].map((b) => b.className + ':' + b.dataset.id));
+    t.ok('History lists the morning\u2019s workout', rows.some((x) => /:w1$/.test(x)), JSON.stringify(rows));
+    await r.click('#view-train [data-t="wosheet"][data-id="w1"]');
+    await r.waitForTimeout(300);
+    const btn = await r.evaluate(() => { const b = document.querySelector('[data-t="woredo"]'); const q = b && b.getBoundingClientRect(); return b ? { t: b.textContent, h: q.height } : null; });
+    t.ok('a saved workout\u2019s page offers Redo this workout, a thumb tall', !!btn && btn.t === 'Redo this workout' && btn.h >= 44, JSON.stringify(btn));
+    if (btn) { await r.click('[data-t="woredo"]'); await r.waitForTimeout(400); }
+    const redo = await r.evaluate(() => {
+      const L = JSON.parse(localStorage.getItem('sh.trainLive') || 'null');
+      const T = JSON.parse(localStorage.getItem('bsc.train'));
+      const w1 = T.wo.w1;
+      return { ms: L && L.ms, n: L && L.n, ex: L && L.x.map((x) => x.e).join(), sets: L && L.x.map((x) => x.s.length).join(),
+        was: w1.x.map((x) => x.e).join(), pw: L && L.x[0] && L.x[0].s[0].pw, sheet: !!document.querySelector('#trainRoot .sheet'),
+        block: Object.keys(T.wo).filter((k) => T.wo[k].ms === 'b').length };
+    });
+    t.ok('it starts the same exercises with the same number of sets, as an extra workout outside the block',
+      redo.ms === '' && redo.ex === redo.was && redo.sets === '2' && !redo.sheet, JSON.stringify(redo));
+    t.ok('with last time\u2019s sets beside them, and the block untouched', redo.pw === 100 && redo.block === 1, JSON.stringify(redo));
+    await r.context().close();
+
     t.ok('with no error on the page', errs.length === 0, errs.join(' | '));
     await p.context().close();
   },

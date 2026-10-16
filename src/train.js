@@ -4502,6 +4502,30 @@
     wake();
     scrollTop();
   }
+  /* An old workout again, from its page in History: its exercises and its
+     number of working sets, at today's weights.
+   *
+     Blake, 2026-10-16: "go into a history, and can restart a workout based
+     on an old one that i did... it loads and meshes with my data for my
+     current block". Each lift comes in as + Add an exercise brings one in,
+     so its weights are worked out from your log as it stands now and last
+     time's sets sit beside it, not the old day's numbers copied. It is an
+     extra workout (ms ''), as he chose: a block's schedule and progress are
+     not moved by it. Save as routine was the way before, in two steps. */
+  function startRedo(wo) {
+    if (LIVE || !wo || !wo.x.length) return;
+    var x = wo.x.filter(function (z) { return z.s.length && lib(z.e); }).map(function (z) {
+      var n = z.s.filter(function (q) { return !q.wu; }).length;
+      return liveEx(z.e, Math.max(1, n || z.s.length));
+    });
+    if (!x.length) return;
+    setLive({ id: newId(), st: Date.now(), n: wo.n || 'Workout', u: T.pr.u, ms: '', w: -1, d: -1, dl: 0, rir: null,
+      x: x, sr: {}, fb: {}, rs: null });
+    S.sub = 'block';
+    draw();
+    wake();
+    scrollTop();
+  }
   function startEmpty() {
     if (LIVE) return;
     setLive({ id: newId(), st: Date.now(), n: 'Workout', u: T.pr.u, ms: '', w: -1, d: -1, dl: 0, rir: null,
@@ -9069,6 +9093,7 @@
               (e1 > 0 ? ' <span class="tr-e1">est. max ' + Math.round(e1) + '</span>' : '') + '</li>';
           }).join('') + '</ol></div>';
       }).join('') +
+      (!LIVE && wo.x.length ? '<div class="tr-acts"><button class="btn-primary" data-t="woredo" data-id="' + esc(wo.id) + '">Redo this workout</button></div>' : '') +
       '<div class="tr-acts"><button class="ghost" data-t="edopen" data-id="' + esc(wo.id) + '">Edit</button>' +
         '<button class="ghost" data-t="wocopy" data-id="' + esc(wo.id) + '">Copy as text</button>' +
         '<button class="ghost" data-t="rtsave" data-id="' + esc(wo.id) + '">Save as routine</button>' +
@@ -11108,6 +11133,13 @@
       return;
     }
     if (t === 'empty') { startEmpty(); return; }
+    if (t === 'woredo') {
+      var rw = T.wo[el.getAttribute('data-id')];
+      if (!rw || LIVE) return;
+      closeSheet();
+      startRedo(rw);
+      return;
+    }
     // your weight on a pull-up day
     if (t === 'bwqsave') { bwSave(false); return; }
     if (t === 'bwqkeep') { bwSave(true); return; }

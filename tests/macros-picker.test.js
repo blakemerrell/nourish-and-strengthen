@@ -828,7 +828,7 @@ module.exports = nourish({
     t.ok('and the fold still says which food is being held',
       foldedBack && await heldPage.evaluate(() => {
         const held = [...document.querySelectorAll('#modalRoot .mrows .mrow')].filter((f) =>
-          [...f.querySelectorAll('.mrow-mk.kept')].some((c) => /Kept/.test(c.textContent)));
+          [...f.querySelectorAll('.mrow-mk.kept')].some((c) => /Kept|Locked/.test(c.textContent)));
         return held.length === 1 && held[0].classList.contains('held');
       }),
       await heldPage.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows .mrow')]

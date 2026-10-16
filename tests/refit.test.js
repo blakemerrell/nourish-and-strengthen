@@ -143,25 +143,29 @@ module.exports = {
       day.lines.some((l) => /Cheddar cheese.*cups?\s*[\d,]+ g$/.test(l)), JSON.stringify(day.lines));
     t.ok('no page errors along the way', errs.length === 0, errs.join(' / '));
 
-    /* ---- an amount you set, and the rest re-fitting around it ---- */
+    /* ---- an amount you set stays put without jumping the other plates ---- */
     ({ p, errs } = await sheet(t));
     await tap(p, 'egg white', 'f:egg_white');
     await tap(p, 'greek yogurt', 'f:greek_yogurt');
-    const yBefore = (await gramsOf(p))[1].g;
-    await p.click('#modalRoot .msh-on [data-mtype="l:0"]');
+    const ewBefore = (await gramsOf(p))[0].g;
+    await p.click('#modalRoot .msh-on [data-mtype="l:1"]');
     await p.waitForTimeout(200);
-    await p.fill('#modalRoot [data-mtypein="l:0"]', '100');
+    await p.fill('#modalRoot [data-mtypein="l:1"]', '100');
     await p.keyboard.press('Enter');
     await p.waitForTimeout(300);
     rows = await gramsOf(p);
-    t.ok('an amount you type is yours: it is Kept at it, and the yogurt grows to cover the protein it gave up',
-      rows[0].held && rows[0].g === 100 && rows[1].g > yBefore && /was/.test(rows[1].was), JSON.stringify({ yBefore, rows }));
+    t.ok('an amount you type is yours: it is Kept at it, and the other plates do not jump while you adjust',
+      rows[1].held && rows[1].g === 100 && rows[0].g === ewBefore && !rows[0].was, JSON.stringify({ ewBefore, rows }));
+    await tap(p, 'cheddar', 'f:cheddar');
+    rows = await gramsOf(p);
+    t.ok('when another food is added, the Kept food stays at 100 g while unlocked plates auto-balance around it',
+      rows[1].held && rows[1].g === 100 && rows[0].g > ewBefore && /was/.test(rows[0].was), JSON.stringify({ ewBefore, rows }));
 
-    /* ---- your usual amount stays your usual ---- */
+    /* ---- even if logged before, adding to a planned meal fits the meal ---- */
     ({ p, errs } = await sheet(t, { usual: true }));
-    const ux = await tap(p, 'egg white', 'f:egg_white');
+    await tap(p, 'egg white', 'f:egg_white');
     const ul = await lunch(p);
-    t.ok('a food you have logged goes on at what you had last time, and stays there', ux === 1 && ul[0] && ul[0].x === 1, JSON.stringify({ ux, ul }));
+    t.ok('a food you have logged still sizes to the meal’s macros when added to a planned meal', ul[0] && ul[0].x > 1, JSON.stringify({ ul }));
 
     /* ---- salt: the same tap on a salty day puts down less ---- */
     ({ p, errs } = await sheet(t));

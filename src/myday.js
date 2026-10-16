@@ -383,7 +383,7 @@
           (r.score === null || r.score === undefined ? '' : leaf(r.score, 'leaf-sm')) +
           '<span class="mrow-nm">' + esc(r.name) + '</span></button>' +
           (fresh ? '<span class="mrow-mk new">New</span>' : '') +
-          (it.l ? '<span class="mrow-mk kept">' + LOCK_SM + 'Kept</span>' : '') +
+          (it.l ? '<span class="mrow-mk kept">' + LOCK_SM + (it.l === 2 ? 'Locked' : 'Kept') + '</span>' : '') +
           (pinned ? '<span class="mrow-mk kept">Pinned</span>' : '') +
         '</span>' +
         '<span class="mrow-m mitem-r2">' + (measure ? '<span class="mitem-uom">' + esc(measure) + '</span> &middot; ' : '') +

@@ -163,10 +163,10 @@
      (mMealFitX), not the picker's ranking fit, which measures room in the
      whole day. */
   function mDefaultX(r) {
-    var v = r ? LIVE.MP_LASTX[r.id] : 0;
-    if (v > 0) return v;
     var f = S.macroPick ? mMealFitX(S.macroPick.slot, r) : mpFitX(r);
-    return f > 0 ? f : 1;
+    if (f > 0) return f;
+    var v = r ? LIVE.MP_LASTX[r.id] : 0;
+    return v > 0 ? v : 1;
   }
 
   /* The portion that would fit the meal the sheet is filling, by the same

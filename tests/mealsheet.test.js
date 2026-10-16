@@ -128,12 +128,12 @@ module.exports = {
     t.ok('⋯ on a food holds Lock, Swap, Move to…, Pin, Favourite and Remove', menu.join('|') === 'Lock the amount|Swap|Move to\u2026|Pin to Lunch|Favourite|Remove', JSON.stringify(menu));
     await p.click('#modalRoot .mrow-menu [data-mlock="l:5"]');
     await p.waitForTimeout(250);
-    t.ok('Lock holds the avocado, and the menu closes', (await mealOf(p, 'l'))[5].l === 1 &&
+    t.ok('Lock holds the avocado, and the menu closes', (await mealOf(p, 'l'))[5].l === 2 &&
       !(await p.$('#modalRoot .mrow-menu')), '');
 
-    /* Balance, in the tray: everything moves again, what you set included,
-       and what moved says what it was. No Undo (Blake: "No need for undo.
-       I can simply remove that from my tray"). */
+    /* Balance, in the tray: manual tweaks (Kept, l===1) are cleared so they
+       re-fit, while an explicit Lock (l===2) holds firm; what moved says what
+       it was. No Undo (Blake: "No need for undo. I can simply remove that from my tray"). */
     const before = await mealOf(p, 'l');
     await p.click('#modalRoot .msh-tray [data-mbal="l"]');
     await p.waitForTimeout(400);
@@ -141,7 +141,7 @@ module.exports = {
     const bal = await p.evaluate(() => ({ was: [...document.querySelectorAll('#modalRoot .mrow-g small')].filter((s) => /^was /.test(s.textContent)).length,
       undo: !!document.querySelector('#modalRoot [data-mbalundo], #modalRoot .mcard-undo') }));
     const changed = after.filter((it, i) => it.x !== before[i].x).length;
-    t.ok('Balance lets go of what you kept and locked: nothing on the meal is held after it', after.every((it) => !it.l), JSON.stringify(after));
+    t.ok('Balance lets go of what you kept while honoring an explicit Lock', !after[0].l && after[5].l === 2 && after[5].x === before[5].x, JSON.stringify(after));
     t.ok('what moved says what it was, and there is no Undo', changed > 0 && bal.was === changed && !bal.undo, JSON.stringify({ changed, bal }));
 
     /* the meal's ⋯ */
@@ -184,8 +184,8 @@ module.exports = {
           freshTint: !!freshRow && !!otherRow && getComputedStyle(freshRow).backgroundColor !== getComputedStyle(otherRow).backgroundColor,
         };
       });
-      t.ok('a tap puts it on dinner at once, at what you had last time, marked New and tinted in the tray',
-        d1.length === n0 + 1 && d1[d1.length - 1].id === 'f:banana' && d1[d1.length - 1].x === 1 && on.pressed === 'true' && on.row && on.freshTint, JSON.stringify({ d1, on }));
+      t.ok('a tap puts it on dinner at once, auto-balanced for the meal, marked New and tinted in the tray',
+        d1.length === n0 + 1 && d1[d1.length - 1].id === 'f:banana' && d1[d1.length - 1].x > 0 && on.pressed === 'true' && on.row && on.freshTint, JSON.stringify({ d1, on }));
       await p.click('#modalRoot [data-mpick="f:banana"]');
       await p.waitForTimeout(400);
       t.ok('a second tap takes it back off', (await mealOf(p, 'd')).length === n0);

@@ -118,8 +118,9 @@ module.exports = {
     /* the lock: pressed in the line's keys, and shown on the line itself */
     await p.click(line('l', 0) + ' [data-mlock]');
     await p.waitForTimeout(200);
+    // the lock is a Lock now (l 2), which Balance leaves; Kept (l 1) is what − / + leave (#103)
     t.ok('the lock holds the amount, and the shut line says so with a small lock',
-      (await mealOf(p, 'l'))[0].l === 1 && !!(await p.$(line('l', 0) + ' .mtray-fm .mcard-lk')) &&
+      (await mealOf(p, 'l'))[0].l === 2 && !!(await p.$(line('l', 0) + ' .mtray-fm .mcard-lk')) &&
       (await p.getAttribute(line('l', 0) + ' [data-mlock]', 'aria-pressed')) === 'true');
 
     /* one open at a time, and a tap on the open line's amount shuts it */
@@ -207,12 +208,23 @@ module.exports = {
     t.ok('State 3 opens all food rows simultaneously with clear visual separation between foods and no inline quick-add drawer',
       s3.mv3 && s3.allOpen && s3.noAddDrawer && s3.gap >= 6 && s3.bordered, JSON.stringify(s3));
 
-    /* The scale on the card balances the meal there, on the day, and says so */
+    /* The scale on the card balances the meal there, on the day. A food
+       Locked holds its amount through it (#103, 2026-10-15: Balance clears
+       the amounts − / + left, Kept, and leaves what you Locked). */
+    const locked = await mealOf(p, 'l');
+    await p.click(card('l') + ' [data-mbal="l"]');
+    await p.waitForTimeout(300);
+    const held = await mealOf(p, 'l');
+    t.ok('the card’s scale leaves a Locked food at its amount, and opens no sheet',
+      held[0].l === 2 && held[0].x === locked[0].x && !(await p.$('#modalRoot .msheet')), JSON.stringify({ locked, held }));
+    // unlocked, it balances the whole meal, and says so
+    await p.click(line('l', 0) + ' [data-mlock]');
+    await p.waitForTimeout(200);
     const before = await mealOf(p, 'l');
     await p.click(card('l') + ' [data-mbal="l"]');
     await p.waitForTimeout(300);
     const after = await mealOf(p, 'l');
-    t.ok('the card’s scale balances the meal on the day, letting go of the lock, and the toast says it',
+    t.ok('unlocked, the card’s scale balances the meal on the day, and the toast says it',
       after.some((it, i) => it.x !== before[i].x) && after.every((it) => !it.l) &&
       /Lunch balanced: \d+ foods? moved/.test(await textOf(p, '#mToast')) && !(await p.$('#modalRoot .msheet')), JSON.stringify({ before, after }));
 

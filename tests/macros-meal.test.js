@@ -193,14 +193,15 @@ module.exports = nourish({
         emDash: /\u2014/.test((items || {}).textContent || ''),
         caps: !!c.querySelector('.msh-top .mcaps'),
         rows: items ? items.children.length : 0,
-        // the one line is the tray's, along the bottom: an empty meal opens on the list (2026-10-08)
-        none: (c.querySelector('.msh-tray .msh-none') || {}).textContent || '',
+        /* the one line: "On Lunch · 0 foods · Tap a food below to add it", pinned
+           at the top since the bottom strip went (#102, 2026-10-15) */
+        none: (c.querySelector('.msh-top .msh-on-empty small') || {}).textContent || '',
         find: !!c.querySelector('#mpFind'),
       };
     });
     t.ok('and holds nothing but its pills, one line, and the picker',
       !!emptyOpen && !emptyOpen.dash && !emptyOpen.emDash && emptyOpen.caps &&
-        emptyOpen.rows === 0 && /^Tap a food above/.test(emptyOpen.none) && emptyOpen.find,
+        emptyOpen.rows === 0 && /Tap a food below to add it/.test(emptyOpen.none) && emptyOpen.find,
       JSON.stringify(emptyOpen));
     await trimPg.context().close();
 

@@ -628,7 +628,9 @@ module.exports = nourish({
       await fold.evaluate(() => {
         const head = document.querySelector('#modalRoot .msheet .msh-top');
         const list = document.querySelector('#modalRoot .msheet .mrows');
-        return !!head && !!list && list.getBoundingClientRect().top >= head.getBoundingClientRect().bottom - 1;
+        /* Since #102 (2026-10-15) the meal's plates are pinned inside its head,
+           where the head cannot cover them; anything else still sits below it. */
+        return !!head && !!list && (head.contains(list) || list.getBoundingClientRect().top >= head.getBoundingClientRect().bottom - 1);
       }),
       await fold.evaluate(() => { const h = document.querySelector('#modalRoot .msheet .msh-top'), l = document.querySelector('#modalRoot .msheet .mrows');
         return 'head ' + (h ? Math.round(h.getBoundingClientRect().bottom) : '-') + ', list ' + (l ? Math.round(l.getBoundingClientRect().top) : '-'); }));

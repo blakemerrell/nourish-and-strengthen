@@ -7454,11 +7454,13 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   -webkit-mask-image: none;
   mask-image: none;
 }
+/* 13 px, the floor every type on the app keeps (macros-ux): the five pills
+   went in at 12.5 px with the rail's simplification (#102). */
 .mp-shelf:not(#u#u) {
   flex: 1 1 auto;
   min-width: 44px;
   padding: 0 7px;
-  font-size: 0.78125rem;
+  font-size: 0.8125rem;
   gap: 3px;
   white-space: nowrap;
 }

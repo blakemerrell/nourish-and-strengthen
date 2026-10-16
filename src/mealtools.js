@@ -20,6 +20,7 @@
   var kcalOf = app.kcalOf;
   var keepingFocus = app.keepingFocus;
   var mBuildFoods = app.mBuildFoods;
+  var mByGram = app.mByGram;
   var mDay = app.mDay;
   var mDayTargets = app.mDayTargets;
   var mEditDay = app.mEditDay;
@@ -96,10 +97,19 @@
     };
   }
 
-  /* The same per-plate ladder mBalanceDay uses — see mLadder — up to a
-     plateful for a food; `keep`, where it already sits, stays allowed, so a
-     portion typed past the plateful is never forced down for being one. */
+  /* For gram-dialled single foods (mByGram), step in 5 g increments up to
+     MFOOD_G_MAX so auto-balance lands on the exact 5 g dial grid and matches
+     the − / + buttons. Counted foods and recipes keep mLadder's rungs. */
   function rungsFor(rf, x, keep) {
+    if (rf && mByGram(rf)) {
+      var G = rf.grams || 100, out = [], seen = {};
+      for (var g = 5; g <= MFOOD_G_MAX; g += 5) {
+        var v = Math.round(g / G * 10000) / 10000;
+        if (v > 0 && !seen[v]) { seen[v] = 1; out.push(v); }
+      }
+      if (keep > 0 && !seen[keep]) out.push(keep);
+      return out.sort(function (a, b) { return a - b; });
+    }
     var rungs = mLadder(rf, x);
     if (rf && rf.food && rf.grams) {
       var gX = MFOOD_G_MAX / rf.grams;

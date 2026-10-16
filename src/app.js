@@ -3512,7 +3512,7 @@
 
   /* src/mealtools.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var MEALTOOLS = window.HiveParts.mealtools({ MFOOD_G_MAX: MFOOD_G_MAX, MNA_CAP: MNA_CAP, MNA_W: MNA_W, MW: MW, fmtNum: fmtNum, kcalOf: kcalOf, keepingFocus: keepingFocus, mBuildFoods: mBuildFoods, mDay: mDay, mDayTargets: mDayTargets, mEditDay: mEditDay, mLadder: mLadder, mMealAsk: mMealAsk, mNewFoodKey: mNewFoodKey, mReadMyFoods: mReadMyFoods, mReadSlots: mReadSlots, mViewKey: mViewKey, mWriteMyFoods: mWriteMyFoods, renderMacros: renderMacros, LIVE: LIVE });
+  var MEALTOOLS = window.HiveParts.mealtools({ MFOOD_G_MAX: MFOOD_G_MAX, MNA_CAP: MNA_CAP, MNA_W: MNA_W, MW: MW, fmtNum: fmtNum, kcalOf: kcalOf, keepingFocus: keepingFocus, mBuildFoods: mBuildFoods, mByGram: mByGram, mDay: mDay, mDayTargets: mDayTargets, mEditDay: mEditDay, mLadder: mLadder, mMealAsk: mMealAsk, mNewFoodKey: mNewFoodKey, mReadMyFoods: mReadMyFoods, mReadSlots: mReadSlots, mViewKey: mViewKey, mWriteMyFoods: mWriteMyFoods, renderMacros: renderMacros, LIVE: LIVE });
   function mBalanceMeal(sk, opt) { return MEALTOOLS.mBalanceMeal(sk, opt); }
   function mMealFitX(sk, r) { return MEALTOOLS.mMealFitX(sk, r); }
   function mSaveMeal(sk, name, share) { return MEALTOOLS.mSaveMeal(sk, name, share); }
@@ -5410,13 +5410,13 @@
        is open on: the day's trays have no dials. */
     /* `fromDay`: the scale on the meal's card (myday.js), which balances
        with no sheet open — the re-fit is otherwise the open sheet's alone. */
-    function mRefitMeal(k, sk, hold, fromDay) {
+    function mRefitMeal(k, sk, hold, fromDay, addedAt) {
       if (!fromDay && (!S.macroPick || S.macroPick.slot !== sk)) return {};
       var before = (mDay(k)[sk] || []).map(function (it) { return { id: it.id, x: it.x }; });
       mBalanceMeal(sk, { hold: hold, quiet: true });
       var after = mDay(k)[sk] || [], was = {};
       before.forEach(function (b, i) {
-        if (i === hold || !after[i] || String(after[i].id) !== String(b.id)) return;
+        if (i === hold || i === addedAt || !after[i] || String(after[i].id) !== String(b.id)) return;
         if (Math.abs(after[i].x - b.x) > 1e-9) was[i] = b;
       });
       return was;
@@ -5697,15 +5697,13 @@
       var tr = e.target.closest('[data-mtry]');
       if (tr) { S.mMenu = ''; mTryAgain(tr.dataset.mtry); if (S.macroPick) renderModal(); return; }
 
-      /* Balance: the meal re-fits as a whole, the amounts you set by hand
-         included — they give up their Kept and move with the rest. Each row
-         that moved says what it was; there is no Undo (Blake: "No need for
-         undo. I can simply remove that from my tray"). */
+      /* Balance: the meal re-fits as a whole, clearing manual −/+ tweaks
+         (it.l === 1) while respecting explicit ⋯ -> Lock items (it.l === 2). */
       var bal = e.target.closest('[data-mbal]');
       if (bal) {
         var bk = mViewKey(), bsk = bal.dataset.mbal;
         if (S.mAmt && S.mAmt !== '*') S.mAmt = '';
-        mEditDay(bk, function (day) { (day[bsk] || []).forEach(function (it) { if (!it.eaten) it.l = 0; }); });
+        mEditDay(bk, function (day) { (day[bsk] || []).forEach(function (it) { if (!it.eaten && it.l === 1) it.l = 0; }); });
         var bwas = mRefitMeal(bk, bsk, undefined, !S.macroPick);
         S.mMarks = { k: bk, sk: bsk, was: bwas, fresh: {}, snap: null };
         S.mMenu = '';
@@ -5802,7 +5800,7 @@
           var newItems = liveParts.map(function (pt) {
             var px = Math.round((Number(pt.x) || 1) * (Number(exItem.x) || 1) * 1000) / 1000;
             var obj = { id: pt.id, x: px || 1, eaten: exItem.eaten ? 1 : 0 };
-            if (exItem.l) obj.l = 1;
+            if (exItem.l) obj.l = exItem.l;
             return obj;
           });
           var exSnap = null;
@@ -5873,10 +5871,8 @@
           /* Quarter-serving steps land on eighths, so fmtNum always has a
              glyph and never falls back to a decimal. */
           it.x = mDialStep(BY_ID[it.id], it.x, sp[2] === 'up' ? 1 : -1);
-          if (S.macroPick && S.macroPick.slot === sp[0]) it.l = 1;
+          if (S.macroPick && S.macroPick.slot === sp[0] && !it.l) it.l = 1;
         });
-        var swas = mRefitMeal(mViewKey(), sp[0], Number(sp[1]));
-        if (S.macroPick && S.macroPick.slot === sp[0]) S.mMarks = { k: mViewKey(), sk: sp[0], was: swas, fresh: {}, snap: null };
         mRedraw();
         return;
       }
@@ -5983,7 +5979,7 @@
         var freed = false;
         mEditDay(mViewKey(), function (day) {
           var it = (day[lp[0]] || [])[Number(lp[1])];
-          if (it) { it.l = it.l ? 0 : 1; freed = !it.l; }
+          if (it) { it.l = it.l ? 0 : 2; freed = !it.l; }
         });
         if (freed) {
           var lwas = mRefitMeal(mViewKey(), lp[0]);
@@ -6004,7 +6000,6 @@
       if (!box || !box.dataset.mtypein) return;
       var sp = box.dataset.mtypein.split(':');
       var typed = parseFloat(String(box.value).replace(/[^0-9.]/g, ''));
-      var typedOk = false;
       S.mType = null;
       mEditDay(mViewKey(), function (day) {
         var it = (day[sp[0]] || [])[Number(sp[1])];
@@ -6013,12 +6008,8 @@
         /* Nonsense is not a portion. An empty box, a stray letter or a nought
            leaves the plate exactly as it was rather than writing a zero and
            quietly taking the food off the day's arithmetic. */
-        if (nx !== null) { it.x = nx; if (S.macroPick && S.macroPick.slot === sp[0]) it.l = 1; typedOk = true; }
+        if (nx !== null) { it.x = nx; if (S.macroPick && S.macroPick.slot === sp[0] && !it.l) it.l = 1; }
       });
-      if (typedOk) {
-        var twas = mRefitMeal(mViewKey(), sp[0], Number(sp[1]));
-        if (S.macroPick && S.macroPick.slot === sp[0]) S.mMarks = { k: mViewKey(), sk: sp[0], was: twas, fresh: {}, snap: null };
-      }
       S.mEdit = null;
       mRedraw();
     }
@@ -7174,9 +7165,9 @@
             list.push({ id: nid, x: nx, eaten: nfe });
             nat = list.length - 1;
           });
-          S.mpBasket[nid] = 1;
           S.mpAt[nid] = nat;
-          S.mMarks = { k: nk, sk: nsk, was: mRefitMeal(nk, nsk, nat), fresh: mpFresh(nat, nid), snap: null };
+          S.mMarks = { k: nk, sk: nsk, was: mRefitMeal(nk, nsk, undefined, false, nat), fresh: mpFresh(nat, nid), snap: null };
+          S.mpBasket[nid] = ((mDay(nk)[nsk] || [])[nat] || {}).x || nx;
           S.newFood = null;
           S.mpMode = 'home';
           renderMacros();
@@ -7195,12 +7186,10 @@
       }
 
       /* Onto the meal, in one tap (Blake, 2026-10-04: no basket, no "Add N").
-         The row adds your usual amount, or what fits when you have never had
-         it (mDefaultX); pressed again it takes the plate back off, so a
-         mis-tap costs a tap. With a plate marked for Swap, what you tap takes
-         its place instead. Either way the rest of the meal re-fits around it
-         (mRefitMeal), the plate just put down held where it went — the Fits
-         chip that used to sit beside the row is what every tap does now. */
+         The row adds what fits the meal (mDefaultX), and all unlocked plates
+         on the meal balance together (mRefitMeal); pressed again it takes the
+         plate back off and re-balances what remains. With a plate marked for
+         Swap, what you tap takes its place instead. */
       var mp = e.target.closest('[data-mpick]');
       if (mp && S.macroPick) {
         var pel = mp;
@@ -7223,9 +7212,9 @@
             } else { list.push(plate); at2 = list.length - 1; }
           });
           S.mpSwap = null;
-          S.mpBasket[pid] = px;
           S.mpAt[pid] = at2;
-          S.mMarks = { k: pk, sk: psk, was: mRefitMeal(pk, psk, at2), fresh: mpFresh(at2, pid), snap: null };
+          S.mMarks = { k: pk, sk: psk, was: mRefitMeal(pk, psk, undefined, false, at2), fresh: mpFresh(at2, pid), snap: null };
+          S.mpBasket[pid] = ((mDay(pk)[psk] || [])[at2] || {}).x || px;
         }
         if (S.mAmt && S.mAmt !== '*') S.mAmt = '';
         var pSel = '#mpList [data-mpick="' + String(pid).replace(/"/g, '') + '"]';

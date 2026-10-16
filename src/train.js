@@ -2347,7 +2347,7 @@
     if (!pf) return false;
     if (pf.avoid && pf.avoid.indexOf(ex.id) >= 0) return true;
     var bk = pf.bk || '', jt = pf.jt || '', i;
-    for (i = 0; i < bk.length; i++) if (ex.bk.indexOf(bk[i].toUpperCase()) >= 0) return true;
+    for (i = 0; i < bk.length; i++) if ((ex.bk || '').indexOf(bk[i].toUpperCase()) >= 0) return true;
     for (i = 0; i < jt.length; i++) if ((ex.jt || '').indexOf(jt[i]) >= 0) return true;
     return false;
   }

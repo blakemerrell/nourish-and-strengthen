@@ -4886,8 +4886,22 @@ module.exports = {
     await p.click('[data-t="tick"][data-x="0"][data-s="0"]');
     await p.fill('#trw-0-1', '185'); await p.fill('#trr-0-1', '8');
     await p.click('[data-t="tick"][data-x="0"][data-s="1"]');
-    // Stop early after 2 of 3 sets and tap ✓ Done in header
+    // Type into set 3 before tapping ✓ Done: Finish still flags the typed-but-unticked set
+    await p.fill('#trw-0-2', '185');
     await p.click('[data-t="exdone"][data-x="0"]');
+    await p.click('[data-t="finish"]');
+    const finEarlyTyped = await p.evaluate(() => !!(document.querySelector('#trainRoot .tr-sheet .tr-typed')));
+    await p.click('#trainRoot .tr-sheet [data-t="close"]');
+    // Reopen, clear set 3, and tap ✓ Done again: empty set 3 is excluded from the open-set count on Finish
+    await p.click('.tr-ex[data-xi="0"] .tr-ex-open-b');
+    await p.fill('#trw-0-2', '');
+    await p.click('[data-t="exdone"][data-x="0"]');
+    await p.click('[data-t="finish"]');
+    const finEarlyEmpty = await p.evaluate(() => {
+      const m = document.querySelector('#trainRoot .tr-sheet');
+      return { typedWarn: !!(m && m.querySelector('.tr-typed')), txt: (m || {}).textContent || '' };
+    });
+    await p.click('#trainRoot .tr-sheet [data-t="close"]');
     r = await p.evaluate(() => {
       const c = document.querySelector('.tr-ex[data-xi="0"]');
       const n = c && c.querySelector('.tr-ex-n');
@@ -4903,9 +4917,9 @@ module.exports = {
         fmTxt: (c && c.querySelector('#trfm-0') || {}).textContent || ''
       };
     });
-    t.ok('tapping ✓ Done collapses an exercise early into a crisp KPI summary row with sets, best set, volume, PR medal, and set breakdown',
-      r.tucked && r.doneTxt === '✓ Done' && r.sameLine && /2 sets/.test(r.kpiTxt) && /Best 195 lb × 8/.test(r.kpiTxt) && /3,040 lb vol/.test(r.kpiTxt) && /PR · heaviest/.test(r.kpiTxt) && r.setsTxt === '195×8 · 185×8' && /▲3%/.test(r.fmTxt),
-      JSON.stringify(r));
+    t.ok('tapping ✓ Done collapses an exercise early into a crisp KPI summary row, flags typed-but-unticked sets, and excludes empty unticked sets on Finish',
+      r.tucked && r.doneTxt === '✓ Done' && r.sameLine && finEarlyTyped && !finEarlyEmpty.typedWarn && /3 sets were never ticked/.test(finEarlyEmpty.txt) && /2 sets/.test(r.kpiTxt) && /Best 195 lb × 8/.test(r.kpiTxt) && /3,040 lb vol/.test(r.kpiTxt) && /PR · heaviest/.test(r.kpiTxt) && r.setsTxt === '195×8 · 185×8' && /▲3%/.test(r.fmTxt),
+      JSON.stringify({ r, finEarlyTyped, finEarlyEmpty }));
     // Reopen via KPI row, finish set 3, and verify auto-collapse when moving to next exercise
     await p.click('.tr-ex[data-xi="0"] .tr-ex-kpis');
     await p.fill('#trw-0-2', '185'); await p.fill('#trr-0-2', '8');
@@ -4913,16 +4927,22 @@ module.exports = {
     const readyCls = await p.evaluate(() => (document.querySelector('[data-t="exdone"][data-x="0"]') || {}).className || '');
     await p.fill('#trw-1-0', '155'); await p.fill('#trr-1-0', '8');
     await p.click('[data-t="tick"][data-x="1"][data-s="0"]');
-    r = await p.evaluate((readyCls) => {
+    // Reopen Exercise 0 and then tick Exercise 1 set 1: Exercise 0 auto-collapses again
+    await p.click('.tr-ex[data-xi="0"] .tr-ex-open-b');
+    const reopened = await p.evaluate(() => !document.querySelector('.tr-ex[data-xi="0"]').classList.contains('tr-ex-tuck'));
+    await p.fill('#trw-1-1', '155'); await p.fill('#trr-1-1', '8');
+    await p.click('[data-t="tick"][data-x="1"][data-s="1"]');
+    r = await p.evaluate((arg) => {
       const c0 = document.querySelector('.tr-ex[data-xi="0"]');
       return {
-        ready: /is-ready/.test(readyCls),
+        ready: /is-ready/.test(arg.readyCls),
+        reopened: arg.reopened,
         autoTucked: c0 && c0.classList.contains('tr-ex-tuck'),
         sets3: (c0 && c0.querySelector('.tr-ex-sets-line') || {}).textContent || ''
       };
-    }, readyCls);
+    }, { readyCls, reopened });
     t.ok('finishing all working sets turns ✓ Done green and auto-collapses the exercise once a set on the next lift is ticked',
-      r.ready && r.autoTucked && r.sets3 === '195×8 · 185×8 · 185×8',
+      r.ready && r.reopened && r.autoTucked && r.sets3 === '195×8 · 185×8 · 185×8',
       JSON.stringify(r));
 
     await p.close();

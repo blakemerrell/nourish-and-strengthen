@@ -518,7 +518,7 @@
      collapse/expand flip-flopping). */
   function sheetTrayHTML(M) {
     var sk = M.sk, n = 0;
-    M.items.forEach(function (it) { if (LIVE.BY_ID[it.id]) n++; });
+    M.items.forEach(function (it) { if (!it.eaten && it.l !== 2 && LIVE.BY_ID[it.id]) n++; });
     return '<div class="msh-tray open no-print">' +
       '<div class="msh-acts">' +
         '<button class="msh-bal" data-mbal="' + esc(sk) + '"' + (n ? '' : ' disabled') +
@@ -875,7 +875,7 @@
          bottom names the scale and the rest. Status keeps only Skip; the
          scale is in Details, with the amounts it moves. A meal anything was
          eaten from is not skippable: that food happened. */
-      var canBal = items.some(function (it) { return !it.eaten && LIVE.BY_ID[it.id]; });
+      var canBal = items.some(function (it) { return !it.eaten && it.l !== 2 && LIVE.BY_ID[it.id]; });
       var pinnedIds = (M.pins || []).map(function (pn) { return String(pn.id); });
       var canTry = onPlan && items.some(function (it) {
         return !it.eaten && !it.l && pinnedIds.indexOf(String(it.id)) < 0 && LIVE.BY_ID[it.id];

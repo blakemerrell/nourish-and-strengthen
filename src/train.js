@@ -4203,7 +4203,7 @@
     if (!wo) return null;
     var x = wo.x.map(function (e) {
       return { e: e.e, n: Math.max(1, Math.min(10, e.s.filter(counts).length || e.s.length)) };
-    }).filter(function (e) { return !!lib(e.e); }).slice(0, 20);
+    }).filter(function (e) { return !!(LIB[e.e] || T.cx[e.e]); }).slice(0, 20);
     var n = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 60) || String(wo.n || 'Routine').slice(0, 60);
     if (!x.length) return null;
     var id = 'r' + newId();
@@ -4514,11 +4514,12 @@
      not moved by it. Save as routine was the way before, in two steps. */
   function startRedo(wo) {
     if (LIVE || !wo || !wo.x.length) return;
-    var x = wo.x.filter(function (z) { return z.s.length && lib(z.e); }).map(function (z) {
-      var n = z.s.filter(function (q) { return !q.wu; }).length;
+    var x = wo.x.filter(function (z) { return z.s.length && (LIB[z.e] || T.cx[z.e]); }).map(function (z) {
+      var n = z.s.filter(counts).length;
       return liveEx(z.e, Math.max(1, n || z.s.length));
     });
     if (!x.length) return;
+    S.planOpen = false; S.peekNext = false; S.revWk = null;
     setLive({ id: newId(), st: Date.now(), n: wo.n || 'Workout', u: T.pr.u, ms: '', w: -1, d: -1, dl: 0, rir: null,
       x: x, sr: {}, fb: {}, rs: null });
     S.sub = 'block';
@@ -4528,6 +4529,7 @@
   }
   function startEmpty() {
     if (LIVE) return;
+    S.planOpen = false; S.peekNext = false; S.revWk = null;
     setLive({ id: newId(), st: Date.now(), n: 'Workout', u: T.pr.u, ms: '', w: -1, d: -1, dl: 0, rir: null,
       x: [], sr: {}, fb: {}, rs: null });
     S.sub = 'block';
@@ -4570,7 +4572,7 @@
       var x = LIVE.x[i];
       if (musOf(x.e) !== m) continue;
       any = true;
-      if (x.s.some(function (s) { return !s.t; })) return false;
+      if (!x.done && x.s.some(function (s) { return !s.t; })) return false;
     }
     return any;
   }
@@ -4776,7 +4778,7 @@
   function tick(xi, si, sure) {
     var x = LIVE.x[xi], s = x && x.s[si];
     if (!s) return;
-    if (s.t) { s.t = 0; delete x.done; saveLive(); draw(); return; }
+    if (s.t) { s.t = 0; x.open = 1; delete x.done; saveLive(); draw(); return; }
     var w = numIn(s.w), r = numIn(s.r), g = ghost(xi, si), miss = s.ty === 'm';
     if (w === null && g.w === null && onBody(x.e)) w = 0;
     /* A slipped finger, ticked, was a record, confetti and next week's
@@ -4802,9 +4804,10 @@
       return;
     }
     s.w = w; s.r = r; s.t = Date.now();
-    delete x.open;
+    var p0 = partner(xi);
+    LIVE.x.forEach(function (y, yi) { if (yi !== p0) delete y.open; });
     S.need = null;
-    var more = LIVE.x.some(function (y) { return y.s.some(function (z) { return !z.t; }); });
+    var more = LIVE.x.some(function (y) { return !y.done && y.s.some(function (z) { return !z.t; }); });
     /* In a pair, the rest after a set is the short one: the other half goes
        next, and it is resting this muscle while it works. After a warm-up a
        minute is plenty; before a drop set there is none, which is the point
@@ -9370,8 +9373,9 @@
   function finishHTML() {
     if (!LIVE) return '';
     var wo = finished();
-    var open = LIVE.x.reduce(function (n, x) { return n + x.s.filter(function (s) { return !s.t; }).length; }, 0);
-    var typed = typedOpen().length, empty = open - typed;
+    var open = LIVE.x.reduce(function (n, x) { return n + (x.done ? 0 : x.s.filter(function (s) { return !s.t; }).length); }, 0);
+    var tOpen = typedOpen(), typed = tOpen.length;
+    var empty = Math.max(0, open - tOpen.filter(function (o) { return !LIVE.x[o.xi].done; }).length);
     var typedSay = typed ? '<div class="tr-note tr-warn tr-typed">' + typed + ' set' + (typed === 1 ? ' has' : 's have') + ' numbers typed in but ' +
       (typed === 1 ? 'wasn\u2019t' : 'weren\u2019t') + ' ticked.</div>' : '';
     var prs = prsIn(wo);
@@ -11236,7 +11240,7 @@
     if ((t === 'styset' || t === 'styrm') && LIVE && S.sheet && S.sheet.k === 'sty') {
       var sx = LIVE.x[S.sheet.x], ss = sx && sx.s[S.sheet.s];
       if (!ss) { closeSheet(); return; }
-      if (t === 'styrm') { if (sx.s.length > 1) sx.s.splice(S.sheet.s, 1); }
+      if (t === 'styrm') { if (sx.s.length > 1) sx.s.splice(S.sheet.s, 1); sx.open = 1; delete sx.done; }
       else {
         if (v === 'w') ss.wu = 1; else delete ss.wu;
         if (v === 'd' || v === 'f' || v === 'm') ss.ty = v; else delete ss.ty;
@@ -11291,6 +11295,7 @@
     if (t === 'dropset') {
       var xd = LIVE.x[num('data-x')];
       for (var k = xd.s.length - 1; k >= 0; k--) { if (!xd.s[k].t) { xd.s.splice(k, 1); break; } }
+      xd.open = 1; delete xd.done;
       remapPrev(xd);
       saveLive(); draw(); return;
     }

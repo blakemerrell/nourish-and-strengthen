@@ -596,11 +596,17 @@ module.exports = {
     // ---- an account deleted takes its name off the household ------------
     SRV.db[HP] = seedHouse({ members: ['alice', 'bob'], diners: { alice: dn('Alice', 550, 70), bob: dn('Bob', 400, 40) } });
     SRV.db['users/alice'] = { myday: {} };
+    // her food log's years and her workouts' years, each a record under hers
+    SRV.db['users/alice/days/2025'] = { myday: { d: { '2025_03_02': { v: { b: [] }, at: 1 } } } };
+    SRV.db['users/alice/days/2026'] = { myday: {} };
+    SRV.db['users/alice/train/2026'] = { wo: {} };
     const Z = await phone({ house: CODE, user: { uid: 'alice', isAnonymous: false, email: 'a@test.example' } });
     const gone = await Z.p.evaluate(() => window.Store.deleteAccount().then(() => 'ok', (e) => 'failed: ' + e.message));
     t.ok('deleting an account takes it off the household’s members list',
       gone === 'ok' && same(SRV.db[HP].members, ['bob']) && !SRV.db['users/alice'],
       gone + ' ' + JSON.stringify(SRV.db[HP].members));
+    t.ok('and every year’s record of its food log and its workouts goes before its own',
+      !Object.keys(SRV.db).some((k) => k.indexOf('users/alice/') === 0), Object.keys(SRV.db).filter((k) => /^users\//.test(k)).join());
     t.ok('and its dinner numbers with it, leaving everybody else’s',
       same(SRV.db[HP].diners, { bob: dn('Bob', 400, 40) }), JSON.stringify(SRV.db[HP].diners));
 

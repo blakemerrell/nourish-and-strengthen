@@ -63,6 +63,10 @@ const M = [
   ['a week can be planned onto the wrong day', 'src/sync.js',
    "function wpath(suffix) { return 'weeks.' + state.active + (suffix ? '.' + suffix : ''); }",
    "function wpath(suffix) { return 'weeks.' + state.active + (suffix ? '.' + String(suffix).replace('tue','wed') : ''); }"],
+  ['a day leaves the one record before its year holds it', 'src/signin.js',
+   '        if (!dyHolds(DY.seenY, p, enc, was)) return;\n', ''],
+  ['a whole push sends every day again, however many years of them', 'src/dayup.js',
+   'var owed = !((had[enc] || 0) >= at)', 'var owed = true'],
 ];
 
 /* The list is read by tests/mutants.test.js, which fails the moment a

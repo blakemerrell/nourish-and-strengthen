@@ -222,6 +222,20 @@ service cloud.firestore {
     }
 
     /*
+     * Nourish's day log the same way, one record per calendar year under your
+     * own (users/{uid}/days/2026): the days, weigh-ins, closed days, training
+     * ticks and skips, which were all in your one record and, kept forever
+     * since October 2026, would fill it in two or three years. Guarded, and
+     * listable, for the same reasons as the workouts above.
+     */
+    match /users/{uid}/days/{year} {
+      allow get, list, delete: if request.auth != null && request.auth.uid == uid;
+      // a year, as dyYear in src/signin.js names one
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && year.matches('^[0-9]{4}$');
+    }
+
+    /*
      * An invite: one person into one household, once, within a week.
      *
      * Made only by somebody already on that household's members list, naming

@@ -136,6 +136,12 @@ service cloud.firestore {
         && year.matches('^[0-9]{4}$');
     }
 
+    match /users/{uid}/days/{year} {
+      allow get, list, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && year.matches('^[0-9]{4}$');
+    }
+
     match /invites/{token} {
       allow get: if request.auth != null
         && (resource == null
@@ -195,6 +201,11 @@ service cloud.firestore {
 > record, as before — which fills at about 1 MB, roughly three years of training —
 > and Settings says so. After, the next time the app opens it copies your workouts
 > into one record per year, and only then takes them out of the old record.
+>
+> **Adding Nourish's yearly records?** The same, for the three lines starting
+> `match /users/{uid}/days/{year}`. Until you publish them, your food log, weigh-ins
+> and the rest of My Day's days stay in your one account record, as before; after,
+> the next time the app opens it moves them to one record per year the same way.
 
 The split matters. `read` is two permissions wearing one name — `get`, which
 fetches the one household whose code you typed, and `list`, which queries the

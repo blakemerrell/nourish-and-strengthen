@@ -229,6 +229,27 @@ async function revealPlanFields(pg) {
     });
   }
 
+/* Going to a day the way a person does since 2026-10-18: the date in the
+   day's head is the phone's calendar (#macroDayPick, over the date), and the
+   arrows step a week. goDay picks a date in it; stepDay goes n days from the
+   one showing, as the old one-day arrows did. */
+async function goDay(pg, key) {
+  await pg.evaluate((k) => {
+    const b = document.getElementById('macroDayPick');
+    b.value = k;
+    b.dispatchEvent(new Event('change', { bubbles: true }));
+  }, key);
+  await pg.waitForTimeout(150);
+}
+async function stepDay(pg, n) {
+  const k = await pg.evaluate((n2) => {
+    const v = document.getElementById('macroDayPick').value.split('-').map(Number);
+    const d = new Date(v[0], v[1] - 1, v[2] + n2), q = (x) => (x < 10 ? '0' : '') + x;
+    return d.getFullYear() + '-' + q(d.getMonth() + 1) + '-' + q(d.getDate());
+  }, n);
+  await goDay(pg, k);
+}
+
 /* The day is trays now (2026-10-04): every food shows on its tray and a
    plate's own controls live in its meal's sheet (openMeal). Nothing on the
    day folds, so there is nothing to open; kept as a no-op for the suites
@@ -280,4 +301,4 @@ function nourish(def) {
   };
 }
 
-module.exports = { nourish, openWeigh, openPlan, revealPlanFields, addOn, asPlanned, openBasket, openMeal, closeSheet, openTray, pickRecipe, pickerList, addTo, storedDay, weighIn, todayOn, openDay };
+module.exports = { goDay, stepDay, nourish, openWeigh, openPlan, revealPlanFields, addOn, asPlanned, openBasket, openMeal, closeSheet, openTray, pickRecipe, pickerList, addTo, storedDay, weighIn, todayOn, openDay };

@@ -1,5 +1,5 @@
 /* The weigh-in's store: the mornings you weighed, kept for a year and a
- * bit for the trend (MWEIGHTS, mWeightFloor), written and stamped
+ * bit for the trend (MWEIGHTS), written and stamped
  * (mWriteWeight); the unit the box asks in, Strengthen's (mWUnit, mWShow,
  * MKG_LB); and the weigh-in on Today, filled in beside the weight box's own
  * rules (WGAPI). The longer account is with the code.
@@ -13,7 +13,6 @@
 
   // what it reads of the app's
   var MSTAMPS = app.MSTAMPS;
-  var dayKey = app.dayKey;
   var mFoldDue = app.mFoldDue;
   var mPut = app.mPut;
   var mStamp = app.mStamp;
@@ -45,31 +44,17 @@
   // a stored morning, said in the box's unit, to the tenth the box takes
   function mWShow(lb) { return Math.round((mWUnit() === 'kg' ? lb / MKG_LB : lb) * 10) / 10; }
 
-  // the oldest morning the weight log keeps: a year and a bit, for the trend
-  function mWeightFloor() {
-    var d = new Date();
-    d.setDate(d.getDate() - 399);
-    return dayKey(d);
-  }
-
   function mWriteWeight(k, lb) {
     mFoldDue();
     if (lb) MWEIGHTS[k] = Math.round(lb * 10) / 10;
     else delete MWEIGHTS[k];              // clearing the box un-logs the day
-    var floor = mWeightFloor();
-    Object.keys(MWEIGHTS).forEach(function (wk) { if (wk < floor) delete MWEIGHTS[wk]; });
-    /* The stamps age out on the same year-and-a-bit as the mornings they
-       stamp — they are what the payload is built from, so one left behind
-       would go on announcing an empty morning long after the morning itself
-       had gone. */
-    if (MSTAMPS.w) {
-      Object.keys(MSTAMPS.w).forEach(function (wk) { if (wk < floor) delete MSTAMPS.w[wk]; });
-    }
+    /* Every morning is kept, however old, and its stamp with it (2026-10-18;
+       both were pruned to a year and a bit). */
     mPut('bsc.macroWeights', MWEIGHTS);
     /* Per morning, so that clearing this one is a thing the payload can say
        without claiming anything about any other. */
     mStamp('w', k);
   }
 
-  return { mWUnit: mWUnit, mWShow: mWShow, mWeightFloor: mWeightFloor, mWriteWeight: mWriteWeight, WGAPI: WGAPI, MWEIGHTS: MWEIGHTS, MKG_LB: MKG_LB };
+  return { mWUnit: mWUnit, mWShow: mWShow, mWriteWeight: mWriteWeight, WGAPI: WGAPI, MWEIGHTS: MWEIGHTS, MKG_LB: MKG_LB };
 };

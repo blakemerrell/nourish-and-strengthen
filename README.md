@@ -58,6 +58,11 @@ nugget" finds Tyson's bag), then its plain foods. A food looked up or scanned op
 short page — its grades and allergens as one line, how much with − and +, the plate's
 P, F and C, and Add, all on the first screen — with the packet's whole Nutrition Facts
 panel and its ingredients folded under it, still there to correct a figure.
+The day's head says the day as a date; tap it for the phone's calendar, any day from the
+first you ever logged (or 120 days back, if that is further) to a week ahead. Nothing is
+let go of: every day and every weigh-in stays, on the phone and in your account. ‹ and › step a week, and so does a swipe
+across the week's bars. The button beside the gear steps every meal of the day at once
+through the three views a meal's name steps it through: its status, its foods, its details.
 
 **Strengthen** (the tab was called Train) — a lifting block, the log you keep at the gym, and a review of it. It is
 three ideas in one tab:

@@ -87,13 +87,18 @@ module.exports = {
     t.ok('a weigh-in from an old phone that is not a weight is left out',
       Object.keys(ws.got).length === 1 && ws.got[ws.want] === 181.5, JSON.stringify(ws));
 
-    // ---- what is long gone stays gone ------------------------------------
-    const gone = await p.evaluate(() => {
+    /* ---- an old day comes back from the account -------------------------
+       It used to be turned away, once older than the 120 days the phone
+       kept. Nothing is let go of since 2026-10-18 (Blake: "I would assume
+       that I'm keeping everything"), so a day from years ago that the
+       account still holds is taken back in, and is this phone's to say
+       again. */
+    const old = await p.evaluate(() => {
       window.__macroLab.merge({ sp: { '2020_01_01': { v: ['b'], at: Date.now() - 1000 } } });
       return { skip: JSON.parse(localStorage.getItem('bsc.macroSkip') || '{}'), sp: window.__macroLab.payload().sp || {} };
     });
-    t.ok('a day that has aged out here is not taken back in from the account',
-      !gone.skip['2020-01-01'] && !gone.sp['2020_01_01'], JSON.stringify(gone));
+    t.ok('a day years old that the account still holds is taken back in from it',
+      JSON.stringify(old.skip['2020-01-01']) === '["b"]' && !!old.sp['2020_01_01'], JSON.stringify(old));
 
     // ---- foods from the other device are counted --------------------------
     const counted = await p.evaluate(() => {

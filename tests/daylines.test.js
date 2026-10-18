@@ -17,6 +17,7 @@
  * Also here, two plates that read wrong on his day the same evening: a
  * scanned can, "1 1 can (335 ml)", and a USDA food whose dial said
  * ", NS as t" (src/portion.js, mLabelServing). */
+const { goDay, stepDay } = require('./fixtures/nourish.js');
 const DAY = '2026-10-08';
 
 const SETUP = () => {
@@ -282,10 +283,10 @@ module.exports = {
     /* a line opened on one day is not open on another */
     await p.click(line('d', 1) + ' [data-mamt]');
     await p.waitForTimeout(200);
-    await p.click('#macroNext');
-    await p.waitForTimeout(300);
-    await p.click('#macroPrev');
-    await p.waitForTimeout(300);
+    await stepDay(p, 1);
+    await p.waitForTimeout(150);
+    await stepDay(p, -1);
+    await p.waitForTimeout(150);
     t.ok('and a line left open is still open back on its own day', !!(await p.$(line('d', 1) + '.open')));
 
     /* ---- two plates that read wrong ---- */

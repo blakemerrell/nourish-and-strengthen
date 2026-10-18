@@ -2679,7 +2679,7 @@
 
   /* src/mydayparts.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var MYDAYPARTS = window.HiveParts.mydayparts({ mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mTrainedAt: mTrainedAt, mWeightFloor: mWeightFloor, LIVE: LIVE });
+  var MYDAYPARTS = window.HiveParts.mydayparts({ mDoneAt: mDoneAt, mTrainedAt: mTrainedAt, LIVE: LIVE });
   function mSyncKey(k) { return MYDAYPARTS.mSyncKey(k); }
   function mPlainObj(v) { return MYDAYPARTS.mPlainObj(v); }
   function mNum(v) { return MYDAYPARTS.mNum(v); }
@@ -2805,19 +2805,27 @@
   var mDrawnToday = '';
   function mViewKey() { return S.macroDate || mDrawnToday || todayKey(); }
 
-  /* Today and about four months behind it: the same stretch the intake log
-     and each day's own targets are kept for (MINTAKE_DAYS), so a past day
-     opened here is still judged against what it was aiming at. It was a
-     fortnight, which was enough to change your mind about last week and not
-     enough to find the dinner you had in August; Blake: "Copy from another
-     day on each meal, and a date picker beyond two weeks." Still not a diary
-     the browser carries forever. YYYY-MM-DD sorts as it dates, so the prune
-     is one string comparison. */
-  var MDAY_KEEP = 120;
+  /* The oldest day there is to go to: the first one anything was logged on,
+     food or a weigh-in, and never less than the last 120 days, so a phone
+     with nothing on it yet can still go back and log yesterday.
+   *
+     It was a window, the last 120 days (a fortnight before that), and the
+     day log, the weigh-ins (399 days), the closed days, the skips and the
+     training ticks were all pruned to it on every write, and older days
+     coming back from the account were turned away. Blake, 2026-10-18: "What
+     about the other historical data? I lose everything after 4 months. I
+     would assume that I'm keeping everything." He chose to keep everything.
+     Nothing is pruned now (dayflags.js, placing.js, weighin.js, and the
+     account's days in mydayparts.js are all taken in), so this only says
+     where the calendar and the arrows stop. YYYY-MM-DD sorts as it dates,
+     so the oldest is the least key. */
   function mEarliestKey() {
     var d = new Date();
-    d.setDate(d.getDate() - (MDAY_KEEP - 1));
-    return dayKey(d);
+    d.setDate(d.getDate() - 119);
+    var first = dayKey(d);
+    Object.keys(MDAYS).forEach(function (k) { if (k < first) first = k; });
+    Object.keys(MWEIGHTS).forEach(function (k) { if (k < first && MWEIGHTS[k] > 0) first = k; });
+    return first;
   }
 
   /* How far forward the day travels. A week is as far as a plan is worth
@@ -2990,7 +2998,7 @@
 
   /* src/placing.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var PLACING = window.HiveParts.placing({ MDAYS: MDAYS, mEarliestKey: mEarliestKey, mFoldDue: mFoldDue, mPut: mPut, mSetSkip: mSetSkip, mSkipped: mSkipped, mSlotKind: mSlotKind, mSlotSecs: mSlotSecs, mStamp: mStamp });
+  var PLACING = window.HiveParts.placing({ MDAYS: MDAYS, mFoldDue: mFoldDue, mPut: mPut, mSetSkip: mSetSkip, mSkipped: mSkipped, mSlotKind: mSlotKind, mSlotSecs: mSlotSecs, mStamp: mStamp });
   function mFoodMealOK(r, slot) { return PLACING.mFoodMealOK(r, slot); }
   function mSlotsForRecipe(r, slots) { return PLACING.mSlotsForRecipe(r, slots); }
   function mSlotForRecipe(r, slots) { return PLACING.mSlotForRecipe(r, slots); }
@@ -3072,7 +3080,7 @@
 
   /* src/dayflags.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var DAYFLAGS = window.HiveParts.dayflags({ MSTAMPS: MSTAMPS, M_WDAY: M_WDAY, keyDate: keyDate, mDayTargets: mDayTargets, mEarliestKey: mEarliestKey, mFoldDue: mFoldDue, mIsTrainingDay: mIsTrainingDay, mPut: mPut, mReadProfileRaw: mReadProfileRaw, mReadTargets: mReadTargets, mStamp: mStamp, mSynced: mSynced, mTrainDays: mTrainDays, mWkIx: mWkIx, todayKey: todayKey });
+  var DAYFLAGS = window.HiveParts.dayflags({ MSTAMPS: MSTAMPS, M_WDAY: M_WDAY, keyDate: keyDate, mDayTargets: mDayTargets, mFoldDue: mFoldDue, mIsTrainingDay: mIsTrainingDay, mPut: mPut, mReadProfileRaw: mReadProfileRaw, mReadTargets: mReadTargets, mStamp: mStamp, mSynced: mSynced, mTrainDays: mTrainDays, mWkIx: mWkIx, todayKey: todayKey });
   function mDoneAt(k) { return DAYFLAGS.mDoneAt(k); }
   function mTrainedAt(k) { return DAYFLAGS.mTrainedAt(k); }
   function mTrainedSaid(k) { return DAYFLAGS.mTrainedSaid(k); }
@@ -3099,10 +3107,9 @@
 
   /* src/weighin.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var WEIGHIN = window.HiveParts.weighin({ MSTAMPS: MSTAMPS, dayKey: dayKey, mFoldDue: mFoldDue, mPut: mPut, mStamp: mStamp });
+  var WEIGHIN = window.HiveParts.weighin({ MSTAMPS: MSTAMPS, mFoldDue: mFoldDue, mPut: mPut, mStamp: mStamp });
   function mWUnit() { return WEIGHIN.mWUnit(); }
   function mWShow(lb) { return WEIGHIN.mWShow(lb); }
-  function mWeightFloor() { return WEIGHIN.mWeightFloor(); }
   function mWriteWeight(k, lb) { return WEIGHIN.mWriteWeight(k, lb); }
   var WGAPI = WEIGHIN.WGAPI;
   var MWEIGHTS = WEIGHIN.MWEIGHTS;
@@ -3209,7 +3216,6 @@
      names here, as declarations, so they answer from anywhere in this file. */
   var MYDAY = window.HiveParts.myday({ MDAYS: MDAYS, MWEIGHTS: MWEIGHTS, M_MONS: M_MONS, S: S, WGAPI: WGAPI, dayKey: dayKey, kcalOf: kcalOf, mNextMeal: mNextMeal, mpIcon: mpIcon, leaf: leaf, mAhead: mAhead, mBatchStrip: mBatchStrip, mCanFav: mCanFav, mCascadeLineHTML: mCascadeLineHTML, mDay: mDay, mDayTargets: mDayTargets, mDialUnit: mDialUnit, mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mEditDay: mEditDay, mFillRoom: mFillRoom, mFoldForget: mFoldForget, mIcon: mIcon, mIsFav: mIsFav, mLatestKey: mLatestKey, mLongDate: mLongDate, mMacLine: mMacLine, mMarkAccountUI: mMarkAccountUI, mMealAsk: mMealAsk, mMealPillsSay: mMealPillsSay, mReadSlots: mReadSlots, mSaltChip: mSaltChip, mServeG: mServeG, mSkipped: mSkipped, mSnapTargets: mSnapTargets, mViewKey: mViewKey, mWeekHTML: mWeekHTML, mWhyChip: mWhyChip, mWhyStrip: mWhyStrip, macroFootHTML: macroFootHTML, macroWeighHTML: macroWeighHTML, syncShrunk: syncShrunk, todayKey: todayKey, mDialFromX: mDialFromX, mDialG: mDialG, mDialMeasure: mDialMeasure, mDialText: mDialText, LIVE: LIVE });
   function renderMacros() { return MYDAY.renderMacros(); }
-  function mDayPick(open) { return MYDAY.mDayPick(open); }
   function mMealSheetParts(sk) { return MYDAY.mMealSheetParts(sk); }
   function mMealNowHTML(sk, add) { return MYDAY.mMealNowHTML(sk, add); }
 
@@ -6076,27 +6082,56 @@
       S.macroDate = d.dataset.mweek === todayKey() ? null : d.dataset.mweek;
       keepingFocus(renderMacros);
     });
-    $('macroPrev').addEventListener('click', function () { mNavDay(-1); });
-    $('macroNext').addEventListener('click', function () { mNavDay(1); });
-    $('macroDaySel').addEventListener('change', function () {
-      if (this.value === 'pick') {
-        this.value = mViewKey();
-        mDayPick(true);
-        return;
-      }
-      S.macroDate = this.value === todayKey() ? null : this.value;
+    /* A week each, and the week strip swiped the same way (Blake, 2026-10-18,
+       "a way for me to scroll to future or past weeks within reason": the
+       arrows a week, he chose, and a swipe on the bars). The same day of the
+       week, so the strip moves and the day lit in it stays put. */
+    $('macroPrev').addEventListener('click', function () { mNavDay(-7); });
+    $('macroNext').addEventListener('click', function () { mNavDay(7); });
+    /* A swipe across the week, not a scroll down past it: more across than
+       down, and far enough to mean it. A tap on a day is a click, and
+       still opens that day. */
+    var wkX = null, wkY = 0;
+    $('macroWeek').addEventListener('touchstart', function (e) {
+      if (e.touches.length !== 1) { wkX = null; return; }
+      wkX = e.touches[0].clientX; wkY = e.touches[0].clientY;
+    }, { passive: true });
+    $('macroWeek').addEventListener('touchend', function (e) {
+      if (wkX === null) return;
+      var t = e.changedTouches[0], dx = t.clientX - wkX, dy = t.clientY - wkY;
+      wkX = null;
+      if (Math.abs(dx) < 48 || Math.abs(dx) < 1.5 * Math.abs(dy)) return;
+      mNavDay(dx < 0 ? 7 : -7);
+    }, { passive: true });
+    /* Every meal's view at once (myday.js, mViewsNow): each meal of the day
+       set to the next view round from the one they share, or to Status
+       when they differ. Set per meal, as a meal's name sets it, so a name
+       still steps its own meal afterwards; what Status and Foods hide goes
+       shut, as it does there. */
+    $('macroViews').addEventListener('click', function () {
+      var vk = mViewKey(), nv = MYDAY.mViewsAll().next;
+      var held = (S.mView[vk] = S.mView[vk] || {});
+      Array.prototype.forEach.call(document.querySelectorAll('#macroSlots [data-mview]'), function (b) {
+        held[b.getAttribute('data-mview')] = nv;
+      });
+      if (nv !== 3 && S.mAmt && S.mAmt.indexOf(vk + '|') === 0) { S.mAmt = ''; S.mType = null; }
       keepingFocus(renderMacros);
     });
+
     /* Any day the log keeps, by date. The box opens its own calendar where
        the phone has one; typed or picked, a day inside the window goes. */
     $('macroDayPick').addEventListener('change', function () {
       var v = this.value;
       if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || v < mEarliestKey() || v > mLatestKey()) return;
-      mDayPick(false);
       S.macroDate = v === todayKey() ? null : v;
+      S.mEdit = '';
       renderMacros();
     });
-    $('macroDayPickX').addEventListener('click', function () { mDayPick(false); });
+    /* A phone opens its calendar for a tap on the box; a desktop browser
+       only for one on its own small icon, so the whole box asks for it. */
+    $('macroDayPick').addEventListener('click', function () {
+      try { if (this.showPicker) this.showPicker(); } catch (e) { /* the box itself is the way in */ }
+    });
     /* One button, two jobs, and which one it is doing is written on its face.
        With no plan there is nothing to fill and the press opens the sheet
        that makes one — see the note where the label is set. */

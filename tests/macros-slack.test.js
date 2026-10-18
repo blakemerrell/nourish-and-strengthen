@@ -4,7 +4,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, openPlan, openMeal, closeSheet, openTray } = require('./fixtures/nourish.js');
+const { nourish, goDay, stepDay, openPlan, openMeal, closeSheet, openTray } = require('./fixtures/nourish.js');
 
 module.exports = nourish({
   name: 'Macros — salt, a meal\'s tray, and handing slack on',
@@ -25,7 +25,7 @@ module.exports = nourish({
         ['b', 'l', 'd', 's'].forEach((sk) => (day[sk] || []).forEach((it) => out.push(String(it.id))));
         return out;
       }));
-      if (d < 2) { await wk.click('#macroNext'); await wk.waitForTimeout(220); }
+      if (d < 2) { await stepDay(wk, 1); await wk.waitForTimeout(70); }
     }
     /* Fill knew only about the day in front of it, so seven drafted days ran
        to nineteen distinct dishes and served one of them four times. A cook
@@ -75,7 +75,7 @@ module.exports = nourish({
     for (let d = 0; d < 4; d++) {
       await wk.click('#macroFill');
       await wk.waitForTimeout(320);
-      if (d < 3) { await wk.click('#macroNext'); await wk.waitForTimeout(220); }
+      if (d < 3) { await stepDay(wk, 1); await wk.waitForTimeout(70); }
     }
 
     /* Chasing protein, the portion solver took a chicken salad carrying

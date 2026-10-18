@@ -5,7 +5,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, pickerList, openMeal, closeSheet } = require('./fixtures/nourish.js');
+const { nourish, goDay, stepDay, pickerList, openMeal, closeSheet } = require('./fixtures/nourish.js');
 
 /* What each meal is asked for, read off its tray: the calorie pill's share
    (trays, 2026-10-04; the pills, 2026-10-05). An empty meal is one row with
@@ -912,7 +912,7 @@ module.exports = nourish({
     await spk.click('.tab[data-view="macros"]');
     await spk.waitForTimeout(450);
     // and look at that week, so the strip is drawing the days just seeded
-    await spk.selectOption('#macroDaySel', await spk.evaluate(() => {
+    await goDay(spk, await spk.evaluate(() => {
       const p2 = (n) => (n < 10 ? '0' : '') + n;
       const d = new Date(); d.setDate(d.getDate() - (((new Date().getDay() + 6) % 7) + 7));
       return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());

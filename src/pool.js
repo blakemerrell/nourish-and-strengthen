@@ -277,7 +277,14 @@
     var d = keyDate(mViewKey());
     d.setDate(d.getDate() + step);
     var k = dayKey(d);
-    if (k > mLatestKey() || k < mEarliestKey()) return;
+    /* A week's step that would go past either end stops at the end: the
+       arrows step a week since 2026-10-18 (Blake chose it with swiping the
+       week strip), and three days from the oldest day kept, a refused step
+       back looked like a broken button. A step that cannot move at all
+       does nothing. */
+    if (k > mLatestKey()) k = mLatestKey();
+    if (k < mEarliestKey()) k = mEarliestKey();
+    if (k === mViewKey()) return;
     S.macroDate = k === todayKey() ? null : k;
     S.mEdit = '';                    // a different day, a different plate
     renderMacros();

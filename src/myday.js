@@ -1,5 +1,5 @@
 /* My Day, drawn: renderMacros, which keeps the weight box's focus across a
- * redraw, the day picker (mDayPick), and the day itself (mRenderDay), its
+ * redraw, and the day itself (mRenderDay), its date and calendar, its
  * week strip, weigh-in card, meals with their plates, pills and the line
  * that says where the slack went, and the foot. The longer account is with
  * the code.
@@ -117,16 +117,6 @@
     mSnapTargets();
     mRendering = true;
     try { mRenderDay(); } finally { mRendering = false; }
-  }
-
-  function mDayPick(open) {
-    var row = $('macroDayPick').closest('.mday-pick');
-    row.classList.toggle('hide', !open);
-    if (!open) return;
-    var inp = $('macroDayPick');
-    inp.value = mViewKey();
-    inp.focus();
-    try { if (inp.showPicker) inp.showPicker(); } catch (e) { /* the box itself is the way in */ }
   }
 
   /* ---- one meal, as the tray and the sheet both read it ---- */
@@ -600,33 +590,24 @@
        out of the window at midnight, and an edit to it would have been
        written and then pruned away by the same save. */
     if (k > mLatestKey() || k < mEarliestKey()) { S.macroDate = null; k = todayK; }
-    /* The day is a control, not a caption: every day the tab remembers, named
-       the way you would say it, with the arrows for single steps either side. */
-    var opts = [];
-    for (var step = 7; step > -14; step--) {
-      var od = new Date();
-      od.setDate(od.getDate() + step);
-      var ok = dayKey(od);
-      /* Month first, the one form the app writes a date in: "Mon, Sep 28",
-         or the word for it when there is one. */
-      var word = step === 0 ? 'Today' : step === -1 ? 'Yesterday'
-        : step === 1 ? 'Tomorrow' : '';
-      /* The word alone when there is one: "Tomorrow · Oct 18" made the box
-         the widest thing in the row, and the week strip under it already
-         says the date (Blake, 2026-10-18: "make that date box look like it
-         belongs. And shorter"). */
-      opts.push('<option value="' + ok + '"' + (ok === k ? ' selected' : '') + '>' +
-        (word || mLongDate(ok)) + '</option>');
-    }
-    /* A day further back than the list, reached by the date box or the
-       arrows, is named at the foot so the box still says where you are; and
-       the last entry opens the date box, for any day the log keeps. */
-    var listFrom = new Date(); listFrom.setDate(listFrom.getDate() - 13);
-    if (k < dayKey(listFrom)) opts.push('<option value="' + k + '" selected>' + mLongDate(k) + '</option>');
-    opts.push('<option value="pick">Earlier day\u2026</option>');
-    $('macroDaySel').innerHTML = opts.join('');
+    /* The day, said as a date ("Sun, Oct 18"), and the box over it the
+       phone's own calendar, from the oldest day the log keeps to a week
+       ahead. It was a list of three weeks of days with "Earlier day…" at its
+       foot opening a second box under the head; Blake, 2026-10-18: "show the
+       date right there and let it be clickable so I can get a calendar.
+       Picker I need to go to a date or a month". The week strip under it
+       says which day of the week, and Today is the one it marks. */
+    var word = k === todayK ? 'Today' : '';
+    var od1 = new Date(); od1.setDate(od1.getDate() - 1);
+    var ot1 = new Date(); ot1.setDate(ot1.getDate() + 1);
+    if (k === dayKey(od1)) word = 'Yesterday';
+    if (k === dayKey(ot1)) word = 'Tomorrow';
+    $('macroDateTx').textContent = mLongDate(k);
     var dp = $('macroDayPick');
-    if (dp) { dp.min = mEarliestKey(); dp.max = mLatestKey(); }
+    if (dp) {
+      dp.min = mEarliestKey(); dp.max = mLatestKey(); dp.value = k;
+      dp.setAttribute('aria-label', (word ? word + ', ' : '') + mLongDate(k) + '. Choose a day');
+    }
     $('macroPrev').disabled = k <= mEarliestKey();
     $('macroNext').disabled = k >= mLatestKey();
     $('macroWeek').innerHTML = mWeekHTML(k, todayK);
@@ -1051,5 +1032,5 @@
     return '<div class="mcaps">' + capsHTML(sub, M.aim, M.ask && M.ask.spent, !!(M.ask && M.ask.capped)) + '</div>';
   }
 
-  return { mViewsAll: mViewsAll, renderMacros: renderMacros, mDayPick: mDayPick, mMealSheetParts: mMealSheetParts, mMealNowHTML: mMealNowHTML };
+  return { mViewsAll: mViewsAll, renderMacros: renderMacros, mMealSheetParts: mMealSheetParts, mMealNowHTML: mMealNowHTML };
 };

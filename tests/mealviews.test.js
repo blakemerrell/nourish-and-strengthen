@@ -1,9 +1,13 @@
-/* Every meal's view at once, and the day box drawn like its neighbours.
+/* Every meal's view at once, the day said as a date that opens a calendar,
+ * and the week strip moved a week at a time.
  *
  * Blake, 2026-10-18, pointing at the day's head: "Add a button here that lets
  * me cycle through the triple tap for all meals. Collapse, show foods, show.
- * Edit foods" (beside the gear, he chose), and "make that date box look.
- * Like it belongs. And shorter". */
+ * Edit foods" (beside the gear, he chose), "make that date box look. Like
+ * it belongs. And shorter", and then "simply just show the date right there
+ * and let it be clickable so I can get a calendar ... Also be a way for me
+ * to scroll to Future or past weeks within reason" (a swipe on the week, and
+ * the arrows a week, he chose). */
 const SETUP = () => {
   localStorage.setItem('bsc.macroProfile', JSON.stringify({ sex: 'm', age: 43, ft: 5, inch: 11, lb: 192, act: 1.55, goal: 'cut1' }));
   localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 190, f: 70, c: 230 }));
@@ -42,18 +46,23 @@ module.exports = {
 
     const head = await p.evaluate(() => {
       const ids = [...document.querySelectorAll('.mday-head > :not(.mday-menu)')].filter((e) => !e.hidden).map((e) => e.id || e.className);
-      const sel = document.getElementById('macroDaySel'), cs = getComputedStyle(sel), r = sel.getBoundingClientRect();
+      const sel = document.getElementById('macroDate'), cs = getComputedStyle(sel), r = sel.getBoundingClientRect();
+      const box = document.getElementById('macroDayPick').getBoundingClientRect();
       const tops = [...document.querySelectorAll('.mday-head > :not(.mday-menu)')].filter((e) => !e.hidden && e.getBoundingClientRect().height)
         .map((e) => Math.round(e.getBoundingClientRect().top + e.getBoundingClientRect().height / 2));
-      return { ids, said: sel.options[sel.selectedIndex].text, w: r.width, h: r.height, bg: cs.backgroundColor,
-        ring: cs.boxShadow, oneRow: Math.max(...tops) - Math.min(...tops) <= 2 };
+      return { ids, said: document.getElementById('macroDateTx').textContent, w: r.width, h: r.height, bg: cs.backgroundColor,
+        ring: cs.boxShadow, oneRow: Math.max(...tops) - Math.min(...tops) <= 2,
+        over: box.left <= r.left + 1 && box.right >= r.right - 1 && box.height >= 30,
+        title: document.querySelector('.mday-title').getBoundingClientRect().width,
+        listen: document.getElementById('macroDayPick').getAttribute('aria-label') };
     });
     t.ok('the button sits by the gear, after the day, a thumb tall',
-      head.ids.slice(1).join() === 'macroPrev,macroDaySel,macroNext,macroViews,macroMore' && head.oneRow, JSON.stringify(head));
-    t.ok('the day box says just the day ("Today"), is no wider than it needs, and is a thumb tall',
-      head.said === 'Today' && head.w < 120 && head.h >= 44, JSON.stringify(head));
-    t.ok('and is drawn as the arrows and the gear are: no fill, their line round it',
-      /rgba\(0, 0, 0, 0\)|transparent/.test(head.bg) && /inset/.test(head.ring) && /1\.5px/.test(head.ring), JSON.stringify(head));
+      head.ids.slice(1).join() === 'macroPrev,macroDate,macroNext,macroViews,macroMore' && head.oneRow, JSON.stringify(head));
+    t.ok('the day is said as its date, a thumb tall, today told as Today to a listener',
+      head.said === 'Thu, Oct 8' && head.h >= 44 && head.listen === 'Today, Thu, Oct 8. Choose a day', JSON.stringify(head));
+    t.ok('drawn as the arrows and the gear are, no fill and their line round it, with the calendar\u2019s box over all of it',
+      /rgba\(0, 0, 0, 0\)|transparent/.test(head.bg) && /inset/.test(head.ring) && /1\.5px/.test(head.ring) && head.over, JSON.stringify(head));
+    t.ok('on a 390 px phone the title gives the date its room (the tab above says Nourish)', head.title <= 1 && head.w > 140, JSON.stringify(head));
 
     let b = await button(p);
     t.ok('meals all on their foods: the button’s middle pip lit, and it says what a press shows next',
@@ -74,11 +83,47 @@ module.exports = {
     await p.click('#macroSlots [data-mview="d"]');
     t.ok('and a name still steps its meal on from there', (await views(p)) === '112', await views(p));
 
-    // another day starts as days start, its own views untouched by this one's
-    await p.click('#macroNext');
+    /* ---- the date's calendar, and weeks ---- */
+    const day = () => p.evaluate(() => [document.getElementById('macroDayPick').value, document.getElementById('macroDateTx').textContent,
+      [...document.querySelectorAll('#macroWeek [data-mweek]')].map((b) => b.dataset.mweek.slice(8)).join(' ')]);
+    const cal = await p.evaluate(() => { const b = document.getElementById('macroDayPick'); return [b.type, b.min, b.max]; });
+    t.ok('the date is a calendar, from the oldest day the log keeps to a week ahead', cal.join() === 'date,2026-06-11,2026-10-15', cal.join());
+    await p.evaluate(() => { const b = document.getElementById('macroDayPick'); b.value = '2026-07-04'; b.dispatchEvent(new Event('change', { bubbles: true })); });
     await p.waitForTimeout(200);
-    const next = await p.evaluate(() => document.getElementById('macroDaySel').selectedOptions[0].text);
-    t.ok('the next day is called by its word too', next === 'Tomorrow', next);
+    let d = await day();
+    t.ok('a date picked on it, months back, goes there, and the week strip shows that week', d[0] === '2026-07-04' && d[1] === 'Sat, Jul 4' && d[2] === '29 30 01 02 03 04 05', JSON.stringify(d));
+    await p.click('#macroNext');
+    await p.waitForTimeout(150);
+    d = await day();
+    t.ok('\u203a steps a week on, the same day of the week', d[0] === '2026-07-11' && d[2] === '06 07 08 09 10 11 12', JSON.stringify(d));
+    await p.click('#macroPrev');
+    await p.click('#macroPrev');
+    await p.waitForTimeout(150);
+    t.ok('and \u2039 a week back', (await day())[0] === '2026-06-27');
+    // Jun 20, Jun 13, and then a week back would be Jun 6, before the oldest day kept (Jun 11)
+    await p.click('#macroPrev');
+    await p.click('#macroPrev');
+    await p.click('#macroPrev');
+    await p.waitForTimeout(150);
+    d = await day();
+    t.ok('a week back past the oldest day kept stops on it, rather than doing nothing', d[0] === '2026-06-11', JSON.stringify(d));
+    const swipe = (dx) => p.evaluate((dx2) => {
+      const w = document.getElementById('macroWeek'), r = w.getBoundingClientRect(), y = r.top + r.height / 2, x = r.left + r.width / 2;
+      const touch = (cx) => new Touch({ identifier: 1, target: w, clientX: cx, clientY: y });
+      w.dispatchEvent(new TouchEvent('touchstart', { touches: [touch(x)], changedTouches: [touch(x)], bubbles: true }));
+      w.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: [touch(x + dx2)], bubbles: true }));
+    }, dx);
+    await p.evaluate(() => { const b = document.getElementById('macroDayPick'); b.value = '2026-10-08'; b.dispatchEvent(new Event('change', { bubbles: true })); });
+    await swipe(-120);
+    await p.waitForTimeout(150);
+    t.ok('a swipe left across the week strip goes to the week after', (await day())[0] === '2026-10-15');
+    await swipe(120);
+    await swipe(120);
+    await p.waitForTimeout(150);
+    t.ok('and a swipe right, the week before', (await day())[0] === '2026-10-01');
+    await swipe(20);
+    await p.waitForTimeout(150);
+    t.ok('a nudge too small to mean it moves nothing', (await day())[0] === '2026-10-01');
     await p.context().close();
 
     /* 320 px, dark: one row, nothing wider than the screen */
@@ -88,12 +133,13 @@ module.exports = {
       const tops = kids.map((e) => Math.round(e.getBoundingClientRect().top + e.getBoundingClientRect().height / 2));
       const head = document.querySelector('.mday-head').getBoundingClientRect();
       return { oneRow: Math.max(...tops) - Math.min(...tops) <= 2, inside: kids.every((e) => e.getBoundingClientRect().right <= head.right + 0.5),
-        page: document.documentElement.scrollWidth <= innerWidth, day: document.getElementById('macroDaySel').getBoundingClientRect().width,
+        page: document.documentElement.scrollWidth <= innerWidth, day: document.getElementById('macroDate').getBoundingClientRect().width,
+        whole: (() => { const tx = document.getElementById('macroDateTx'); return tx.scrollWidth <= tx.clientWidth; })(),
         // the meal cards drop their own pips this narrow; the button is nothing but them
         pips: [...document.querySelectorAll('#macroViews .mtray-pips i')].filter((i) => i.getBoundingClientRect().width >= 5).length };
     });
-    t.ok('at 320 px in the dark the head stays one row, inside the screen, the day still readable and the button\u2019s pips shown',
-      narrow.oneRow && narrow.inside && narrow.page && narrow.day >= 90 && narrow.pips === 3, JSON.stringify(narrow));
+    t.ok('at 320 px in the dark the head stays one row, inside the screen, the date whole and the button\u2019s pips shown',
+      narrow.oneRow && narrow.inside && narrow.page && narrow.day >= 90 && narrow.whole && narrow.pips === 3, JSON.stringify(narrow));
     await n.context().close();
 
     t.ok('with no error on the page', errs.length === 0, errs.join(' | '));

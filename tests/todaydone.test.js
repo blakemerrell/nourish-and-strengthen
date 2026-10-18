@@ -8,6 +8,7 @@
  * line; the calories and protein stay; a finished workout is one green card;
  * a tap on either card goes to its tab, and its own buttons still do their
  * own thing. With nothing planned, the Eating card says so. */
+const { goDay, stepDay } = require('./fixtures/nourish.js');
 const EVENING = new Date(2026, 9, 1, 18, 0, 0);     // a Thursday, 6 pm
 
 async function at(t, setup) {
@@ -151,8 +152,8 @@ module.exports = {
     /* Nourish left on yesterday: Today's Fill still fills today. */
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(300);
-    await p.click('#macroPrev');
-    await p.waitForTimeout(300);
+    await stepDay(p, -1);
+    await p.waitForTimeout(150);
     await p.click('.tab[data-view="today"]');
     await p.waitForTimeout(300);
     await p.click('[data-card="eating"] [data-td="fill"]');

@@ -4,7 +4,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, openMeal: openMeal0, closeSheet } = require('./fixtures/nourish.js');
+const { nourish, goDay, stepDay, openMeal: openMeal0, closeSheet } = require('./fixtures/nourish.js');
 
 /* Opens one meal's sheet the way a thumb does, if it is not open already.
    Since 2026-10-04 the day is trays, and a meal's plates and verbs are in
@@ -666,8 +666,8 @@ module.exports = nourish({
       await ep.reload();
       await ep.click('.tab[data-view="macros"]');
       await ep.waitForTimeout(300);
-      await ep.click('#macroNext');
-      await ep.waitForTimeout(300);
+      await stepDay(ep, 1);
+      await ep.waitForTimeout(150);
       const tmr = await ep.evaluate((k) => (JSON.parse(localStorage.getItem('bsc.macroDays') || '{}'))[k] || null, tomorrow);
       const tdy = await ep.evaluate((k) => (JSON.parse(localStorage.getItem('bsc.macroDays') || '{}'))[k] || null, today);
       t.ok('browsing to tomorrow writes nothing onto it; today still gets its pins',
@@ -1336,8 +1336,8 @@ module.exports = nourish({
       await np.reload();
       await np.click('.tab[data-view="macros"]');
       await np.waitForTimeout(300);
-      await np.click('#macroNext');
-      await np.waitForTimeout(300);
+      await stepDay(np, 1);
+      await np.waitForTimeout(150);
       const canSweep = await np.evaluate(() => !document.getElementById('macroSweep').disabled);
       await np.click('#macroSweep');
       await np.waitForTimeout(300);

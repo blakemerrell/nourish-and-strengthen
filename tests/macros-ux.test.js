@@ -4,7 +4,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish } = require('./fixtures/nourish.js');
+const { nourish, goDay, stepDay } = require('./fixtures/nourish.js');
 
 /* Back to the day from a meal's sheet. While a meal's sheet is up (the
    trays and the meal sheet, 2026-10-04) the day's header — the day picker,
@@ -305,15 +305,15 @@ module.exports = nourish({
       t.ok('Fill drafts stay planned, even on meals whose time has come',
         drafts.length > 0 && drafts.every((it) => it.eaten === 0), JSON.stringify(drafted));
       /* A day behind you is all eaten; a day ahead is all plan. */
-      await homeDay(pg); await pg.selectOption('#macroDaySel', TUE);
+      await homeDay(pg); await goDay(pg, TUE);
       await pg.waitForTimeout(300);
       await addFood('d', 'banana', 'f:banana');
       t.ok('on yesterday, dinner arrives planned too', ((await stored(TUE)).d || [])[0].eaten === 0, JSON.stringify(await stored(TUE)));
-      await homeDay(pg); await pg.selectOption('#macroDaySel', THU);
+      await homeDay(pg); await goDay(pg, THU);
       await pg.waitForTimeout(300);
       await addFood('b', 'banana', 'f:banana');
       t.ok('and on tomorrow, even breakfast is a plan', ((await stored(THU)).b || [])[0].eaten === 0, JSON.stringify(await stored(THU)));
-      await homeDay(pg); await pg.selectOption('#macroDaySel', WED);
+      await homeDay(pg); await goDay(pg, WED);
       await pg.waitForTimeout(300);
       /* At quarter to eleven lunch has not started; at five past, it has. */
       await at(2026, 8, 30, 10, 45);
@@ -493,7 +493,7 @@ module.exports = nourish({
       const s4 = await strip();
       t.ok('but over is over at any hour, because that is already a fact', s4.word === '' && /\bover\b/.test(s4.cls), JSON.stringify(s4));
       await seed({ days: Object.assign({ [TUE]: { b: [{ id: 'f:egg', x: 3, eaten: 1 }] } }, halfDay) });
-      await homeDay(pg); await pg.selectOption('#macroDaySel', TUE);
+      await homeDay(pg); await goDay(pg, TUE);
       await pg.waitForTimeout(300);
       const s5 = await strip();
       t.ok('and a day behind you keeps its verdict, as colour', s5.word === '' && /\bunder\b/.test(s5.cls), JSON.stringify(s5));
@@ -696,12 +696,17 @@ module.exports = nourish({
 
       /* One date form, month first; and button words that never break, down
          to a 320-wide phone. */
-      const opts = await pg.evaluate(() => [...document.getElementById('macroDaySel').options].map((o) => o.text));
-      t.ok('the day box says "Mon, Sep 28", month first, and "Today · Sep 30"',
-        opts.indexOf('Mon, Sep 28') >= 0 && opts.indexOf('Today · Sep 30') >= 0 &&
-        opts.every((o) => !/\b\d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/.test(o)), opts.join(' | '));
+      /* The day is said as a date since 2026-10-18, month first; today is the
+         date too, said as Today to a listener. */
+      const said = [await pg.evaluate(() => [document.getElementById('macroDateTx').textContent,
+        document.getElementById('macroDayPick').getAttribute('aria-label')])];
+      await goDay(pg, MON);
+      said.push(await pg.evaluate(() => [document.getElementById('macroDateTx').textContent, '']));
+      await goDay(pg, WED);
+      t.ok('the day says "Mon, Sep 28", month first, and today "Wed, Sep 30", told as Today',
+        said[1][0] === 'Mon, Sep 28' && said[0][0] === 'Wed, Sep 30' && /^Today, Wed, Sep 30\. Choose a day$/.test(said[0][1]), JSON.stringify(said));
       await pg.setViewportSize({ width: 320, height: 700 });
-      await homeDay(pg); await pg.selectOption('#macroDaySel', MON);
+      await homeDay(pg); await goDay(pg, MON);
       await pg.waitForTimeout(400);
       const broken = await pg.evaluate(() => {
         const out = [];
@@ -1026,15 +1031,15 @@ module.exports = nourish({
         after.length === 3 && after.filter((it) => it.id === 'f:oats').every((it) => it.eaten === 0) &&
           after[after.length - 1].eaten === 0, JSON.stringify(after));
 
-      /* The day box: the fortnight, then any day by date. */
-      const selOpts = await pg.evaluate(() => [...document.getElementById('macroDaySel').options].map((o) => o.value));
-      t.ok('the day box keeps its three weeks and ends on "Earlier day…"',
-        selOpts.length === 22 && selOpts[selOpts.length - 1] === 'pick', selOpts.slice(-3).join(' '));
-      await homeDay(pg); await pg.selectOption('#macroDaySel', 'pick');
-      await pg.waitForTimeout(200);
-      const pickOpen = await pg.evaluate(() => !document.querySelector('.mday-pick').classList.contains('hide'));
-      await pg.fill('#macroDayPick', FAR);
-      await pg.dispatchEvent('#macroDayPick', 'change');
+      /* The day's date is the phone's calendar (2026-10-18): it runs from the
+         oldest day the log keeps to a week ahead, and a date picked there goes. */
+      const cal = await pg.evaluate(() => { const b = document.getElementById('macroDayPick');
+        return { type: b.type, min: b.min, max: b.max, value: b.value, over: (() => {
+          const a = b.getBoundingClientRect(), d = document.getElementById('macroDate').getBoundingClientRect();
+          return a.left <= d.left + 1 && a.right >= d.right - 1; })() }; });
+      t.ok('the date is a calendar over the whole button, from the oldest day kept to a week ahead',
+        cal.type === 'date' && cal.min === '2026-06-03' && cal.max === '2026-10-07' && cal.value === WED && cal.over, JSON.stringify(cal));
+      await homeDay(pg); await goDay(pg, FAR);
       await pg.waitForTimeout(400);
       /* Every tray lists its foods (2026-10-04), so the plates are read off
          the day — once the eaten dinner, which starts on its Status
@@ -1043,17 +1048,15 @@ module.exports = nourish({
         await pg.click('#macroSlots [data-mslot="d"] [data-mview]');
         await pg.waitForTimeout(250);
       }
-      const onFar = await pg.evaluate(() => ({ sel: document.getElementById('macroDaySel').value,
-        text: document.getElementById('macroDaySel').selectedOptions[0].text,
-        shut: document.querySelector('.mday-pick').classList.contains('hide'),
+      const onFar = await pg.evaluate(() => ({ sel: document.getElementById('macroDayPick').value,
+        text: document.getElementById('macroDateTx').textContent,
         plates: [...document.querySelectorAll('#macroSlots .mtray-fn')].map((x) => x.textContent) }));
-      t.ok('"Earlier day…" opens a date box, and a date six weeks back goes there',
-        pickOpen && onFar.sel === FAR && onFar.text === 'Fri, Aug 21' && onFar.shut && onFar.plates.some((x) => /Chicken/i.test(x)),
-        JSON.stringify(onFar));
+      t.ok('a date six weeks back, picked on the calendar, goes there',
+        onFar.sel === FAR && onFar.text === 'Fri, Aug 21' && onFar.plates.some((x) => /Chicken/i.test(x)), JSON.stringify(onFar));
       await homeDay(pg); await pg.click('#macroPrev');
       await pg.waitForTimeout(300);
-      t.ok('and the arrow walks on back from there', await pg.evaluate(() => document.getElementById('macroDaySel').value) === '2026-08-20');
-      await homeDay(pg); await pg.selectOption('#macroDaySel', WED);
+      t.ok('and the arrow walks on back from there, a week', await pg.evaluate(() => document.getElementById('macroDayPick').value) === '2026-08-14');
+      await homeDay(pg); await goDay(pg, WED);
       await pg.waitForTimeout(300);
 
       /* ---- the food sheet: an amount, its units, Add, every nutrient ----

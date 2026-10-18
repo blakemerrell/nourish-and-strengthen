@@ -3,7 +3,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, openWeigh } = require('./fixtures/nourish.js');
+const { nourish, goDay, stepDay, openWeigh } = require('./fixtures/nourish.js');
 
 module.exports = nourish({
   name: 'Macros — the charts and the morning card',
@@ -478,20 +478,19 @@ module.exports = nourish({
     t.ok('with a sparkline once there is a line to draw',
       await w.evaluate(() => !!document.querySelector('.mw-spark polyline')));
 
-    // ‹ shows yesterday's number in the box, filed where it belongs
-    await w.click('#macroPrev');
-    await w.waitForTimeout(150);
+    // yesterday shows yesterday's number in the box, filed where it belongs
+    await stepDay(w, -1);
     t.ok('a missed morning can be read and edited under its own day',
       await w.evaluate(() => Number(document.getElementById('mWeight').value) === 190.2),
       await w.evaluate(() => document.getElementById('mWeight').value));
 
-    // and the selector jumps straight to a day the arrows would take five taps to reach
+    // and the calendar jumps straight to a day five back
     const fiveBack = await w.evaluate(() => {
       const p2 = (n) => (n < 10 ? '0' : '') + n;
       const d = new Date(); d.setDate(d.getDate() - 5);
       return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
     });
-    await w.selectOption('#macroDaySel', fiveBack);
+    await goDay(w, fiveBack);
     await w.waitForTimeout(150);
     t.ok('the day selector jumps, and the day it lands on is really that day',
       await w.evaluate(() => Number(document.getElementById('mWeight').value) === 191),

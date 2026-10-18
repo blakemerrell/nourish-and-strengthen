@@ -5,7 +5,7 @@
  *
  * Split by topic: later sections are in tests/macros-*.test.js, and the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, openWeigh, openPlan, pickerList, openTray } = require('./fixtures/nourish.js');
+const { nourish, goDay, stepDay, openWeigh, openPlan, pickerList, openTray } = require('./fixtures/nourish.js');
 
 /* The day is trays and a meal opens as its sheet (trays and the meal sheet,
    Blake 2026-10-04). The sheet stands over the day's header, the weigh card
@@ -56,13 +56,14 @@ module.exports = nourish({
 
     t.ok('four meal slots on the day',
       await p.evaluate(() => document.querySelectorAll('.mslot').length) === 4);
-    t.ok('the day selector starts on Today and holds the whole fortnight',
+    t.ok('the day starts on today, said as its date, its calendar from the oldest day kept to a week ahead',
       await p.evaluate(() => {
-        const s = document.getElementById('macroDaySel');
-        // a fortnight behind and a week ahead: you can plan Thursday on Tuesday;
-        // and last, "Earlier day…" for any day the log keeps (2026-09-27)
-        return /^Today ·/.test(s.options[s.selectedIndex].text) && s.options.length === 22 &&
-          /^Tomorrow ·/.test(s.options[s.selectedIndex - 1].text) && s.options[21].value === 'pick';
+        const b = document.getElementById('macroDayPick'), q = (n) => (n < 10 ? '0' : '') + n;
+        const k = (d) => d.getFullYear() + '-' + q(d.getMonth() + 1) + '-' + q(d.getDate());
+        const now = new Date(), wk = new Date(), old = new Date();
+        wk.setDate(wk.getDate() + 7); old.setDate(old.getDate() - 119);
+        return b.value === k(now) && b.max === k(wk) && b.min === k(old) &&
+          /^Today, /.test(b.getAttribute('aria-label')) && /^[A-Z][a-z]{2}, [A-Z][a-z]{2} \d{1,2}$/.test(document.getElementById('macroDateTx').textContent);
       }));
 
     // the two morning verbs are the bar; everything else folded behind the ⋯

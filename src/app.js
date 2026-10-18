@@ -6078,6 +6078,21 @@
     });
     $('macroPrev').addEventListener('click', function () { mNavDay(-1); });
     $('macroNext').addEventListener('click', function () { mNavDay(1); });
+    /* Every meal's view at once (myday.js, mViewsNow): each meal of the day
+       set to the next view round from the one they share, or to Status
+       when they differ. Set per meal, as a meal's name sets it, so a name
+       still steps its own meal afterwards; what Status and Foods hide goes
+       shut, as it does there. */
+    $('macroViews').addEventListener('click', function () {
+      var vk = mViewKey(), nv = MYDAY.mViewsAll().next;
+      var held = (S.mView[vk] = S.mView[vk] || {});
+      Array.prototype.forEach.call(document.querySelectorAll('#macroSlots [data-mview]'), function (b) {
+        held[b.getAttribute('data-mview')] = nv;
+      });
+      if (nv !== 3 && S.mAmt && S.mAmt.indexOf(vk + '|') === 0) { S.mAmt = ''; S.mType = null; }
+      keepingFocus(renderMacros);
+    });
+
     $('macroDaySel').addEventListener('change', function () {
       if (this.value === 'pick') {
         this.value = mViewKey();

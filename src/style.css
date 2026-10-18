@@ -5734,6 +5734,8 @@ button.tr-ck-h {
 .mday-head #macroPrev::after, .mday-head #macroNext::after {
   content: ''; position: absolute; top: 0; left: -5px; width: 44px; height: 44px;
 }
+.mday-head #macroViews { margin-left: auto; }
+.mday-head #macroViews:not([hidden]) + #macroMore:not(#u#u) { margin-left: 0; }
 .mday-head #macroMore {
   margin-left: auto;
   width: 44px;
@@ -6428,6 +6430,37 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
    stand apart, and the day picker keeps the room to say "Today · Sep 30". */
 .mday-head:not(#u#u) { column-gap: 0; gap: 0; }
 .mday-head:not(#u#u) .mday-title { margin-right: 4px; }
+/* The day box drawn as the arrows and the gear are: no fill, their 1.5px
+   line, their 8px corners, inset to 36px inside a 44px reach. A select has
+   no ::after to draw that with, so the reach is a transparent border and
+   the box is its padding: the line an inset shadow, the fill clipped to it.
+   Only as wide as the day it says, the gear pushed to the end beside it.
+   Blake, 2026-10-18: "make that date box look like it belongs. And
+   shorter". */
+.mday-head:not(#u#u) select {
+  flex: 0 1 auto; width: auto; max-width: 9.5em; height: 44px; min-height: 44px; margin: 0 2px;
+  padding: 0 4px 0 8px; border: 4px solid transparent; border-left-width: 0; border-right-width: 0; border-radius: 12px;
+  background: transparent; background-clip: padding-box; box-shadow: inset 0 0 0 1.5px var(--line-control);
+  color: var(--ink-2); font-weight: 500; text-overflow: ellipsis;
+}
+.mday-head:not(#u#u) select:hover { box-shadow: inset 0 0 0 1.5px var(--ochre); }
+.mday-head:not(#u#u) select:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--ochre); }
+/* Every meal's view at once (myday.js, mViewsNow): the meals' own pips, a
+   size up, in the 32px square the gear has. */
+/* shown at every width: a narrow meal card drops its own pips for room, and
+   this button is nothing but them */
+.mday-head .mday-views .mtray-pips:not(#u#u) { display: inline-flex; gap: 4px; }
+.mday-head .mday-views .mtray-pips:not(#u#u) i { display: block; width: 6px; height: 6px; }
+.mday-head .mday-views[hidden] { display: none; }
+/* A narrow phone has no room for the title as well: at 320 px it left the
+   day box 24 px. The tab above already says Nourish, lit, so the title goes
+   to the screen reader only and the day box takes its room. */
+@media (max-width: 360px) {
+  .mday-head:not(#u#u) .mday-title {
+    position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .mday-head:not(#u#u) select { flex: 1 1 auto; max-width: none; }
+}
 .ad-plus:not(#u#u) { color: var(--paper); font-size: 1.125rem; }
 .ad-plus:not(#u#u)::after { background: var(--ink); border-color: var(--ink); }
 .iconbtn[aria-pressed="true"]:not(#u#u) { color: var(--ochre-text); }

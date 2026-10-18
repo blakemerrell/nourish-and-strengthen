@@ -242,6 +242,9 @@
         <button class="ghost" id="macroPrev" aria-label="Previous day">&lsaquo;</button>
         <select id="macroDaySel" aria-label="Day"></select>
         <button class="ghost" id="macroNext" aria-label="Next day">&rsaquo;</button>
+        <!-- Every meal's view at once, round the same three a meal's name
+             steps through (src/myday.js, mViewsNow): Blake, 2026-10-18. -->
+        <button class="ghost mday-icon mday-views" id="macroViews" hidden></button>
         <!-- The gear alone now. Opening every meal is a thing you do WHILE
              reading the day, with the thumb already at the bottom of the
              screen, so it went down to the bar with the rest of the verbs —

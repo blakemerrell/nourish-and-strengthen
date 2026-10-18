@@ -303,6 +303,37 @@
      eaten on its status, the next meal with food still to eat on its
      details, and the meals after it on their foods. A tap holds for the day
      it was made on (S.mView), and printing shows every meal whole. */
+  /* Every meal at once. Blake, 2026-10-18, pointing at the day's head: "Add
+     a button here that lets me cycle through the triple tap for all meals.
+     Collapse, show foods, show. Edit foods". He chose it beside the gear.
+   *
+     One press puts every meal of the day in the same view, the next one
+     round from where they all are: Status, Foods, Details, and back. Meals
+     in different views (one opened by its own name) all go to Status, the
+     start of the round. It sets each meal's own view rather than holding
+     them all (S.mViewAll, which printing uses), so a meal's name still
+     steps that meal on its own afterwards. The button wears the pips the
+     meals' names wear, the shared view lit, none when they differ; the
+     current views are read off the cards as drawn (data-mv), so they are
+     the views on screen, defaults included. */
+  var VIEWS_SAY = ['', 'just their status', 'their foods', 'their details'];
+  function mViewsAll() {
+    var vs = Array.prototype.map.call(document.querySelectorAll('#macroSlots [data-mview]'), function (b) {
+      return Number(b.getAttribute('data-mv')) || 0;
+    });
+    var same = vs.length && vs.every(function (v) { return v === vs[0]; }) ? vs[0] : 0;
+    return { n: vs.length, same: same, next: same ? same % 3 + 1 : 1 };
+  }
+  function mViewsNow() {
+    var b = $('macroViews');
+    if (!b) return;
+    var a = mViewsAll();
+    b.hidden = !a.n;
+    b.innerHTML = mPipsHTML(a.same);
+    b.setAttribute('aria-label', 'Every meal: show ' + VIEWS_SAY[a.next]);
+    b.title = 'Every meal: show ' + VIEWS_SAY[a.next];
+  }
+
   function mViewOf(k, sk, M, nextSk) {
     if (S.mViewAll) return S.mViewAll;
     var held = S.mView[k] && S.mView[k][sk];
@@ -580,8 +611,12 @@
          or the word for it when there is one. */
       var word = step === 0 ? 'Today' : step === -1 ? 'Yesterday'
         : step === 1 ? 'Tomorrow' : '';
+      /* The word alone when there is one: "Tomorrow · Oct 18" made the box
+         the widest thing in the row, and the week strip under it already
+         says the date (Blake, 2026-10-18: "make that date box look like it
+         belongs. And shorter"). */
       opts.push('<option value="' + ok + '"' + (ok === k ? ' selected' : '') + '>' +
-        (word ? word + ' &middot; ' + M_MONS[od.getMonth()] + ' ' + od.getDate() : mLongDate(ok)) + '</option>');
+        (word || mLongDate(ok)) + '</option>');
     }
     /* A day further back than the list, reached by the date box or the
        arrows, is named at the foot so the box still says where you are; and
@@ -969,6 +1004,7 @@
     });
     $('macroSlots').innerHTML = html;
     if ($('macroFind')) $('macroFind').innerHTML = mFindBarHTML(slots);
+    mViewsNow();
 
     var readout = macroFootHTML(day, targets, slots);
     $('macroFoot').innerHTML = readout.foot;
@@ -1015,5 +1051,5 @@
     return '<div class="mcaps">' + capsHTML(sub, M.aim, M.ask && M.ask.spent, !!(M.ask && M.ask.capped)) + '</div>';
   }
 
-  return { renderMacros: renderMacros, mDayPick: mDayPick, mMealSheetParts: mMealSheetParts, mMealNowHTML: mMealNowHTML };
+  return { mViewsAll: mViewsAll, renderMacros: renderMacros, mDayPick: mDayPick, mMealSheetParts: mMealSheetParts, mMealNowHTML: mMealNowHTML };
 };

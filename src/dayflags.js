@@ -21,7 +21,6 @@
   var M_WDAY = app.M_WDAY;
   var keyDate = app.keyDate;
   var mDayTargets = app.mDayTargets;
-  var mEarliestKey = app.mEarliestKey;
   var mFoldDue = app.mFoldDue;
   var mIsTrainingDay = app.mIsTrainingDay;
   var mPut = app.mPut;
@@ -79,12 +78,10 @@
      window that never held on a device with an account. Keeping the stamps
      instead would have held it, at the price of a payload announcing empty
      days forever. */
-  function mPruneWindow(m) {
-    var floor = mEarliestKey();
-    Object.keys(m).forEach(function (dk) {
-      if (dk < floor) delete m[dk];
-    });
-  }
+  /* Nothing ages out since 2026-10-18: everything is kept (app.js,
+     mEarliestKey). Kept as the one place the flags would be trimmed, should
+     a day ever need to be let go of again. */
+  function mPruneWindow() {}
   /* Mornings you trained, as they happened.
    *
      The profile already carries how many sessions a week, and mBurn spreads

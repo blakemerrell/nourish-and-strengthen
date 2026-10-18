@@ -56,13 +56,14 @@ module.exports = nourish({
 
     t.ok('four meal slots on the day',
       await p.evaluate(() => document.querySelectorAll('.mslot').length) === 4);
-    t.ok('the day starts on today, said as its date, its calendar from the oldest day kept to a week ahead',
+    t.ok('the day starts on today, said as its date, its calendar from the first day logged to a week ahead',
       await p.evaluate(() => {
         const b = document.getElementById('macroDayPick'), q = (n) => (n < 10 ? '0' : '') + n;
         const k = (d) => d.getFullYear() + '-' + q(d.getMonth() + 1) + '-' + q(d.getDate());
-        const now = new Date(), wk = new Date(), old = new Date();
-        wk.setDate(wk.getDate() + 7); old.setDate(old.getDate() - 119);
-        return b.value === k(now) && b.max === k(wk) && b.min === k(old) &&
+        // a fresh phone: nothing logged before today, so the calendar starts at today
+        const now = new Date(), wk = new Date();
+        wk.setDate(wk.getDate() + 7);
+        return b.value === k(now) && b.max === k(wk) && b.min <= k(now) &&
           /^Today, /.test(b.getAttribute('aria-label')) && /^[A-Z][a-z]{2}, [A-Z][a-z]{2} \d{1,2}$/.test(document.getElementById('macroDateTx').textContent);
       }));
 
@@ -1501,7 +1502,9 @@ module.exports = nourish({
     await toDay(p);
     t.ok('and opening its meals shows both plates with their controls', plates === 2, String(plates));
 
-    // ---- days older than the window are pruned on the next write
+    /* ---- every day is kept, however old (2026-10-18). Days older than the
+       window used to be pruned on the next write; Blake: "I would assume that
+       I'm keeping everything". */
     await p.evaluate(() => {
       const days = JSON.parse(localStorage.getItem('bsc.macroDays'));
       days['2020-01-01'] = { b: [{ id: window.RECIPES[0].id, x: 1, eaten: 0 }], l: [], d: [], s: [] };
@@ -1511,14 +1514,16 @@ module.exports = nourish({
     await p.waitForTimeout(300);
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(150);
-    // any write prunes; the meal's tick is a write (no per-plate tick since 2026-10-04)
+    // the meal's tick is a write (no per-plate tick since 2026-10-04), which used to prune
     await p.click('[data-mdot="b"]');
     await p.waitForTimeout(200);
-    t.ok('a stale day is gone after the next write, today kept',
+    t.ok('a day six years old is still there after the next write, and today with it',
       await p.evaluate(() => {
         const keys = Object.keys(JSON.parse(localStorage.getItem('bsc.macroDays')));
-        return keys.indexOf('2020-01-01') < 0 && keys.length === 1;
+        return keys.indexOf('2020-01-01') >= 0 && keys.length === 2;
       }));
+    const back = await p.evaluate(() => document.getElementById('macroDayPick').min);
+    t.ok('and the calendar reaches back to it', back === '2020-01-01', back);
 
     // ---- personal means personal: nothing macro rides in the household state
     t.ok('the synced Store carries no macro data',

@@ -13,7 +13,6 @@
 
   // what it reads of the app's
   var MDAYS = app.MDAYS;
-  var mEarliestKey = app.mEarliestKey;
   var mFoldDue = app.mFoldDue;
   var mPut = app.mPut;
   var mSetSkip = app.mSetSkip;
@@ -125,10 +124,8 @@
        real ones: set the date back ten days and the next plate logged erased
        everything eaten since. Nothing on screen can reach past a week ahead,
        so a day out there costs nothing to keep. */
-    var floor = mEarliestKey();
-    Object.keys(MDAYS).forEach(function (dk) {
-      if (dk < floor) delete MDAYS[dk];
-    });
+    /* Every day is kept, however old (2026-10-18, app.js mEarliestKey): it
+       was pruned here to the last 120. */
     mPut('bsc.macroDays', MDAYS);
     if (!seed) mStamp('d', k);
   }

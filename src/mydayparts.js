@@ -15,9 +15,7 @@
 
   // what it reads of the app's, and (LIVE) what the app replaces as it goes: MDAYS, MDONE, MSEND, MSKIP, MTRAINED, MWEIGHTS
   var mDoneAt = app.mDoneAt;
-  var mEarliestKey = app.mEarliestKey;
   var mTrainedAt = app.mTrainedAt;
-  var mWeightFloor = app.mWeightFloor;
   var LIVE = app.LIVE;
 
   /* ---------------------------------------------------------------- the parts
@@ -88,7 +86,6 @@
   var MSYNC_KEYED = [
     { part: 'w', ls: 'bsc.macroWeights', stamps: true,
       store: function () { return LIVE.MWEIGHTS; },
-      keep: function (k) { return k >= mWeightFloor(); },
       value: function (k, m) { return (m || LIVE.MWEIGHTS)[k] || 0; },
       /* Zero is a real answer: it is the morning you cleared. */
       accept: function (r) { return mNum(r.v) && r.v >= 0; },
@@ -96,7 +93,6 @@
 
     { part: 'd', ls: 'bsc.macroDays', stamps: false,
       store: function () { return LIVE.MDAYS; },
-      keep: function (k) { return k >= mEarliestKey(); },
       value: function (k, m) { return (m || LIVE.MDAYS)[k]; },
       /* A day is meals keyed by slot, each a list of plates. */
       accept: function (r) {
@@ -144,7 +140,6 @@
 
     { part: 'dn', ls: 'bsc.macroDone', stamps: false,
       store: function () { return LIVE.MDONE; },
-      keep: function (k) { return k >= mEarliestKey(); },
       value: function (k, m) { return m ? Number(m[k]) || 0 : mDoneAt(k); },
       /* Zero means "I reopened this", so a falsy value must still land. */
       accept: function (r) { return mNum(r.v); },
@@ -152,7 +147,6 @@
 
     { part: 'tn', ls: 'bsc.macroTrained', stamps: false,
       store: function () { return LIVE.MTRAINED; },
-      keep: function (k) { return k >= mEarliestKey(); },
       value: function (k, m) { return m ? Number(m[k]) || 0 : mTrainedAt(k); },
       /* And zero here means "I un-ticked it". */
       accept: function (r) { return mNum(r.v); },
@@ -160,7 +154,6 @@
 
     { part: 'sp', ls: 'bsc.macroSkip', stamps: true,
       store: function () { return LIVE.MSKIP; },
-      keep: function (k) { return k >= mEarliestKey(); },
       value: function (k, m) { return (m || LIVE.MSKIP)[k] || []; },
       /* An empty list is a real answer: it means "I un-skipped them all". */
       accept: function (r) { return mStrList(r.v); },
@@ -168,7 +161,6 @@
 
     { part: 'sn', ls: 'bsc.macroSend', stamps: true,
       store: function () { return LIVE.MSEND; },
-      keep: function (k) { return k >= mEarliestKey(); },
       value: function (k, m) { return (m || LIVE.MSEND)[k] || null; },
       /* Null is a real answer: it means "I cleared that day's choice". */
       accept: function (r) {

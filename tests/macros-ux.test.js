@@ -1003,7 +1003,8 @@ module.exports = nourish({
         box: !!document.getElementById('mcfDate'), min: (document.getElementById('mcfDate') || {}).min }));
       t.ok('each meal has "From another day": the latest days it had food, newest first, and a date box',
         sheet.days[0] === 'Mon, Sep 28' && sheet.days.indexOf('Fri, Aug 21') > 0 && sheet.box, JSON.stringify(sheet));
-      t.ok('and the date box reaches back four months, not two weeks', sheet.min === '2026-06-03', sheet.min);
+      // to the first day there is anything on (OLD), since nothing is let go of (2026-10-18)
+      t.ok('and the date box reaches back to the first day ever logged, not four months', sheet.min === OLD, sheet.min);
       await pg.fill('#mcfDate', FAR);
       await pg.dispatchEvent('#mcfDate', 'change');
       await pg.waitForTimeout(300);
@@ -1015,8 +1016,10 @@ module.exports = nourish({
       t.ok('one tap puts it on this dinner at the amounts it was, planned, since dinner is still to come',
         !!dWed && JSON.stringify((dWed.d || []).map((it) => [it.id, it.x, it.eaten])) === JSON.stringify([['f:chicken_breast', 1.5, 0], ['f:broccoli', 2, 0]]),
         JSON.stringify(dWed));
-      t.ok('and the day it came from is still there after the write: a month back is kept now',
-        !!(await stored(FAR)) && !(await stored(OLD)), JSON.stringify([await stored(FAR), await stored(OLD)]));
+      /* It used to keep the last 120 days and let OLD go on the next write;
+         Blake, 2026-10-18: "I would assume that I'm keeping everything". */
+      t.ok('and every day is still there after the write, five months back included',
+        !!(await stored(FAR)) && !!(await stored(OLD)), JSON.stringify([await stored(FAR), await stored(OLD)]));
       /* Copied to a meal whose time has come, what lands on it is still a plan. */
       await openAdd('b');
       /* "Repeat a day" is behind the meal's ⋯ in its sheet (2026-10-04). */
@@ -1032,13 +1035,13 @@ module.exports = nourish({
           after[after.length - 1].eaten === 0, JSON.stringify(after));
 
       /* The day's date is the phone's calendar (2026-10-18): it runs from the
-         oldest day the log keeps to a week ahead, and a date picked there goes. */
+         first day ever logged to a week ahead, and a date picked there goes. */
       const cal = await pg.evaluate(() => { const b = document.getElementById('macroDayPick');
         return { type: b.type, min: b.min, max: b.max, value: b.value, over: (() => {
           const a = b.getBoundingClientRect(), d = document.getElementById('macroDate').getBoundingClientRect();
           return a.left <= d.left + 1 && a.right >= d.right - 1; })() }; });
-      t.ok('the date is a calendar over the whole button, from the oldest day kept to a week ahead',
-        cal.type === 'date' && cal.min === '2026-06-03' && cal.max === '2026-10-07' && cal.value === WED && cal.over, JSON.stringify(cal));
+      t.ok('the date is a calendar over the whole button, from the first day logged to a week ahead',
+        cal.type === 'date' && cal.min === OLD && cal.max === '2026-10-07' && cal.value === WED && cal.over, JSON.stringify(cal));
       await homeDay(pg); await goDay(pg, FAR);
       await pg.waitForTimeout(400);
       /* Every tray lists its foods (2026-10-04), so the plates are read off

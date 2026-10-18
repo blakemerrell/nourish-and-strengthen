@@ -15,7 +15,9 @@ const SETUP = () => {
     { k: 'd', n: 'Dinner', t: 'd' }, { k: 's', n: 'Snacks', t: 's' }], names: { b: 'Breakfast', l: 'Lunch', d: 'Dinner', s: 'Snacks' } }));
   const f = (k, x) => ({ id: 'f:' + k, x: x, eaten: 0 });
   localStorage.setItem('bsc.macroDays', JSON.stringify({ '2026-10-08': {
-    b: [f('egg', 2)], l: [f('chicken_breast', 1), f('green_beans', 1)], d: [{ id: 66, x: 1, eaten: 0 }] } }));
+    b: [f('egg', 2)], l: [f('chicken_breast', 1), f('green_beans', 1)], d: [{ id: 66, x: 1, eaten: 0 }] },
+    // the first day ever logged, four months back: older than the 120 days that used to be all there was
+    '2026-06-01': { b: [f('egg', 1)] } }));
 };
 // the three meals with food on them, Breakfast, Lunch and Dinner: an empty meal has no views to step
 const views = (p) => p.evaluate(() => [...document.querySelectorAll('#macroSlots [data-mview]')].map((b) => Number(b.dataset.mv)).join(''));
@@ -87,7 +89,7 @@ module.exports = {
     const day = () => p.evaluate(() => [document.getElementById('macroDayPick').value, document.getElementById('macroDateTx').textContent,
       [...document.querySelectorAll('#macroWeek [data-mweek]')].map((b) => b.dataset.mweek.slice(8)).join(' ')]);
     const cal = await p.evaluate(() => { const b = document.getElementById('macroDayPick'); return [b.type, b.min, b.max]; });
-    t.ok('the date is a calendar, from the oldest day the log keeps to a week ahead', cal.join() === 'date,2026-06-11,2026-10-15', cal.join());
+    t.ok('the date is a calendar, from the first day ever logged to a week ahead', cal.join() === 'date,2026-06-01,2026-10-15', cal.join());
     await p.evaluate(() => { const b = document.getElementById('macroDayPick'); b.value = '2026-07-04'; b.dispatchEvent(new Event('change', { bubbles: true })); });
     await p.waitForTimeout(200);
     let d = await day();
@@ -100,13 +102,11 @@ module.exports = {
     await p.click('#macroPrev');
     await p.waitForTimeout(150);
     t.ok('and \u2039 a week back', (await day())[0] === '2026-06-27');
-    // Jun 20, Jun 13, and then a week back would be Jun 6, before the oldest day kept (Jun 11)
-    await p.click('#macroPrev');
-    await p.click('#macroPrev');
-    await p.click('#macroPrev');
+    // Jun 20, Jun 13, Jun 6, and then a week back would be May 30, before the first day logged (Jun 1)
+    for (let i = 0; i < 4; i++) await p.click('#macroPrev');
     await p.waitForTimeout(150);
     d = await day();
-    t.ok('a week back past the oldest day kept stops on it, rather than doing nothing', d[0] === '2026-06-11', JSON.stringify(d));
+    t.ok('a week back past the first day logged stops on it, rather than doing nothing', d[0] === '2026-06-01', JSON.stringify(d));
     const swipe = (dx) => p.evaluate((dx2) => {
       const w = document.getElementById('macroWeek'), r = w.getBoundingClientRect(), y = r.top + r.height / 2, x = r.left + r.width / 2;
       const touch = (cx) => new Touch({ identifier: 1, target: w, clientX: cx, clientY: y });

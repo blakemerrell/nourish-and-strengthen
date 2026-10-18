@@ -2679,7 +2679,7 @@
 
   /* src/mydayparts.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var MYDAYPARTS = window.HiveParts.mydayparts({ mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mTrainedAt: mTrainedAt, mWeightFloor: mWeightFloor, LIVE: LIVE });
+  var MYDAYPARTS = window.HiveParts.mydayparts({ mDoneAt: mDoneAt, mTrainedAt: mTrainedAt, LIVE: LIVE });
   function mSyncKey(k) { return MYDAYPARTS.mSyncKey(k); }
   function mPlainObj(v) { return MYDAYPARTS.mPlainObj(v); }
   function mNum(v) { return MYDAYPARTS.mNum(v); }
@@ -2805,19 +2805,27 @@
   var mDrawnToday = '';
   function mViewKey() { return S.macroDate || mDrawnToday || todayKey(); }
 
-  /* Today and about four months behind it: the same stretch the intake log
-     and each day's own targets are kept for (MINTAKE_DAYS), so a past day
-     opened here is still judged against what it was aiming at. It was a
-     fortnight, which was enough to change your mind about last week and not
-     enough to find the dinner you had in August; Blake: "Copy from another
-     day on each meal, and a date picker beyond two weeks." Still not a diary
-     the browser carries forever. YYYY-MM-DD sorts as it dates, so the prune
-     is one string comparison. */
-  var MDAY_KEEP = 120;
+  /* The oldest day there is to go to: the first one anything was logged on,
+     food or a weigh-in, and never less than the last 120 days, so a phone
+     with nothing on it yet can still go back and log yesterday.
+   *
+     It was a window, the last 120 days (a fortnight before that), and the
+     day log, the weigh-ins (399 days), the closed days, the skips and the
+     training ticks were all pruned to it on every write, and older days
+     coming back from the account were turned away. Blake, 2026-10-18: "What
+     about the other historical data? I lose everything after 4 months. I
+     would assume that I'm keeping everything." He chose to keep everything.
+     Nothing is pruned now (dayflags.js, placing.js, weighin.js, and the
+     account's days in mydayparts.js are all taken in), so this only says
+     where the calendar and the arrows stop. YYYY-MM-DD sorts as it dates,
+     so the oldest is the least key. */
   function mEarliestKey() {
     var d = new Date();
-    d.setDate(d.getDate() - (MDAY_KEEP - 1));
-    return dayKey(d);
+    d.setDate(d.getDate() - 119);
+    var first = dayKey(d);
+    Object.keys(MDAYS).forEach(function (k) { if (k < first) first = k; });
+    Object.keys(MWEIGHTS).forEach(function (k) { if (k < first && MWEIGHTS[k] > 0) first = k; });
+    return first;
   }
 
   /* How far forward the day travels. A week is as far as a plan is worth
@@ -2990,7 +2998,7 @@
 
   /* src/placing.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var PLACING = window.HiveParts.placing({ MDAYS: MDAYS, mEarliestKey: mEarliestKey, mFoldDue: mFoldDue, mPut: mPut, mSetSkip: mSetSkip, mSkipped: mSkipped, mSlotKind: mSlotKind, mSlotSecs: mSlotSecs, mStamp: mStamp });
+  var PLACING = window.HiveParts.placing({ MDAYS: MDAYS, mFoldDue: mFoldDue, mPut: mPut, mSetSkip: mSetSkip, mSkipped: mSkipped, mSlotKind: mSlotKind, mSlotSecs: mSlotSecs, mStamp: mStamp });
   function mFoodMealOK(r, slot) { return PLACING.mFoodMealOK(r, slot); }
   function mSlotsForRecipe(r, slots) { return PLACING.mSlotsForRecipe(r, slots); }
   function mSlotForRecipe(r, slots) { return PLACING.mSlotForRecipe(r, slots); }
@@ -3072,7 +3080,7 @@
 
   /* src/dayflags.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var DAYFLAGS = window.HiveParts.dayflags({ MSTAMPS: MSTAMPS, M_WDAY: M_WDAY, keyDate: keyDate, mDayTargets: mDayTargets, mEarliestKey: mEarliestKey, mFoldDue: mFoldDue, mIsTrainingDay: mIsTrainingDay, mPut: mPut, mReadProfileRaw: mReadProfileRaw, mReadTargets: mReadTargets, mStamp: mStamp, mSynced: mSynced, mTrainDays: mTrainDays, mWkIx: mWkIx, todayKey: todayKey });
+  var DAYFLAGS = window.HiveParts.dayflags({ MSTAMPS: MSTAMPS, M_WDAY: M_WDAY, keyDate: keyDate, mDayTargets: mDayTargets, mFoldDue: mFoldDue, mIsTrainingDay: mIsTrainingDay, mPut: mPut, mReadProfileRaw: mReadProfileRaw, mReadTargets: mReadTargets, mStamp: mStamp, mSynced: mSynced, mTrainDays: mTrainDays, mWkIx: mWkIx, todayKey: todayKey });
   function mDoneAt(k) { return DAYFLAGS.mDoneAt(k); }
   function mTrainedAt(k) { return DAYFLAGS.mTrainedAt(k); }
   function mTrainedSaid(k) { return DAYFLAGS.mTrainedSaid(k); }
@@ -3099,10 +3107,9 @@
 
   /* src/weighin.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var WEIGHIN = window.HiveParts.weighin({ MSTAMPS: MSTAMPS, dayKey: dayKey, mFoldDue: mFoldDue, mPut: mPut, mStamp: mStamp });
+  var WEIGHIN = window.HiveParts.weighin({ MSTAMPS: MSTAMPS, mFoldDue: mFoldDue, mPut: mPut, mStamp: mStamp });
   function mWUnit() { return WEIGHIN.mWUnit(); }
   function mWShow(lb) { return WEIGHIN.mWShow(lb); }
-  function mWeightFloor() { return WEIGHIN.mWeightFloor(); }
   function mWriteWeight(k, lb) { return WEIGHIN.mWriteWeight(k, lb); }
   var WGAPI = WEIGHIN.WGAPI;
   var MWEIGHTS = WEIGHIN.MWEIGHTS;

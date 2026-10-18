@@ -356,6 +356,14 @@ function seedDoc(extra) {
       await seed('users/alice/train/zzz-999', { wo: {} });
       await assertSucceeds(as('alice').doc('users/alice/train/zzz-999').delete());
     });
+    await check('your food log’s years too: yours, listable only by you, named by their year', async () => {
+      await assertSucceeds(as('alice').doc('users/alice/days/2026').set({ myday: { d: {} } }));
+      await assertSucceeds(as('alice').collection('users/alice/days').get());
+      await assertFails(as('mallory').collection('users/alice/days').get());
+      await assertFails(as('mallory').doc('users/alice/days/2026').set({ myday: {} }));
+      await assertFails(as('alice').doc('users/alice/days/notayear').set({ myday: {} }));
+      await assertSucceeds(as('alice').doc('users/alice/days/2026').delete());
+    });
 
     /* Firestore evaluates at most a thousand expressions a request, and these
        rules spend most of them on every write: on 4 October the household's

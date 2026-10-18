@@ -1525,9 +1525,17 @@ window.Store = (function () {
         var off = house && doc && FV
           ? doc.update(bye).catch(function () { return null; })
           : Promise.resolve();
-        return off.then(function () { return mine.collection('train').get(); })
-          .then(function (qs) { return Promise.all(qs.docs.map(function (d) { return d.ref.delete(); })); },
-            function (err) { if (err && err.code === 'permission-denied') return null; throw err; })
+        /* And Nourish's day log, kept the same way, a year to a record (see
+           src/signin.js). Each set on its own, so a database that has the
+           rule for one and not yet the other still loses all it holds. */
+        var under = function (name) {
+          return function () {
+            return mine.collection(name).get()
+              .then(function (qs) { return Promise.all(qs.docs.map(function (d) { return d.ref.delete(); })); },
+                function (err) { if (err && err.code === 'permission-denied') return null; throw err; });
+          };
+        };
+        return off.then(under('train')).then(under('days'))
           .then(function () { return mine.delete(); })
           .then(function () { wiped = true; return onGone ? onGone() : null; })
           .then(function () { return u.delete(); })

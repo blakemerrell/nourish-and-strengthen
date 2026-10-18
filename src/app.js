@@ -2703,9 +2703,9 @@
   /* src/dayup.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
   var DAYUP = window.HiveParts.dayup({ MCLOCK_SLACK: MCLOCK_SLACK, MSTAMPS: MSTAMPS, MSYNC_KEYED: MSYNC_KEYED, MSYNC_SHAPE: MSYNC_SHAPE, MSYNC_SIMPLE: MSYNC_SIMPLE, mBuildFoods: mBuildFoods, mLsJson: mLsJson, mNow: mNow, mNum: mNum, mPut: mPut, mSyncKey: mSyncKey, mSyncUnkey: mSyncUnkey, LIVE: LIVE });
-  function mSyncPayload() { return DAYUP.mSyncPayload(); }
+  function mSyncPayload(seen) { return DAYUP.mSyncPayload(seen); }
   function mSyncPartial() { return DAYUP.mSyncPartial(); }
-  function mSyncTake() { return DAYUP.mSyncTake(); }
+  function mSyncTake(seen) { return DAYUP.mSyncTake(seen); }
   function mMergeRemote(md) { return DAYUP.mMergeRemote(md); }
 
   var mFoldTimer = null;
@@ -2756,12 +2756,13 @@
 
   /* src/signin.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var SIGNIN = window.HiveParts.signin({ MCLOCK_ID: MCLOCK_ID, S: S, dinerKeep: dinerKeep, dinerWatch: dinerWatch, mAccount: mAccount, mAccountMark: mAccountMark, mBootTargets: mBootTargets, mClockHear: mClockHear, mCreditWeek: mCreditWeek, mForgetDay: mForgetDay, mHouseReconcile: mHouseReconcile, mInviteTry: mInviteTry, mMergeRemote: mMergeRemote, mOwner: mOwner, mSetOwner: mSetOwner, mSuspectAccount: mSuspectAccount, mSyncState: mSyncState, mSyncTake: mSyncTake, mTrainSig: mTrainSig, pwFitCaps: pwFitCaps, renderMacros: renderMacros, renderModal: renderModal, LIVE: LIVE });
+  var SIGNIN = window.HiveParts.signin({ MCLOCK_ID: MCLOCK_ID, MSTAMPS: MSTAMPS, MSYNC_KEYED: MSYNC_KEYED, S: S, dinerKeep: dinerKeep, dinerWatch: dinerWatch, mAccount: mAccount, mAccountMark: mAccountMark, mBootTargets: mBootTargets, mClockHear: mClockHear, mCreditWeek: mCreditWeek, mForgetDay: mForgetDay, mHouseReconcile: mHouseReconcile, mInviteTry: mInviteTry, mMergeRemote: mMergeRemote, mOwner: mOwner, mSetOwner: mSetOwner, mSuspectAccount: mSuspectAccount, mSyncState: mSyncState, mSyncTake: mSyncTake, mTrainSig: mTrainSig, pwFitCaps: pwFitCaps, renderMacros: renderMacros, renderModal: renderModal, LIVE: LIVE });
   function mSyncRetry() { return SIGNIN.mSyncRetry(); }
   function mWatchUser() { return SIGNIN.mWatchUser(); }
   function mSyncStart() { return SIGNIN.mSyncStart(); }
   function mDeleteAccount() { return SIGNIN.mDeleteAccount(); }
   function mSyncPush(now) { return SIGNIN.mSyncPush(now); }
+  function mSyncAttach(doc, fv) { return SIGNIN.mSyncAttach(doc, fv); }
 
   window.addEventListener('online', mSyncRetry);
   document.addEventListener('visibilitychange', function () {
@@ -4882,6 +4883,8 @@
      the interface, and nothing in the interface calls it. */
   window.__macroLab = {
     forget: function () { delete MDAYS[mViewKey()]; },
+    // a stand-in for your account's record, listened to as sign-in listens to the real one (tests/dayyears.test.js)
+    acct: mSyncAttach,
     newFoodKey: mNewFoodKey,
     draft: mDraftDay,
     balance: function () {

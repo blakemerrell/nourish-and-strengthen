@@ -64,6 +64,14 @@ let go of: every day and every weigh-in stays, on the phone and in your account.
 across the week's bars. The button beside the gear steps every meal of the day at once
 through the three views a meal's name steps it through: its status, its foods, its details.
 
+Signed in, the account keeps the day log (days, weigh-ins, closed days, training ticks,
+skips) one record per calendar year (`users/{uid}/days/2026`), like Strengthen's workouts
+below, so it has no ceiling; your profile, plan, slots and own foods stay in the one
+record. It needs the `users/{uid}/days/{year}` rule in `firestore.rules` published
+(SETUP.md, step 4). Until it is, everything stays in the one record as before; once it
+is, the app copies each day to its year and only then takes it out of the one record, and
+a session's first push sends only what the years don't already hold.
+
 **Strengthen** (the tab was called Train) — a lifting block, the log you keep at the gym, and a review of it. It is
 three ideas in one tab:
 

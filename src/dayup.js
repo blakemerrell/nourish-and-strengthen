@@ -61,7 +61,13 @@
      can win nowhere, since a far end takes only what is newer than its own,
      but it could still be written over the account's real copy on the way
      past; and an empty map has nothing to say. */
-  function mSyncPayload() {
+  /* `seen` (src/signin.js), when given: the stamp the account already holds
+     for each day of each part. A day it holds at this stamp or newer is left
+     out, so a whole push is what the account is missing rather than every
+     day ever logged, which since 2026-10-18 is all of them. Unless it is
+     dirty: a day the merge below made different from the account's copy
+     under the same stamp (mMergedAway) still has something to say. */
+  function mSyncPayload(seen) {
     var raw = mLsJson;
     var out = {};
     MSYNC_SIMPLE.forEach(function (row) {
@@ -74,9 +80,11 @@
       if (row.stamps) {
         Object.keys(MSTAMPS[row.part] || {}).forEach(function (k) { keys[k] = 1; });
       }
+      var had = (seen && seen[row.part]) || {}, dirt = LIVE.mDirty[row.part];
       Object.keys(keys).forEach(function (k) {
-        var at = (MSTAMPS[row.part] || {})[k] || 0;
-        if (at > 0) map[mSyncKey(k)] = { v: row.value(k), at: at };
+        var at = (MSTAMPS[row.part] || {})[k] || 0, enc = mSyncKey(k);
+        var owed = !((had[enc] || 0) >= at) || dirt === true || !!(dirt && dirt[k]);
+        if (at > 0 && owed) map[enc] = { v: row.value(k), at: at };
       });
       if (Object.keys(map).length) out[row.part] = map;
     });
@@ -122,11 +130,31 @@
    *
      Cleared as the body is taken, not when the write lands, so a change made
      while it is in flight is dirty again rather than swallowed. */
-  function mSyncTake() {
-    var body = LIVE.mDirtyAll ? mSyncPayload() : mSyncPartial();
+  function mSyncTake(seen) {
+    var body = LIVE.mDirtyAll ? mSyncPayload(seen) : mSyncPartial();
     LIVE.mDirtyAll = false;
     LIVE.mDirty = {};
     return body;
+  }
+
+  /* A day the merge made out of both copies — the account's plates in a meal
+     that was empty here, kept beside this phone's own — is a day the account
+     does not have, under a stamp it does. The whole push used to send every
+     day there was and carried it up regardless; it now leaves out what the
+     account holds at that stamp (`seen`, above), so the day is marked to go.
+     Keys in sorted order, so the same day built in another order is the same. */
+  function mMergedAway(row, k, v) {
+    var same = function (a, b) {
+      var o = function (x) {
+        if (!x || typeof x !== 'object' || Array.isArray(x)) return x;
+        var y = {};
+        Object.keys(x).sort().forEach(function (kk) { y[kk] = x[kk]; });
+        return y;
+      };
+      return JSON.stringify(o(a)) === JSON.stringify(o(b));
+    };
+    if (same(row.value(k), v) || LIVE.mDirty[row.part] === true) return;
+    (LIVE.mDirty[row.part] = LIVE.mDirty[row.part] || {})[k] = 1;
   }
 
   /* Newer wins, part by part. Returns true when anything here changed, so the
@@ -236,6 +264,7 @@
             MSTAMPS[row.part] = MSTAMPS[row.part] || {};
             MSTAMPS[row.part][k] = Math.max(localStamp, when(r.at));
             moved = true;
+            mMergedAway(row, k, r.v);
           }
           return;
         }
@@ -243,6 +272,7 @@
         MSTAMPS[row.part] = MSTAMPS[row.part] || {};
         MSTAMPS[row.part][k] = when(r.at);
         moved = true;
+        if (localStamp > 0 && row.merge) mMergedAway(row, k, r.v);
       });
     });
     /* Persisted off the same table that merged them. This was a hand-written

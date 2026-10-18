@@ -51,6 +51,14 @@ the item is on the list; take the recipe out of the week and its tick is forgott
 an item never comes back to a later list already ticked. Ticks belong to their own
 week, so shopping for one does not tick things off in another.
 
+**Nourish: finding a food** — the top of My Day has a search box and a barcode for the
+next meal by the clock (or whichever meal you choose under them). A search answers from
+the app's own foods first, then asks the USDA: its store brands by name ("Tyson chicken
+nugget" finds Tyson's bag), then its plain foods. A food looked up or scanned opens on a
+short page — its grades and allergens as one line, how much with − and +, the plate's
+P, F and C, and Add, all on the first screen — with the packet's whole Nutrition Facts
+panel and its ingredients folded under it, still there to correct a figure.
+
 **Strengthen** (the tab was called Train) — a lifting block, the log you keep at the gym, and a review of it. It is
 three ideas in one tab:
 

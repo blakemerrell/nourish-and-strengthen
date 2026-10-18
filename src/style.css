@@ -2667,6 +2667,31 @@ select { max-width: 280px; }
   overflow: clip;
 }
 .mday-stop.done { background: var(--paper-soft); }
+/* Search and scan for the next meal, at the top of the day (src/myday.js,
+   mFindBarHTML): a box that is a button, since what it opens is the meal's
+   own search, and the barcode beside it in ink, the way the mockup Blake
+   picked had it (2026-10-18). */
+.mday-find:empty { display: none; }
+.mfind {
+  display: grid; gap: 4px; padding: 10px 12px 4px; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--card);
+}
+.mfind-row { display: flex; gap: 8px; }
+.mfind-box {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px;
+  border: 1px solid var(--line-firm); border-radius: 10px; background: var(--field); color: var(--muted-2);
+  font-family: var(--sans); font-size: 1rem; text-align: left; cursor: pointer;
+}
+.mfind-box .mp-way-i, .mfind-cam .mp-way-i { width: 18px; height: 18px; flex: none; }
+.mfind-cam {
+  flex: none; width: 48px; min-height: 48px; padding: 0; border: 0; border-radius: 10px;
+  background: var(--ink); color: var(--paper); display: grid; place-items: center; cursor: pointer;
+}
+.mfind-to { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--muted); }
+.mfind-to select {
+  min-height: 44px; padding: 0 6px; border: 0; background: transparent; color: var(--ink);
+  font-family: var(--sans); font-size: 0.875rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px;
+}
 /* The dot is a control, so it is a button with a thumb-sized reach and a
    nine-pixel face — the visible dot is drawn inside it, and the rest is
    invisible target. Press it and the whole meal is eaten. */
@@ -5887,6 +5912,54 @@ button.tr-ck-h {
 .mfs-grid .mfs-nr.key span { color: var(--ink); }
 .mfs-grid .mfs-nr.key b { font-weight: 700; }
 .mfs-meals { margin-top: 0; }
+/* ---- a food looked up with its sizes: the short page (src/camera.js, mNfShortHTML) ----
+   Drawn as the food page above is: its name as the title (still the box
+   it is saved under, so it can be renamed), what one of it is, the grades
+   and allergens as one line, then how much, the plate and Add on the first
+   screen, the grid, and the packet's whole label folded under all of it.
+   Blake, 2026-10-18: "much shorter", and "the styling of that card isn't
+   like the others". */
+.nf-sheet .nf-name:not([type="checkbox"]) {
+  width: 100%; min-height: 44px; padding: 2px 0; border-bottom-color: transparent;
+  font-family: var(--serif); font-size: 1.375rem; line-height: 1.25;
+}
+.nf-sheet .nf-name:focus { border-bottom-color: var(--ochre); }
+.nf-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.nf-chips:empty { display: none; }
+.nf-chip.nfs-grade {
+  flex-direction: row; align-items: center; gap: 7px; min-height: 34px; padding: 0 12px 0 5px;
+  border-radius: 999px; background: var(--card);
+}
+.nf-chip .nfs-k { font-size: 0.8125rem; }
+.nf-chip-b {
+  width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px;
+  font-family: var(--sans); font-weight: 800; font-size: 0.875rem;
+}
+.nf-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.nf-sheet .nfl-alg { margin-top: 0; padding: 6px 12px; font-size: 0.875rem; }
+.nf-sheet .nfl-alg-src { display: inline; }
+.nf-sheet .nfh { margin-top: 2px; gap: 8px; }
+.nf-sheet .nfh-b { width: 48px; height: 48px; }
+.nf-sheet .nfz { margin-top: 0; }
+.nf-sheet .nfz > .nfz-h { display: none; }
+.nf-add { width: 100%; min-height: 52px; font-size: 1rem; }
+.nf-sheet .mt-cap:empty { display: none; }
+.nf-more { border-top: 1px solid var(--line-soft); }
+.nf-more > summary {
+  min-height: 48px; display: flex; align-items: center; cursor: pointer;
+  font-size: 0.9375rem; font-weight: 600; color: var(--ink);
+}
+.nf-more > summary::-webkit-details-marker { display: none; }
+.nf-more > summary::after {
+  content: ''; width: 8px; height: 8px; margin: 0 6px 4px auto; border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform 0.15s;
+}
+.nf-more[open] > summary::after { transform: rotate(-135deg); margin-bottom: -4px; }
+.nf-more[open] > summary { margin-bottom: 4px; }
+.nf-more .nfl { margin-top: 8px; }
+.nf-more .nfh-with { margin-top: 10px; }
+.nf-why { margin-top: 4px; }
+
 /* a narrow phone: the Add under the amount, the width of the sheet */
 @media (max-width: 360px) {
   .mfs-amt { grid-template-columns: 5em minmax(0, 1fr); }

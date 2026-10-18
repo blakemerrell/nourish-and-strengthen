@@ -439,8 +439,14 @@ module.exports = nourish({
       SRV.online = true;
       SRV.waiters.splice(0).forEach((f) => f());
       await op.evaluate(() => window.dispatchEvent(new Event('online')));
+      /* A morning is kept in its year's record under yours since 2026-10-18
+         (src/signin.js, "a year to a record"), or in yours where that rule
+         is not published; this stand-in lists the records under yours, so
+         it is in its year's. */
+      const wIn = (db) => { const y = (((db['users/u1/days/' + wk.slice(0, 4)] || {}).myday || {}).w || {})[wk];
+        return y || ((((db['users/u1'] || {}).myday || {}).w || {})[wk]) || null; };
       const up = () => { const u = SRV.db['users/u1'] || {};
-        return !!(u.myday && u.myday.w && u.myday.w[wk]) && !!(u.train && u.train.pr); };
+        return !!wIn(SRV.db) && !!(u.train && u.train.pr); };
       for (let i = 0; i < 40 && !up(); i++) await op.waitForTimeout(200);
       await op.waitForTimeout(500);
       const on = await op.evaluate(() => ({ who: document.getElementById('macroWho').textContent,
@@ -448,7 +454,7 @@ module.exports = nourish({
         row: (document.querySelector('.mw-train') || {}).textContent || '', wos: Object.keys(window.Train._.state().T.wo).length }));
       const u = SRV.db['users/u1'] || {};
       t.ok('signal back with the app open: the weigh-in made offline reaches the account, no reload',
-        !!(u.myday && u.myday.w && u.myday.w[wk] && u.myday.w[wk].v === 183.4), JSON.stringify(u.myday && u.myday.w));
+        !!wIn(SRV.db) && wIn(SRV.db).v === 183.4, JSON.stringify(wIn(SRV.db)));
       t.ok('and Strengthen syncs too', !!(u.train && u.train.pr), JSON.stringify(Object.keys(u.train || {})));
       t.ok('the menu names the account again', on.who === 'me@test.example' && on.state === 'on', JSON.stringify(on));
       t.ok('the other phone’s workout arrives once, and Nourish redraws today as a training day',
@@ -489,10 +495,13 @@ module.exports = nourish({
       }
       await np.waitForTimeout(600);
       const md = S2.db['users/u1'].myday;
+      // the weigh-in, moved to its year's record (this stand-in has the rule for them)
+      const yw = ((S2.db['users/u1/days/2026'] || {}).myday || {}).w || {};
+      const w0 = (md.w && md.w['2026_09_01']) || yw['2026_09_01'];
       const got = await np.evaluate(() => JSON.parse(localStorage.getItem('bsc.macroTargets') || 'null'));
       t.ok('a new phone signing in leaves the account’s targets, profile and weigh-ins as they were',
-        md.t && md.t.v && md.t.v.p === 150 && md.pr && md.pr.v && md.pr.v.lb === 200 && md.w && md.w['2026_09_01'] && md.w['2026_09_01'].v === 190,
-        JSON.stringify({ t: md.t, pr: md.pr, w: md.w }));
+        md.t && md.t.v && md.t.v.p === 150 && md.pr && md.pr.v && md.pr.v.lb === 200 && w0 && w0.v === 190 && w0.at === 1000,
+        JSON.stringify({ t: md.t, pr: md.pr, w: md.w, yw }));
       t.ok('and takes them itself', !!got && got.p === 150, JSON.stringify(got));
       t.ok('and never sends a part it has no stamp for', !S2.sets.some((x) => /users\/u1$/.test(x.path) && x.keys.indexOf('t') >= 0 && !(md.t && md.t.at > 0)),
         JSON.stringify(S2.sets.slice(0, 4)));

@@ -76,12 +76,17 @@ module.exports = {
         const nm = document.getElementById('nfName');
         if (!nm) return document.getElementById('nfResults').textContent;
         return 'LABEL ' + nm.value + ' · ' + document.getElementById('nfKcal').value + ' kcal · ' +
-          ((document.querySelector('.mt-sheet .mt-cap') || {}).textContent || '');
+          ((document.querySelector('.nf-sheet .mfs-meta') || document.querySelector('.mt-sheet .mt-cap') || {}).textContent || '');
       });
     }
     // the label, if a scan has not already opened it
+    /* The label is folded under the amount and its Add since 2026-10-18
+       (tests/foodfind.test.js), so a figure to be corrected is reached the
+       way a person reaches it: Full label & ingredients, opened. */
     async function take(p) {
       if (!(await p.$('#nfName'))) await p.click('[data-nfpick="0"]');
+      await p.waitForSelector('#nfName');
+      if (await p.$('.nf-more:not([open]) > summary')) await p.click('.nf-more > summary');
     }
     const panel = (p) => p.evaluate(() => {
       const v = (id) => (document.getElementById(id) || {}).value;
@@ -209,7 +214,9 @@ module.exports = {
         /Open Food Facts contributors, CC BY-SA/.test(pic.credit), JSON.stringify(pic));
     const more = await g.evaluate(() => {
       const q = (s) => document.querySelector(s);
-      return { ns: (q('.nfs-ns') || {}).getAttribute && q('.nfs-ns').getAttribute('aria-label'), on: (q('.nfs-l.on') || {}).textContent,
+      // the short page's chips (camera.js, mOffTopHTML): a grade's letter in its colour, said in words
+      return { ns: (q('.nf-chip[role="img"]') || {}).getAttribute && q('.nf-chip[role="img"]').getAttribute('aria-label'),
+        on: (q('.nf-chip .nf-chip-b.nfs-b') || {}).textContent, why: (q('.nf-why') || {}).textContent || '',
         grades: [...document.querySelectorAll('.nfs-grade')].map((x) => x.textContent.replace(/\s+/g, ' ').trim()),
         tags: [...document.querySelectorAll('.nfs-tag')].map((x) => x.textContent),
         lv: [...document.querySelectorAll('.nfs-lvi')].map((x) => x.textContent),
@@ -218,10 +225,10 @@ module.exports = {
         link: q('.nfs-src a') && [q('.nfs-src a').href, q('.nfs-src a').target, q('.nfs-src a').rel].join(' '),
         leaf: !!document.querySelector('.mt-sheet .leaf') };
     });
-    t.ok('the Nutri-Score is drawn A to E with its letter picked out, and said in words',
-      more.on === 'B' && /^Nutri-Score B, on a scale from A/.test(more.ns) && /Nutri-Score B/.test(more.grades[0]), JSON.stringify(more));
+    t.ok('the Nutri-Score is its letter in the colour of its place from A to E, and said in words',
+      more.on === 'B' && /^Nutri-Score B, on a scale from A/.test(more.ns) && /Nutri-Score/.test(more.grades[0]), JSON.stringify(more));
     t.ok('the NOVA group says what it is and, for an ultra-processed food, what made it so',
-      /Ultra-processed/.test(more.grades[1]) && /NOVA 4 of 4, for high fructose corn syrup, baking soda/.test(more.grades[1]), JSON.stringify(more.grades));
+      /Ultra-processed/.test(more.grades[1]) && /NOVA 4 of 4\), for high fructose corn syrup, baking soda/.test(more.why), JSON.stringify([more.grades, more.why]));
     t.ok('the ingredients\u2019 own tags: vegetarian or not, palm oil, and the additive by its name',
       JSON.stringify(more.tags) === '["Not vegetarian","No palm oil","1 additive: baking soda"]', JSON.stringify(more.tags));
     t.ok('the traffic lights per 100 g, each in words',
@@ -357,7 +364,7 @@ module.exports = {
     await take(ag);
     await ag.waitForTimeout(250);
     got = await panel(ag);
-    const agCap = await ag.evaluate(() => (document.querySelector('.mt-sheet .mt-cap') || {}).textContent || '');
+    const agCap = await ag.evaluate(() => (document.querySelector('.nf-sheet .mfs-meta') || document.querySelector('.mt-sheet .mt-cap') || {}).textContent || '');
     t.ok('said as checked, with the fiber it lacked filled in from the USDA at the same serving',
       /checked against the USDA/.test(agCap) && got.fib === '6' && got.na === '390', agCap + ' ' + JSON.stringify(got));
     await ag.context().close();
@@ -446,6 +453,7 @@ module.exports = {
         /^USDA 165 g · 1 cup, cooked, diced · 333 kcal · 35P · 15F · 12C$/.test(rowLook.fit), JSON.stringify(rowLook));
     await sp.click('#nfResults [data-nfpick="0"]');
     await sp.waitForTimeout(300);
+    await sp.click('.nf-more > summary');
     const card = () => sp.evaluate(() => {
       const v = (id) => (document.getElementById(id) || {}).value, x = (id) => (document.getElementById(id) || {}).textContent;
       return { sizes: [...document.querySelectorAll('[data-nfsize]')].map((b) => b.textContent.replace(/\s+/g, ' ').trim()),

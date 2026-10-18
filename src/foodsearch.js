@@ -129,7 +129,7 @@
         var src = f.dataType === 'Branded' ? 'packaged' + (f.brandOwner ? ' \u00b7 ' + mTitle(f.brandOwner) : '')
           : f.dataType === 'Survey (FNDDS)' ? 'as eaten' : 'reference';
         // a packet by its brand, in the case a person writes it, as a scanned one is
-        var nm = f.dataType === 'Branded' ? [mTitle(f.brandName || f.brandOwner), mTitle(f.description)].filter(Boolean).join(' ') : f.description;
+        var nm = f.dataType === 'Branded' ? mBrandName(f) : f.description;
         return { name: nm, unit: unit,
           kcal: Math.round(n.kcal * per), p: Math.round(n.p * per),
           f: Math.round(n.f * per), c: Math.round(n.c * per),
@@ -186,7 +186,11 @@
     if (!(g > 0) || (!isG && !isMl)) return null;
     var u = isMl ? 'mL' : 'g';
     // its own aside off, as with a reference food's measure (mUsdaMeasure): "1 cup (8 fl oz)"
-    var hh = String(f.householdServingFullText || '').replace(/\s*\([^)]*\)/g, '').trim();
+    /* And only its first clause, said in small letters when the maker typed
+       it in capitals: a search for Tyson's nuggets offered "3.21 OZ SERVING,
+       About 10 Servings Per Container" and "5 PIECES" as sizes (2026-10-18). */
+    var hh = String(f.householdServingFullText || '').replace(/\s*\([^)]*\)/g, '').split(',')[0].trim();
+    if (hh && hh === hh.toUpperCase()) hh = hh.toLowerCase();
     var w = Math.round(g * 10) / 10;
     return { per: g / 100, unit: hh && /^\d/.test(hh) ? hh + ' (' + w + ' ' + u + ')' : w + ' ' + u,
       t: hh && /^\d/.test(hh) ? hh : w + ' ' + u, g: w, u: u };
@@ -196,6 +200,15 @@
     s = String(s || '').trim();
     if (s !== s.toUpperCase()) return s;
     return s.toLowerCase().replace(/(^|[\s\-\/(&])([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); });
+  }
+
+  /* A packet by its brand and then its name, without saying the brand
+     twice: the USDA files Tyson's nuggets as "TYSON, CHICKEN NUGGETS" under
+     the brand "TYSON", which read "Tyson Tyson, Chicken Nuggets". */
+  function mBrandName(f) {
+    var br = mTitle(f.brandName || f.brandOwner), ds = mTitle(f.description);
+    if (br && ds.toLowerCase().indexOf(br.toLowerCase()) === 0) ds = ds.slice(br.length).replace(/^[\s,.\-]+/, '');
+    return [br, ds].filter(Boolean).join(' ');
   }
 
   /* A barcode the USDA knows. Open Food Facts is asked first and is the one
@@ -229,7 +242,7 @@
       var n = mNutrients(f.foodNutrients), bs = mUsdaServing(f) || { per: 1, unit: '100 g' }, per = bs.per;
       if (!(n.kcal || n.p || n.f || n.c)) throw new Error('nonutrition');
       return [{
-        name: [mTitle(f.brandName || f.brandOwner), mTitle(f.description)].filter(Boolean).join(' '),
+        name: mBrandName(f),
         unit: bs.unit,
         kcal: Math.round(n.kcal * per), p: Math.round(n.p * per), f: Math.round(n.f * per), c: Math.round(n.c * per),
         na: mPer(n.na, per, 1), fib: mPer(n.fib, per, 10),

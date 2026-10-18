@@ -319,14 +319,17 @@
     return (code ? 'Open Food Facts' : 'The USDA') + ' did not answer. Type it in below, or try again.';
   }
 
-  function mLookupRows(list) {
+  function mLookupRows(list, from) {
     if (!list.length) return '<div class="mslot-empty">Nothing came back.</div>';
+    from = from || 0;
     var k = list.clash;
     return (k ? '<div class="mlook-clash" role="note"><b>Two different answers for this barcode.</b> ' +
         'Open Food Facts says ' + k.off + ' kcal per 100 g; the USDA\u2019s packaged foods, from the maker\u2019s label, say ' +
         k.usda + '.' + (k.flagged ? ' Open Food Facts\u2019 own checks fault its figures.' : '') +
         ' Pick the one that matches the packet in your hand.</div>' : '') +
-      list.map(function (x, i) {
+      list.map(function (x, j) {
+      // numbered on from the rows already drawn, when two lists share the one store (mLookNet)
+      var i = from + j;
       LIVE.MLOOKUP[i] = x;
       /* The same row as the app's own foods (src/pickrow.js, mpRowHTML):
          a + in a circle, the name, then grams first and the kitchen's word
@@ -384,10 +387,41 @@
        search list in mockup I, 2026-10-07). */
     res.innerHTML = '<div class="mt-div">From the USDA</div><div class="mslot-empty">Asking the USDA&hellip;</div>';
     LIVE.MLOOKUP = {};
-    mFoodSearch(term, false).then(function (list) {
+    /* The store brands as well as the plain foods. Blake, 2026-10-18,
+       searching "Tyson chicken nugget": nothing. The USDA was only ever asked
+       about cooked, unbranded food by name — its packaged foods, the makers'
+       own labels, were asked only for a barcode — so a brand typed in came
+       back as "Chicken nuggets, NFS" and Wendy's, and Tyson's own bag, first
+       in the packaged list, was never seen.
+     *
+       Held to the words typed, all of them, brand included, so a brand is
+       only listed when it is what was asked for: the packaged list is twenty
+       thousand rows for "chicken nugget", mostly other people's nuggets, and
+       the USDA's loose answers were what made Blake send these to the bottom
+       of the list on 2026-10-08 ("almost all junk"). Four at most, above the
+       plain foods, since a brand named is the more particular question. A
+       packaged search that fails says nothing; the plain one's answer, or
+       its failure, is what is shown. */
+    /* The little words go, or "mac and cheese" would turn away Kraft's
+       "Macaroni & Cheese" for having no "and" in it; and a plural is its
+       singular, so "nuggets" finds a bag the USDA calls "nugget". */
+    var want = String(term).toLowerCase().split(/[\s,&]+/).filter(function (w) {
+      return w.length > 2 && !/^(and|the|with|for|from|plus)$/.test(w);
+    }).map(function (w) { return w.replace(/(?:es|s)$/, ''); });
+    var brands = mFoodSearch(term, true).then(function (list) {
+      var seen = {};
+      return list.filter(function (x) {
+        var nm = String(x.name).toLowerCase(), key = nm + '|' + x.kcal;
+        if (seen[key] || !want.every(function (w) { return nm.indexOf(w) >= 0; })) return false;
+        seen[key] = 1;
+        return true;
+      }).slice(0, 4);
+    }, function () { return []; });
+    Promise.all([mFoodSearch(term, false), brands]).then(function (both) {
       if (mine !== LIVE.mLookSeq || !$('nfResults')) return;
-      $('nfResults').innerHTML = list.length
-        ? '<div class="mt-div">From the USDA</div>' + mLookupRows(list) : '';
+      var list = both[0], br = both[1];
+      $('nfResults').innerHTML = (br.length ? '<div class="mt-div">Store brands</div>' + mLookupRows(br) : '') +
+        (list.length ? '<div class="mt-div">From the USDA</div>' + mLookupRows(list, br.length) : '');
     }, function (err) {
       if (mine !== LIVE.mLookSeq || !$('nfResults')) return;
       $('nfResults').innerHTML = '<div class="mslot-empty">' + esc(mLookSay(err)) + '</div>' +

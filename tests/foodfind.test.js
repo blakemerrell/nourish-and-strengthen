@@ -40,6 +40,10 @@ module.exports = {
         await r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(/Branded/.test(body) ? BRANDED : PLAIN) });
       });
       await p.context().route(OFF, (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(NUGGETS) }));
+      /* Half past seven in the morning, so the next meal is Breakfast. On the
+         real clock this passed on the morning it was written and failed on
+         main that afternoon, when the next meal was Lunch. */
+      await p.clock.setFixedTime(new Date(2026, 9, 18, 7, 30, 0));
       await p.reload();
       await p.click('.tab[data-view="macros"]');
       await p.waitForTimeout(300);

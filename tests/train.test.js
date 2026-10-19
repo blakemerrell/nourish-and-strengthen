@@ -4061,6 +4061,32 @@ module.exports = {
     t.ok('a date with no year is not read as 2001', r.yr === ',,,y', r.yr);
     r = await p.evaluate(() => ['Pull Up (Weighted)', 'Chest Dip (Weighted)', 'Weighted Dips', 'Squats', 'OHP', 'DB Curls', 'RDL', 'Triceps Pushdown'].map((n) => window.Train._.sgMatch(n)).join());
     t.ok('names as people write them: (Weighted), plurals, OHP, DB and RDL', r.split(',').slice(0, 7).join() === 'pullup,dip,dip,bb-squat,bb-ohp,db-curl,bb-rdl' && r.split(',')[7] !== '', r);
+    r = await p.evaluate(() => {
+      const _ = window.Train._;
+      const matched = [
+        'Pull-up (bodyweight)', 'Push-up (Deficit)', 'Inverted Row (Bodyweight)',
+        'Calf Press on Seated Leg Press', 'Hanging Knee Raise', 'Pulldown (Straight Arm)',
+        'Lat Pulldown - Underhand (Cable)', 'Bent Over Row (Dumbbell)', 'Incline Chest Fly (Dumbbell)',
+        'Kettlebell hammer Curl', 'Bicep Curl (Machine)', 'Deadlift (Dumbbell)', 'Standing Calf Raise (Smith Machine)'
+      ].map((n) => _.sgMatch(n)).join();
+      const guessed = [
+        'Kettlebell Swing', 'Kettlebell Turkish Get Up', 'Halos',
+        'Knee Raise (Captain\'s Chair)', 'Thruster (Kettlebell)', 'Cable Pull Through'
+      ].map((n) => _.sgGuess(n).m).join();
+      const G = _.sgParse(
+        'Date;Workout Name;Exercise Name;Set Order;Weight;Weight Unit;Reps;RPE;Distance;Distance Unit;Seconds;Notes;Workout Notes;Workout Duration\n' +
+        '2024-09-24 10:00:00;Upper;Pull-up (bodyweight);1;86.18;kg;10;;;;;;;45m\n' +
+        '2024-09-24 10:00:00;Upper;Push Up;1;0.45;kg;18;;;;;;;45m\n' +
+        '2024-09-24 10:00:00;Upper;Chest Dip;1;15.88;kg;12;;;;;;;45m\n'
+      );
+      const w = _.sgList(G, 0)[0];
+      return { matched, guessed, bw: w.bw, sets: w.x.map((x) => x.e + ':' + x.s[0].w + 'x' + x.s[0].r).join() };
+    });
+    t.ok('Strong’s own exercise variants map to the library and guess kettlebell/ab/glute muscles accurately',
+      r.matched === 'pullup,pushup,inv-row,calf-lp,hang-raise,cb-straight,lat-pd-n,db-row,db-fly,hammer,preacher,db-rdl,calf-stand' &&
+      r.guessed === 'glutes,front,front,abs,quads,glutes', JSON.stringify(r));
+    t.ok('Strong’s bodyweight column on pull-ups becomes workout bodyweight, 1 lb push-up placeholders zero out, and weighted dips stay weighted',
+      r.bw === 86.2 && r.sets === 'pullup:0x10,pushup-flat:0x18,dip:15.88x12', JSON.stringify(r));
     await p.close();
 
     // the same session from another app, a minute or two apart, is not brought in twice

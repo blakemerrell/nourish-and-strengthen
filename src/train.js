@@ -10224,20 +10224,21 @@
     'bench press barbell': 'bb-bench', 'bench press dumbbell': 'db-bench', 'chest press machine': 'mc-press',
     'incline bench press barbell': 'bb-incline', 'incline bench press dumbbell': 'db-incline',
     'incline bench press smith machine': 'sm-incline', 'chest dip': 'dip', 'dip': 'dip', 'push up': 'pushup-flat',
-    'incline push up': 'inc-pushup', 'cable crossover': 'cb-fly', 'chest fly cable': 'cb-fly', 'chest fly dumbbell': 'db-fly',
+    'incline push up': 'inc-pushup', 'push up deficit': 'pushup', 'deficit push up': 'pushup',
+    'cable crossover': 'cb-fly', 'chest fly cable': 'cb-fly', 'chest fly dumbbell': 'db-fly', 'incline chest fly dumbbell': 'db-fly',
     'chest fly machine': 'pec-deck', 'pec deck machine': 'pec-deck', 'pec deck': 'pec-deck',
     'lat pulldown cable': 'lat-pd', 'lat pulldown machine': 'lat-pd', 'lat pulldown wide grip cable': 'lat-pd', 'lat pulldown': 'lat-pd',
-    'lat pulldown close grip cable': 'lat-pd-n', 'pull up': 'pullup', 'chin up': 'chinup',
+    'lat pulldown close grip cable': 'lat-pd-n', 'lat pulldown underhand cable': 'lat-pd-n', 'pull up': 'pullup', 'chin up': 'chinup',
     'bent over row barbell': 'bb-row', 'seated row cable': 'cb-row', 'seated cable row': 'cb-row', 'seated row machine': 'mc-row',
-    'bent over one arm row dumbbell': 'db-row', 'one arm row dumbbell': 'db-row', 'chest supported row dumbbell': 'db-cs-row',
-    'pullover dumbbell': 'db-pullover', 'straight arm pulldown cable': 'cb-straight', 'inverted row': 'inv-row',
+    'bent over one arm row dumbbell': 'db-row', 'one arm row dumbbell': 'db-row', 'bent over row dumbbell': 'db-row', 'chest supported row dumbbell': 'db-cs-row',
+    'pullover dumbbell': 'db-pullover', 'straight arm pulldown cable': 'cb-straight', 'pulldown straight arm': 'cb-straight', 'inverted row': 'inv-row',
     'squat barbell': 'bb-squat', 'back squat barbell': 'bb-squat', 'front squat barbell': 'bb-front', 'hack squat': 'hack',
     'hack squat machine': 'hack', 'squat smith machine': 'sm-squat', 'leg press': 'leg-press', 'leg press machine': 'leg-press',
     'goblet squat kettlebell': 'goblet', 'goblet squat dumbbell': 'goblet', 'goblet squat': 'goblet',
     'bulgarian split squat': 'db-bss', 'bulgarian split squat dumbbell': 'db-bss', 'lunge dumbbell': 'db-lunge',
     'walking lunge dumbbell': 'db-lunge', 'step up': 'db-stepup', 'step up dumbbell': 'db-stepup', 'belt squat machine': 'belt-squat',
     'leg extension machine': 'leg-ext', 'leg extension': 'leg-ext', 'air squat': 'bw-squat', 'squat bodyweight': 'bw-squat',
-    'romanian deadlift barbell': 'bb-rdl', 'romanian deadlift dumbbell': 'db-rdl', 'stiff leg deadlift barbell': 'bb-sldl',
+    'romanian deadlift barbell': 'bb-rdl', 'romanian deadlift dumbbell': 'db-rdl', 'deadlift dumbbell': 'db-rdl', 'stiff leg deadlift barbell': 'bb-sldl',
     'deadlift barbell': 'bb-dl', 'sumo deadlift barbell': 'sumo-dl', 'deadlift trap bar': 'trap-dl', 'trap bar deadlift': 'trap-dl',
     'pull up assisted': 'as-pullup', 'chest dip assisted': 'as-dip', 'dip assisted': 'as-dip', 'good morning barbell': 'good-am', 'lying leg curl machine': 'lying-curl',
     'seated leg curl machine': 'seated-curl', 'nordic hamstring curl': 'nordic',
@@ -10253,16 +10254,17 @@
     'front raise dumbbell': 'db-front', 'pike push up': 'pike-pushup',
     'bicep curl barbell': 'bb-curl', 'biceps curl barbell': 'bb-curl', 'ez bar curl': 'ez-curl', 'bicep curl ez bar': 'ez-curl',
     'bicep curl dumbbell': 'db-curl', 'biceps curl dumbbell': 'db-curl', 'incline curl dumbbell': 'inc-curl',
-    'hammer curl dumbbell': 'hammer', 'bicep curl cable': 'cb-curl', 'biceps curl cable': 'cb-curl', 'preacher curl machine': 'preacher',
+    'hammer curl dumbbell': 'hammer', 'kettlebell hammer curl': 'hammer', 'hammer curl kettlebell': 'hammer',
+    'bicep curl cable': 'cb-curl', 'biceps curl cable': 'cb-curl', 'preacher curl machine': 'preacher', 'bicep curl machine': 'preacher', 'biceps curl machine': 'preacher',
     'triceps pushdown': 'pushdown', 'triceps pushdown cable straight bar': 'pushdown', 'triceps pushdown cable': 'pushdown',
     'tricep pushdown cable': 'pushdown', 'triceps pushdown cable rope': 'pushdown', 'overhead triceps extension cable': 'cb-oh-ext',
     'triceps extension cable': 'cb-oh-ext', 'skullcrusher barbell': 'skull', 'skullcrusher ez bar': 'skull',
     'triceps extension dumbbell': 'db-oh-ext', 'overhead triceps extension dumbbell': 'db-oh-ext', 'triceps extension machine': 'mc-tri',
     'bench press close grip barbell': 'cgbp', 'close grip bench press barbell': 'cgbp', 'bench dip': 'bench-dip', 'diamond push up': 'diamond',
-    'standing calf raise machine': 'calf-stand', 'calf raise machine': 'calf-stand', 'seated calf raise machine': 'calf-seat',
-    'seated calf raise plate loaded': 'calf-seat', 'calf press on leg press': 'calf-lp', 'calf press machine': 'calf-lp',
+    'standing calf raise machine': 'calf-stand', 'standing calf raise smith machine': 'calf-stand', 'calf raise machine': 'calf-stand', 'seated calf raise machine': 'calf-seat',
+    'seated calf raise plate loaded': 'calf-seat', 'calf press on leg press': 'calf-lp', 'calf press on seated leg press': 'calf-lp', 'calf press machine': 'calf-lp',
     'standing calf raise dumbbell': 'calf-db', 'shrug dumbbell': 'db-shrug', 'shrug barbell': 'bb-shrug', 'shrug cable': 'cb-shrug',
-    'cable crunch': 'cb-crunch', 'crunch cable': 'cb-crunch', 'hanging leg raise': 'hang-raise', 'ab wheel': 'ab-wheel',
+    'cable crunch': 'cb-crunch', 'crunch cable': 'cb-crunch', 'hanging leg raise': 'hang-raise', 'hanging knee raise': 'hang-raise', 'ab wheel': 'ab-wheel',
     'crunch machine': 'mc-crunch', 'crunch': 'crunch', 'pallof press cable': 'pallof', 'dead bug': 'dead-bug', 'bird dog': 'bird-dog'
   };
   function sgKey(n) {
@@ -10274,9 +10276,9 @@
   }
   function sgMatch(n) {
     var k = sgKey(n), tries = [k];
-    /* "Pull Up (Weighted)", "Weighted Dips": the lift itself, the weight
-       column being what was added to you. */
-    var unw = k.replace(/\bweighted\b/g, ' ').replace(/\s+/g, ' ').trim();
+    /* "Pull Up (Weighted)", "Pull-up (bodyweight)", "Weighted Dips": the lift
+       itself, once any exact match (like "Squat (Bodyweight)") has been tried. */
+    var unw = k.replace(/\b(weighted|bodyweight)\b/g, ' ').replace(/\s+/g, ' ').trim();
     if (unw && unw !== k) tries.push(unw);
     // "Squats", "Dumbbell Curls": one of them (never triceps or biceps)
     tries.slice().forEach(function (t) {
@@ -10293,10 +10295,11 @@
   /* A guess at what a lift you made up trains, most particular first, so a
      leg curl is not taken for a biceps curl. Shown to be checked. */
   var SG_MUS = [
-    [/leg curl|hamstring|romanian|\brdl\b|good morning|stiff leg/, 'hams'], [/leg extension|squat|leg press|lunge|step up|sissy/, 'quads'],
-    [/calf/, 'calves'], [/hip thrust|glute|bridge|abduct|kickback/, 'glutes'], [/reverse fly|rear delt|face pull/, 'rear'],
-    [/lateral raise|upright row/, 'side'], [/overhead press|shoulder press|military|arnold|front raise|push press|landmine press/, 'front'],
-    [/shrug/, 'traps'], [/crunch|plank|leg raise|sit up|ab wheel|oblique|twist|hollow|v up|toes to bar/, 'abs'],
+    [/leg curl|hamstring|romanian|\brdl\b|good morning|stiff leg/, 'hams'], [/calf/, 'calves'],
+    [/leg extension|squat|leg press|lunge|step up|sissy|thruster/, 'quads'],
+    [/hip thrust|glute|bridge|abduct|kickback|swing|pull through/, 'glutes'], [/reverse fly|rear delt|face pull/, 'rear'],
+    [/lateral raise|upright row/, 'side'], [/overhead press|shoulder press|military|arnold|front raise|push press|landmine press|turkish|get up|\bhalo|steering wheel/, 'front'],
+    [/shrug/, 'traps'], [/crunch|plank|leg raise|knee raise|captain|sit up|ab wheel|oblique|twist|hollow|v up|toes to bar/, 'abs'],
     [/triceps|skullcrusher|pushdown|close grip|kickback|jm press/, 'triceps'], [/curl/, 'biceps'],
     [/deadlift|back extension|hyperextension/, 'hams'], [/row|pulldown|pull up|chin up|pullover|lat\b|pull down/, 'back'],
     [/bench|chest|fly|pec|push up|dip|press/, 'chest']
@@ -10304,9 +10307,9 @@
   function sgGuess(n) {
     var k = sgKey(n), m = 'chest', i;
     for (i = 0; i < SG_MUS.length; i++) if (SG_MUS[i][0].test(k)) { m = SG_MUS[i][1]; break; }
-    var q = /smith/.test(k) ? 'sm' : /barbell|ez bar|trap bar/.test(k) ? 'bb' : /dumbbell|kettlebell/.test(k) ? 'db'
-      : /cable|band/.test(k) ? 'cb' : /machine|plate loaded|lever/.test(k) ? 'mc' : /bodyweight|assisted|weighted|push up|pull up|chin up|dip/.test(k) ? 'bw' : 'mc';
-    var c = /press|squat|deadlift|row|pull|chin|dip|lunge|thrust|clean|snatch|step up|push up/.test(k) && !/leg curl|pushdown|triceps/.test(k) ? 'c' : 'i';
+    var q = /smith/.test(k) ? 'sm' : /barbell|ez bar|trap bar/.test(k) ? 'bb' : /dumbbell|kettlebell|\bhalo|steering wheel/.test(k) ? 'db'
+      : /cable|band/.test(k) ? 'cb' : /machine|plate loaded|lever/.test(k) ? 'mc' : /bodyweight|assisted|weighted|push up|pull up|chin up|dip|sit up|crunch|v up|knee raise|leg raise|plank|captain/.test(k) ? 'bw' : 'mc';
+    var c = /press|incline|squat|deadlift|row|pull|chin|dip|lunge|thrust|swing|turkish|get up|clean|snatch|step up|push up/.test(k) && !/leg curl|pushdown|triceps extension/.test(k) ? 'c' : 'i';
     return { m: m, q: q, k: c };
   }
 
@@ -10604,15 +10607,24 @@
     return G.wos.filter(function (w) { return w.st >= from && !T.wo[sgId(w)] && !near(w.st); });
   }
   function sgWo(G, w, ids) {
-    var x = [], at = {};
+    var x = [], at = {}, bwFound = 0;
     w.x.forEach(function (sx) {
       var e = ids[sx.nm];
       if (!e) return;
+      var bwLift = (onBody(e) || (!LIB[e] && sgGuess(sx.nm).q === 'bw')) && !/\bweighted\b/i.test(sx.nm);
+      var bwTag = /\bbodyweight\b/i.test(sx.nm);
       // two of Strong's exercises matched to one of ours become one
       var ss = sx.s.map(function (s) {
         var c = sgUnit(clean(s), G.unit);
         // a minus is the help on an assisted lift; on anything else it is no weight
         if (c.ng) { if (!ASST[e]) c.w = 0; delete c.ng; }
+        if (bwLift && c.w > 0) {
+          if (c.w <= (G.unit === 'kg' ? 0.5 : 1)) c.w = 0;
+          else if ((bwTag || G.app === 'Strong') && c.w >= (G.unit === 'kg' ? 60 : 135)) {
+            if (!bwFound) bwFound = Math.round(c.w * 10) / 10;
+            c.w = 0;
+          }
+        }
         return c;
       });
       if (at[e] !== undefined) { x[at[e]].s = x[at[e]].s.concat(ss); return; }
@@ -10621,6 +10633,7 @@
     });
     var wo = { id: sgId(w), st: w.st, dk: dayKey(new Date(w.st)), n: w.n, u: G.unit, x: x, im: 's' };
     if (w.bw > 0) wo.bw = w.bwu && w.bwu !== G.unit ? Math.round((w.bwu === 'kg' ? w.bw * 2.20462 : w.bw / 2.20462) * 10) / 10 : w.bw;
+    else if (bwFound > 0) wo.bw = bwFound;
     if (w.dur > 0 && w.dur < DAY_MS) wo.en = w.st + w.dur;
     var nt = w.nt.join('\n').slice(0, 1000);
     if (nt) wo.nt = nt;

@@ -3215,7 +3215,7 @@
 
   /* src/myday.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var MYDAY = window.HiveParts.myday({ MDAYS: MDAYS, MWEIGHTS: MWEIGHTS, M_MONS: M_MONS, S: S, WGAPI: WGAPI, dayKey: dayKey, kcalOf: kcalOf, mNextMeal: mNextMeal, mpIcon: mpIcon, leaf: leaf, mAhead: mAhead, mBatchStrip: mBatchStrip, mCanFav: mCanFav, mCascadeLineHTML: mCascadeLineHTML, mDay: mDay, mDayTargets: mDayTargets, mDialUnit: mDialUnit, mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mEditDay: mEditDay, mFillRoom: mFillRoom, mFoldForget: mFoldForget, mIcon: mIcon, mIsFav: mIsFav, mLatestKey: mLatestKey, mLongDate: mLongDate, mMacLine: mMacLine, mMarkAccountUI: mMarkAccountUI, mMealAsk: mMealAsk, mMealPillsSay: mMealPillsSay, mReadSlots: mReadSlots, mSaltChip: mSaltChip, mServeG: mServeG, mSkipped: mSkipped, mSnapTargets: mSnapTargets, mViewKey: mViewKey, mWeekHTML: mWeekHTML, mWhyChip: mWhyChip, mWhyStrip: mWhyStrip, macroFootHTML: macroFootHTML, macroWeighHTML: macroWeighHTML, syncShrunk: syncShrunk, todayKey: todayKey, mDialFromX: mDialFromX, mDialG: mDialG, mDialMeasure: mDialMeasure, mDialText: mDialText, LIVE: LIVE });
+  var MYDAY = window.HiveParts.myday({ MDAYS: MDAYS, MWEIGHTS: MWEIGHTS, M_MONS: M_MONS, S: S, WGAPI: WGAPI, dayKey: dayKey, kcalOf: kcalOf, mpIcon: mpIcon, leaf: leaf, mAhead: mAhead, mBatchStrip: mBatchStrip, mCanFav: mCanFav, mCascadeLineHTML: mCascadeLineHTML, mDay: mDay, mDayTargets: mDayTargets, mDialUnit: mDialUnit, mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mEditDay: mEditDay, mFillRoom: mFillRoom, mFoldForget: mFoldForget, mIcon: mIcon, mIsFav: mIsFav, mLatestKey: mLatestKey, mLongDate: mLongDate, mMacLine: mMacLine, mMarkAccountUI: mMarkAccountUI, mMealAsk: mMealAsk, mMealPillsSay: mMealPillsSay, mReadSlots: mReadSlots, mSaltChip: mSaltChip, mServeG: mServeG, mSkipped: mSkipped, mSnapTargets: mSnapTargets, mViewKey: mViewKey, mWeekHTML: mWeekHTML, mWhyChip: mWhyChip, mWhyStrip: mWhyStrip, macroFootHTML: macroFootHTML, macroWeighHTML: macroWeighHTML, syncShrunk: syncShrunk, todayKey: todayKey, mDialFromX: mDialFromX, mDialG: mDialG, mDialMeasure: mDialMeasure, mDialText: mDialText, LIVE: LIVE });
   function renderMacros() { return MYDAY.renderMacros(); }
   function mMealSheetParts(sk) { return MYDAY.mMealSheetParts(sk); }
   function mMealNowHTML(sk, add) { return MYDAY.mMealNowHTML(sk, add); }
@@ -5436,31 +5436,6 @@
     }
 
     $('macroSlots').addEventListener('click', mDayClick);
-    /* The day's own search and barcode (myday.js, mFindBarHTML): the meal's
-       sheet, opened on its search with the caret in it, or on the camera,
-       for the meal chosen under them. */
-    $('macroFind').addEventListener('click', function (e) {
-      var fb = e.target.closest('[data-mfind]');
-      if (!fb) return;
-      var fsel = $('mFindMeal'), fsk = fsel ? fsel.value : '';
-      rememberOpener();
-      S.mEdit = null;
-      if (fb.dataset.mfind === 'scan') {
-        mCamDone = false;               // a fresh visit to scan opens the lens
-        mOpenPicker(fsk, 'scan');
-        return;
-      }
-      mOpenPicker(fsk, 'home');
-      var fq = $('mpFind');
-      if (fq) fq.focus();
-    });
-    $('macroFind').addEventListener('change', function (e) {
-      if (e.target.id !== 'mFindMeal') return;
-      S.mFindSlot = e.target.value;
-      renderMacros();
-      var back = $('mFindMeal');
-      if (back) back.focus();
-    });
     /* The meal sheet carries the meal's own controls — its tick, Balance,
        the ⋯ menus and every food's dial — and they mean exactly what they
        meant on the day, so the same handler answers them there. An open ⋯

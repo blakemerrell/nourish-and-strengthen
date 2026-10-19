@@ -23,7 +23,6 @@
   var WGAPI = app.WGAPI;
   var dayKey = app.dayKey;
   var kcalOf = app.kcalOf;
-  var mNextMeal = app.mNextMeal;
   var mpIcon = app.mpIcon;
   var leaf = app.leaf;
   var mAhead = app.mAhead;
@@ -79,38 +78,6 @@
      "the node to be removed is no longer a child of this node". One redraw
      at a time. */
   var mRendering = false;
-  /* Search and scan, on the day itself, for the meal that is next.
-   *
-     Blake, 2026-10-18: searching and scanning "needs to get much easier",
-     and the first thing in the way was the way in: open a meal's tray, then
-     its sheet's search box, then type; or the tray, the sheet, then the
-     barcode in the box. This is a box and a barcode at the top of the day.
-     "Search a food" opens the meal's sheet with the caret in its search and
-     the keyboard up; the barcode opens the same sheet on the camera. Both
-     put what you pick on the meal named under them: the next one by the
-     clock (mNextMeal, as the bar's Add food did), or whichever you choose
-     there, for as long as the app is open (S.mFindSlot). The meal's sheet is
-     still the one place food is added; this is only a shorter way to it.
-     Mockup: https://claude.ai/artifact/KnJS2zNRXw4MyVM6N4VrNm */
-  function mFindBarHTML(slots) {
-    var list = slots.list;
-    if (!list.length) return '';
-    var next = mNextMeal() || list[0];
-    var sk = S.mFindSlot && list.some(function (sl) { return sl.k === S.mFindSlot; }) ? S.mFindSlot : next.k;
-    var cam = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-    return '<div class="mfind" role="search" aria-label="Find a food">' +
-      '<div class="mfind-row">' +
-        '<button class="mfind-box" data-mfind="search">' + mpIcon('look') + '<span>Search a food</span></button>' +
-        (cam ? '<button class="mfind-cam" data-mfind="scan" aria-label="Scan a barcode">' + mpIcon('scan') + '</button>' : '') +
-      '</div>' +
-      '<div class="mfind-to"><label for="mFindMeal">Goes on</label>' +
-        '<select id="mFindMeal">' + list.map(function (sl) {
-          return '<option value="' + esc(sl.k) + '"' + (sl.k === sk ? ' selected' : '') + '>' + esc(sl.n) + '</option>';
-        }).join('') + '</select>' +
-        (sk === next.k ? '<span>the next meal</span>' : '') + '</div>' +
-    '</div>';
-  }
-
   function renderMacros() {
     if (mRendering) return;
     LIVE.mDrawnToday = todayKey();
@@ -984,7 +951,6 @@
       if (onPlanKeys.indexOf(sk) < 0) html += trayHTML(sk, slots.names[sk] || 'Meal', false);
     });
     $('macroSlots').innerHTML = html;
-    if ($('macroFind')) $('macroFind').innerHTML = mFindBarHTML(slots);
     mViewsNow();
 
     var readout = macroFootHTML(day, targets, slots);

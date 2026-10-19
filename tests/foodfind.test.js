@@ -7,7 +7,10 @@
  * not find was "Tyson Chicken nugget". Three changes, mockup
  * https://claude.ai/artifact/KnJS2zNRXw4MyVM6N4VrNm:
  *
- *   - a search box and a barcode at the top of the day, for the next meal;
+ *   - (a search box and a barcode at the top of the day, for the next meal,
+ *     taken off again on 2026-10-19: "I didn't need that search box in the
+ *     day tab for meals... I get that by clicking a plus button on the meal
+ *     card." The meal's sheet keeps its own search and barcode);
  *   - a name typed asks the USDA's packaged foods too, so a brand is found;
  *   - a looked-up food's page has its amount and Add on the first screen,
  *     and the whole label folded under them.
@@ -18,6 +21,7 @@ const USDA = /api\.nal\.usda\.gov/;
 const OFF = /world\.openfoodfacts\.org/;
 const BRANDED = require('./fixtures/usda-tyson-branded.json');
 const PLAIN = require('./fixtures/usda-tyson-plain.json');
+const { openMeal } = require('./fixtures/nourish');
 
 // Tyson's nuggets by their barcode, as Open Food Facts had them on 2026-10-18
 const NUGGETS = { status: 1, product: { product_name: 'Chicken Nuggets', brands: 'Tyson', serving_size: '5 PIECES (90 g)',
@@ -50,26 +54,14 @@ module.exports = {
       return p;
     }
 
-    /* ---- the day's own search and barcode */
+    /* ---- the day has no search bar of its own: a meal's + is the way in */
     const p = await open();
-    const bar = await p.evaluate(() => {
-      const box = document.querySelector('#macroFind [data-mfind="search"]'), cam = document.querySelector('#macroFind [data-mfind="scan"]');
-      const sel = document.getElementById('mFindMeal'), first = document.getElementById('macroSlots');
-      const r = (el) => el && el.getBoundingClientRect();
-      const said = (el) => el ? [...el.children].map((c) => c.tagName === 'SELECT' ? c.options[c.selectedIndex].text : c.textContent).join(' ') : '';
-      return { box: box && box.textContent, boxH: r(box) && r(box).height, camH: r(cam) && r(cam).height,
-        meal: sel && sel.options[sel.selectedIndex].text, said: said(document.querySelector('.mfind-to')),
-        above: !!first && r(box).bottom < r(first).top, selH: r(sel) && r(sel).height };
-    });
-    t.ok('the day opens with a search box and a barcode above its meals, each a thumb tall',
-      bar.box === 'Search a food' && bar.boxH >= 44 && bar.camH >= 44 && bar.above && bar.selH >= 44, JSON.stringify(bar));
-    t.ok('what is found goes on the next meal, and says so', bar.meal === 'Breakfast' && bar.said === 'Goes on Breakfast the next meal', bar.said);
-
-    await p.click('[data-mfind="search"]');
-    await p.waitForTimeout(300);
+    t.ok('the day has no search box or barcode of its own above the meals (2026-10-19)',
+      await p.evaluate(() => !document.getElementById('macroFind') && !document.querySelector('[data-mfind]')));
+    await openMeal(p, 'b');
     const opened = await p.evaluate(() => ({ sheet: (document.querySelector('.msheet') || { getAttribute: () => '' }).getAttribute('aria-label'),
-      focus: document.activeElement && document.activeElement.id }));
-    t.ok('one tap opens that meal’s sheet with the caret in its search, the keyboard up', opened.sheet === 'Breakfast' && opened.focus === 'mpFind', JSON.stringify(opened));
+      find: !!document.getElementById('mpFind') }));
+    t.ok('a meal’s sheet has the search', opened.sheet === 'Breakfast' && opened.find, JSON.stringify(opened));
 
     /* ---- a brand, by name */
     await p.fill('#mpFind', 'tyson chicken nugget');
@@ -132,17 +124,13 @@ module.exports = {
     });
     t.ok('Add puts it on the meal at the amount said, and the meal’s sheet comes back', saved.sheet && saved.items.length === 1 && saved.items[0] === 1.5, JSON.stringify(saved));
 
-    /* ---- the meal chosen under the box, and the barcode */
+    /* ---- the barcode, from the meal's own sheet */
     const q = await open();
-    await q.selectOption('#mFindMeal', { label: 'Dinner' });
-    await q.waitForTimeout(150);
-    const chose = await q.evaluate(() => ({ said: [...document.querySelector('.mfind-to').children].map((c) => c.tagName === 'SELECT' ? c.options[c.selectedIndex].text : c.textContent).join(' '),
-      focus: document.activeElement && document.activeElement.id }));
-    t.ok('another meal can be chosen, and it no longer says "the next meal"', chose.said === 'Goes on Dinner' && chose.focus === 'mFindMeal', JSON.stringify(chose));
-    await q.click('[data-mfind="scan"]');
+    await openMeal(q, 'd');
+    await q.click('#modalRoot .mp-cam');
     await q.waitForTimeout(300);
     const scan = await q.evaluate(() => ({ sheet: document.querySelector('.msheet').getAttribute('aria-label'), lens: !!document.getElementById('scanRoot') }));
-    t.ok('and the barcode opens that meal’s sheet on the camera', scan.sheet === 'Dinner' && scan.lens, JSON.stringify(scan));
+    t.ok('the meal’s barcode opens its sheet on the camera', scan.sheet === 'Dinner' && scan.lens, JSON.stringify(scan));
 
     /* A scanned packet: its two grades and its allergens as one line of chips */
     await q.fill('#nfFind', '0023700014498');
@@ -161,12 +149,9 @@ module.exports = {
     t.ok('its × goes back to the meal, as Cancel did', !back.form && back.sheet, JSON.stringify(back));
     await q.context().close();
 
-    /* ---- 320 px, dark: the page and the bar fit */
+    /* ---- 320 px, dark: the food's page fits */
     const n = await open({ width: 320, height: 640 }, { colorScheme: 'dark' });
-    const fitBar = await n.evaluate(() => ({ page: document.documentElement.scrollWidth <= innerWidth,
-      small: [...document.querySelectorAll('#macroFind *')].filter((el) => el.children.length === 0 && el.textContent.trim() &&
-        parseFloat(getComputedStyle(el).fontSize) < 13).map((el) => el.textContent) }));
-    await n.click('[data-mfind="search"]');
+    await openMeal(n, 'b');
     await n.fill('#mpFind', 'tyson chicken nugget');
     await n.waitForFunction(() => document.querySelector('[data-nfpick]'), null, { timeout: 5000 });
     await n.click('[data-nfpick="0"]');
@@ -174,8 +159,8 @@ module.exports = {
     const fitPage = await n.evaluate(() => ({ page: document.documentElement.scrollWidth <= innerWidth,
       sheet: document.querySelector('.nf-sheet').scrollWidth <= document.querySelector('.nf-sheet').clientWidth,
       add: document.querySelector('[data-nf="save"]').getBoundingClientRect().bottom <= innerHeight }));
-    t.ok('at 320 px in the dark the bar and the food’s page fit, with Add still on the first screen',
-      fitBar.page && !fitBar.small.length && fitPage.page && fitPage.sheet && fitPage.add, JSON.stringify({ fitBar, fitPage }));
+    t.ok('at 320 px in the dark the food’s page fits, with Add still on the first screen',
+      fitPage.page && fitPage.sheet && fitPage.add, JSON.stringify(fitPage));
     await n.context().close();
 
     t.ok('with no error on the page', errs.length === 0, errs.join(' | '));

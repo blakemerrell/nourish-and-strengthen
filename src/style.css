@@ -2667,31 +2667,6 @@ select { max-width: 280px; }
   overflow: clip;
 }
 .mday-stop.done { background: var(--paper-soft); }
-/* Search and scan for the next meal, at the top of the day (src/myday.js,
-   mFindBarHTML): a box that is a button, since what it opens is the meal's
-   own search, and the barcode beside it in ink, the way the mockup Blake
-   picked had it (2026-10-18). */
-.mday-find:empty { display: none; }
-.mfind {
-  display: grid; gap: 4px; padding: 10px 12px 4px; border: 1px solid var(--line); border-radius: 12px;
-  background: var(--card);
-}
-.mfind-row { display: flex; gap: 8px; }
-.mfind-box {
-  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px;
-  border: 1px solid var(--line-firm); border-radius: 10px; background: var(--field); color: var(--muted-2);
-  font-family: var(--sans); font-size: 1rem; text-align: left; cursor: pointer;
-}
-.mfind-box .mp-way-i, .mfind-cam .mp-way-i { width: 18px; height: 18px; flex: none; }
-.mfind-cam {
-  flex: none; width: 48px; min-height: 48px; padding: 0; border: 0; border-radius: 10px;
-  background: var(--ink); color: var(--paper); display: grid; place-items: center; cursor: pointer;
-}
-.mfind-to { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--muted); }
-.mfind-to select {
-  min-height: 44px; padding: 0 6px; border: 0; background: transparent; color: var(--ink);
-  font-family: var(--sans); font-size: 0.875rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px;
-}
 /* The dot is a control, so it is a button with a thumb-sized reach and a
    nine-pixel face — the visible dot is drawn inside it, and the rest is
    invisible target. Press it and the whole meal is eaten. */

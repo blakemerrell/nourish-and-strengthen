@@ -4883,14 +4883,14 @@ module.exports = {
       return { count: _.LIB_LIST.length, ids, rigCount: rigs.size, allValid, allMedia, ohpPriOk, fallbackOk };
     });
     const fs = require('fs'), path = require('path');
-    const gifsOnDisk = anims.count === 112 && anims.ids.every((id) => {
+    const gifsOnDisk = anims.count === 114 && anims.ids.every((id) => {
       const fp = path.join(__dirname, '..', 'art', 'lifts', id + '.gif');
       if (!fs.existsSync(fp)) return false;
       const b = fs.readFileSync(fp);
       return b.length > 1000 && b.slice(0, 3).toString('ascii') === 'GIF';
     });
-    t.ok('Every exercise in LIB_LIST (all 112 lifts) has a local 3D anatomical GIF in art/lifts/, offline SVG error fallback, and primary shoulder highlight on OHP',
-      anims.count === 112 && anims.rigCount === 24 && anims.allValid && anims.allMedia && anims.ohpPriOk && anims.fallbackOk && gifsOnDisk,
+    t.ok('Every exercise in LIB_LIST (all 114 lifts) has a local 3D anatomical GIF in art/lifts/, offline SVG error fallback, and primary shoulder highlight on OHP',
+      anims.count === 114 && anims.rigCount === 24 && anims.allValid && anims.allMedia && anims.ohpPriOk && anims.fallbackOk && gifsOnDisk,
       JSON.stringify(Object.assign({}, anims, { ids: anims.ids.length, gifsOnDisk })));
 
     // ---- Exercise card ✓ Done collapse & crisp KPI summary row ----

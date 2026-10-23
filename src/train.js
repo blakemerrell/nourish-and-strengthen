@@ -261,7 +261,14 @@
     ['as-dip', 'Assisted Dip', 'chest', 'c', 'mc', 'dip', 6, 12],
     ['seated-lp', 'Seated Leg Press', 'quads', 'c', 'mc', 'machine', 8, 15],
     ['mc-kick', 'Glute Kickback Machine', 'glutes', 'i', 'mc', 'iso', 12, 20],
-    ['sm-thrust', 'Smith Machine Hip Thrust', 'glutes', 'c', 'sm', 'thrust', 8, 12]
+    ['sm-thrust', 'Smith Machine Hip Thrust', 'glutes', 'c', 'sm', 'thrust', 8, 12],
+    /* Blake, 2026-10-23: Cable Rear Delt Fly's picture was the seated pull
+       to the face, which is the one he had been doing and logging, while its
+       steps and the videos it finds are the standing reverse crossover. That
+       one stays as he did it; the crossover, high and bent-over, are lifts
+       of their own. */
+    ['cb-rev-x', 'High Cable Reverse Crossover', 'rear', 'i', 'cb', 'fly', 12, 20],
+    ['cb-rev-bo', 'Bent-Over Cable Reverse Fly', 'rear', 'i', 'cb', 'fly', 12, 20]
   ];
 
   /* ------------------------------------------------------------ the back
@@ -288,7 +295,7 @@
     'leg-press': 'f', 'db-bss': 'c', 'db-lunge': 'c', 'db-stepup': 'c',
     'bb-rdl': 'F', 'db-rdl': 'F', 'bb-sldl': 'F', 'bb-dl': 'FC', 'sumo-dl': 'FC', 'trap-dl': 'fC', 'good-am': 'F',
     'hip-thrust': 'x', 'mc-thrust': 'x', 'db-thrust': 'x', 'sm-thrust': 'x', 'back-ext': 'Fx', 'mc-kick': 'x', 'seated-lp': 'f',
-    'db-rear': 'f', 'bb-ohp': 'Cx', 'calf-stand': 'C',
+    'db-rear': 'f', 'cb-rev-bo': 'f', 'bb-ohp': 'Cx', 'calf-stand': 'C',
     'db-shrug': 'c', 'bb-shrug': 'C', 'cb-shrug': 'c',
     'cb-crunch': 'F', 'hang-raise': 'F', 'mc-crunch': 'F', 'crunch': 'F', 'ab-wheel': 'X',
     'sl-rdl': 'F', 'bw-squat': '', 'split-squat': '', 'prone-y': 'x'
@@ -461,7 +468,9 @@
     'rev-deck': ['Face the pad, handles at shoulder height, arms straight.', 'Sweep your arms back and out until they line up with your body.', 'Return slowly.'],
     'face-pull': ['Rope on a pulley at about face height.', 'Pull toward your face, splitting the rope, elbows high, hands ending beside your ears.', 'Return slowly.'],
     'db-rear': ['Hinge forward with a flat back, or lie chest-down on an incline bench, dumbbells hanging.', 'Raise them out to the side with arms slightly bent, squeezing the backs of your shoulders.', 'Lower slowly.'],
-    'cb-rear': ['Stand between two pulleys at shoulder height with the cables crossed: left hand holds the right cable.', 'Pull your arms back and out until they line up with your body.', 'Return slowly.'],
+    'cb-rear': ['Sit at a low pulley, feet braced, a handle or stirrups in each hand, arms straight in front of you.', 'Pull toward your face with your elbows high and wide, squeezing the backs of your shoulders.', 'Return slowly. Your torso stays still.'],
+    'cb-rev-x': ['Stand between two high pulleys with the cables crossed in front of you: left hand holds the right cable.', 'Pull your arms back and out, nearly straight, until they line up with your body.', 'Return slowly, letting the cables cross again.'],
+    'cb-rev-bo': ['Stand between two low pulleys, cables crossed: left hand holds the right cable. Hinge forward with a flat back.', 'Raise your arms out to the side, slightly bent, until they line up with your body.', 'Lower slowly.'],
     'prone-y': ['Lie face down on an incline bench or the floor, arms overhead in a Y, thumbs up.', 'Lift your arms with the muscles between your shoulder blades.', 'Lower slowly. Tiny weights, or none.'],
     'bb-ohp': ['Bar at your collarbones, grip just outside your shoulders, glutes tight.', 'Press straight up, moving your head back out of the way, then under the bar at the top.', 'Lower to your collarbones.'],
     'db-ohp': ['Sit tall on an upright bench, dumbbells at shoulder height.', 'Press them overhead until your arms are straight.', 'Lower to your shoulders.'],
@@ -2407,7 +2416,7 @@
   }
 
   // in the library to add or swap to, never chosen for you
-  var NOPICK = { 'sumo-dl': 1, 'trap-dl': 1, 'as-pullup': 1, 'as-dip': 1, 'seated-lp': 1, 'mc-kick': 1, 'sm-thrust': 1 };
+  var NOPICK = { 'sumo-dl': 1, 'trap-dl': 1, 'as-pullup': 1, 'as-dip': 1, 'seated-lp': 1, 'mc-kick': 1, 'sm-thrust': 1, 'cb-rev-x': 1, 'cb-rev-bo': 1 };
   function pickEx(m, k, p, eq, used, seed, pf, today, known) {
     var cand = allEx().filter(function (ex) { return ex.m === m && eq.indexOf(ex.q) >= 0 && !barred(ex, pf) && !NOPICK[ex.id]; });
     /* Never the same exercise twice in one day: with nothing else to hand,

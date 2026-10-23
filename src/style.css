@@ -5164,6 +5164,7 @@ button.tr-card:hover { border-color: var(--line-firm); background: var(--field);
 .tr-rq .tr-set-h span:nth-child(5) { text-align: center; }
 /* The editor: no Previous column, and a cross where the tick was. */
 .tr-edx-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.tr-edx-a { display: flex; gap: 16px; flex: none; }
 .tr-set.tr-eds { grid-template-columns: 30px 72px 60px 40px; justify-content: start; }
 .tr-rq .tr-set.tr-eds { grid-template-columns: 30px 72px 60px 50px 40px; }
 .tr-set-h.tr-eds span:nth-child(2), .tr-set-h.tr-eds span:nth-child(3), .tr-set-h.tr-eds span:nth-child(4) { text-align: center; }

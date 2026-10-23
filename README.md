@@ -98,7 +98,8 @@ three ideas in one tab:
   an exercise ("seat 4") comes up every time it does, and a workout takes a note at Finish.
   Turn it on and every set has a reps-in-reserve box, which the review then grades against
   what the plan asked. A saved workout can be edited — weights, reps, sets in or out, an
-  exercise forgotten — and records, charts and next week's weights follow the correction.
+  exercise forgotten, or one logged under the wrong name swapped for the right one with its
+  sets kept — and records, charts and next week's weights follow the correction.
   The foot of the screen holds when you started (tap to change it), the running time and
   Finish, with the rest timer on top of it while you rest; Finish lets you set the end time
   too, and a saved workout's date and times can be edited, so it exports at the hour it

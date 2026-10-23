@@ -7978,7 +7978,7 @@
     var sh = S.sheet;
     if (!sh || sh.k !== 'pick') return false;
     if (sh.mode === 'smap' && S.sg) S.sheet = { k: 'strong', eyebrow: 'Import', title: 'From ' + (S.sg.app || 'your file') };
-    else if (sh.mode === 'eadd' && S.ed && T.wo[S.ed.id]) S.sheet = { k: 'wo', id: S.ed.id, eyebrow: 'Workout', title: 'Workout' };
+    else if ((sh.mode === 'eadd' || sh.mode === 'eswap') && S.ed && T.wo[S.ed.id]) S.sheet = { k: 'wo', id: S.ed.id, eyebrow: 'Workout', title: 'Workout' };
     else return false;
     S.arm = '';
     S.own = null;
@@ -8092,7 +8092,8 @@
   function pickHTML(sh) {
     var q = S.q.toLowerCase().trim();
     var old = (sh.mode === 'swap' && LIVE && LIVE.x[sh.x]) ? LIVE.x[sh.x].e
-      : (sh.mode === 'dswap' && S.draft) ? S.draft.days[sh.d].s[sh.i].e : '';
+      : (sh.mode === 'dswap' && S.draft) ? S.draft.days[sh.d].s[sh.i].e
+        : (sh.mode === 'eswap' && S.ed && S.ed.x[sh.x]) ? S.ed.x[sh.x].e : '';
     /* Word by word, each by its start, as well as the whole phrase: "hip
        abductor" finds the Hip Abduction Machine, "db curls" nothing less
        than "curl" would. */
@@ -8117,6 +8118,7 @@
     var today = {};
     if (sh.mode === 'swap' && LIVE) LIVE.x.forEach(function (x) { today[x.e] = 1; });
     if (sh.mode === 'dswap' && S.draft) S.draft.days[sh.d].s.forEach(function (x) { today[x.e] = 1; });
+    if (sh.mode === 'eswap' && S.ed) S.ed.x.forEach(function (x) { today[x.e] = 1; });
     var best = old && !q ? swapBest(old, today) : [];
     /* In a block, a swap asks how long it is for. The machine being taken is
        today; not getting on with the exercise is the rest of the block. */
@@ -8127,7 +8129,7 @@
         '<div class="tr-hint">' + (S.never ? 'Never again takes it out of every day of this block, and every block after.'
           : sh.sc === 'block' ? 'This session has the new one in its place every week from now on.'
           : 'Today only. Next time the plan has ' + esc(lib(old).n) + ' again.') + '</div></div>' : '') +
-      (old ? '<div class="tr-chips tr-never"><button class="tr-chip" data-t="never" aria-pressed="' + !!S.never + '">' +
+      (old && sh.mode !== 'eswap' ? '<div class="tr-chips tr-never"><button class="tr-chip" data-t="never" aria-pressed="' + !!S.never + '">' +
         'Never suggest ' + esc(lib(old).n) + ' again</button></div>' : '') +
       (best.length ? '<div class="tr-bestw"><div class="tr-rdg">Best swaps</div><div class="tr-picks tr-best">' + best.map(function (b) {
         return '<button class="tr-pick tr-pick-best" data-t="pickex" data-e="' + esc(b.ex.id) + '">' +
@@ -9150,7 +9152,8 @@
         var ex = lib(x.e);
         return '<div class="tr-wx tr-edx' + (rq ? ' tr-rq' : '') + '">' +
           '<div class="tr-edx-h"><span class="tr-wx-n">' + esc(ex.n) + '</span>' +
-            '<button class="tr-lnk" data-t="edrmx" data-x="' + i + '">Remove</button></div>' +
+            '<span class="tr-edx-a"><button class="tr-lnk" data-t="edswap" data-x="' + i + '" aria-label="Swap ' + esc(ex.n) + ' for another exercise, keeping its sets">Swap</button>' +
+            '<button class="tr-lnk" data-t="edrmx" data-x="' + i + '">Remove</button></span></div>' +
           '<div class="tr-set tr-set-h tr-eds" aria-hidden="true"><span>Set</span><span>' + T.pr.u + '</span><span>Reps</span>' +
             (rq ? '<span>' + (rpeOn() ? 'RPE' : 'Spare') + '</span>' : '') + '<span></span></div>' +
           x.s.map(function (s, j) {
@@ -10123,6 +10126,17 @@
       return;
     } else if (sh.mode === 'eadd' && S.ed && T.wo[S.ed.id]) {
       S.ed.x.push({ e: e, s: [{ w: '', r: '', q: '', o: null }], nu: 1 });
+      openSheet({ k: 'wo', id: S.ed.id, eyebrow: 'Workout', title: 'Workout' });
+      return;
+    } else if (sh.mode === 'eswap' && S.ed && T.wo[S.ed.id] && S.ed.x[sh.x]) {
+      /* A lift logged under the wrong name, put right after the event: the
+         sets go across as they were, under the new one. Blake, 2026-10-23:
+         a high cable reverse crossover at 15 lb logged as Cable Rear Delt
+         Fly, the seated one he had done at 40, so it read as 67% down. The
+         live Swap carried ticked sets across already; a saved workout had
+         only Remove and Add, and the sets to type again. Only the name
+         changes, so one added in this edit still says it has no reps. */
+      S.ed.x[sh.x].e = e;
       openSheet({ k: 'wo', id: S.ed.id, eyebrow: 'Workout', title: 'Workout' });
       return;
     }
@@ -11668,6 +11682,13 @@
       var ex0 = S.ed.x[num('data-x')], l0 = ex0.s[ex0.s.length - 1];
       ex0.s.push({ w: l0 ? l0.w : '', r: l0 ? l0.r : '', q: '', o: null });
       drawSheet(); return;
+    }
+    if (S.ed && t === 'edswap') {
+      var sx = num('data-x');
+      if (!S.ed.x[sx]) return;
+      S.q = ''; S.qm = '';
+      openSheet({ k: 'pick', mode: 'eswap', x: sx, eyebrow: 'Swap', title: 'Swap ' + lib(S.ed.x[sx].e).n });
+      return;
     }
     if (S.ed && t === 'edaddx') {
       S.q = ''; S.qm = '';

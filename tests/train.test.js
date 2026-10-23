@@ -2084,6 +2084,43 @@ module.exports = {
     t.ok('a forgotten exercise can be added, and one left with no reps drops out', r === 'bb-bench:2,hammer:1', r);
     await p.close();
 
+    // a lift logged under the wrong name: Swap keeps its sets. Blake,
+    // 2026-10-23: high cable reverse crossovers at 15 lb went in as Cable
+    // Rear Delt Fly, the seated one he had done at 40 the week before.
+    p = await t.fresh();
+    await p.click('.tab[data-view="train"]');
+    await seed(p, { pr: { qz: 1 }, act: '', ms: {}, cx: {}, ax: {},
+      wo: { seat: wo('seat', '', -1, -1, 7, [{ e: 'cb-rear', s: sets(40, [12, 12]) }]),
+        rd: wo('rd', '', -1, -1, 1, [{ e: 'cb-rear', s: sets(15, [14, 12]) }, { e: 'db-curl', s: sets(30, [12]) }]) } });
+    await openWorkouts(p);
+    await p.click('[data-t="wosheet"][data-id="rd"]');
+    await p.click('[data-t="edopen"]');
+    await p.click('[data-t="edswap"][data-x="0"]');
+    r = await p.evaluate(() => ({ title: (document.querySelector('.tr-sheet .sheet-name') || {}).textContent || '',
+      never: !!document.querySelector('.tr-sheet [data-t="never"]'), scope: !!document.querySelector('.tr-sheet [data-t="swsc"]') }));
+    t.ok('Swap on a saved workout opens the picker for that lift, with no Never or For questions (it is the past)',
+      r.title === 'Swap Cable Rear Delt Fly' && !r.never && !r.scope, JSON.stringify(r));
+    await p.click('.sheet-x');
+    r = await p.evaluate(() => ({ boxes: document.querySelectorAll('[data-ed="w"]').length, e: window.Train._.state().S.ed && window.Train._.state().S.ed.x[0].e }));
+    t.ok('closing the picker goes back to the edit, nothing changed', r.boxes === 3 && r.e === 'cb-rear', JSON.stringify(r));
+    await p.click('[data-t="edswap"][data-x="0"]');
+    await p.fill('#trPickQ', 'reverse crossover');
+    await p.click('.tr-pick[data-e="cb-rev-x"]');
+    r = await p.evaluate(() => ({ n: [...document.querySelectorAll('.tr-edx .tr-wx-n')].map((e) => e.textContent).join('|'),
+      w: [...document.querySelectorAll('[data-ed="w"][data-x="0"]')].map((e) => e.value).join(),
+      reps: [...document.querySelectorAll('[data-ed="r"][data-x="0"]')].map((e) => e.value).join() }));
+    t.ok('picking the right one puts it in the same place, with the same sets in the boxes',
+      r.n === 'High Cable Reverse Crossover|Dumbbell Curl' && r.w === '15,15' && r.reps === '14,12', JSON.stringify(r));
+    await p.click('[data-t="edsave"]');
+    r = await p.evaluate(() => {
+      const T = window.Train._.state().T;
+      const f = (w) => w.x.map((x) => x.e + ':' + x.s.map((z) => z.w + 'x' + z.r + (z.t ? 't' : '')).join('/')).join();
+      return { rd: f(T.wo.rd), seat: f(T.wo.seat), ed: T.wo.rd.ed > 0 };
+    });
+    t.ok('saved: the sets are under the crossover, still ticked, and the seated week before is untouched',
+      r.rd === 'cb-rev-x:15x14t/15x12t,db-curl:30x12t' && r.seat === 'cb-rear:40x12t/40x12t' && r.ed, JSON.stringify(r));
+    await p.close();
+
     // every day: six lifting days and an easy one
     p = await t.fresh();
     await p.click('.tab[data-view="train"]');

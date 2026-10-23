@@ -92,8 +92,9 @@ function update() {
       /* The page asks for updates itself too (src/boot.js, on load and on
          focus), and one of its asks can find the new worker a moment before
          this listener is on: updatefound has been and gone. One already
-         under way is followed rather than waited for. */
-      if (reg.installing) { follow(reg.installing); return; }
+         under way, or installed and waiting to take over, is followed
+         rather than waited for. */
+      if (reg.installing || reg.waiting) { follow(reg.installing || reg.waiting); return; }
       reg.update().catch(() => { /* a failed install may reject it; the state says */ });
     });
   });
@@ -270,12 +271,21 @@ module.exports = {
       s = await see();
       t.ok('after both, it still opens with no signal, on the build it kept',
         s.tag === 'B' && s.cards > 100, s.tag + ', ' + s.cards + ' cards');
-      await ctx.setOffline(false);
-      srv.down = false;
 
       /* ---- new pictures ---------------------------------------------- */
+      /* E is put up before the signal comes back, not after. The page asks
+         for an update itself as it loads (src/boot.js), and on a busy runner
+         the offline reload above can finish loading late: its ask reached
+         the server in the moment between the signal coming back and E going
+         up, fetched D, and was mid-install when the files under it changed
+         to E's. It gave up, update() below followed it rather than asking
+         again, and the check read "redundant, 0 picture requests" on main's
+         run of #118 while passing everywhere else. With E already up, an
+         early ask finds E, and is the update this check is waiting for. */
       await p.evaluate(() => { window.__editing = true; });
       srv.root = E.out; srv.log = [];
+      await ctx.setOffline(false);
+      srv.down = false;
       st = await p.evaluate(update);
       s = await see();
       t.ok('a build with a new picture gets a new art cache, and both old caches go',

@@ -7145,7 +7145,8 @@
         var nm = nval('nfName');
         if (!nm) { $('nfNote').textContent = 'It needs a name to be findable again.'; return; }
         var kc = nnum('nfKcal'), pp = ndec('nfP'), ff = ndec('nfF'), cc = ndec('nfC');
-        if (!kc && !pp && !ff && !cc) {
+        var nfAny = ['nfKcal', 'nfP', 'nfF', 'nfC'].some(function (id) { return nval(id) !== ''; });
+        if (!kc && !pp && !ff && !cc && !nfAny) {
           $('nfNote').textContent = 'Give it at least the calories, or it counts for nothing.';
           return;
         }

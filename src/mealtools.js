@@ -129,7 +129,7 @@
      serving: a tap is still a tap, and the pills show what it cost. Falling
      through to "one serving" put a whole cup of salsa on a salty day. */
   function mMealFitX(sk, r) {
-    if (!r || !r.macro) return null;
+    if (!r || !r.macro || !(r.macro.kcal > 0 || r.macro.p > 0 || r.macro.f > 0 || r.macro.c > 0)) return null;
     var k = mViewKey();
     var ask = mMealAsk(sk, mDayTargets(k), mReadSlots());
     if (!ask) return null;

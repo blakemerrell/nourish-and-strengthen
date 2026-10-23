@@ -308,6 +308,9 @@ module.exports = {
       got.panel && Object.values(got.dv).every((x) => x === '') && got.alg === '' && got.counts === '' &&
         got.na === '' && got.fib === '', JSON.stringify(got));
     await h.fill('#nfName', 'Tamale');
+    await h.click('[data-nf="save"]');
+    const blankNote = await h.evaluate(() => (document.getElementById('nfNote') || {}).textContent || '');
+    t.ok('an empty form with all four boxes left blank is still refused', /counts for nothing/.test(blankNote), blankNote);
     await h.fill('#nfKcal', '250');
     await h.fill('#nfP', '10');
     await h.fill('#nfF', '12');
@@ -318,6 +321,31 @@ module.exports = {
     t.ok('and a food saved with its sodium and fiber left empty keeps no 0 it was never told',
       !!tam && !('na' in tam) && !('fib' in tam) && !('alg' in tam), JSON.stringify(tam));
     await h.context().close();
+
+    // ---- a 0-calorie sweetener (Blake, 2026-10-23: Great Value Splenda) ----
+    const SPLENDA_OFF = { status: 1, product: { product_name: 'Granulated No Calorie Sweetener', brands: 'Great Value',
+      serving_size: '2 tsp (1 g)', nova_group: 4,
+      nutriments: { 'energy-kcal_serving': 0, proteins_serving: 0, fat_serving: 0, carbohydrates_serving: 0.01,
+        'energy-kcal_100g': 0, proteins_100g: 0, fat_100g: 0, carbohydrates_100g: 1 } } };
+    const SPLENDA_USDA = { foods: [{ dataType: 'Branded', gtinUpc: '078742123769',
+      description: 'GRANULATED NO CALORIE SWEETENER', brandName: 'GREAT VALUE',
+      servingSize: 1, servingSizeUnit: 'g', householdServingFullText: '2 tsp',
+      foodNutrients: nutr(0, 0, 0, 0, 0, 0) }] };
+    const z = await open(() => SPLENDA_OFF, SPLENDA_USDA);
+    const zRow = await ask(z, '078742123769');
+    t.ok('a 0-calorie sweetener opens its label at 0 kcal', /^LABEL /.test(zRow) && /No Calorie Sweetener/i.test(zRow) && /\b0 kcal\b/.test(zRow), zRow);
+    await z.click('[data-nf="save"]');
+    await z.waitForTimeout(300);
+    const zSaved = await z.evaluate(() => {
+      const mine = Object.values(JSON.parse(localStorage.getItem('bsc.myFoods') || '{}'));
+      const days = JSON.parse(localStorage.getItem('bsc.macroDays') || '{}'), d = days[Object.keys(days)[0]] || {};
+      const items = [].concat(...Object.values(d).filter(Array.isArray));
+      return { food: mine.find((f) => /No Calorie Sweetener/i.test(f.name)), items };
+    });
+    t.ok('and logs to the meal with 0 kcal and 0 macros instead of being refused',
+      !!zSaved.food && zSaved.food.kcal === 0 && zSaved.food.p === 0 && zSaved.food.f === 0 && zSaved.food.c === 0 &&
+        zSaved.items.some((it) => /^f:my:/.test(it.id) && it.x === 1), JSON.stringify(zSaved));
+    await z.context().close();
 
     // ---- a barcode Open Food Facts does not know, the USDA does ------------
     const u = await open(() => ({ status: 0, status_verbose: 'product not found' }), PB);

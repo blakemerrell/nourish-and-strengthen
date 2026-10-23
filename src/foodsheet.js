@@ -296,8 +296,9 @@
       per[b[1]] = sig(n * factor);
     });
     if (bad) return { err: bad + ' needs a number.' };
+    var any = per.kcal !== undefined || per.p !== undefined || per.f !== undefined || per.c !== undefined;
     ['p', 'f', 'c'].forEach(function (k) { if (per[k] === undefined) per[k] = 0; });
-    if (!per.kcal && !per.p && !per.f && !per.c) return { err: 'Give it at least the calories, or it counts for nothing.' };
+    if (!any) return { err: 'Give it at least the calories, or it counts for nothing.' };
     var t2 = val('mffServ'), code = val('mffCode').replace(/\D/g, '');
     return { per: per, sz: base ? { t: t2, n: servN } : null, code: code };
   }

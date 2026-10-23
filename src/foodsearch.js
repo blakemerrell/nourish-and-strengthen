@@ -63,6 +63,15 @@
     return out;
   }
 
+  function mHasNutrients(list) {
+    return (list || []).some(function (n) {
+      var name = n.nutrientName || (n.nutrient && n.nutrient.name) || '';
+      var v = n.value === undefined ? n.amount : n.value;
+      return typeof v === 'number' && (/^Energy\b/.test(name) || name === 'Protein' ||
+        name === 'Total lipid (fat)' || name === 'Carbohydrate, by difference');
+    });
+  }
+
   function mFoodSearch(q, packaged) {
     var key = window.USDA_KEY || '';
     if (!key) return Promise.reject(new Error('nokey'));
@@ -96,6 +105,7 @@
       var words = q.toLowerCase().split(/\s+/).filter(function (w) { return w.length > 2; });
       var seen = {};
       return (d.foods || []).filter(function (f) {
+        if (!mHasNutrients(f.foodNutrients)) return false;
         var desc = String(f.description || '').toLowerCase();
         if (words.length && !words.some(function (w) { return desc.indexOf(w) >= 0; })) return false;
         if (seen[desc]) return false;
@@ -136,7 +146,7 @@
           na: mPer(n.na, per, 1), fib: mPer(n.fib, per, 10),
           per100: n, sizes: bs ? mPacketSizes(bs) : mMeasureSizes(f.foodMeasures),
           src: src, note: 'the USDA' };
-      }).filter(function (x) { return x.kcal || x.p || x.f || x.c; });
+      });
     });
   }
 
@@ -240,14 +250,14 @@
       var f = (d.foods || []).filter(function (x) { return bare(x.gtinUpc) && bare(x.gtinUpc) === bare(digits); })[0];
       if (!f) throw new Error('none');
       var n = mNutrients(f.foodNutrients), bs = mUsdaServing(f) || { per: 1, unit: '100 g' }, per = bs.per;
-      if (!(n.kcal || n.p || n.f || n.c)) throw new Error('nonutrition');
+      if (!mHasNutrients(f.foodNutrients)) throw new Error('nonutrition');
       return [{
         name: mBrandName(f),
         unit: bs.unit,
         kcal: Math.round(n.kcal * per), p: Math.round(n.p * per), f: Math.round(n.f * per), c: Math.round(n.c * per),
         na: mPer(n.na, per, 1), fib: mPer(n.fib, per, 10),
         // per 100 g, for weighing against Open Food Facts' answer (src/lookup.js, mTwoAnswers)
-        k100: n.kcal || null, per100: n, sizes: mUsdaServing(f) ? mPacketSizes(mUsdaServing(f)) : [{ t: '100 g', g: 100 }],
+        k100: n.kcal, per100: n, sizes: mUsdaServing(f) ? mPacketSizes(mUsdaServing(f)) : [{ t: '100 g', g: 100 }],
         src: 'USDA packaged foods', note: 'the USDA\u2019s packaged foods'
       }];
     });

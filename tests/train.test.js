@@ -4917,17 +4917,29 @@ module.exports = {
       if (img) img.dispatchEvent(new Event('error'));
       const fallbackOk = !!holder.querySelector('.tr-ex-anim-card') && !holder.querySelector('img.tr-media');
       holder.remove();
-      return { count: _.LIB_LIST.length, ids, rigCount: rigs.size, allValid, allMedia, ohpPriOk, fallbackOk };
+      const sgOk = _.sgMatch('T Bar Row') === 'lm-row' &&
+        _.sgMatch('Barbell Standing Wrist Curl') === 'bb-wrist-curl' &&
+        _.sgMatch('Upright Row (Barbell)') === 'bb-upright' &&
+        _.sgMatch('Kettlebell Swing') === 'kb-swing' &&
+        _.sgMatch('Kettlebell Turkish Get Up') === 'kb-tgu' &&
+        _.sgMatch('Hip Thrust (Bodyweight)') === 'bw-hip-thrust' &&
+        _.sgMatch('Cable Pull Through') === 'cb-pull-thru' &&
+        _.sgMatch('Front Raise (Barbell)') === 'bb-front-raise' &&
+        _.sgMatch('Cable Twist') === 'cb-woodchop' &&
+        _.sgMatch('Thruster (Kettlebell)') === 'kb-thruster' &&
+        _.sgMatch('Landmine Oblique Twist') === 'lm-180' &&
+        !_.onBar(_.lib('lm-row'));
+      return { count: _.LIB_LIST.length, ids, rigCount: rigs.size, allValid, allMedia, ohpPriOk, fallbackOk, sgOk };
     });
     const fs = require('fs'), path = require('path');
-    const gifsOnDisk = anims.count === 114 && anims.ids.every((id) => {
+    const gifsOnDisk = anims.count === 144 && anims.ids.every((id) => {
       const fp = path.join(__dirname, '..', 'art', 'lifts', id + '.gif');
       if (!fs.existsSync(fp)) return false;
       const b = fs.readFileSync(fp);
       return b.length > 1000 && b.slice(0, 3).toString('ascii') === 'GIF';
     });
-    t.ok('Every exercise in LIB_LIST (all 114 lifts) has a local 3D anatomical GIF in art/lifts/, offline SVG error fallback, and primary shoulder highlight on OHP',
-      anims.count === 114 && anims.rigCount === 24 && anims.allValid && anims.allMedia && anims.ohpPriOk && anims.fallbackOk && gifsOnDisk,
+    t.ok('Every exercise in LIB_LIST (all 144 lifts) has a local 3D anatomical GIF in art/lifts/, offline SVG error fallback, and primary shoulder highlight on OHP',
+      anims.count === 144 && anims.rigCount === 24 && anims.allValid && anims.allMedia && anims.ohpPriOk && anims.fallbackOk && anims.sgOk && gifsOnDisk,
       JSON.stringify(Object.assign({}, anims, { ids: anims.ids.length, gifsOnDisk })));
 
     // ---- Exercise card ✓ Done collapse & crisp KPI summary row ----

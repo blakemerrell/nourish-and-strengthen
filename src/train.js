@@ -1457,7 +1457,7 @@
       if (fin(+k) && +k > 0 && +k <= 100 && fin(n) && n >= 0 && n <= 10) pl[k] = Math.round(n);
     });
     return { on: g.on === 1 ? 1 : 0, bar: fin(g.bar) && g.bar >= 0 && g.bar <= 100 ? g.bar : null, pl: pl,
-      u: g.u === 'kg' ? 'kg' : 'lb', last: g.last === 'home' ? 'home' : 'gym' };
+      u: g.u === 'kg' ? 'kg' : 'lb', last: g.last === 'home' ? 'home' : 'gym', cb: g.cb === 'p2' || g.cb === 'p1' ? g.cb : '' };
   }
   // this workout is at home, with home set up in the unit you lift in
   function homeNow() { var g = T.pr.gy; return !!(g && g.on && g.u === T.pr.u && LIVE && LIVE.g === 'home'); }
@@ -1466,6 +1466,14 @@
   function barAt(e) { return homeNow() && onBar(lib(e)) && !SLED[e] ? homeBar() : barFor(e); }
   function barLabelAt(e) { return homeNow() && onBar(lib(e)) && !SLED[e] ? 'home bar ' + fmtN(homeBar()) + ' ' + T.pr.u : barLabel(e); }
   function homeInv() { return homeNow() ? T.pr.gy.pl : null; }
+  /* The cable at home, when it takes plates rather than a stack: on a 2:1
+     pulley (Blake's, 2026-10-23) the handle carries half of what is on the
+     post, on 1:1 all of it. A cable lift is weighed at the handle either way,
+     the number a gym's stack would print, so a set at home and one at the
+     gym say the same thing. '' is a weight stack, and no plates to count. */
+  function homeCable(ex) { var c = T.pr.gy.cb; return homeNow() && ex.q === 'cb' && (c === 'p2' || c === 'p1') ? c : ''; }
+  // a lift with a Plates button: on a bar or a sled, or the home cable's post
+  function plateLoaded(ex) { return onBar(ex) || !!homeCable(ex); }
   /* Every total the home plates can make on the home bar, lightest first,
      worked in quarters so 1.25 kg adds up exactly. */
   var LOADS = { k: '', v: [] };
@@ -4918,6 +4926,7 @@
       '<button class="tr-top-t" data-t="times" aria-label="' + esc(LIVE.n) + ', started ' + hm(LIVE.st) + '. Change the start time">' +
         '<span class="tr-top-n">' + esc(LIVE.n) + '</span>' +
         '<span class="tr-top-c" id="trElapsed" role="timer" aria-live="off">' + ela + '</span></button>' +
+      '<button class="tr-top-min tr-plfree" data-t="plfree" aria-label="Plate counter">' + EA_ICO.plates + '</button>' +
       '<button class="btn-primary tr-top-f" data-t="finish">Finish</button>' +
     '</div>';
     top.setAttribute('data-shape', shape);
@@ -5222,7 +5231,8 @@
     if (view) view.classList.toggle('tr-focus', focusOn());
     var head = $('trHead');
     if (head) {
-      head.innerHTML = '<button class="ghost" data-t="settings">Settings</button>';
+      head.innerHTML = '<button class="ghost tr-plfree" data-t="plfree" aria-label="Plate counter">' + EA_ICO.plates + '</button>' +
+        '<button class="ghost" data-t="settings">Settings</button>';
     }
     var html = segHTML();
     if (SY.err && doc) {
@@ -7072,7 +7082,7 @@
         '<button class="tr-ea tr-ea-add" data-t="addset" data-x="' + i + '" aria-label="Add a set of ' + esc(ex.n) + '">' + EA_ICO.plus + '<span>Set</span></button>' +
         (x.s.length > 1 ? eaBtn('dropset', 'minus', 'Set', ' data-x="' + i + '"', 'Take off the last set') : '') +
         (ex.k === 'c' && ex.q !== 'bw' ? eaBtn('warm', 'warm', 'Warm-up', ' data-x="' + i + '"', 'Add warm-up sets') : '') +
-        (onBar(ex) ? eaBtn('plates', 'plates', 'Plates', ' data-x="' + i + '"', 'What plates to load') : '') +
+        (plateLoaded(ex) ? eaBtn('plates', 'plates', 'Plates', ' data-x="' + i + '"', 'What plates to load, or count the ones you loaded') : '') +
         eaBtn('swap', 'swap', 'Swap', ' data-x="' + i + '"', 'Swap ' + ex.n + ' for another exercise') +
         (note ? '' : eaBtn('note', 'note', 'Note', ' data-e="' + esc(x.e) + '"', 'Add a note to ' + ex.n)) +
         '<button class="tr-ea tr-ea-rm' + (armed ? ' tr-lnk-arm' : '') + '" data-t="rmex" data-x="' + i + '">' + EA_ICO.rm +
@@ -7968,7 +7978,7 @@
     var sh = S.sheet;
     if (!sh || sh.k !== 'pick') return false;
     if (sh.mode === 'smap' && S.sg) S.sheet = { k: 'strong', eyebrow: 'Import', title: 'From ' + (S.sg.app || 'your file') };
-    else if (sh.mode === 'eadd' && S.ed && T.wo[S.ed.id]) S.sheet = { k: 'wo', id: S.ed.id, eyebrow: 'Workout', title: 'Workout' };
+    else if ((sh.mode === 'eadd' || sh.mode === 'eswap') && S.ed && T.wo[S.ed.id]) S.sheet = { k: 'wo', id: S.ed.id, eyebrow: 'Workout', title: 'Workout' };
     else return false;
     S.arm = '';
     S.own = null;
@@ -8082,7 +8092,8 @@
   function pickHTML(sh) {
     var q = S.q.toLowerCase().trim();
     var old = (sh.mode === 'swap' && LIVE && LIVE.x[sh.x]) ? LIVE.x[sh.x].e
-      : (sh.mode === 'dswap' && S.draft) ? S.draft.days[sh.d].s[sh.i].e : '';
+      : (sh.mode === 'dswap' && S.draft) ? S.draft.days[sh.d].s[sh.i].e
+        : (sh.mode === 'eswap' && S.ed && S.ed.x[sh.x]) ? S.ed.x[sh.x].e : '';
     /* Word by word, each by its start, as well as the whole phrase: "hip
        abductor" finds the Hip Abduction Machine, "db curls" nothing less
        than "curl" would. */
@@ -8107,6 +8118,7 @@
     var today = {};
     if (sh.mode === 'swap' && LIVE) LIVE.x.forEach(function (x) { today[x.e] = 1; });
     if (sh.mode === 'dswap' && S.draft) S.draft.days[sh.d].s.forEach(function (x) { today[x.e] = 1; });
+    if (sh.mode === 'eswap' && S.ed) S.ed.x.forEach(function (x) { today[x.e] = 1; });
     var best = old && !q ? swapBest(old, today) : [];
     /* In a block, a swap asks how long it is for. The machine being taken is
        today; not getting on with the exercise is the rest of the block. */
@@ -8117,7 +8129,7 @@
         '<div class="tr-hint">' + (S.never ? 'Never again takes it out of every day of this block, and every block after.'
           : sh.sc === 'block' ? 'This session has the new one in its place every week from now on.'
           : 'Today only. Next time the plan has ' + esc(lib(old).n) + ' again.') + '</div></div>' : '') +
-      (old ? '<div class="tr-chips tr-never"><button class="tr-chip" data-t="never" aria-pressed="' + !!S.never + '">' +
+      (old && sh.mode !== 'eswap' ? '<div class="tr-chips tr-never"><button class="tr-chip" data-t="never" aria-pressed="' + !!S.never + '">' +
         'Never suggest ' + esc(lib(old).n) + ' again</button></div>' : '') +
       (best.length ? '<div class="tr-bestw"><div class="tr-rdg">Best swaps</div><div class="tr-picks tr-best">' + best.map(function (b) {
         return '<button class="tr-pick tr-pick-best" data-t="pickex" data-e="' + esc(b.ex.id) + '">' +
@@ -9140,7 +9152,8 @@
         var ex = lib(x.e);
         return '<div class="tr-wx tr-edx' + (rq ? ' tr-rq' : '') + '">' +
           '<div class="tr-edx-h"><span class="tr-wx-n">' + esc(ex.n) + '</span>' +
-            '<button class="tr-lnk" data-t="edrmx" data-x="' + i + '">Remove</button></div>' +
+            '<span class="tr-edx-a"><button class="tr-lnk" data-t="edswap" data-x="' + i + '" aria-label="Swap ' + esc(ex.n) + ' for another exercise, keeping its sets">Swap</button>' +
+            '<button class="tr-lnk" data-t="edrmx" data-x="' + i + '">Remove</button></span></div>' +
           '<div class="tr-set tr-set-h tr-eds" aria-hidden="true"><span>Set</span><span>' + T.pr.u + '</span><span>Reps</span>' +
             (rq ? '<span>' + (rpeOn() ? 'RPE' : 'Spare') + '</span>' : '') + '<span></span></div>' +
           x.s.map(function (s, j) {
@@ -9278,21 +9291,102 @@
     return { plates: best.plates, left: best.left, under: false, short: best.left > 0, have: 1 };
   }
 
+  /* The plate counter, both ways round (Blake, 2026-10-23: "a weight
+     counter ... for a leg press, or my home cable machine, that use plates
+     instead of weight stack"). Plates for a weight: type the total, see what
+     goes on. Count plates: tap each plate as it goes on, and the total adds
+     itself up, to Use on the set in hand.
+   *
+     How a plate count becomes a weight depends on what the plates go on:
+     a bar, its weight and each side twice; a sled, each side twice and the
+     sled only if you have weighed it; one post, the plates as they are; a
+     2:1 pulley, half of them, at the handle. A lift knows which it is (its
+     bar, SLED, the home cable in Settings); opened from the top, with no
+     lift, it is yours to pick. */
+  var PL_STD = { lb: [45, 35, 25, 10, 5, 2.5], kg: [25, 20, 15, 10, 5, 2.5, 1.25] };
+  function plLoad(sh) {
+    var ex = sh.e ? lib(sh.e) : null, k;
+    if (ex) k = SLED[sh.e] ? 'sides' : onBar(ex) ? 'bar' : homeCable(ex) === 'p2' ? 'pull' : 'post';
+    else k = { bar: 1, sides: 1, post: 1, pull: 1 }[sh.ld] ? sh.ld : 'bar';
+    var bar = ex ? barAt(sh.e) : homeNow() ? homeBar() : T.pr.bar;
+    var base = k === 'bar' ? bar : k === 'sides' && ex ? barFor(sh.e) : 0;
+    return { k: k, bar: bar, base: base, mult: k === 'bar' || k === 'sides' ? 2 : k === 'pull' ? 0.5 : 1 };
+  }
+  // the plates a count is made from: yours at home, else the usual set
+  function plSizes() {
+    var inv = homeInv();
+    if (!inv) return PL_STD[T.pr.u];
+    var own = Object.keys(inv).map(Number).filter(function (k) { return inv[k] > 0; }).sort(function (a, b) { return b - a; });
+    return own.length ? own : PL_STD[T.pr.u];
+  }
+  function plCount(sh) {
+    var ld = plLoad(sh), sum = (sh.c || []).reduce(function (a, b) { return a + b; }, 0);
+    return { ld: ld, sum: sum, tot: Math.round((ld.base + ld.mult * sum) * 100) / 100 };
+  }
+  // one plate as the bar end shows it: its weight, its colour, taller the heavier
+  function plChip(p) { return '<span class="tr-plate p' + String(p).replace('.', '_') + ' ' + plCls(p) + '">' + fmtP(p) + '</span>'; }
+  // the set a total goes to: the first one not yet ticked
+  function plTarget(sh) {
+    var x = LIVE && fin(sh.x) ? LIVE.x[sh.x] : null;
+    if (!x || x.e !== sh.e) return -1;
+    for (var j = 0; j < x.s.length; j++) if (!x.s[j].t) return j;
+    return -1;
+  }
+  function plUseBtn(sh, w) {
+    if (!(w > 0) || plTarget(sh) < 0) return '';
+    return '<button class="btn-primary" data-t="pluse" data-v="' + fmtN(w) + '">Use ' + fmtN(w) + ' ' + T.pr.u + '</button>';
+  }
   function platesHTML(sh) {
-    var w = numIn(sh.w);
-    var bar = sh.e ? barAt(sh.e) : homeNow() ? homeBar() : T.pr.bar;
-    var pm = w === null ? null : plateMath(w, bar, T.pr.u, homeInv());
-    return '<h2 class="sheet-name tr-sn2">Plates' + (sh.e ? ' for ' + esc(lib(sh.e).n) : '') + '</h2>' +
-      '<div class="tr-own-r"><input class="txt" id="trPlateW" inputmode="decimal" value="' + esc(w === null ? '' : fmtN(w)) + '" aria-label="Total weight">' +
-        '<span class="tr-sub">' + T.pr.u + ' on a ' + fmtN(bar) + ' ' + T.pr.u + ' bar</span></div>' +
-      (sh.e && !homeNow() ? '<div class="tr-q"><div class="tr-ql">Bar</div>' + barChoices(sh.e) + '</div>' : '') +
-      (homeNow() ? '<div class="tr-hint">At home: your bar and your plates, from Settings.</div>' : '') +
+    var u = T.pr.u, ld = plLoad(sh), ex = sh.e ? lib(sh.e) : null, two = ld.mult === 2;
+    var html = '<h2 class="sheet-name tr-sn2">Plates' + (ex ? ' for ' + esc(ex.n) : '') + '</h2>' +
+      chips('plm', sh.m === 'c' ? 'c' : 'w', [['c', 'Count plates'], ['w', 'Plates for a weight']]) +
+      (ex ? '' : '<div class="tr-q"><div class="tr-ql">On</div>' + chips('plld', ld.k, [['bar', 'A bar, ' + fmtN(ld.bar) + ' ' + u],
+        ['sides', 'Both sides'], ['post', 'One post'], ['pull', 'A 2:1 pulley']]) + '</div>');
+    // what the plates go on, and how it counts
+    if (ex && SLED[sh.e] && !homeNow()) {
+      html += '<div class="tr-q"><div class="tr-ql">Sled</div><div class="tr-sub">' +
+        (barSet(sh.e) ? fmtN(ld.base) + ' ' + u + ', counted in the weight you log.' : 'Not counted: the weight you log is the plates.') + '</div>' +
+        '<div class="tr-own-r"><input class="txt tr-barw" id="trSledW" inputmode="decimal" autocomplete="off" value="' + (barSet(sh.e) ? esc(fmtN(ld.base)) : '') +
+          '" placeholder="Its weight" aria-label="The sled’s own weight in ' + u + '"><span class="tr-sub">' + u + '</span>' +
+          '<button class="ghost" data-t="sledset" data-e="' + esc(sh.e) + '">Count it</button>' +
+          (barSet(sh.e) ? '<button class="ghost" data-t="sledclr" data-e="' + esc(sh.e) + '">Don’t count it</button>' : '') + '</div></div>';
+    } else if (ex && ld.k === 'bar' && !homeNow()) {
+      html += '<div class="tr-q"><div class="tr-ql">Bar</div>' + barChoices(sh.e) + '</div>';
+    }
+    if (homeNow()) html += '<div class="tr-hint">At home: ' + (ld.k === 'bar' ? 'your bar and ' : '') + 'your plates, from Settings.</div>';
+    if (sh.m === 'c') {
+      var c = plCount(sh);
+      var say = ld.k === 'pull' ? fmtN(c.sum) + ' ' + u + ' on the post; the handle carries half'
+        : ld.k === 'post' ? 'Every plate counted once'
+          : (ld.base ? fmtN(ld.base) + ' ' + u + (ld.k === 'bar' ? ' bar' : ' sled') + ', and ' : '') + 'each side counted twice';
+      html += '<div class="tr-plrail" aria-label="' + (two ? 'One side' : 'The post') + ', as loaded">' + (sh.c && sh.c.length
+          ? sh.c.map(plChip).join('') : '<span class="tr-sub">Tap a plate for each one you load' + (two ? ' on one side' : '') + '.</span>') + '</div>' +
+        '<div class="tr-pltot"><b id="trPlTot">' + fmtN(c.tot) + ' ' + u + '</b><span>' + say + '</span></div>' +
+        '<div class="tr-plpads" role="group" aria-label="Add a plate">' + plSizes().map(function (p) {
+          return '<button class="tr-plate tr-plpad ' + plCls(p) + '" data-t="pladd" data-v="' + p + '" aria-label="Add a ' + fmtP(p) + ' ' + u + ' plate">' + fmtP(p) + '</button>';
+        }).join('') + '</div>' +
+        '<div class="tr-acts"><button class="ghost" data-t="plpop"' + (sh.c && sh.c.length ? '' : ' disabled') + '>− Last plate</button>' +
+          '<button class="ghost" data-t="plclr"' + (sh.c && sh.c.length ? '' : ' disabled') + '>Clear</button>' + plUseBtn(sh, sh.c && sh.c.length ? c.tot : 0) + '</div>';
+      return html;
+    }
+    var w = numIn(sh.w), inv = homeInv(), pm = null, unit = ld.k === 'pull' ? ' at the handle' : '';
+    if (w !== null && two) pm = plateMath(w, ld.base, u, inv);
+    else if (w !== null) {
+      // one post: what the plates add up to, from every plate of each pair you own
+      var post = ld.k === 'pull' ? w * 2 : w, inv2 = null;
+      if (inv) { inv2 = {}; Object.keys(inv).forEach(function (k) { inv2[k] = inv[k] * 2; }); }
+      pm = plateMath(post * 2, 0, u, inv2);
+    }
+    html += '<div class="tr-own-r"><input class="txt" id="trPlateW" inputmode="decimal" value="' + esc(w === null ? '' : fmtN(w)) + '" aria-label="Total weight">' +
+        '<span class="tr-sub">' + u + (ld.k === 'bar' ? ' on a ' + fmtN(ld.base) + ' ' + u + ' bar' : ld.k === 'sides' ? (ld.base ? ' with a ' + fmtN(ld.base) + ' ' + u + ' sled' : ', plates only') : unit) + '</span></div>' +
       (pm === null ? '<div class="tr-note">Type the total weight.</div>'
         : pm.under ? '<div class="tr-note">That is less than the bar.</div>'
-          : '<div class="tr-plates">' + (pm.plates.length ? pm.plates.map(function (p) {
-            return '<span class="tr-plate p' + String(p).replace('.', '_') + ' ' + plCls(p) + '">' + fmtP(p) + '</span>';
-          }).join('') : '<span class="tr-note">Just the bar.</span>') + '</div>' +
-            '<div class="tr-sub">Each side' + (pm.left > 0 ? ' — ' + fmtP(pm.left) + ' ' + T.pr.u + ' short (' + fmtP(pm.left * 2) + ' ' + T.pr.u + ' on the bar) with ' + (pm.have ? 'the plates you have at home' : 'standard plates') : '') + '.</div>');
+          : '<div class="tr-plates">' + (pm.plates.length ? pm.plates.map(plChip).join('')
+            : '<span class="tr-note">' + (ld.k === 'bar' ? 'Just the bar.' : 'No plates.') + '</span>') + '</div>' +
+            '<div class="tr-sub">' + (two ? 'Each side' : 'On the post' + (ld.k === 'pull' ? ', ' + fmtN(w * 2) + ' ' + u + ' for ' + fmtN(w) + ' at the handle' : '')) +
+              (pm.left > 0 ? ' — ' + fmtP(pm.left) + ' ' + u + ' short' + (two ? ' (' + fmtP(pm.left * 2) + ' ' + u + ' on the bar)' : '') + ' with ' + (pm.have ? 'the plates you have at home' : 'standard plates') : '') + '.</div>' +
+            '<div class="tr-acts">' + plUseBtn(sh, w) + '</div>');
+    return html;
   }
 
   /* A warm-up that rehearses the lift without tiring it: half the working
@@ -9778,6 +9872,9 @@
         }).join('') + '</div>' +
         // a fact about your plates, in view; how Home and Gym work is help, behind the i
         '<div class="tr-sub tr-gymax">The most you can load at home: ' + fmtN(homeMax()) + ' ' + u + '.</div>' +
+        '<div class="tr-ql tr-gyh">Home cable</div>' + chips('s-gycb', g.cb || '', [['', 'Weight stack'], ['p2', 'Plates, 2:1 pulley'], ['p1', 'Plates, 1:1']]) +
+        (g.cb ? '<div class="tr-hint">At home, cable lifts get Plates to count what you load. Logged at the handle' +
+          (g.cb === 'p2' ? ': half of what is on the post.' : '.') + '</div>' : '') +
         '<div class="tr-hint">At the top of a workout, tap Home or Gym. At home, each row\u2019s plates and the weights it suggests are what these make; the gym has every plate and each lift\u2019s own bar.</div>';
     return '<div class="tr-q"><div class="tr-ql">Where you train</div>' + chips('s-gyon', g.on, [[0, 'One gym'], [1, 'A gym and home']]) + body + '</div>';
   }
@@ -10029,6 +10126,17 @@
       return;
     } else if (sh.mode === 'eadd' && S.ed && T.wo[S.ed.id]) {
       S.ed.x.push({ e: e, s: [{ w: '', r: '', q: '', o: null }], nu: 1 });
+      openSheet({ k: 'wo', id: S.ed.id, eyebrow: 'Workout', title: 'Workout' });
+      return;
+    } else if (sh.mode === 'eswap' && S.ed && T.wo[S.ed.id] && S.ed.x[sh.x]) {
+      /* A lift logged under the wrong name, put right after the event: the
+         sets go across as they were, under the new one. Blake, 2026-10-23:
+         a high cable reverse crossover at 15 lb logged as Cable Rear Delt
+         Fly, the seated one he had done at 40, so it read as 67% down. The
+         live Swap carried ticked sets across already; a saved workout had
+         only Remove and Add, and the sets to type again. Only the name
+         changes, so one added in this edit still says it has no reps. */
+      S.ed.x[sh.x].e = e;
       openSheet({ k: 'wo', id: S.ed.id, eyebrow: 'Workout', title: 'Workout' });
       return;
     }
@@ -11343,8 +11451,33 @@
       var open = px.s.filter(function (s) { return !s.t; })[0] || px.s[0];
       var pw = numIn(open.w);
       if (pw === null) pw = fin(open.tw) ? open.tw : fin(open.pw) ? open.pw : null;
-      openSheet({ k: 'plates', w: pw, e: px.e, eyebrow: 'Plate calculator', title: 'Plates' });
+      openSheet({ k: 'plates', w: pw, e: px.e, x: num('data-x'), m: pw === null ? 'c' : 'w', c: [], eyebrow: 'Plate counter', title: 'Plates' });
       return;
+    }
+    // from the top of Strengthen: no lift, what the plates go on is yours to say
+    if (t === 'plfree') {
+      openSheet({ k: 'plates', w: null, e: '', m: 'c', c: [], ld: S.plLd || (homeNow() && T.pr.gy.cb === 'p2' ? 'pull' : 'bar'), eyebrow: 'Plate counter', title: 'Plates' });
+      return;
+    }
+    if (S.sheet && S.sheet.k === 'plates') {
+      var ps = S.sheet;
+      if (t === 'plm') { ps.m = v === 'c' ? 'c' : 'w'; drawSheet(); return; }
+      if (t === 'plld') { ps.ld = v; S.plLd = v; drawSheet(); return; }
+      if (t === 'pladd') { ps.c = (ps.c || []).concat(Number(v)).slice(0, 40); drawSheet(); return; }
+      if (t === 'plpop') { ps.c = (ps.c || []).slice(0, -1); drawSheet(); return; }
+      if (t === 'plclr') { ps.c = []; drawSheet(); return; }
+      if (t === 'pluse') {
+        var pj = plTarget(ps), pwv = Number(v);
+        if (pj < 0 || !(pwv > 0)) return;
+        LIVE.x[ps.x].s[pj].w = fmtN(pwv);
+        saveLive(); closeSheet(); draw(); return;
+      }
+      if (t === 'sledset' || t === 'sledclr') {
+        var sw = t === 'sledclr' ? null : numIn(($('trSledW') || {}).value);
+        if (t === 'sledset' && (sw === null || sw < 0 || sw > 1000)) { var swi = $('trSledW'); if (swi) swi.focus(); return; }
+        setBar(el.getAttribute('data-e'), sw);
+        drawSheet(); draw(); return;
+      }
     }
     if (t === 'bk') {
       LIVE.bk = LIVE.bk === Number(v) ? undefined : Number(v);
@@ -11550,6 +11683,13 @@
       ex0.s.push({ w: l0 ? l0.w : '', r: l0 ? l0.r : '', q: '', o: null });
       drawSheet(); return;
     }
+    if (S.ed && t === 'edswap') {
+      var sx = num('data-x');
+      if (!S.ed.x[sx]) return;
+      S.q = ''; S.qm = '';
+      openSheet({ k: 'pick', mode: 'eswap', x: sx, eyebrow: 'Swap', title: 'Swap ' + lib(S.ed.x[sx].e).n });
+      return;
+    }
     if (S.ed && t === 'edaddx') {
       S.q = ''; S.qm = '';
       openSheet({ k: 'pick', mode: 'eadd', eyebrow: 'Add', title: 'Add to this workout' });
@@ -11642,6 +11782,7 @@
       if (gy.on && (!Object.keys(gy.pl).length || gy.u !== T.pr.u)) { gy.pl = Object.assign({}, PL_HOME[T.pr.u]); gy.u = T.pr.u; gy.bar = null; }
       stamp('pr'); drawSheet(); draw(); return;
     }
+    if (t === 's-gycb') { T.pr.gy.cb = v === 'p2' || v === 'p1' ? v : ''; stamp('pr'); drawSheet(); draw(); return; }
     if (t === 'gyreset') { T.pr.gy.pl = Object.assign({}, PL_HOME[T.pr.u]); T.pr.gy.u = T.pr.u; T.pr.gy.bar = null; stamp('pr'); drawSheet(); draw(); return; }
     if (t === 'gypl') {
       var pk = String(Number(v)), pn = (T.pr.gy.pl[pk] || 0) + (Number(el.getAttribute('data-d')) > 0 ? 1 : -1);

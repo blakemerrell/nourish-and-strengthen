@@ -4878,6 +4878,16 @@ button.tr-card:hover { border-color: var(--line-firm); background: var(--field);
 .tr-e1 { color: var(--muted); font-size: 0.8125rem; margin-left: 6px; }
 .tr-warm li { padding: 7px 0; border-bottom: 1px solid var(--line-soft); font-size: 0.875rem; }
 .tr-plates { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+/* The plate counter (train.js, platesHTML): the plates loaded so far, drawn
+   end-on as the bar shows them; the total under them; and a button for
+   each plate, a thumb tall, to tap as it goes on. */
+.tr-plrail { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; min-height: 72px; margin-top: 14px; padding: 4px 8px; border-radius: 8px; background: var(--paper-soft); }
+.tr-pltot { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 10px; padding: 8px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.tr-pltot b { flex: none; white-space: nowrap; font-family: var(--serif); font-size: 1.75rem; font-variant-numeric: tabular-nums; }
+.tr-pltot span { color: var(--muted); font-size: 0.875rem; text-align: right; }
+.tr-plpads { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; margin-top: 12px; }
+.tr-plate.tr-plpad { height: auto; min-height: 52px; min-width: 0; border: 0; border-radius: 8px; font-size: 0.9375rem; cursor: pointer; }
+.tr-plfree svg { width: 22px; height: 22px; }
 .tr-plate {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 34px; height: 64px; padding: 0 6px; border-radius: 3px;
@@ -5154,6 +5164,7 @@ button.tr-card:hover { border-color: var(--line-firm); background: var(--field);
 .tr-rq .tr-set-h span:nth-child(5) { text-align: center; }
 /* The editor: no Previous column, and a cross where the tick was. */
 .tr-edx-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.tr-edx-a { display: flex; gap: 16px; flex: none; }
 .tr-set.tr-eds { grid-template-columns: 30px 72px 60px 40px; justify-content: start; }
 .tr-rq .tr-set.tr-eds { grid-template-columns: 30px 72px 60px 50px 40px; }
 .tr-set-h.tr-eds span:nth-child(2), .tr-set-h.tr-eds span:nth-child(3), .tr-set-h.tr-eds span:nth-child(4) { text-align: center; }

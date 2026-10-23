@@ -142,6 +142,16 @@ three ideas in one tab:
   your plates make (the plan says 190)"). A weight you type stands. The gym keeps every
   plate and each lift's own bar; the default bar can be any weight too. A workout done at
   home is marked so.
+- *The plate counter:* *Plates* on a barbell, Smith or sled lift (Leg Press, Hack Squat,
+  Belt Squat) works both ways round. *Plates for a weight* takes a total and shows the plates.
+  *Count plates* takes a tap on each plate as it goes on and adds the total up: a bar and
+  each side twice, a sled each side twice. *Use* puts the total in the next set not yet done.
+  A sled counts as nothing unless you enter its own weight there. Settings → *Where you
+  train* → *Home cable* says whether the home cable is a weight stack, plates on a 2:1 pulley
+  or plates 1:1. With plates, cable lifts at home get *Plates* too, logged at the handle (on
+  a 2:1 pulley, half of what is on the post). The round plate button in Strengthen's header,
+  or beside Finish during a workout, opens the same counter with no lift: on a bar, both
+  sides, one post or a 2:1 pulley.
 - *For the serious lifter:* a set can be marked *Missed* (M) — an attempt that didn't go
   up: its weight is kept with the reps you got (0 if none), shown in history, and never a
   record, volume, target or hard set. *Assisted Pull-Up* and *Assisted Dip* take the

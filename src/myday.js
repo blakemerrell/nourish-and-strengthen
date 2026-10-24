@@ -105,6 +105,7 @@
   var I_UP = ICO('<path d="M6 15l6-6 6 6"/>');
   var I_DOWN = ICO('<path d="M6 9l6 6 6-6"/>');
   var I_MOVE = ICO('<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>');
+  var I_INFO = ICO('<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8v.4"/>');
   var I_EXPLODE = ICO('<path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/><path d="M3 3l6 6M21 3l-6 6M3 21l6-6M21 21l-6-6"/>');
 
   var fmtK = function (n) { return Math.round(n).toLocaleString('en-US'); };
@@ -387,7 +388,35 @@
      dial: the keys go quiet and a tap on the grams hands them back.
      .mstep, .mstep-x and .mstep-in keep their names — they are what the
      portion tests reach for. */
-  function foodRowHTML(M, r, it, i, mk) {
+  /* Which of a meal's foods is open in its sheet: one at most, the rest a
+     line each (name, amount, calories). Blake chose this on 2026-10-24
+     (mockup https://claude.ai/artifact/UbVye3DEoQptDXF7bMxUa9, "B") over
+     rows that always showed their stepper: those rows were cramped enough
+     that the macro line ran out of its box, long names were cut short, and
+     four foods filled the box so the first scrolled half out of sight. A
+     row being typed into, with its menu open or being swapped is open
+     whatever else is; then the one tapped open; then a food just added, so
+     its amount is right there to set. */
+  function mOpenRow(M, mk) {
+    var items = M.items, pre = M.sk + ':', live = [S.mType, S.mEdit, typeof S.mMenu === 'string' ? S.mMenu.replace(/^move:/, '') : ''];
+    for (var a = 0; a < live.length; a++) {
+      var v = live[a];
+      if (typeof v === 'string' && v.indexOf(pre) === 0 && items[+v.slice(pre.length)]) return +v.slice(pre.length);
+    }
+    if (S.mpSwap && S.mpSwap.slot === M.sk && items[S.mpSwap.i]) return S.mpSwap.i;
+    var o = S.mRowOpen;
+    if (o && o.k === M.k && o.sk === M.sk) {
+      if (o.id === null) return -1;
+      if (items[o.i] && String(items[o.i].id) === String(o.id)) return o.i;
+      for (var j = 0; j < items.length; j++) if (String(items[j].id) === String(o.id)) return j;
+      return -1;
+    }
+    var last = -1;
+    Object.keys(mk.fresh).forEach(function (f) { if (+f > last) last = +f; });
+    return last;
+  }
+
+  function foodRowHTML(M, r, it, i, mk, open) {
     var sk = M.sk, tag = sk + ':' + i;
     var pinned = M.pins.some(function (p) { return p.id === it.id; });
     var was = mk.was[i], fresh = !!mk.fresh[i];
@@ -407,23 +436,35 @@
         return '<button class="mfood-mi mmoveto" role="menuitem" data-mmoveto="' + tag + ':' + esc(sl.k) + '">' + I_MOVE + esc(sl.n) + '</button>';
       }).join('');
     }
-    return '<div class="mitem mfood mrow' + (it.eaten ? ' eaten' : '') + (it.l ? ' held' : '') +
-        (was !== undefined ? ' moved' : fresh ? ' fresh' : '') + (S.mpSwap && S.mpSwap.slot === sk && S.mpSwap.i === i ? ' swapping' : '') + '">' +
-      (S.mpSwap && S.mpSwap.slot === sk && S.mpSwap.i === i
-        ? '<div class="mrow-swap">Tap its replacement below<button class="ghost" data-mswapx="1">Cancel</button></div>' : '') +
-      '<div class="mrow-n">' +
-        '<span class="mitem-nm">' + (r.food
-          ? '<button class="mitem-name mitem-food" data-mfood="' + esc(String(r.id)) + '" data-mx="' + it.x + '" data-mfslot="' + esc(sk) + '">'
-          : '<button class="mitem-name" data-open="' + esc(String(r.id)) + '" data-mx="' + it.x + '">') +
-          (r.score === null || r.score === undefined ? '' : leaf(r.score, 'leaf-sm')) +
-          '<span class="mrow-nm">' + esc(r.name) + '</span></button>' +
-          (fresh ? '<span class="mrow-mk new">New</span>' : '') +
-          (it.l ? '<span class="mrow-mk kept">' + LOCK_SM + (it.l === 2 ? 'Locked' : 'Kept') + '</span>' : '') +
-          (pinned ? '<span class="mrow-mk kept">Pinned</span>' : '') +
-        '</span>' +
-        '<span class="mrow-m mitem-r2">' + (measure ? '<span class="mitem-uom">' + esc(measure) + '</span> &middot; ' : '') +
-          '<span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mSaltChip(r, it.x) + mWhyChip(it, tag) + '</span>' +
-      '</div>' +
+    var swapping = !!(S.mpSwap && S.mpSwap.slot === sk && S.mpSwap.i === i);
+    var kc = Math.round(((r.macro || {}).kcal || 0) * it.x);
+    var sum = '<button class="mrow-sum" data-mrowopen="' + tag + '" aria-expanded="' + !!open + '" aria-label="' + esc(r.name) + ', ' +
+        esc(mDialText(r, it.x)) + ', ' + kc + ' kcal. ' + (open ? 'Close' : 'Open to change it') + '">' +
+        (r.score === null || r.score === undefined ? '' : leaf(r.score, 'leaf-sm')) +
+        '<span class="mrow-nm">' + esc(r.name) + '</span>' +
+        (fresh ? '<span class="mrow-mk new">New</span>' : '') +
+        (it.l ? '<span class="mrow-mk kept">' + LOCK_SM + (it.l === 2 ? 'Locked' : 'Kept') + '</span>' : '') +
+        (pinned ? '<span class="mrow-mk kept">Pinned</span>' : '') +
+        '<span class="mrow-sg num">' + esc(mDialText(r, it.x)) + '</span>' +
+        '<span class="mrow-sk num">' + kc + ' kcal</span>' +
+      '</button>';
+    var cls = 'mitem mfood mrow mrow-x ' + (open ? 'mrow-open' : 'mrow-shut') + (it.eaten ? ' eaten' : '') + (it.l ? ' held' : '') +
+      (was !== undefined ? ' moved' : fresh ? ' fresh' : '') + (swapping ? ' swapping' : '');
+    /* A shut line keeps its drawer, unseen (display: none, so not read
+       aloud or tappable either): what a food costs and how it is measured
+       stay in the page for whatever reads them, and opening it is a class. */
+    return '<div class="' + cls + '">' +
+      (swapping ? '<div class="mrow-swap">Tap its replacement below<button class="ghost" data-mswapx="1">Cancel</button></div>' : '') +
+      sum +
+      '<div class="mrow-dr">' +
+      '<span class="mrow-m mitem-r2">' + (measure ? '<span class="mitem-uom">' + esc(measure) + '</span> &middot; ' : '') +
+        '<span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mSaltChip(r, it.x) + mWhyChip(it, tag) + '</span>' +
+      /* The name was the way to a food's page; a tap on it opens the line
+         now, so the page is a word of its own in the drawer. */
+      (r.food
+        ? '<button class="mitem-name mitem-food mrow-door" data-mfood="' + esc(String(r.id)) + '" data-mx="' + it.x + '" data-mfslot="' + esc(sk) + '"'
+        : '<button class="mitem-name mrow-door" data-open="' + esc(String(r.id)) + '" data-mx="' + it.x + '"') +
+        ' aria-label="' + esc(r.name) + ', ' + (r.food ? 'the food' : 'the recipe') + '">' + I_INFO + 'Details</button>' +
       /* Typing opens an EMPTY box with the amount shown faint behind it, so
          what you type is the amount. Opened holding the number, it relied on
          the phone selecting it, and an iPhone often does not: Blake had to
@@ -458,6 +499,7 @@
           '<button class="mfood-mi mdel" role="menuitem" data-mdel="' + tag + '" aria-label="Remove ' + esc(r.name) + '">' + I_BIN + 'Remove</button>'
         ) +
       '</div>' : '') +
+      '</div>' +
     '</div>';
   }
 
@@ -504,9 +546,10 @@
           '<button class="ghost mslot-unskip" data-mskip="' + esc(sk) + '">Put ' + esc(name) + ' back</button></div>' };
     }
     var stick = '<div class="mcaps">' + capsHTML(M.sub, M.aim, M.ask && M.ask.spent, !!(M.ask && M.ask.capped)) + '</div>';
+    var openI = mOpenRow(M, mk);
     var rows = items.map(function (it, i) {
       var r = LIVE.BY_ID[it.id];
-      return r ? foodRowHTML(M, r, it, i, mk) : '';
+      return r ? foodRowHTML(M, r, it, i, mk, i === openI) : '';
     }).join('');
     rows = '<div class="mrows mslot-items">' + (rows || '<div class="mscreen-empty">Nothing on ' + esc(name.toLowerCase()) + ' yet. Tap a food above.</div>') + '</div>';
     return { name: name, head: head, stick: stick, skipped: false, onPlan: M.onPlan, rows: rows,

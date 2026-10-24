@@ -6,7 +6,7 @@
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
 /* Since 2026-10-04 the day is trays and a plate's controls live in its
    meal's sheet (#modalRoot): openMeal is the tray's own door. */
-const { nourish, openPlan, pickerList, openMeal } = require('./fixtures/nourish.js');
+const { nourish, openPlan, pickerList, openMeal, openRow } = require('./fixtures/nourish.js');
 
 module.exports = nourish({
   name: 'Macros — portions, and the fold',
@@ -144,6 +144,7 @@ module.exports = nourish({
       return ((days[k] || {}).b || [])[0].x;
     });
     for (let i = 0; i < 12; i++) {
+      await openRow(qty);
       await qty.click('#modalRoot [data-mstep$=":up"]');
       await qty.waitForTimeout(60);
     }
@@ -162,6 +163,7 @@ module.exports = nourish({
       await qty.textContent('#modalRoot .mstep-x'));
     /* The floor still holds: a portion never steps to nothing. */
     for (let i = 0; i < 40; i++) {
+      await openRow(qty);
       await qty.click('#modalRoot [data-mstep$=":down"]');
       await qty.waitForTimeout(40);
     }
@@ -238,6 +240,7 @@ module.exports = nourish({
     await wg.click('.tab[data-view="macros"]');
     await wg.waitForTimeout(300);
     await openMeal(wg, 'b');
+    await openRow(wg, 'b:0');
     const weighed = await wg.evaluate(() => {
       const row = document.querySelector('#modalRoot .mrows .mitem');
       /* It has its own chip on the facts band now, ahead of the figures —
@@ -271,6 +274,7 @@ module.exports = nourish({
        grid: a cup of cheddar is 113 g and goes to 115, not to 120. The chip
        only moves when the weight crosses an eighth of a cup; the dial moves
        every time. */
+    await openRow(wg);
     await wg.click('#modalRoot [data-mstep$=":up"]');
     await wg.waitForTimeout(250);
     t.ok('and a tap moves the weight up to the next five grams',
@@ -314,7 +318,12 @@ module.exports = nourish({
     }, n);
 
     // by position among the food rows of the meal's sheet
-    const typeOn = (i) => typ.locator('#modalRoot .mrows .mitem').nth(i).locator('[data-mtype]').click();
+    // by position among the food rows of the meal's sheet, its line tapped open first
+    const typeOn = async (i) => {
+      const row = typ.locator('#modalRoot .mrows .mitem').nth(i), line = row.locator('[data-mrowopen]');
+      if ((await line.getAttribute('aria-expanded')) !== 'true') { await line.click(); await typ.waitForTimeout(150); }
+      await row.locator('[data-mtype]').click();
+    };
     await typeOn(0);
     await typ.waitForTimeout(200);
     t.ok('tapping a portion opens an empty box, the number that was there shown faint in it',

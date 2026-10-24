@@ -5,7 +5,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, openPlan, pickRecipe, pickerList } = require('./fixtures/nourish.js');
+const { nourish, openPlan, pickRecipe, pickerList, openRow, openRowOf } = require('./fixtures/nourish.js');
 
 /* Trays and the meal sheet (Blake, 2026-10-04): the day is a small tray a
    meal, and a meal opens as its sheet — the one place food is added or
@@ -161,6 +161,7 @@ module.exports = nourish({
       if (e8 === 0) return String(wh || 0); if (e8 === 8) return String(wh + 1);
       return (wh ? wh + ' ' : '') + { 1: '⅛', 2: '¼', 3: '⅜', 4: '½', 5: '⅝', 6: '¾', 7: '⅞' }[e8];
     };
+    await openRowOf(m, '#modalRoot .mitem-name');
     await m.click('#modalRoot .mitem-name');
     await m.waitForTimeout(250);
     t.ok('opening a plate opens its recipe at the batch that makes the portion',
@@ -286,6 +287,7 @@ module.exports = nourish({
     /* A few steps, not twenty: the plate goes on at what fits breakfast
        (2026-10-05), a quarter of a bowl, and twenty 5 g steps would walk it
        off the plate. */
+    await openRow(z, 'b:0');
     for (let i = 0; i < 3; i++) await z.click('#modalRoot [data-mstep="b:0:down"]');
     await z.waitForTimeout(150);
     const handX = await dayX(z, 'b', 0);
@@ -366,6 +368,7 @@ module.exports = nourish({
     t.ok('a plate can be locked', await z.evaluate(() =>
       document.querySelector('#modalRoot [data-mlock="b:0"]').getAttribute('aria-pressed') === 'true'));
     const lockedX = await dayX(z, 'b', 0);
+    await openRow(z, 'b:0');
     for (let i = 0; i < 3; i++) await z.click('#modalRoot [data-mstep="b:0:down"]');
     await z.waitForTimeout(150);
     await mealMenu(z, 'b');
@@ -614,6 +617,7 @@ module.exports = nourish({
       window.__probe = r.id;
       window.Store.state.plan.mon = [];
     });
+    await openRowOf(y, '#modalRoot .mitem-name');
     await y.click('#modalRoot .mitem-name');
     await y.waitForTimeout(300);
     const cook = await y.evaluate(() => {

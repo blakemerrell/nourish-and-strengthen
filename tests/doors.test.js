@@ -1,3 +1,4 @@
+const { openRowOf } = require('./fixtures/nourish.js');
 /* Doors from the day to the recipe, and the way back (Blake, 2026-10-06).
  *
  * "I tried to open the recipe card for my meal. And it just opened the meal
@@ -151,6 +152,7 @@ module.exports = {
     await p.waitForTimeout(500);
     await p.click('#modalRoot .msh-tray [data-mtray="1"]').catch(() => {});
     await p.waitForTimeout(300);
+    await openRowOf(p, '#modalRoot .mrow .mitem-name[data-open="351"]');
     const door = await p.$('#modalRoot .mrow .mitem-name[data-open="351"]');
     if (door) {
       await door.click();

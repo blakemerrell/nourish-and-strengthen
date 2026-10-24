@@ -27,13 +27,14 @@ const SETUP = () => {
     { k: 'd', n: 'Dinner', t: 'd' }, { k: 's', n: 'Snacks', t: 's' }], names: { b: 'Breakfast', l: 'Lunch', d: 'Dinner', s: 'Snacks' } }));
   localStorage.setItem('bsc.myFoods', JSON.stringify({
     spark: { name: 'Sparkling Protein', unit: '1 can (335 ml)', kcal: 124, p: 30, f: 0, c: 1 },
-    fries: { name: 'Potato, french fries, from fresh, fried', unit: '1 order, NS as to size', kcal: 202, p: 0, f: 16, c: 16 } }));
+    fries: { name: 'Potato, french fries, from fresh, fried', unit: '1 order, NS as to size', kcal: 202, p: 0, f: 16, c: 16 },
+    cbread: { name: 'Bread, cheese', unit: '1 small or thin/very thin slice (25 g)', kcal: 102, p: 3, f: 5, c: 12 } }));
   const f = (k, x) => ({ id: 'f:' + k, x: x, eaten: 0 });
   localStorage.setItem('bsc.macroDays', JSON.stringify({ '2026-10-08': {
     l: [f('chicken_breast', 1), f('green_beans', 1), f('apple', 1)],
     // a recipe from the book, so a line wears a leaf: Chicken & Broccoli Rice Skillet
     d: [{ id: 66, x: 1, eaten: 0 }, f('egg', 2)],
-    s: [{ id: 'f:my:spark', x: 1, eaten: 0 }, { id: 'f:my:fries', x: 1, eaten: 0 }] } }));
+    s: [{ id: 'f:my:spark', x: 1, eaten: 0 }, { id: 'f:my:fries', x: 1, eaten: 0 }, { id: 'f:my:cbread', x: 0.25, eaten: 0 }] } }));
 };
 const mealOf = (p, sk) => p.evaluate((a) => JSON.parse(localStorage.getItem('bsc.macroDays'))[a[0]][a[1]] || [], [DAY, sk]);
 const textOf = (p, sel) => p.evaluate((s) => (document.querySelector(s) || {}).textContent || '', sel);
@@ -308,8 +309,15 @@ module.exports = {
     t.ok('and a line left open is still open back on its own day', !!(await p.$(line('d', 1) + '.open')));
 
     /* ---- two plates that read wrong ---- */
-    const snack = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-f')].map((l) => (l.querySelector('.mtray-fm') || {}).textContent), card('s'));
-    t.ok('a can said "1 can (335 ml)" reads "1 can" on the day, not "1 1 can (335 ml)"', snack[0] === '1 can', JSON.stringify(snack));
+    const snack = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-f')].map((l) => ({
+      fm: (l.querySelector('.mtray-fm') || {}).textContent,
+      g: (l.querySelector('.mfl-amt em') || {}).textContent,
+      nmW: Math.round(l.querySelector('.mfl-nm').getBoundingClientRect().width),
+      nmH: Math.round(l.querySelector('.mfl-nm').getBoundingClientRect().height)
+    })), card('s'));
+    t.ok('a can said "1 can (335 ml)" reads "1 can" on the day, not "1 1 can (335 ml)"', snack[0].fm === '1 can', JSON.stringify(snack));
+    t.ok('and "Bread, cheese" with "1 small or thin/very thin slice (25 g)" reads "¼ slice | 6 g" on one uncrushed line',
+      snack[2].fm === '¼ slice' && snack[2].g === '6 g' && snack[2].nmW >= 100 && snack[2].nmH <= 24, JSON.stringify(snack[2]));
     await p.click(line('s', 1) + ' [data-mamt]');
     await p.waitForTimeout(250);
     const fries = await textOf(p, line('s', 1) + ' [data-mtype]');

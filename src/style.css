@@ -7165,7 +7165,7 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   border: 0; background: none; padding: 0; margin: 0; text-align: left; cursor: pointer;
   font: 500 0.9375rem/1.25 var(--sans); color: var(--ink);
 }
-.mfl-nm { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.mfl-nm { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-clamp: 3; overflow: hidden; overflow-wrap: break-word; }
 .mtray-f.eaten .mtray-fn, .mtray.done .mtray-fn { color: var(--label); }
 /* A recipe's name in the link colour, so it reads as one on a phone, where
    nothing hovers. Never underlined: a line under a food's name on the day has
@@ -7187,13 +7187,13 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   background: var(--paper-soft); line-height: 22px; white-space: nowrap;
 }
 .mfl-amt.locked .mtray-fm { background: var(--ochre-soft); border-color: var(--ochre); }
-.mfl-amt .mtray-fm b { display: inline-flex; align-items: center; gap: 3px; font-size: 0.875rem; font-weight: 600; line-height: 1.15; color: var(--ink); }
+.mfl-amt .mtray-fm b { display: inline-block; max-width: 12ch; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; font-size: 0.875rem; font-weight: 600; line-height: 1.15; color: var(--ink); }
 .mfl-amt .mtray-fm small { font-size: 0.8125rem; line-height: 1.15; color: var(--note); }
 .mfl-amt .mtray-fm small i { font-style: normal; }
 @media (max-width: 380px) {
   .mfl-amt .mtray-fm small { display: none; }
 }
-.mfl-amt .mtray-fm .mcard-lk { width: 11px; height: 11px; color: var(--ochre-text); }
+.mfl-amt .mtray-fm .mcard-lk { width: 11px; height: 11px; margin-right: 3px; vertical-align: -1px; color: var(--ochre-text); }
 .mfl-amt em {
   display: inline-flex; align-items: center; justify-content: flex-end;
   height: 24px; box-sizing: border-box; padding: 0 7px;

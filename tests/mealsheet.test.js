@@ -285,6 +285,16 @@ module.exports = {
     t.ok('a food added from the list goes up with the others, and the list holds still under the thumb',
       at0.s > 0 && at1.n === at0.n + 1 && Math.abs(at1.y - at0.y) <= 1, JSON.stringify({ at0, at1 }));
 
+    /* It comes in open, for its amount; and stays open while you set it.
+       The first build shut it on the first −, because "just added" was all
+       that held it open and a step clears that mark. */
+    const egg = await p.evaluate(() => { const r = [...document.querySelectorAll('#modalRoot .mrows .mrow')].find((x) => x.classList.contains('mrow-open'));
+      return r ? r.querySelector('[data-mrowopen]').dataset.mrowopen : null; });
+    if (egg) { await p.click('#modalRoot [data-mstep="' + egg + ':down"]'); await p.waitForTimeout(250); }
+    const stillOpen = await p.evaluate((tg) => !!tg && (document.querySelector('#modalRoot [data-mrowopen="' + tg + '"]') || {}).getAttribute &&
+      document.querySelector('#modalRoot [data-mrowopen="' + tg + '"]').getAttribute('aria-expanded') === 'true', egg);
+    t.ok('a food just added comes in open, and a − on it leaves it open', !!egg && stillOpen, egg);
+
     /* a recipe's Details (its name, until its line became the way to open
        it) opens the recipe; back lands on the meal's sheet */
     await p.evaluate(() => { const s = document.querySelector('#modalRoot .scrim'); s.scrollTop = 0; });

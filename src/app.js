@@ -5449,6 +5449,21 @@
       if (!e.target.closest || !e.target.closest('.msheet')) return;
       // × closes the sheet, menu or no menu: the document's listener does it
       if (e.target.closest('.sheet-x, .sheet-done')) return;
+      /* A food opened because it was just added stays open once you use it:
+         its dial, its amount or its ⋯ pin it open, so the first − does not
+         shut it as the "just added" mark is cleared. Here, before an open
+         menu is shut and the sheet drawn again, or the tap's own button is
+         no longer in the page to say which food it was. */
+      var inRow = e.target.closest('#modalRoot .mrow-open [data-mstep], #modalRoot .mrow-open [data-mtype], #modalRoot .mrow-open [data-mfmenu]');
+      if (inRow) {
+        var pinB = inRow.closest('.mrow').querySelector('[data-mrowopen]');
+        if (pinB) {
+          var pp = pinB.dataset.mrowopen.split(':'), pi = Number(pp.pop()), psk = pp.join(':');
+          var pit = (mDay(mViewKey())[psk] || [])[pi];
+          if (pit) S.mRowOpen = { k: mViewKey(), sk: psk, i: pi, id: pit.id };
+        }
+      }
+
       if (S.mMenu && !e.target.closest('.mfood-menu, [data-mfmenu], [data-mmenu]')) {
         S.mMenu = '';
         if (!e.target.closest('button, input, select')) { renderModal(); return; }

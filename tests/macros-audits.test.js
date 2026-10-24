@@ -1238,6 +1238,7 @@ module.exports = nourish({
         t.ok('with a chip beside its name: "Added for fiber"', chip === 'Added for fiber', chip);
         /* Blake chose the chip as the button (option 1): it opens a strip
            inside the plate, in the style of the app's other in-meal cards. */
+        await openRow(np, tag);
         await np.click('[data-mwhy="' + tag + '"]');
         await np.waitForTimeout(150);
         const strip = await np.evaluate(() => {

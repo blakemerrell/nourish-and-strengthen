@@ -617,6 +617,7 @@ module.exports = nourish({
       window.__probe = r.id;
       window.Store.state.plan.mon = [];
     });
+    await openRowOf(y, '#modalRoot .mitem-name');
     await y.click('#modalRoot .mitem-name');
     await y.waitForTimeout(300);
     const cook = await y.evaluate(() => {

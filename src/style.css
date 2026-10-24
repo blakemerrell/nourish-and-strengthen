@@ -7470,6 +7470,9 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .msheet .mrow-dr .mrow-door { margin-right: auto; min-height: 44px; gap: 5px; color: var(--note); font-size: 0.875rem; }
 .msheet .mrow-dr .mrow-door svg { width: 16px; height: 16px; }
 .msheet .mrow-dr > .mwhy-strip { flex: 1 1 100%; }
+/* Under the drawer, not 46 px down it: there that is the dial's own line,
+   and the menu sat over the − and + it was opened beside. */
+.msheet .mrow-dr .mrow-menu { top: calc(100% - 4px); }
 .msheet .mrow-shut .mrow-dr { display: none; }
 .msheet .mrow .mitem-name:hover .mrow-nm { text-decoration: underline; text-decoration-color: var(--line-firm); text-underline-offset: 3px; }
 .mrow-mk { flex: none; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ochre-text); display: inline-flex; align-items: center; gap: 2px; }

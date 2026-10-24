@@ -65,8 +65,12 @@ time, a food just added opens by itself, and one you are setting stays open.
 The day's head says the day as a date; tap it for the phone's calendar, any day from the
 first you ever logged (or 120 days back, if that is further) to a week ahead. Nothing is
 let go of: every day and every weigh-in stays, on the phone and in your account. ‹ and › step a week, and so does a swipe
-across the week's bars. The button beside the gear steps every meal of the day at once
+across the week's bars. The button beside the menu (☰) steps every meal of the day at once
 through the three views a meal's name steps it through: its status, its foods, its details.
+The menu holds My plan, Food I eat, Sync & sharing and How today went, and wears a dot for
+sync: green when the household or your account has everything, amber while something is
+sending or there is no signal, red when it has stopped, grey on this phone only. On Nourish
+that dot stands in for the sync pill the other tabs show on the top line.
 
 Signed in, the account keeps the day log (days, weigh-ins, closed days, training ticks,
 skips) one record per calendar year (`users/{uid}/days/2026`), like Strengthen's workouts

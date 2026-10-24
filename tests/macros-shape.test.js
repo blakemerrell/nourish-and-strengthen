@@ -5,7 +5,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, openPlan, pickRecipe, pickerList, openRow, openRowOf } = require('./fixtures/nourish.js');
+const { nourish, openPlan, pickRecipe, pickerList, openRow, openRowOf, openSync } = require('./fixtures/nourish.js');
 
 /* Trays and the meal sheet (Blake, 2026-10-04): the day is a small tray a
    meal, and a meal opens as its sheet — the one place food is added or
@@ -678,7 +678,7 @@ module.exports = nourish({
        not "never signing in" — it is asking to. */
     const bootOutside = await a2.evaluate(() => performance.getEntriesByType('resource')
       .filter((e) => e.name.indexOf(location.origin) !== 0).map((e) => e.name));
-    await a2.click('#syncBtn');
+    await openSync(a2);
     await a2.waitForTimeout(300);
     t.ok('Google is the way in, said once and not argued for',
       await a2.evaluate(() => {

@@ -1,4 +1,3 @@
-const { openRow } = require('./fixtures/nourish.js');
 /* A food whose serving is already a weight (Blake, 2026-10-06).
  *
  * "Typing in grams in this view is impossible." The food was a butter
@@ -10,6 +9,7 @@ const { openRow } = require('./fixtures/nourish.js');
  * to 7px. Typing the 50 on the dial logged five kilos. The food's own page
  * offered the same "× 100 g". A unit said in grams is now a weight on both,
  * and the typed box keeps room for four digits whatever its unit says. */
+const { openRow } = require('./fixtures/nourish.js');
 const SETUP = () => {
   localStorage.setItem('bsc.macroProfile', JSON.stringify({ sex: 'm', age: 43, ft: 5, inch: 11, lb: 192, act: 1.55, goal: 'cut1' }));
   localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 190, f: 70, c: 230 }));

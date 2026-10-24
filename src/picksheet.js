@@ -70,11 +70,13 @@
     if (!srec && slotKey && (mDay(mViewKey())[slotKey] || []).length) {
       rememberOpener();
       S.macroPick = { slot: slotKey, n: slots.names[slotKey] || 'Meal', secs: [], w: 1, gone: true };
+      S.mRowOpen = null;
     } else {
       if (!srec) srec = mNextMeal();
       if (!srec) return;
       rememberOpener();
       S.macroPick = { slot: srec.k, n: srec.n, secs: mSlotSecs(srec), w: mSlotW(srec) };
+      S.mRowOpen = null;
     }
     S.mpSec = 'meal';
     S.mpSort = 'fit';

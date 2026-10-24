@@ -5,7 +5,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, openMeal: openMeal0, closeSheet } = require('./fixtures/nourish.js');
+const { nourish, openMeal: openMeal0, closeSheet, openRow } = require('./fixtures/nourish.js');
 
 /* Since 2026-10-04 the day is trays and a meal opens as one sheet over it:
    its plates and the picker are in the sheet, so a test reaching for them
@@ -602,6 +602,7 @@ module.exports = nourish({
       const c0 = await row('l');
       t.ok('a cup of chicken shows its weight on the dial', /^\d+ g$/.test(c0.dial), JSON.stringify(c0));
       t.ok('and the cup on the chip', /1 cup/.test(c0.chip), JSON.stringify(c0));
+      await openRow(gp, 'l:0');
       await gp.click('[data-mstep="l:0:up"]');
       await gp.waitForTimeout(150);
       const c1 = await row('l');
@@ -613,11 +614,13 @@ module.exports = nourish({
          140 is 144.998 — one grid point short of the dial — and the second
          tap landed on 145 again. Blake: "it stops at a number and won't go
          past." Ten taps, fifty grams, on the one food he eats most. */
+      await openRow(gp, 'l:0');
       for (let i = 0; i < 9; i++) await gp.click('[data-mstep="l:0:up"]');
       await gp.waitForTimeout(200);
       const c10 = await row('l');
       t.ok('and ten taps are fifty grams, not one tap and a wall',
         parseInt(c10.dial, 10) === parseInt(c0.dial, 10) + 50, c0.dial + ' → ' + c10.dial + ' after ten taps');
+      await openRow(gp, 'l:0');
       await gp.click('[data-mtype="l:0"]');
       await gp.waitForTimeout(100);
       await gp.fill('.mstep-in', '185');
@@ -636,6 +639,7 @@ module.exports = nourish({
          included — but nobody eats a fraction of one, so it still steps a
          whole egg at a time, and the count is the small print. */
       t.ok('an egg says its weight on the dial and its count in the small print', /^100 g$/.test(e0.dial) && /^2 whole$/.test(e0.chip.trim()), JSON.stringify(e0));
+      await openRow(gp, 'b:0');
       await gp.click('[data-mstep="b:0:up"]');
       await gp.waitForTimeout(150);
       const e1 = await row('b');

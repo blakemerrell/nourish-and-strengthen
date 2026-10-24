@@ -143,7 +143,7 @@ module.exports = {
     // the meal's sheet is back, the food on it; the tray opened on its rows, its name opens the food
     await openTray(a);
     await a.evaluate(() => {
-      const b = [...document.querySelectorAll('#modalRoot .mitem-food')].find((x) => /Pork/.test(x.textContent));
+      const b = [...document.querySelectorAll('#modalRoot .mitem-food')].find((x) => /Pork/.test(x.closest('.mitem').textContent));
       b.scrollIntoView({ block: 'center' }); b.click();
     });
     await a.waitForTimeout(250);
@@ -249,7 +249,7 @@ module.exports = {
       full.ns === 'b' && full.nova === 4 && !('ingr' in full) && !('lv' in full) && !('off' in full), JSON.stringify(full));
     await openTray(g);
     await g.evaluate(() => {
-      const b = [...document.querySelectorAll('#modalRoot .mitem-food')].find((x) => /Pork/.test(x.textContent));
+      const b = [...document.querySelectorAll('#modalRoot .mitem-food')].find((x) => /Pork/.test(x.closest('.mitem').textContent));
       b.scrollIntoView({ block: 'center' }); b.click();
     });
     await g.waitForTimeout(250);

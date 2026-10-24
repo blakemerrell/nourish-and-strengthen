@@ -7,7 +7,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, addOn, pickerList, closeSheet, openTray } = require('./fixtures/nourish.js');
+const { nourish, addOn, pickerList, closeSheet, openTray, openRow } = require('./fixtures/nourish.js');
 
 /* Since 2026-10-04 the day is trays and a meal's plates, its scales and its
    ⋯ live in the meal's sheet (#modalRoot .msheet), opened by its tray — the
@@ -603,6 +603,7 @@ module.exports = nourish({
        thumb can land and still hit the control (elementFromPoint, so the
        invisible ring a small key carries counts). 44 tall for everything;
        wide enough (34) not to be a sliver. */
+    await openRow(tinyPhone, 'b:0');
     const targets44 = await tinyPhone.evaluate(() => {
       const reach = (el) => {
         const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
@@ -615,18 +616,21 @@ module.exports = nourish({
         return { w: lf + rt + 1, h: up + dn + 1, what: (el.getAttribute('data-mstep') ? 'key ' + el.getAttribute('data-mstep')
           : el.className.split(' ')[0] || el.tagName) };
       };
-      const els = [...document.querySelectorAll('#modalRoot .mrows .mrow [data-mstep], #modalRoot .mrows .mrow .mstep-x, ' +
-        '#modalRoot .mrows .mrow [data-mfmenu], #modalRoot .msh-h button, #modalRoot .msh-acts button')];
+      /* What is on screen: every food's line, and the dial, Details and ⋯ of
+         the one open (a shut line keeps its drawer unseen since 2026-10-24). */
+      const els = [...document.querySelectorAll('#modalRoot .mrows .mrow [data-mrowopen], #modalRoot .mrows .mrow [data-mstep], #modalRoot .mrows .mrow .mstep-x, ' +
+        '#modalRoot .mrows .mrow [data-mfmenu], #modalRoot .mrows .mrow .mrow-door, #modalRoot .msh-h button, #modalRoot .msh-acts button')]
+        .filter((e) => e.getClientRects().length);
       const all = els.map(reach);
       return { n: els.length, keys: all.filter((x) => /^key/.test(x.what)).length, small: all.filter((x) => x.h < 44 || x.w < 34) };
     });
     t.ok('every control on a plate is a thumb wide at the narrowest phone',
-      targets44.n >= 8 && targets44.keys >= 4 && targets44.small.length === 0,
+      targets44.n >= 8 && targets44.keys >= 2 && targets44.small.length === 0,
       JSON.stringify(targets44));
 
     /* What has to hold one line at 320 is the dial: −, the grams and +, side
        by side, none over its neighbour, and the row not scrolling sideways. */
-    const strip320 = await tinyPhone.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows .mrow')].map((row) => {
+    const strip320 = await tinyPhone.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows .mrow.mrow-open')].map((row) => {
       const R = (e) => e.getBoundingClientRect();
       const dial = row.querySelector('.mrow-dial');
       const parts = [row.querySelector('[data-mstep$=":down"]'), row.querySelector('.mstep-x'), row.querySelector('[data-mstep$=":up"]')];
@@ -637,7 +641,7 @@ module.exports = nourish({
         fits: row.scrollWidth <= row.clientWidth + 1, amt: Math.round(R(parts[1]).width) };
     }));
     t.ok('a food’s dial fits one line at 320, each control clear of the one before',
-      strip320.length >= 2 && strip320.every((x) => !x.missing && x.sameLine && x.clear && x.fits),
+      strip320.length === 1 && strip320.every((x) => !x.missing && x.sameLine && x.clear && x.fits),
       JSON.stringify(strip320));
 
     /* The meal's own verbs on the sheet's head, drawn without words, each
@@ -684,6 +688,7 @@ module.exports = nourish({
        out of the reference table. */
     const favMenu = async () => {
       if (!(await tinyPhone.$('#modalRoot .mrow-menu'))) {
+        await openRow(tinyPhone, 'b:0');
         await tinyPhone.click('#modalRoot [data-mfmenu="b:0"]');
         await tinyPhone.waitForTimeout(250);
       }
@@ -752,6 +757,7 @@ module.exports = nourish({
     /* The food's ⋯ in the meal sheet (2026-10-04) is a short worded list:
        Lock, Swap, Pin, Favourite, then Remove last — the destructive one at
        the end, in the warning colour, never in the middle of the others. */
+    await openRow(spacePhone, 'b:0');
     await spacePhone.click('#modalRoot [data-mfmenu="b:0"]');
     await spacePhone.waitForTimeout(250);
     const spacing = await spacePhone.evaluate(() => {
@@ -805,6 +811,7 @@ module.exports = nourish({
     await heldPage.waitForTimeout(300);
     await openMeal(heldPage, 'b');                      // breakfast's sheet
     // the lock is in the food's ⋯ since 2026-10-04
+    await openRow(heldPage, 'b:0');
     await heldPage.click('#modalRoot [data-mfmenu="b:0"]');
     await heldPage.waitForTimeout(250);
     const heldOk = await heldPage.evaluate(() => document.querySelectorAll('#modalRoot [data-mlock]').length > 0);

@@ -1286,8 +1286,8 @@ module.exports = nourish({
       const bad = combos.filter((r) => !r.parts || !r.parts.length || !r.spot || r.unit !== 'order');
       return { n: combos.length, bad: bad.length };
     });
-    t.ok('Price & Spanish Fork catalog registers 100 restaurant Smart Combos with parts and spots',
-      eatoutCatalog.n === 100 && eatoutCatalog.bad === 0, JSON.stringify(eatoutCatalog));
+    t.ok('Price & Spanish Fork catalog registers 126 restaurant Smart Combos with parts and spots',
+      eatoutCatalog.n === 126 && eatoutCatalog.bad === 0, JSON.stringify(eatoutCatalog));
 
     t.ok('the shelf rail carries an Eating out chip',
       !!(await lookPage.$('#mpShelves [data-mpshelf="eatout"]')));
@@ -1316,7 +1316,7 @@ module.exports = nourish({
     t.ok('searching a local Price restaurant finds its Smart Combos',
       await lookPage.evaluate(() => {
         const rows = [...document.querySelectorAll('#mpList .mpick-row[data-mpick]')];
-        return rows.length === 3 && rows.every((r) => /Grogg/.test(r.textContent));
+        return rows.length === 4 && rows.every((r) => /Grogg/.test(r.textContent));
       }));
 
     await lookPage.fill('#mpFind', 'Spanish Fork');
@@ -1328,11 +1328,11 @@ module.exports = nourish({
     /* Tapping a combo adds 1 order, wears no "A saved meal" badge, and Explode splits it into parts */
     await lookPage.fill('#mpFind', 'Costa Vida');
     await lookPage.waitForTimeout(300);
-    await lookPage.click('#mpList .mpick-row[data-mpick="f:rc_cv_baja_chk_tacos"]');
+    await lookPage.click('#mpList .mpick-row[data-mpick="f:rc_cv_2_chk_tacos"]');
     await lookPage.waitForTimeout(300);
     const onPlate = await lookPage.evaluate(() => {
       const hasSavedBadge = !!document.querySelector('#modalRoot .mrows .mfood-saved');
-      const sub = window.__macroLab.read().meals.find((m) => m.items.some((it) => it.id === 'f:rc_cv_baja_chk_tacos'));
+      const sub = window.__macroLab.read().meals.find((m) => m.items.some((it) => it.id === 'f:rc_cv_2_chk_tacos'));
       return {
         found: !!sub,
         hasSavedBadge,
@@ -1343,11 +1343,21 @@ module.exports = nourish({
       onPlate.found && !onPlate.hasSavedBadge && onPlate.hasMenu, JSON.stringify(onPlate));
 
     const beforeExplode = await lookPage.evaluate(() => {
-      const m = window.__macroLab.read().meals.find((ml) => ml.items.some((it) => it.id === 'f:rc_cv_baja_chk_tacos'));
-      const it = m.items.find((x) => x.id === 'f:rc_cv_baja_chk_tacos');
+      const m = window.__macroLab.read().meals.find((ml) => ml.items.some((it) => it.id === 'f:rc_cv_2_chk_tacos'));
+      const it = m.items.find((x) => x.id === 'f:rc_cv_2_chk_tacos');
       return { sk: m.k, kcal: it.kcal, p: it.p, f: it.f, c: it.c };
     });
-    await lookPage.click('#modalRoot .mrows [data-mfmenu]');
+    /* Each food is a line that opens its controls (layout B), so open the
+       combo's own line before its ⋯ menu; a meal that already held a food
+       would otherwise have its first, hidden, menu picked. */
+    const cvTag = await lookPage.evaluate(() => {
+      const row = [...document.querySelectorAll('#modalRoot .mrows .mrow')]
+        .find((r) => /Costa Vida/.test(r.textContent));
+      const b = row && row.querySelector('[data-mrowopen]');
+      return b ? b.dataset.mrowopen : null;
+    });
+    await openRow(lookPage, cvTag);
+    await lookPage.click('#modalRoot .mrows .mrow:not(.mrow-shut) [data-mfmenu]');
     await lookPage.waitForTimeout(200);
     await lookPage.click('#modalRoot .mrows [data-mexplode]');
     await lookPage.waitForTimeout(300);

@@ -314,6 +314,7 @@
      two links Save meal is drawn with. */
   function mBadgeHTML(r) {
     if (r.score !== null && r.score !== undefined) return leaf(r.score, 'leaf-sm');
+    if (r.eatout) return '';
     return r.parts && r.parts.length ? '<span class="mtray-kept" role="img" aria-label="A saved meal" title="A saved meal">' + mIcon('keep') + '</span>' : '';
   }
 

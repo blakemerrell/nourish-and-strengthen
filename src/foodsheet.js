@@ -178,7 +178,7 @@
     return '<div class="scrim no-print" data-close="1">' +
       '<div class="sheet mt-sheet mfs-sheet" role="dialog" aria-modal="true" aria-label="' + esc(r.name) + '">' +
         '<div class="sheet-top">' +
-          '<div class="sheet-eyebrow">' + (parts.length ? 'A meal you kept' : 'A food') + '</div>' +
+          '<div class="sheet-eyebrow">' + (r.eatout ? esc(r.spot || 'Eating out') : parts.length ? 'A meal you kept' : 'A food') + '</div>' +
           '<button class="sheet-x" data-close="1" aria-label="Close">&times;</button>' +
         '</div>' +
         '<div class="mfs-name">' + esc(r.name) + '</div>' +

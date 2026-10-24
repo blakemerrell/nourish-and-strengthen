@@ -108,8 +108,13 @@
     if (fk >= pk && fk >= ck) return 'fat';
     return 'carb';
   }
+  function mpEatoutPool() {
+    return LIVE.MFOODS.filter(function (r) { return !!r.eatout; });
+  }
   function mpShelfOK(r) {
     if (!S.mpShelf) return true;
+    if (S.mpShelf === 'eatout') return !!r.eatout;
+    if (r.eatout) return false;
     if (S.mpShelf === 'recipes') return !r.food;
     if (S.mpShelf === 'protein' || S.mpShelf === 'fat' || S.mpShelf === 'carb') {
       return !!r.food && mpMacroDomKey(r) === S.mpShelf;
@@ -118,13 +123,13 @@
   }
 
   function mpSortsOn() {
-    return !(S.mpSec === 'foods' || (S.mpShelf && S.mpShelf !== 'recipes'));
+    return !(S.mpSec === 'foods' || (S.mpShelf && S.mpShelf !== 'recipes' && S.mpShelf !== 'eatout'));
   }
   function mpSortNow() { return mpSortsOn() ? S.mpSort : 'fit'; }
 
   function mpSavedMeals() {
     var out = [];
-    LIVE.MFOODS.forEach(function (r) { if (r.parts && r.parts.length) out.push(r); });
+    LIVE.MFOODS.forEach(function (r) { if (r.parts && r.parts.length && !r.eatout) out.push(r); });
     LIVE.RECIPES.forEach(function (r) {
       if (r.own && r.typedMacro && !(r.steps || []).length && (r.ing || []).length) out.push(r);
     });
@@ -170,12 +175,14 @@
     mReadSlots().list.forEach(function (sl) { if (sl.k === S.macroPick.slot) slot = sl; });
     if (!slot) return '';
     var q = mpQ();
-    var n = { protein: 0, fat: 0, carb: 0 }, anyRecipe = false, total = 0, cooked = 0;
-    mMealPool(slot, true).forEach(function (r) {
+    var n = { protein: 0, fat: 0, carb: 0 }, anyRecipe = false, anyEatout = false, total = 0, cooked = 0, eatout = 0;
+    mMealPool(slot, true).concat(mpEatoutPool()).forEach(function (r) {
       if (!r.food) anyRecipe = anyRecipe || !q;
+      if (r.eatout) anyEatout = anyEatout || !q;
       if (q && !mpMatches(r, q)) return;
       total++;
       if (!r.food) { anyRecipe = true; cooked++; return; }
+      if (r.eatout) { anyEatout = true; eatout++; return; }
       var k = mpMacroDomKey(r);
       if (k) n[k] = (n[k] || 0) + 1;
     });
@@ -201,12 +208,20 @@
         '" aria-label="Recipes' + (q ? ', ' + cooked + ' of them' : '') +
         '"><i>\uD83C\uDF72</i><span class="mp-shl"> Recipes</span>' + tag(cooked) + '</button>';
     }
+    if ((anyEatout && (!q || eatout > 0)) || S.mpShelf === 'eatout') {
+      chips += '<button class="mp-shelf' + (q ? ' counted' : '') +
+        (S.mpShelf === 'eatout' ? ' on' : '') +
+        '" data-mpshelf="eatout" aria-pressed="' + (S.mpShelf === 'eatout' ? 'true' : 'false') +
+        '" aria-label="Eating out' + (q ? ', ' + eatout + ' of them' : '') +
+        '"><i>\uD83E\uDD61</i><span class="mp-shl"> Eating out</span>' + tag(eatout) + '</button>';
+    }
     return '<div class="mp-shelves" id="mpShelves">' + chips + '</div>';
   }
   function mpMatches(r, qs) {
     if (!r) return false;
     if (!mpShelfOK(r)) return false;
     if (!qs) return true;
+    if (r.eatout) return searchScore(r.name + ' ' + (r.spot || ''), qs) >= 0;
     return r.food ? searchScore(r.name, qs) >= 0 : !!matchRank(r, qs);
   }
 
@@ -243,7 +258,7 @@
      or its section comes after every name. `coarse` drops the fine grades
      inside each band, for a list that has its own order (fit) to keep. */
   function mpHitRank(r, q, coarse) {
-    var s = searchScore(r.name, q);
+    var s = searchScore(r.eatout ? r.name + ' ' + (r.spot || '') : r.name, q);
     if (s < 0) {
       if (r.food) return -1;
       var m = matchRank(r, q);
@@ -273,7 +288,7 @@
        you had starred. */
     var hits = [];
     LIVE.MFOODS.forEach(function (r, i) {
-      if (shown[r.id] || !mpShelfOK(r)) return;
+      if (r.eatout || shown[r.id] || !mpShelfOK(r)) return;
       var rk = mpHitRank(r, q);
       if (rk >= 0) hits.push({ r: r, rk: rk, i: i });
     });
@@ -301,9 +316,9 @@
       var slot = null;
       mReadSlots().list.forEach(function (sl) { if (sl.k === S.macroPick.slot) slot = sl; });
       if (!slot) return '';
-      mMealPool(slot, true).forEach(function (r, i) {
+      mMealPool(slot, true).concat(mpEatoutPool()).forEach(function (r, i) {
         if (shown[r.id] || !mIsFav(r) || !mpMatches(r, '')) return;
-        hits.push({ r: r, rk: (r.food ? 0 : 1) - mpMacroShare(r, S.mpShelf) * 0.5, i: i });
+        hits.push({ r: r, rk: (r.food && !r.eatout ? 0 : 1) - mpMacroShare(r, S.mpShelf) * 0.5, i: i });
       });
     } else {
       var look = function (r, i) {
@@ -374,7 +389,7 @@
        then foods before dishes as the look-up box always had it, and fit
        only after that — which is still the order most of a grade is in. */
     var rows = ranked.map(function (e, i) {
-      return { e: e, rk: mpHitRank(e.r, q, true), f: e.r.food ? 0 : 1, i: i };
+      return { e: e, rk: mpHitRank(e.r, q, true), f: (e.r.food && !e.r.eatout) ? 0 : 1, i: i };
     }).sort(function (a, b) {
       return a.rk - b.rk || a.f - b.f || a.i - b.i;
     }).map(function (h) { return h.e; }).slice(0, 12);
@@ -383,7 +398,7 @@
     return '<div class="mt-div">Everything else</div>' + rows.map(function (e) {
       var r = e.r, x0 = mDefaultX(r);
       var xx = S.mpBasket[r.id] !== undefined ? S.mpBasket[r.id] : x0;
-      var src = r.id && String(r.id).indexOf('f:my:') === 0 ? 'Yours' : r.food ? 'Food' : 'Recipe';
+      var src = r.id && String(r.id).indexOf('f:my:') === 0 ? 'Yours' : r.eatout ? 'Eat out' : r.food ? 'Food' : 'Recipe';
       return mpRowHTML(r, x0,
         '<span class="mp-src">' + src + '</span> &times;' + fmtNum(xx) +
         (r.food ? ' ' + esc(r.unit) : '') + ' &middot; ' + mMacLine(r, xx, S.mpBasket[r.id] === undefined),
@@ -456,12 +471,14 @@
       pool = [];
       LIVE.MFOODS.forEach(function (r) {
         if (!r.macro || !(r.macro.kcal > 0 || r.macro.p > 0)) return;
+        if (r.eatout && S.mpShelf !== 'eatout') return;
         pool.push(r);
       });
     } else if (S.mpSec === 'saved') {
       pool = mpSavedMeals();
     } else if (S.mpSec === 'meal') {
       pool = mMealPool(slot, mWideOpen(S.macroPick.slot));
+      if (S.mpShelf === 'eatout' || mpQ()) pool = pool.concat(mpEatoutPool());
     } else {
       var fam = S.mpSec === 'family' ? mFamilyIds(mViewKey()) : null;
       pool = LIVE.RECIPES.filter(function (r) {
@@ -476,9 +493,9 @@
          from whatever lens they happen to be standing in. */
       /* And a typed word reaches the outside foods too, for the same reason
          the lens does: the setting is about drafting, not about looking. */
-      if (mpQ()) {
+      if (mpQ() || S.mpShelf === 'eatout') {
         LIVE.MFOODS.forEach(function (r) {
-          if (r.eat || r.side) pool.push(r);
+          if (r.eat || r.side || r.eatout) pool.push(r);
         });
       }
     }
@@ -535,11 +552,19 @@
        with the top ten is answering the shortlist question again. The old
        Recipes screen showed forty for exactly this reason and it went out
        with the mode. */
+    if (S.mpShelf === 'eatout' && S.mpSec === 'meal' && !q) {
+      var mt = (slot && (slot.t || slot.k)) || 'l';
+      var mHit = [], mRest = [];
+      ranked.forEach(function (e) {
+        (String(e.r.meals || 'bld').indexOf(mt) >= 0 ? mHit : mRest).push(e);
+      });
+      ranked = mHit.concat(mRest);
+    }
     if (S.mpSec === 'foods' || (S.mpShelf && S.mpShelf !== 'recipes')) {
       /* Stable: the fit/macro order is kept inside each group, and the
          condiments simply move below the foods. */
       var eats = [], cond = [];
-      ranked.forEach(function (e) { ((!e.r.food || e.r.eat || e.r.side) ? eats : cond).push(e); });
+      ranked.forEach(function (e) { ((!e.r.food || e.r.eat || e.r.side || e.r.eatout) ? eats : cond).push(e); });
       ranked = eats.concat(cond);
     }
     /* Anything already in the basket stays on screen, outside the cap.

@@ -283,7 +283,7 @@
     ['kb-goblet', 'Kettlebell Goblet Squat', 'quads', 'c', 'db', 'squat', 8, 15],
     ['kb-row', 'One-Arm Kettlebell Row', 'back', 'c', 'db', 'horiz', 8, 12],
     ['kb-floor', 'Kettlebell One-Arm Floor Press', 'chest', 'c', 'db', 'flat', 8, 12],
-    ['kb-tgu', 'Kettlebell Turkish Get-Up', 'front', 'c', 'db', 'press', 3, 6],
+    ['kb-tgu', 'Kettlebell Turkish Get-Up', 'front', 'c', 'db', 'press', 5, 8],
     ['kb-thruster', 'Kettlebell Thruster', 'quads', 'c', 'db', 'squat', 8, 12],
     ['bd-pullup', 'Band-Assisted Pull-Up', 'back', 'c', 'bw', 'vert', 6, 12],
     ['bd-rev-fly', 'Band Reverse Fly', 'rear', 'i', 'bw', 'fly', 12, 20],
@@ -342,7 +342,7 @@
     'db-rear': 'f', 'bb-rear-row': 'f', 'cb-rev-bo': 'f', 'bb-ohp': 'Cx', 'cb-ohp': 'c', 'kb-tgu': 'c', 'calf-stand': 'C', 'bb-calf': 'C',
     'db-shrug': 'c', 'bb-shrug': 'C', 'cb-shrug': 'c',
     'cb-crunch': 'F', 'hang-raise': 'F', 'capt-raise': 'f', 'mc-crunch': 'F', 'crunch': 'F', 'situp': 'F', 'dec-crunch': 'F', 'v-up': 'F', 'ab-wheel': 'X',
-    'sl-rdl': 'F', 'bw-squat': '', 'split-squat': '', 'bw-lunge': '', 'prone-y': 'x'
+    'lm-180': 'f', 'cb-woodchop': 'f', 'sl-rdl': 'F', 'bw-squat': '', 'split-squat': '', 'bw-lunge': '', 'prone-y': 'x'
   };
 
   /* ------------------------------------------------------------ the joints
@@ -575,7 +575,7 @@
     'bd-rev-fly': ['Hold a resistance band in front of your chest at shoulder height, arms nearly straight.', 'Pull the band apart by sweeping your arms out and back, squeezing your rear delts and upper back.', 'Return slowly without letting the band go slack.'],
     'bd-abduct': ['Sit on the edge of a bench with a resistance band looped just above or below your knees, feet hip width.', 'Push your knees outward against the band and pause.', 'Return slowly under control.'],
     'bd-leg-ext': ['Loop the band around a low anchor behind you and around one ankle, seated tall on a bench.', 'Extend your knee until your leg is straight and squeeze your quad at the top.', 'Lower slowly. All reps on one leg, then the other.'],
-    'bw-hip-thrust': ['Rest your upper back against the edge of a bench or couch, feet flat on the floor hip width apart.', 'Drive through your heels until your thighs are parallel to the floor, chin tucked and glutes squeezed.', 'Lower your hips under control and repeat.'],
+    'bw-hip-thrust': ['Lie on your back with your heels propped on the edge of a bench or couch and your knees bent.', 'Drive through your heels until your hips are fully extended in a straight line from shoulders to knees, squeezing your glutes.', 'Lower your hips back toward the floor under control.'],
     'cb-low-fly': ['Set both pulleys near the floor, step forward and hold a handle in each hand with palms facing forward.', 'With a slight elbow bend, scoop your hands up and together in front of your upper chest.', 'Lower slowly along the same arc until your chest stretches.'],
     'cb-high-fly': ['Set both pulleys high above shoulder height and step forward, leaning slightly from the ankles.', 'With a fixed slight bend in your elbows, bring the handles down and together in front of your lower chest.', 'Open slowly back into a stretch.'],
     'cb-rear-seat': ['Sit near the end of a bench facing a low pulley, cables crossed in opposite hands, hinged forward over your thighs.', 'Sweep your arms out to the sides with a slight elbow bend, squeezing your rear delts.', 'Return slowly under control.'],
@@ -587,7 +587,7 @@
     'db-rev-lunge': ['Stand tall holding dumbbells at your sides.', 'Step one foot backward and lower until your back knee nearly touches the floor, front shin vertical.', 'Drive through your front heel to return to standing.'],
     'tri-dip': ['Support yourself on parallel bars with straight arms, shoulders pressed down and torso upright.', 'Keeping your body vertical and elbows tucked close to your sides, lower until your upper arms are about level with the bars.', 'Press straight up to locked arms, focusing on the triceps.'],
     'capt-raise': ['Forearms on the pads, back pressed flat against the backrest, legs hanging.', 'Raise your knees or straight legs toward your chest by curling your pelvis up rather than swinging.', 'Lower slowly under control.'],
-    'kb-halo': ['Stand tall holding a kettlebell upside-down by the horns in front of your chest, core braced.', 'Circle the bell tightly around your head — past one ear, behind your neck, and past the other ear — keeping your ribs down.', 'Alternate directions cleanly each rep.'],
+    'kb-halo': ['Stand tall holding a kettlebell by the horns in front of your chest or hips, core braced.', 'Circle the bell tightly around your head — or sweep it in a high controlled arc across your body and overhead — keeping your ribs down.', 'Alternate directions cleanly each rep.'],
     'sl-leg-curl': ['Kneel or stand on the single-leg curl machine with the pad just above your heel and your thigh against the pad.', 'Curl your heel toward your glute and squeeze your hamstring at the top.', 'Lower slowly to full extension. All reps on one leg, then the other.'],
     'situp': ['Lie on your back with knees bent and feet flat on the floor, hands across your chest or beside your ears.', 'Curl your torso all the way up toward your thighs without yanking on your neck.', 'Lower your back to the floor under control.'],
     'cb-ohp': ['Stand holding low-pulley handles at shoulder height, cables behind your forearms, core braced.', 'Press the handles straight overhead until your arms are extended.', 'Lower slowly back to shoulder height.'],
@@ -597,7 +597,7 @@
     'db-upright': ['Stand tall holding dumbbells in front of your thighs, palms facing your body.', 'Pull the dumbbells up along your body to lower-chest height, elbows leading out to the side.', 'Lower slowly under control.'],
     'kb-inc-press': ['Set the bench to 30–45° and hold a kettlebell or dumbbell at shoulder height in one hand, free hand braced.', 'Press straight up over your upper chest while keeping your ribs and shoulders level on the bench.', 'Lower under control into a stretch. All reps on one arm, then the other.'],
     'dec-crunch': ['Hook your feet under the pads of a decline bench and lie back with hands across your chest or beside your head.', 'Curl your ribs toward your pelvis to lift your upper back off the pad.', 'Lower slowly under control.'],
-    'lm-lunge': ['Stand facing the landmine holding the sleeve at your chest or in one hand on the stepping-back side.', 'Step backward into a reverse lunge until your back knee nearly touches the floor.', 'Drive through your front heel to stand tall.'],
+    'lm-lunge': ['Hold the loaded sleeve of the landmine at your chest or rest a barbell across your upper back, standing tall.', 'Step backward into a reverse lunge until your back knee nearly touches the floor.', 'Drive through your front heel to stand tall.'],
     'v-up': ['Lie flat on your back with arms extended overhead and legs straight.', 'Fold at the hips to lift your torso and straight legs together, reaching your hands toward your toes in a V.', 'Lower back down under control without dropping your feet.']
   };
 
@@ -8306,11 +8306,11 @@
   var SAFETY = {
     'bb-bench': 'Set the safety bars (or pins) just below your chest, or ask someone to spot you. Start with the empty bar.',
     'bb-incline': 'Set the safety bars just below your chest, or ask someone to spot you. Start with the empty bar.',
-    'bb-close': 'Set the safety bars just below your chest, or ask someone to spot you. Start with the empty bar.',
+    'cgbp': 'Set the safety bars just below your chest, or ask someone to spot you. Start with the empty bar.',
     'bb-squat': 'Squat inside the rack with the safety bars just below the bottom of your squat. Start with the empty bar.',
     'bb-front': 'Squat inside the rack with the safety bars just below the bottom of your squat. Start with the empty bar.',
     'sm-squat': 'Set the Smith machine\u2019s stops just below the bottom of your squat.',
-    'sm-bench': 'Set the Smith machine\u2019s stops just below your chest.',
+    'sm-thrust': 'Set the Smith machine\u2019s stops just above the floor.',
     'sm-incline': 'Set the Smith machine\u2019s stops just below your chest.'
   };
   // never logged: no record of any kind, weighted or bodyweight
@@ -8920,7 +8920,7 @@
 
   function mediaFor(e, ex) {
     if (MEDIA[e]) return MEDIA[e];
-    if (!ex) return null;
+    if (!ex || !ex.own) return null;
     var hit = sgMatch(ex.n);
     if (hit && MEDIA[hit]) return MEDIA[hit];
     var best = null;
@@ -10529,7 +10529,7 @@
     'lunge bodyweight': 'bw-lunge', 'bodyweight lunge': 'bw-lunge', 'upright row dumbbell': 'db-upright', 'dumbbell upright row': 'db-upright',
     'kettlebell single arm incline chest press': 'kb-inc-press', 'incline press kettlebell': 'kb-inc-press',
     'decline crunch': 'dec-crunch', 'landmine lunge': 'lm-lunge', 'landmine reverse lunge': 'lm-lunge', 'v up': 'v-up', 'v sit up': 'v-up',
-    'kettlebell hammer curl': 'hammer', 'triceps extension': 'mc-tri', 'dumbbell high incline': 'db-incline',
+    'triceps extension': 'mc-tri', 'dumbbell high incline': 'db-incline',
     'back extension machine': 'back-ext', 'squat machine': 'hack', 'chest fly': 'pec-deck', 'machine leg press calf raise': 'calf-lp'
   };
   function sgKey(n) {

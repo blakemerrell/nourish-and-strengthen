@@ -4928,18 +4928,28 @@ module.exports = {
         _.sgMatch('Cable Twist') === 'cb-woodchop' &&
         _.sgMatch('Thruster (Kettlebell)') === 'kb-thruster' &&
         _.sgMatch('Landmine Oblique Twist') === 'lm-180' &&
-        !_.onBar(_.lib('lm-row'));
-      return { count: _.LIB_LIST.length, ids, rigCount: rigs.size, allValid, allMedia, ohpPriOk, fallbackOk, sgOk };
+        _.sgMatch('Triceps Dip') === 'tri-dip' &&
+        _.sgMatch("Knee Raise (Captain's Chair)") === 'capt-raise' &&
+        _.sgMatch('Halos') === 'kb-halo' &&
+        _.sgMatch('Single Leg - Leg Curl') === 'sl-leg-curl' &&
+        _.sgMatch('Steering wheel') === 'plate-front' &&
+        _.sgMatch('Tricep Press') === 'mc-dip' &&
+        _.sgMatch('Landmine Lunge') === 'lm-lunge' &&
+        !_.onBar(_.lib('lm-row')) &&
+        !_.onBar(_.lib('lm-lunge'));
+      const customAbout = _.exAbout('cx-custom-1', { id: 'cx-custom-1', n: 'Custom Bicep Blaster', m: 'biceps', q: 'db', p: 'iso', k: 'i', rr: [8, 12], own: 1 });
+      const customUsesGif = /class="tr-media"/.test(customAbout) && !/class="tr-ex-anim-card"/.test(customAbout);
+      return { count: _.LIB_LIST.length, ids, rigCount: rigs.size, allValid, allMedia, ohpPriOk, fallbackOk, sgOk, customUsesGif };
     });
     const fs = require('fs'), path = require('path');
-    const gifsOnDisk = anims.count === 144 && anims.ids.every((id) => {
+    const gifsOnDisk = anims.count === 158 && anims.ids.every((id) => {
       const fp = path.join(__dirname, '..', 'art', 'lifts', id + '.gif');
       if (!fs.existsSync(fp)) return false;
       const b = fs.readFileSync(fp);
       return b.length > 1000 && b.slice(0, 3).toString('ascii') === 'GIF';
     });
-    t.ok('Every exercise in LIB_LIST (all 144 lifts) has a local 3D anatomical GIF in art/lifts/, offline SVG error fallback, and primary shoulder highlight on OHP',
-      anims.count === 144 && anims.rigCount === 24 && anims.allValid && anims.allMedia && anims.ohpPriOk && anims.fallbackOk && anims.sgOk && gifsOnDisk,
+    t.ok('Every exercise in LIB_LIST (all 158 lifts) and custom exercises use a local 3D anatomical GIF in art/lifts/, with offline SVG error fallback',
+      anims.count === 158 && anims.rigCount === 24 && anims.allValid && anims.allMedia && anims.ohpPriOk && anims.fallbackOk && anims.sgOk && anims.customUsesGif && gifsOnDisk,
       JSON.stringify(Object.assign({}, anims, { ids: anims.ids.length, gifsOnDisk })));
 
     // ---- Exercise card ✓ Done collapse & crisp KPI summary row ----

@@ -4937,8 +4937,11 @@ module.exports = {
         _.sgMatch('Landmine Lunge') === 'lm-lunge' &&
         !_.onBar(_.lib('lm-row')) &&
         !_.onBar(_.lib('lm-lunge'));
-      const customAbout = _.exAbout('cx-custom-1', { id: 'cx-custom-1', n: 'Custom Bicep Blaster', m: 'biceps', q: 'db', p: 'iso', k: 'i', rr: [8, 12], own: 1 });
-      const customUsesGif = /class="tr-media"/.test(customAbout) && !/class="tr-ex-anim-card"/.test(customAbout);
+      _.state().T.cx['cx-custom-1'] = { n: 'Custom Bicep Blaster', m: 'biceps', q: 'db', k: 'i' };
+      const customAbout = _.exAbout('cx-custom-1', _.lib('cx-custom-1'));
+      delete _.state().T.cx['cx-custom-1'];
+      const unkAbout = _.exAbout('cx-deleted', _.lib('cx-deleted'));
+      const customUsesGif = /class="tr-media"/.test(customAbout) && !/class="tr-ex-anim-card"/.test(customAbout) && /class="tr-ex-anim-card"/.test(unkAbout);
       return { count: _.LIB_LIST.length, ids, rigCount: rigs.size, allValid, allMedia, ohpPriOk, fallbackOk, sgOk, customUsesGif };
     });
     const fs = require('fs'), path = require('path');

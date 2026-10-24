@@ -89,7 +89,8 @@ function check(dir) {
     .split(V).join(site.UNBUILT), 'latin1')]);
   const again = site.contentVersion(back);
   ok('and the version is the hash of the files it covers', again === V, again + ' from the files, ' + V + ' in them');
-  const art = site.contentVersion(w.EXTRAS.map(site.fileOf).map((f) => [f, fs.readFileSync(path.join(dir, f))]));
+  const liftFiles = files.filter((f) => /^art\/lifts\/[^/]+\.gif$/.test(f));
+  const art = site.contentVersion(w.EXTRAS.map(site.fileOf).concat(liftFiles).map((f) => [f, fs.readFileSync(path.join(dir, f))]));
   ok('the art cache is named for the pictures and typefaces in it', art === w.ART_VERSION,
     art + ' from the files, ' + w.ART_VERSION + ' in the worker');
 

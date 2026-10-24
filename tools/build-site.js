@@ -252,7 +252,8 @@ async function build(opts) {
      therefore a new worker and a new app cache as well as a new art cache —
      the app's cache is small, and one version meaning one worker is simpler
      to reason about than two workers sharing a cache name. */
-  const artFiles = worker.EXTRAS.map(fileOf);
+  const liftFiles = files.filter((f) => /^art\/lifts\/[^/]+\.gif$/.test(f));
+  const artFiles = worker.EXTRAS.map(fileOf).concat(liftFiles);
   const art = contentVersion(artFiles.map((f) => [f, out.get(f)]));
   let sw = out.get('sw.js').toString('utf8');
   sw = replaceCounted(sw, declared('ART_VERSION'), art, 1, 'sw.js ART_VERSION');
@@ -302,7 +303,7 @@ async function build(opts) {
 
   return {
     version, art, covered, artFiles, pages, out: o.out, files: written, bytes,
-    sizes: covered.concat(artFiles).map((f) => ({ file: f, raw: src.get(f).length, built: out.get(f).length })),
+    sizes: covered.concat(worker.EXTRAS.map(fileOf)).map((f) => ({ file: f, raw: src.get(f).length, built: out.get(f).length })),
   };
 }
 

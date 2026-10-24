@@ -154,7 +154,8 @@ module.exports = {
        the repository builds today and not one left over from before an
        edit. */
     const w = built.worker(dir);
-    const theirs = w.CORE.concat(w.EXTRAS, w.COVERS).map(site.fileOf).concat('sw.js', 'share/index.html');
+    const liftFiles = fs.readdirSync(path.join(dir, 'art', 'lifts')).filter((f) => f.endsWith('.gif')).map((f) => 'art/lifts/' + f);
+    const theirs = w.CORE.concat(w.EXTRAS, w.COVERS).map(site.fileOf).concat(liftFiles, 'sw.js', 'share/index.html');
     const again = await site.build({ out: scratch(), include: (f) => theirs.indexOf(f) >= 0 });
     const differ = theirs.filter((f) => !fs.readFileSync(path.join(dir, f)).equals(fs.readFileSync(path.join(again.out, f))));
     t.ok('building the same files again gives the same version, byte for byte',

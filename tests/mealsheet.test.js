@@ -1,4 +1,4 @@
-const { openRow } = require('./fixtures/nourish.js');
+const { openRow, openRowOf } = require('./fixtures/nourish.js');
 /* Trays and the meal sheet (Blake, 2026-10-04).
  *
  * Blake, of the RP-style day: "The main page is worse now. Way to fat and
@@ -102,13 +102,30 @@ module.exports = {
       const rows = [...s.querySelectorAll('.mrows .mrow')];
       return { caps: s.querySelectorAll('.msh-top .mcap').length, rows: rows.length,
         ticks: s.querySelectorAll('.mrows [data-meat], .mrows .mday-dot').length,
-        dial: rows.every((r) => r.querySelector('[data-mstep$=":down"]') && r.querySelector('[data-mstep$=":up"]') && r.querySelector('[data-mfmenu]') &&
-          / g$/.test(r.querySelector('.mstep-x').textContent)),
+        /* A line a food since 2026-10-24 (Blake's "B"): its name, grams and
+           calories, with its dial and ⋯ behind a tap, so none is in sight
+           until one is opened. */
+        lines: rows.every((r) => { const b = r.querySelector('[data-mrowopen]');
+          return b && b.offsetHeight >= 44 && / g/.test(b.querySelector('.mrow-sg').textContent) && /kcal/.test(b.querySelector('.mrow-sk').textContent); }),
+        shut: rows.every((r) => !r.querySelector('.mrow-dial').offsetParent && !r.querySelector('[data-mfmenu]').offsetParent),
         find: !!s.querySelector('.msh-find #mpFind'), shelves: !!s.querySelector('.msh-find #mpShelves'),
         basket: !!s.querySelector('[data-mpdone], [data-mpbasket]'), tall: Math.max.apply(null, rows.map((r) => r.offsetHeight)) };
     });
     t.ok('opened, the tray is one row a food, under the meal\'s four pills', !!sh && sh.caps === 4 && sh.rows === 7, JSON.stringify(sh));
-    t.ok('every food: − grams + and ⋯, and no tick of its own', sh && sh.dial && sh.ticks === 0, JSON.stringify(sh));
+    t.ok('every food is a line, its grams and calories, its dial and ⋯ behind a tap, and no tick of its own',
+      sh && sh.lines && sh.shut && sh.ticks === 0, JSON.stringify(sh));
+    await openRow(p, 'l:2');
+    const one = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows .mrow')].map((r) =>
+      (r.querySelector('[data-mrowopen]').getAttribute('aria-expanded') === 'true' ? 'O' : '-') +
+      (r.querySelector('[data-mstep$=":down"]').offsetParent && r.querySelector('[data-mstep$=":up"]').offsetParent &&
+        r.querySelector('[data-mfmenu]').offsetParent && r.querySelector('.mrow-door').offsetParent && / g$/.test(r.querySelector('.mstep-x').textContent) ? 'd' : '')).join());
+    t.ok('a tap opens that one: − grams +, ⋯ and Details, the rest still a line', one === '-,-,Od,-,-,-,-', one);
+    await openRow(p, 'l:4');
+    const shifted = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows [data-mrowopen]')].map((b) => b.getAttribute('aria-expanded') === 'true' ? 'O' : '-').join(''));
+    await p.click('#modalRoot [data-mrowopen="l:4"]');
+    await p.waitForTimeout(150);
+    const none = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows [data-mrowopen]')].every((b) => b.getAttribute('aria-expanded') === 'false'));
+    t.ok('one open at a time: another tap moves it, a tap on the open one shuts it', shifted === '----O--' && none, JSON.stringify({ shifted, none }));
     t.ok('the rows are compact', sh && sh.tall <= 72, JSON.stringify(sh));
     t.ok('under them, the picker: the search box and the shelves, and no basket or Add', sh && sh.find && sh.shelves && !sh.basket, JSON.stringify(sh));
 
@@ -268,8 +285,10 @@ module.exports = {
     t.ok('a food added from the list goes up with the others, and the list holds still under the thumb',
       at0.s > 0 && at1.n === at0.n + 1 && Math.abs(at1.y - at0.y) <= 1, JSON.stringify({ at0, at1 }));
 
-    /* a recipe's name opens the recipe; back lands on the meal's sheet */
+    /* a recipe's Details (its name, until its line became the way to open
+       it) opens the recipe; back lands on the meal's sheet */
     await p.evaluate(() => { const s = document.querySelector('#modalRoot .scrim'); s.scrollTop = 0; });
+    await openRowOf(p, '#modalRoot .mrows [data-open]');
     await p.click('#modalRoot .mrows [data-open]');
     await p.waitForTimeout(400);
     const rec = await p.evaluate(() => !document.querySelector('#modalRoot .msheet') && !!document.querySelector('#modalRoot .sheet'));

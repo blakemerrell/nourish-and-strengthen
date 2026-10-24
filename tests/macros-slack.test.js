@@ -4,7 +4,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, goDay, stepDay, openPlan, openMeal, closeSheet, openTray } = require('./fixtures/nourish.js');
+const { nourish, goDay, stepDay, openPlan, openMeal, closeSheet, openTray, openRow } = require('./fixtures/nourish.js');
 
 module.exports = nourish({
   name: 'Macros — salt, a meal\'s tray, and handing slack on',
@@ -659,6 +659,7 @@ module.exports = nourish({
     });
     t.ok('a food’s name is a door, not a label',
       !!door && door.tag === 'BUTTON' && door.id !== '', JSON.stringify(door));
+    await openRow(fold);
     await fold.click('#modalRoot .msheet .mrow .mitem-name');
     await fold.waitForTimeout(400);
     t.ok('and pressing it opens what it names',

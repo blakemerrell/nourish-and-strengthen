@@ -240,6 +240,7 @@ module.exports = nourish({
     await wg.click('.tab[data-view="macros"]');
     await wg.waitForTimeout(300);
     await openMeal(wg, 'b');
+    await openRow(wg, 'b:0');
     const weighed = await wg.evaluate(() => {
       const row = document.querySelector('#modalRoot .mrows .mitem');
       /* It has its own chip on the facts band now, ahead of the figures —

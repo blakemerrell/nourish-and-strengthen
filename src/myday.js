@@ -458,6 +458,12 @@
       '<div class="mrow-dr">' +
       '<span class="mrow-m mitem-r2">' + (measure ? '<span class="mitem-uom">' + esc(measure) + '</span> &middot; ' : '') +
         '<span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mSaltChip(r, it.x) + mWhyChip(it, tag) + '</span>' +
+      /* The name was the way to a food's page; a tap on it opens the line
+         now, so the page is a word of its own in the drawer. */
+      (r.food
+        ? '<button class="mitem-name mitem-food mrow-door" data-mfood="' + esc(String(r.id)) + '" data-mx="' + it.x + '" data-mfslot="' + esc(sk) + '"'
+        : '<button class="mitem-name mrow-door" data-open="' + esc(String(r.id)) + '" data-mx="' + it.x + '"') +
+        ' aria-label="' + esc(r.name) + ', ' + (r.food ? 'the food' : 'the recipe') + '">' + I_INFO + 'Details</button>' +
       /* Typing opens an EMPTY box with the amount shown faint behind it, so
          what you type is the amount. Opened holding the number, it relied on
          the phone selecting it, and an iPhone often does not: Blake had to
@@ -479,11 +485,6 @@
       mWhyStrip(it, tag) + mBatchStrip(r, it, tag) +
       (menuOpen ? '<div class="mfood-menu mrow-menu no-print" role="menu">' +
         (moveOpen ? destHTML :
-          /* The name was the way to a food's page; tapping it opens the row now. */
-          (r.food
-            ? '<button class="mfood-mi mdetail" role="menuitem" data-mfood="' + esc(String(r.id)) + '" data-mx="' + it.x + '" data-mfslot="' + esc(sk) + '">'
-            : '<button class="mfood-mi mdetail" role="menuitem" data-open="' + esc(String(r.id)) + '" data-mx="' + it.x + '">') +
-            I_INFO + 'Details</button>' +
           '<button class="mfood-mi mlock" role="menuitem" data-mlock="' + tag + '" aria-pressed="' + (it.l ? 'true' : 'false') + '">' +
             (it.l ? I_OPEN + 'Let it move' : I_LOCK + 'Lock the amount') + '</button>' +
           '<button class="mfood-mi mswap" role="menuitem" data-mswap="' + tag + '">' + I_SWAP + 'Swap</button>' +

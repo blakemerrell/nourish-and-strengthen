@@ -311,4 +311,12 @@ async function openRow(pg, tag) {
   if (shut) { await pg.click(sel); await pg.waitForTimeout(150); }
 }
 
-module.exports = { openRow, goDay, stepDay, nourish, openWeigh, openPlan, revealPlanFields, addOn, asPlanned, openBasket, openMeal, closeSheet, openTray, pickRecipe, pickerList, addTo, storedDay, weighIn, todayOn, openDay };
+/* The same, for the line that holds `inner` (a selector inside a food's
+   drawer, say its Details door), wherever in the sheet that food is. */
+async function openRowOf(pg, inner) {
+  const tag = await pg.evaluate((q) => { const e = document.querySelector(q), row = e && e.closest('.mrow');
+    const b = row && row.querySelector('[data-mrowopen]'); return b ? b.dataset.mrowopen : null; }, inner);
+  if (tag) await openRow(pg, tag);
+}
+
+module.exports = { openRowOf, openRow, goDay, stepDay, nourish, openWeigh, openPlan, revealPlanFields, addOn, asPlanned, openBasket, openMeal, closeSheet, openTray, pickRecipe, pickerList, addTo, storedDay, weighIn, todayOn, openDay };

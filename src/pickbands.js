@@ -122,9 +122,14 @@
     if (mpSpotOf(r) === want) return true;
     return !!(r && r.spots && r.spots.indexOf(want) >= 0);
   }
+  function mpKindMatch(r, want) {
+    if (!want) return true;
+    return !!(r && r.kinds && r.kinds.indexOf(want) >= 0);
+  }
+  var MP_KINDS = [['fast', '\uD83C\uDF54', 'Fast food'], ['sit', '\uD83C\uDF7D\uFE0F', 'Sit-down'], ['grab', '\u26FD', 'Grab & go']];
   function mpShelfOK(r) {
     if (!S.mpShelf) return !r.eatoutMenu;
-    if (S.mpShelf === 'eatout') return !!(r.eatout || r.eatoutMenu) && mpSpotMatch(r, S.mpSpot);
+    if (S.mpShelf === 'eatout') return !!(r.eatout || r.eatoutMenu) && mpKindMatch(r, S.mpKind) && mpSpotMatch(r, S.mpSpot);
     if (r.eatout || r.eatoutMenu) return false;
     if (S.mpShelf === 'recipes') return !r.food;
     if (S.mpShelf === 'protein' || S.mpShelf === 'fat' || S.mpShelf === 'carb') {
@@ -191,13 +196,19 @@
   function mpSpotsHTML(slot, q) {
     if (S.mpShelf !== 'eatout') return '';
     var mt = (slot && (slot.t || slot.k)) || 'l';
-    var counts = {}, mealHit = {}, seen = [];
+    var counts = {}, mealHit = {}, seen = [], kindN = {}, allN = 0;
     mpEatoutPool().forEach(function (r) {
       var sp = mpSpotOf(r);
       if (!sp) return;
+      var hit = !q || mpTextMatch(r, q);
+      if (hit) {
+        allN++;
+        (r.kinds || []).forEach(function (kd) { kindN[kd] = (kindN[kd] || 0) + 1; });
+      }
+      if (!mpKindMatch(r, S.mpKind)) return;
       if (counts[sp] === undefined) { counts[sp] = 0; seen.push(sp); }
       if (String(r.meals || 'bld').indexOf(mt) >= 0) mealHit[sp] = 1;
-      if (!q || mpTextMatch(r, q)) counts[sp]++;
+      if (hit) counts[sp]++;
     });
     seen.sort(function (a, b) {
       var ma = mealHit[a] ? 0 : 1, mb = mealHit[b] ? 0 : 1;
@@ -207,12 +218,22 @@
     });
     /* Each chip carries its count of orders (of those a search still
        matches), so a place with two is not mistaken for one with sixteen. */
-    var all = 0;
-    seen.forEach(function (sp) { all += counts[sp] || 0; });
     var orders = function (c) { return c + (c === 1 ? ' order' : ' orders'); };
-    var chips = '<button class="mp-spot' + (S.mpSpot ? '' : ' on') +
-      '" data-mpspot="" aria-pressed="' + (S.mpSpot ? 'false' : 'true') + '" aria-label="All restaurants, ' + orders(all) + '">' +
-      'All<small class="mp-spn">' + all + '</small></button>';
+    var allOn = !S.mpSpot && !S.mpKind;
+    var chips = '<button class="mp-spot' + (allOn ? ' on' : '') +
+      '" data-mpspot="" aria-pressed="' + (allOn ? 'true' : 'false') + '" aria-label="All restaurants, ' + orders(allN) + '">' +
+      'All<small class="mp-spn">' + allN + '</small></button>';
+    /* The three kinds of place lead the row (Blake chose them, 2026-10-24,
+       mockup https://claude.ai/artifact/8ZbY84w2EfdQxbbpT7ULrp): one picked,
+       the places after the line are only that kind, and so is the list. */
+    MP_KINDS.forEach(function (kd) {
+      var c = kindN[kd[0]] || 0;
+      if (!c && S.mpKind !== kd[0]) return;
+      var on = S.mpKind === kd[0];
+      chips += '<button class="mp-spot mp-kind' + (on ? ' on' : '') + '" data-mpkind="' + kd[0] + '" aria-pressed="' + (on ? 'true' : 'false') +
+        '" aria-label="' + esc(kd[2]) + ', ' + orders(c) + '"><i>' + kd[1] + '</i>' + esc(kd[2]) + '<small class="mp-spn">' + c + '</small></button>';
+    });
+    chips += '<span class="mp-spsep" aria-hidden="true"></span>';
     seen.forEach(function (sp) {
       var c = counts[sp] || 0;
       if (q && c < 1 && S.mpSpot !== sp) return;

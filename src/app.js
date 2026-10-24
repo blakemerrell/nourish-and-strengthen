@@ -399,6 +399,16 @@
       BY_ID[MFOODS[MFOODS.length - 1].id] = MFOODS[MFOODS.length - 1];
     });
     var eo = SHELVES.mEatoutCatalog(), pSpot = {}, pSpots = {}, pMeals = {};
+    /* The kinds of place a record is from (fast, sit or grab), for the type
+       chips under Eating out: a menu item two places share can be both. */
+    var kindsOf = function (names) {
+      var out = [];
+      names.forEach(function (nm) {
+        var kd = (eo.kinds || {})[nm] || 'fast';
+        if (out.indexOf(kd) < 0) out.push(kd);
+      });
+      return out;
+    };
     eo.combos.forEach(function (cf) {
       var sp0 = cf.spot || '';
       var spClean = String(sp0).split(/\s*\u00b7\s*/)[0].trim();
@@ -421,7 +431,7 @@
       var dname = sp && pf.name.indexOf(sp) !== 0 ? (sp + ' \u2014 ' + pf.name) : pf.name;
       var prec = {
         id: 'f:' + pk, food: true, side: false, eat: false, lever: false,
-        eatoutPart: true, eatoutMenu: !!spotRaw, spot: spotRaw, spots: spots,
+        eatoutPart: true, eatoutMenu: !!spotRaw, spot: spotRaw, spots: spots, kinds: kindsOf(spots.length ? spots : sp ? [sp] : []),
         meals: pf.meals || pMeals[pk] || 'blds', veg: !!pf.veg, starch: !!pf.starch, shelf: spotRaw ? 'eatout' : (pf.shelf || ''),
         ext: true, zone: '', book: 0, secNum: 0, secName: spotRaw || 'Eating out',
         name: dname, rawName: pf.name, servings: '1 ' + (pf.unit || 'serving'), servN: 1,
@@ -453,7 +463,7 @@
       cf2 = Math.round(cf2 * 10) / 10;
       var crec = {
         id: 'f:rc_' + cf.id, food: true, side: false, eat: false, lever: false,
-        eatout: true, spot: cf.spot || 'Eating out',
+        eatout: true, spot: cf.spot || 'Eating out', kinds: kindsOf([String(cf.spot || '').split(/\s*\u00b7\s*/)[0].trim()]),
         meals: cf.meals || 'bld', veg: false, starch: false, shelf: 'eatout',
         ext: true, zone: '', book: 0, secNum: 0, secName: cf.spot || 'Eating out',
         name: cf.name, servings: '1 order', servN: 1, unit: 'order', grams: Math.round(cg),
@@ -3953,7 +3963,7 @@
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
-    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpspot', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave'];
+    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave'];
 
   function focusKey(el) {
     if (!el || el === document.body || !el.getAttribute) return null;
@@ -7086,6 +7096,7 @@
         var want = msh.dataset.mpshelf;
         S.mpShelf = S.mpShelf === want ? '' : want;
         S.mpSpot = '';
+        S.mpKind = '';
         var rail = $('mpShelves');
         if (rail) {
           Array.prototype.forEach.call(rail.querySelectorAll('[data-mpshelf]'), function (b2) {
@@ -7098,10 +7109,32 @@
         return;
       }
 
+      /* A type chip (fast food, sit-down, grab & go) narrows the places after
+         it as well as the list, so the row is drawn again, not just re-lit;
+         a place picked under another type is let go. */
+      var mkd = e.target.closest('[data-mpkind]');
+      if (mkd && S.macroPick) {
+        var wantKind = mkd.dataset.mpkind;
+        S.mpKind = (!wantKind || S.mpKind === wantKind) ? '' : wantKind;
+        S.mpSpot = '';
+        var kSpots = $('mpSpots');
+        if (kSpots) kSpots.setAttribute('data-q', '\u0001');   // stale, so mRailSync draws it again
+        refreshMacroPicker();
+        return;
+      }
+
       var msp = e.target.closest('[data-mpspot]');
       if (msp && S.macroPick) {
         var wantSpot = msp.dataset.mpspot;
         S.mpSpot = (!wantSpot || S.mpSpot === wantSpot) ? '' : wantSpot;
+        // All lets go of a type too, and the row is drawn again to show every place
+        if (!wantSpot && S.mpKind) {
+          S.mpKind = '';
+          var aSpots = $('mpSpots');
+          if (aSpots) aSpots.setAttribute('data-q', '\u0001');
+          refreshMacroPicker();
+          return;
+        }
         var spots = $('mpSpots');
         if (spots) {
           Array.prototype.forEach.call(spots.querySelectorAll('[data-mpspot]'), function (b2) {
@@ -8325,6 +8358,7 @@
     S.mpQuery = '';
     S.mpShelf = '';
     S.mpSpot = '';
+    S.mpKind = '';
     // a basket left behind would silently refill the next meal you opened
     S.mpBasket = {};
     /* A Train sheet is an entry in the same history, so the same back

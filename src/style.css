@@ -7640,6 +7640,11 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   cursor: pointer;
 }
 .mp-spn { font-size: 0.6875rem; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+/* The three kinds of place, squarer than the places so they read as a
+   different sort of choice, and a hairline between them and the places. */
+.mp-kind:not(#u#u)::after { border-radius: 10px; }
+.mp-kind i { font-style: normal; font-size: 0.9375rem; line-height: 1; }
+.mp-spsep { flex: none; width: 1px; margin: 12px 3px; background: var(--line-firm); }
 .mp-spot.on .mp-spn { color: inherit; opacity: 0.75; }
 .msh-acts { display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; padding: 6px 12px 0; }
 .msh-bal {

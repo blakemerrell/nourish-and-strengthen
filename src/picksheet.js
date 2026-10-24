@@ -87,6 +87,7 @@
     S.mpQuery = '';
     S.mpShelf = '';
     S.mpSpot = '';
+    S.mpKind = '';
     S.mpMode = mode || 'home';
     /* What a tap put on the meal during THIS visit, by id: the rows that
        wear the ✓, and what a second tap takes back off (app.js). */

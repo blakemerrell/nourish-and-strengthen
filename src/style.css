@@ -7596,31 +7596,51 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .msh-on .mrows .mrow.mrow-open { border-color: var(--ochre); }
 .msh-on .mrows .mrow.moved, .msh-on .mrows .mrow.swapping { background: var(--ochre-soft); border-color: var(--ochre); }
 .msheet .msh-tray.open .msh-trc { display: none; }
-.mp-shelves {
-  gap: 4px;
-  -webkit-mask-image: none;
-  mask-image: none;
-}
-/* 13 px, the floor every type on the app keeps (macros-ux): the five pills
-   went in at 12.5 px with the rail's simplification (#102). */
+/* The rail and the row of restaurants under it scroll sideways and fade at
+   the right edge, so a chip past the edge reads as "more this way".
+ *
+   #102 made the five chips share the width (flex: 1 1 auto) with no fade.
+   A sixth, 🥡 Eating out, came in on 2026-10-24 and the six were squeezed
+   into one screen: the pills shrank under their words, the emoji sat on the
+   pill's edge, and "Eating out" was cut off at the glass (Blake: "make them
+   look good please"). Now a chip never shrinks; Protein, Fats and Carbs are
+   their emoji alone, square, the word kept for a screen reader; and the
+   rail scrolls where six do not fit. Mockup he chose (A1):
+   https://claude.ai/artifact/V6CvsMrVo3Br21YeVPe67N */
+.mp-shelves { gap: 4px; }
+/* Room at the end of the scroll for the fade to fall on, so the last chip,
+   scrolled to, is not itself faded (🥡 Eating out, chosen, was). */
+.mp-shelves::after { content: ''; flex: 0 0 22px; }
+/* 13 px, the floor every type on the app keeps (macros-ux). */
 .mp-shelf:not(#u#u) {
-  flex: 1 1 auto;
-  min-width: 44px;
-  padding: 0 7px;
-  font-size: 0.8125rem;
-  gap: 3px;
-  white-space: nowrap;
-}
-.mp-shelf i { font-size: 0.875rem; }
-.mp-spots { margin-top: 2px; }
-.mp-spot:not(#u#u) {
   flex: none;
   min-width: 44px;
   padding: 0 11px;
   font-size: 0.8125rem;
+  gap: 4px;
+  white-space: nowrap;
+}
+.mp-shelf.emo:not(#u#u) { width: 44px; padding: 0; }
+.mp-shelf.emo.counted:not(#u#u) { width: auto; padding: 0 10px; }
+.mp-shelf.emo .mp-shl {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+.mp-shelf i { font-size: 0.9375rem; }
+.mp-shelf.emo i { font-size: 1.0625rem; }
+.mp-spots { margin-top: 2px; }
+/* Each place says how many orders it has, small and after the name, the way
+   a typed search counts the rail's chips. */
+.mp-spot:not(#u#u) {
+  flex: none;
+  min-width: 44px;
+  padding: 0 12px;
+  font-size: 0.8125rem;
+  gap: 5px;
   white-space: nowrap;
   cursor: pointer;
 }
+.mp-spn { font-size: 0.6875rem; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mp-spot.on .mp-spn { color: inherit; opacity: 0.75; }
 .msh-acts { display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; padding: 6px 12px 0; }
 .msh-bal {
   min-height: 50px; margin: 0; border-radius: 11px; border: 1px solid var(--line-firm); background: var(--card); color: var(--ink);

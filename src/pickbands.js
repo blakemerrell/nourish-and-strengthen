@@ -205,15 +205,21 @@
       var ia = MP_SPOT_ORDER.indexOf(a), ib = MP_SPOT_ORDER.indexOf(b);
       return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
     });
+    /* Each chip carries its count of orders (of those a search still
+       matches), so a place with two is not mistaken for one with sixteen. */
+    var all = 0;
+    seen.forEach(function (sp) { all += counts[sp] || 0; });
+    var orders = function (c) { return c + (c === 1 ? ' order' : ' orders'); };
     var chips = '<button class="mp-spot' + (S.mpSpot ? '' : ' on') +
-      '" data-mpspot="" aria-pressed="' + (S.mpSpot ? 'false' : 'true') + '">All</button>';
+      '" data-mpspot="" aria-pressed="' + (S.mpSpot ? 'false' : 'true') + '" aria-label="All restaurants, ' + orders(all) + '">' +
+      'All<small class="mp-spn">' + all + '</small></button>';
     seen.forEach(function (sp) {
       var c = counts[sp] || 0;
       if (q && c < 1 && S.mpSpot !== sp) return;
       var on = S.mpSpot === sp;
       chips += '<button class="mp-spot' + (on ? ' on' : '') +
-        '" data-mpspot="' + esc(sp) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' +
-        esc(sp) + '</button>';
+        '" data-mpspot="' + esc(sp) + '" aria-pressed="' + (on ? 'true' : 'false') + '" aria-label="' + esc(sp) + ', ' + orders(c) + '">' +
+        esc(sp) + '<small class="mp-spn">' + c + '</small></button>';
     });
     return '<div class="mp-shelves mp-spots" id="mpSpots" role="group" aria-label="Restaurant">' + chips + '</div>';
   }
@@ -243,7 +249,7 @@
     MP_PILLS.forEach(function (sh) {
       var c = n[sh[0]] || 0;
       if (q && c < 1 && S.mpShelf !== sh[0]) return;
-      chips += '<button class="mp-shelf' + (q ? ' counted' : '') +
+      chips += '<button class="mp-shelf emo' + (q ? ' counted' : '') +
         (S.mpShelf === sh[0] ? ' on' : '') +
         '" data-mpshelf="' + sh[0] + '" aria-pressed="' + (S.mpShelf === sh[0] ? 'true' : 'false') +
         '" aria-label="' + esc(sh[2]) + (q ? ', ' + c + ' of them' : '') +

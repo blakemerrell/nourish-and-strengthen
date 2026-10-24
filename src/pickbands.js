@@ -190,8 +190,11 @@
     'Costa Vida', 'Cafe Rio', 'Chipotle', 'Subway', 'Jersey Mike\u2019s', 'Jimmy John\u2019s',
     'Taco Bell', 'Taco Time', 'Culver\u2019s', 'In-N-Out', 'Panda Express', 'Cafe Zupas',
     'R&R BBQ', 'Kneaders', 'Mo\u2019 Bettahs', 'Teriyaki Grill', 'Cupbop', 'Sonic Drive-In',
-    'Burger King', 'Maverik', 'Walmart Deli', 'Grogg\u2019s Pinnacle Brewing',
-    'JB\u2019s Restaurant', 'Wingers', 'Sherald\u2019s', 'Domino\u2019s', 'Little Caesars'
+    'Burger King', 'Maverik', 'Walmart Deli',
+    'Texas Roadhouse', 'LongHorn', 'Olive Garden', 'Chili\u2019s', 'Denny\u2019s',
+    'Grogg\u2019s Pinnacle Brewing', 'JB\u2019s Restaurant', 'Wingers', 'Club Mecca',
+    'Greek Streak', 'Los 2 Amigos', 'El Salto', 'Los 2 Potrillos', 'Totonacos',
+    'Tangerine Eatery', 'Juniper Pizza Cafe', 'Sherald\u2019s', 'Domino\u2019s', 'Little Caesars'
   ];
   function mpSpotsHTML(slot, q) {
     if (S.mpShelf !== 'eatout') return '';
@@ -299,7 +302,7 @@
   }
   function mpTextMatch(r, qs) {
     if (!qs) return true;
-    if (r.eatout || r.eatoutMenu) return searchScore(r.name + ' ' + (r.spot || ''), qs) >= 0;
+    if (r.eatout || r.eatoutMenu) return searchScore(r.name + ' ' + (r.spot || '') + (r.spots && r.spots.length ? ' ' + r.spots.join(' ') : ''), qs) >= 0;
     return r.food ? searchScore(r.name, qs) >= 0 : !!matchRank(r, qs);
   }
   function mpMatches(r, qs) {
@@ -340,7 +343,7 @@
      or its section comes after every name. `coarse` drops the fine grades
      inside each band, for a list that has its own order (fit) to keep. */
   function mpHitRank(r, q, coarse) {
-    var s = searchScore((r.eatout || r.eatoutMenu) ? r.name + ' ' + (r.spot || '') : r.name, q);
+    var s = searchScore((r.eatout || r.eatoutMenu) ? r.name + ' ' + (r.spot || '') + (r.spots && r.spots.length ? ' ' + r.spots.join(' ') : '') : r.name, q);
     if (s < 0) {
       if (r.food) return -1;
       var m = matchRank(r, q);

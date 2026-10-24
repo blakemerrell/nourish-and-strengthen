@@ -449,7 +449,9 @@
       '</button>';
     var cls = 'mitem mfood mrow mrow-x ' + (open ? 'mrow-open' : 'mrow-shut') + (it.eaten ? ' eaten' : '') + (it.l ? ' held' : '') +
       (was !== undefined ? ' moved' : fresh ? ' fresh' : '') + (swapping ? ' swapping' : '');
-    if (!open) return '<div class="' + cls + '">' + sum + '</div>';
+    /* A shut line keeps its drawer, unseen (display: none, so not read
+       aloud or tappable either): what a food costs and how it is measured
+       stay in the page for whatever reads them, and opening it is a class. */
     return '<div class="' + cls + '">' +
       (swapping ? '<div class="mrow-swap">Tap its replacement below<button class="ghost" data-mswapx="1">Cancel</button></div>' : '') +
       sum +

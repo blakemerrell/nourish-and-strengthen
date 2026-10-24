@@ -7468,6 +7468,7 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 }
 .msheet .mrow-dr .mrow-m { flex: 1 1 150px; min-width: 0; overflow-wrap: anywhere; }
 .msheet .mrow-dr > .mwhy-strip { flex: 1 1 100%; }
+.msheet .mrow-shut .mrow-dr { display: none; }
 .msheet .mrow .mitem-name:hover .mrow-nm { text-decoration: underline; text-decoration-color: var(--line-firm); text-underline-offset: 3px; }
 .mrow-mk { flex: none; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ochre-text); display: inline-flex; align-items: center; gap: 2px; }
 .mrow-mk.new { color: var(--green); }

@@ -130,7 +130,7 @@
      through to "one serving" put a whole cup of salsa on a salty day. */
   function mMealFitX(sk, r) {
     if (!r || !r.macro || !(r.macro.kcal > 0 || r.macro.p > 0 || r.macro.f > 0 || r.macro.c > 0)) return null;
-    if (r.eatout) return 1;
+    if (r.eatout || r.eatoutPart) return 1;
     var k = mViewKey();
     var ask = mMealAsk(sk, mDayTargets(k), mReadSlots());
     if (!ask) return null;
@@ -158,7 +158,7 @@
       var held = opt.hold !== undefined ? (day[sk] || [])[opt.hold] : null;
       var free = (day[sk] || []).filter(function (it) {
         var r = LIVE.BY_ID[it.id];
-        return it !== held && !it.eaten && !it.l && r && !r.eatout && r.macro && r.macro.kcal > 0;
+        return it !== held && !it.eaten && !it.l && r && !r.eatout && !r.eatoutPart && r.macro && r.macro.kcal > 0;
       });
       if (!free.length) return;
       /* The meal's FULL share of the day, not what is left of the day after

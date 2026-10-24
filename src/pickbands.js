@@ -111,13 +111,21 @@
   function mpEatoutPool() {
     return LIVE.MFOODS.filter(function (r) { return !!r.eatout; });
   }
+  function mpEatoutMenus() {
+    return LIVE.MFOODS.filter(function (r) { return !!r.eatoutMenu; });
+  }
   function mpSpotOf(r) {
     return r && r.spot ? String(r.spot).split(/\s*\u00b7\s*/)[0].trim() : '';
   }
+  function mpSpotMatch(r, want) {
+    if (!want) return true;
+    if (mpSpotOf(r) === want) return true;
+    return !!(r && r.spots && r.spots.indexOf(want) >= 0);
+  }
   function mpShelfOK(r) {
-    if (!S.mpShelf) return true;
-    if (S.mpShelf === 'eatout') return !!r.eatout && (!S.mpSpot || mpSpotOf(r) === S.mpSpot);
-    if (r.eatout) return false;
+    if (!S.mpShelf) return !r.eatoutMenu;
+    if (S.mpShelf === 'eatout') return !!(r.eatout || r.eatoutMenu) && mpSpotMatch(r, S.mpSpot);
+    if (r.eatout || r.eatoutMenu) return false;
     if (S.mpShelf === 'recipes') return !r.food;
     if (S.mpShelf === 'protein' || S.mpShelf === 'fat' || S.mpShelf === 'carb') {
       return !!r.food && mpMacroDomKey(r) === S.mpShelf;
@@ -259,7 +267,7 @@
   }
   function mpTextMatch(r, qs) {
     if (!qs) return true;
-    if (r.eatout) return searchScore(r.name + ' ' + (r.spot || ''), qs) >= 0;
+    if (r.eatout || r.eatoutMenu) return searchScore(r.name + ' ' + (r.spot || ''), qs) >= 0;
     return r.food ? searchScore(r.name, qs) >= 0 : !!matchRank(r, qs);
   }
   function mpMatches(r, qs) {
@@ -300,7 +308,7 @@
      or its section comes after every name. `coarse` drops the fine grades
      inside each band, for a list that has its own order (fit) to keep. */
   function mpHitRank(r, q, coarse) {
-    var s = searchScore(r.eatout ? r.name + ' ' + (r.spot || '') : r.name, q);
+    var s = searchScore((r.eatout || r.eatoutMenu) ? r.name + ' ' + (r.spot || '') : r.name, q);
     if (s < 0) {
       if (r.food) return -1;
       var m = matchRank(r, q);
@@ -330,7 +338,7 @@
        you had starred. */
     var hits = [];
     LIVE.MFOODS.forEach(function (r, i) {
-      if (r.eatout || shown[r.id] || !mpShelfOK(r)) return;
+      if (r.eatout || r.eatoutMenu || shown[r.id] || !mpShelfOK(r)) return;
       var rk = mpHitRank(r, q);
       if (rk >= 0) hits.push({ r: r, rk: rk, i: i });
     });
@@ -358,9 +366,9 @@
       var slot = null;
       mReadSlots().list.forEach(function (sl) { if (sl.k === S.macroPick.slot) slot = sl; });
       if (!slot) return '';
-      mMealPool(slot, true).concat(mpEatoutPool()).forEach(function (r, i) {
+      mMealPool(slot, true).concat(mpEatoutPool()).concat(mpEatoutMenus()).forEach(function (r, i) {
         if (shown[r.id] || !mIsFav(r) || !mpMatches(r, '')) return;
-        hits.push({ r: r, rk: (r.food && !r.eatout ? 0 : 1) - mpMacroShare(r, S.mpShelf) * 0.5, i: i });
+        hits.push({ r: r, rk: (r.food && !r.eatout && !r.eatoutMenu ? 0 : 1) - mpMacroShare(r, S.mpShelf) * 0.5, i: i });
       });
     } else {
       var look = function (r, i) {
@@ -440,7 +448,7 @@
     return '<div class="mt-div">Everything else</div>' + rows.map(function (e) {
       var r = e.r, x0 = mDefaultX(r);
       var xx = S.mpBasket[r.id] !== undefined ? S.mpBasket[r.id] : x0;
-      var src = r.id && String(r.id).indexOf('f:my:') === 0 ? 'Yours' : r.eatout ? 'Eat out' : r.food ? 'Food' : 'Recipe';
+      var src = r.id && String(r.id).indexOf('f:my:') === 0 ? 'Yours' : (r.eatout || r.eatoutMenu) ? 'Eat out' : r.food ? 'Food' : 'Recipe';
       return mpRowHTML(r, x0,
         '<span class="mp-src">' + src + '</span> &times;' + fmtNum(xx) +
         (r.food ? ' ' + esc(r.unit) : '') + ' &middot; ' + mMacLine(r, xx, S.mpBasket[r.id] === undefined),
@@ -513,7 +521,7 @@
       pool = [];
       LIVE.MFOODS.forEach(function (r) {
         if (!r.macro || !(r.macro.kcal > 0 || r.macro.p > 0)) return;
-        if (r.eatout && S.mpShelf !== 'eatout') return;
+        if (r.eatoutMenu || (r.eatout && S.mpShelf !== 'eatout')) return;
         pool.push(r);
       });
     } else if (S.mpSec === 'saved') {
@@ -653,9 +661,9 @@
          No message here either way. A band that returns any string at all
          makes the list look non-empty, and that is what buried the honest
          sentence the first time this was tried. */
-      if (mpQ()) return '';
+      if (mpQ()) return mpMenuHTML(skip, slot, targets, planned, q);
       return '<div class="mt-div mt-div-x">' + (planned ? 'Fits best' : 'On the shelf') +
-        mpLensHTML() + '</div>';
+        mpLensHTML() + '</div>' + mpMenuHTML(skip, slot, targets, planned, q);
     }
     /* Writes into the shared set, which it never used to — safe only while it
        was composed last, and it is not last any more. */
@@ -670,7 +678,47 @@
       /* Ranked by how well it fits the day, offered at what a tap puts
          down: what you have, or what fits this meal (mDefaultX). */
       return mpRowHTML(e.r, mDefaultX(e.r));
-    }).join('');
+    }).join('') + mpMenuHTML(skip, slot, targets, planned, q);
+  }
+
+  function mpMenuHTML(skip, slot, targets, planned, q) {
+    if (S.mpShelf !== 'eatout') return '';
+    var mpool = mpEatoutMenus().filter(function (r) {
+      return !skip[r.id] && mpMatches(r, q);
+    });
+    if (!mpool.length) return '';
+    var mranked = planned
+      ? mRank(mpool, mDay(mViewKey()), targets, slot).filter(function (e) {
+          return e.score !== null && (q || !mNever(e.r.id));
+        })
+      : mpool.map(function (r) { return { r: r, x: 1 }; });
+    var order = mpSortNow();
+    if (order === 'protein') {
+      mranked.sort(function (a, b) {
+        return ((b.r.macro && b.r.macro.p) || 0) - ((a.r.macro && a.r.macro.p) || 0);
+      });
+    } else if (order === 'healthy') {
+      mranked.sort(function (a, b) { return (b.r.score || 0) - (a.r.score || 0); });
+    }
+    if (S.mpSec === 'meal' && !q) {
+      var mt = (slot && (slot.t || slot.k)) || 'l';
+      var mHit = [], mRest = [];
+      mranked.forEach(function (e) {
+        (String(e.r.meals || 'blds').indexOf(mt) >= 0 ? mHit : mRest).push(e);
+      });
+      mranked = mHit.concat(mRest);
+    }
+    var held = [], offer = [];
+    mranked.forEach(function (e) {
+      (S.mpBasket[e.r.id] !== undefined ? held : offer).push(e);
+    });
+    mranked = offer.slice(0, S.mpSpot ? 60 : 20).concat(held);
+    if (!mranked.length) return '';
+    mranked.forEach(function (e) { skip[e.r.id] = 1; });
+    return '<div class="mt-div">Menu items</div>' +
+      mranked.map(function (e) {
+        return mpRowHTML(e.r, mDefaultX(e.r));
+      }).join('');
   }
 
   /* `shown` is shared with the bands above and below, so the same dish is

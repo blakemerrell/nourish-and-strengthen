@@ -169,7 +169,12 @@ module.exports = {
     t.ok('holding + down opens the same line, and does not open food search', (await emp()).open && !(await p.$('#modalRoot .msheet')));
     await p.click(card('s') + ' [data-mhold]');
     await p.waitForTimeout(500);
-    t.ok('while a plain tap on + goes straight to food search', !!(await p.$('#modalRoot .msheet #mpFind')));
+    t.ok('while a plain tap on + goes straight to food search, offering Same as yesterday when yesterday had that meal',
+      !!(await p.$('#modalRoot .msheet #mpFind')) &&
+      await p.evaluate(() => {
+        const b = document.querySelector('#modalRoot .msheet .msh-on-empty .msh-yest[data-mcopy="2026-10-09"]');
+        return !!b && /^Same as yesterday/.test(b.getAttribute('aria-label') || '');
+      }));
     await shutSheet();
     await p.click(card('s') + ' [data-msaved]');
     await p.waitForTimeout(500);
@@ -216,5 +221,22 @@ module.exports = {
       t.ok('at 320 px on view ' + v + ': every head one line, every button a thumb, nothing sideways',
         fit.heads.every((h) => h <= 50) && !fit.small.length && fit.wide <= 320, JSON.stringify(fit));
     }
+    /* Double-tapping Same as yesterday before the sheet closes lands yesterday's foods only once. */
+    await p.evaluate(SETUP);
+    await p.reload();
+    await p.waitForTimeout(600);
+    await p.click('.tab[data-view="macros"]');
+    await p.waitForTimeout(300);
+    await p.click(card('s') + ' [data-mhold]');
+    await p.waitForTimeout(400);
+    const yestCopy = await p.evaluate(() => {
+      const b = document.querySelector('#modalRoot .msheet .msh-yest[data-mcopy="2026-10-09"]');
+      if (b) { b.click(); b.click(); }
+      const d = JSON.parse(localStorage.getItem('bsc.macroDays') || '{}');
+      return (d['2026-10-10'] && d['2026-10-10'].s) || [];
+    });
+    await p.waitForTimeout(300);
+    t.ok('and tapping Same as yesterday copies the meal once (even on a double-tap) and closes the sheet',
+      yestCopy.length === 1 && yestCopy[0].id === 'f:apple' && !(await p.$('#modalRoot .msheet')), JSON.stringify(yestCopy));
   },
 };

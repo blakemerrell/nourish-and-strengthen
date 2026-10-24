@@ -23,12 +23,14 @@
   var WGAPI = app.WGAPI;
   var dayKey = app.dayKey;
   var kcalOf = app.kcalOf;
+  var keyDate = app.keyDate;
   var mpIcon = app.mpIcon;
   var leaf = app.leaf;
   var mAhead = app.mAhead;
   var mBatchStrip = app.mBatchStrip;
   var mCanFav = app.mCanFav;
   var mCascadeLineHTML = app.mCascadeLineHTML;
+  var mCopyItems = app.mCopyItems;
   var mDay = app.mDay;
   var mDayTargets = app.mDayTargets;
   var mDialUnit = app.mDialUnit;
@@ -241,10 +243,10 @@
       var want = !M.aim ? 0 : m === 'kcal' ? (M.aim.kcal || (4 * M.aim.p + 9 * M.aim.f + 4 * M.aim.c)) : (M.aim[m] || 0);
       /* A macro the day can no longer pay for is asked for nought: none on
          the plate is as it should be, and any is over (protein aside). */
-      if (!M.live) R = { s: 'none', f: 0, r: 0 };
-      else if (spent[m]) R = got >= 0.5 ? { s: m === 'p' ? 'on' : 'over', f: 1, r: 2 } : { s: 'none', f: 0, r: 0 };
-      else R = mRingOf(got, want, m);
-      return { m: m, word: x[1], s: R.s, f: R.f, r: R.r };
+      if (!M.live) R = { s: 'none', f: 0, r: 0, overSl: false };
+      else if (spent[m]) R = got >= 0.5 ? { s: m === 'p' ? 'on' : 'over', f: 1, r: 2, overSl: true } : { s: 'none', f: 0, r: 0, overSl: false };
+      else { R = mRingOf(got, want, m); R.overSl = want > 0 && got > want + mSlack(m, want, 0.1); }
+      return { m: m, word: x[1], s: R.s, f: R.f, r: R.r, overSl: !!R.overSl };
     });
   }
   function mBeadsHTML(B) {
@@ -260,7 +262,7 @@
     if (!M.aim) return fmtK(M.sub.kcal) + ' kcal';
     return (M.eatenAll ? 'eaten: ' : 'planned: ') + B.map(function (b) {
       return b.word + ' ' + (b.s === 'none' ? 'none left' : b.s === 'over' ? 'over'
-        : b.s === 'on' ? (b.r > 1.1 ? 'over, which is fine' : 'on plan') : Math.round(b.r * 100) + '% there');
+        : b.s === 'on' ? (b.m === 'p' && (b.overSl !== undefined ? b.overSl : b.r > 1.1) ? 'over, which is fine' : 'on plan') : Math.round(b.r * 100) + '% there');
     }).join(', ');
   }
   var VIEW_SAY = ['', 'its status', 'its foods', 'its details'];
@@ -582,9 +584,19 @@
     var n = 0;
     M.items.forEach(function (it) { if (LIVE.BY_ID[it.id]) n++; });
     if (!n) {
+      /* One-tap repeat from yesterday when opening an empty meal sheet.
+         Reuses mCopyItems and keyDate so its count and filter never diverge
+         from the Repeat-a-day sheet, and leads aria-label with the visible
+         button words so voice control can target it by name. */
+      var yd = keyDate(M.k);
+      if (yd) yd.setDate(yd.getDate() - 1);
+      var yestK = yd ? dayKey(yd) : '';
+      var yestItems = yestK ? mCopyItems(yestK, M.sk) : [];
       return '<section class="msh-on msh-on-empty no-print" aria-label="On ' + esc(M.name) + '">' +
-        '<div class="msh-trh"><span class="msh-trt"><b>On ' + esc(M.name) + '</b><small class="num">0 foods &middot; Tap a food below to add it</small></span></div>' +
-        '</section>';
+        '<div class="msh-trh"><span class="msh-trt"><b>On ' + esc(M.name) + '</b><small class="num">0 foods &middot; Tap a food below to add it</small></span>' +
+        (yestItems.length ? '<button class="ghost msh-yest" data-mcopy="' + esc(yestK) + '" aria-label="Same as yesterday, copy yesterday\u2019s ' + esc(M.name) + ' (' + yestItems.length + (yestItems.length === 1 ? ' food' : ' foods') + ')">' +
+          mIcon('fromday') + 'Same as yesterday</button>' : '') +
+        '</div></section>';
     }
     return '<section class="msh-on no-print" aria-label="On ' + esc(M.name) + '">' +
       '<div class="msh-trh"><span class="msh-trt"><b>On ' + esc(M.name) + '</b><small class="num">' +
@@ -1055,5 +1067,5 @@
   }
 
   return { mViewsAll: mViewsAll, renderMacros: renderMacros, mMealSheetParts: mMealSheetParts, mMealNowHTML: mMealNowHTML,
-    capsHTML: capsHTML, mRingOf: mRingOf };
+    capsHTML: capsHTML, mRingOf: mRingOf, mBeadsOf: mBeadsOf, mBeadsSay: mBeadsSay };
 };

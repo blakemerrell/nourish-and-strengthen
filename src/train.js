@@ -4296,17 +4296,55 @@
     return { n: readyName(row) + (xp ? XP : ''), rir: E.rir, s: s };
   }
   /* The day after the last ready one you did, in its own rotation: Full
-     Body B after A, Lower A after Upper A. Nothing until there is one. */
+     Body B after A, Lower A after Upper A, or Day 2 after Day 1 in a
+     numbered Day split under Your routines. Nothing until there is one. */
   function readyNext() {
     var last = null;
+    var daySplit = Object.keys(T.rt).map(function (k) { return { id: k, r: T.rt[k] }; })
+      .filter(function (m) {
+        if (!/^day\s*\d+\b/i.test(m.r.n)) return false;
+        var d = readyDay(m.id, false, 1);
+        return !!(d && d.s && d.s.length);
+      })
+      .sort(function (a, b) { return a.r.n.localeCompare(b.r.n, undefined, { numeric: true }); });
     ix().list.forEach(function (w) {
       if (w.ms) return;
       var n = String(w.n || '').replace(XP, '');
       READY.forEach(function (g) {
-        g.d.forEach(function (d, i) { if (readyName(d) === n && (!last || w.st >= last.st)) last = { st: w.st, g: g, i: i }; });
+        g.d.forEach(function (d, i) { if (readyName(d) === n && (!last || w.st >= last.st)) last = { st: w.st, d: g.d[(i + 1) % g.d.length] }; });
       });
+      if (daySplit.length >= 2) {
+        daySplit.forEach(function (m, i) {
+          if (m.r.n === n && (!last || w.st >= last.st)) {
+            var nx = daySplit[(i + 1) % daySplit.length];
+            last = { st: w.st, d: [nx.id, nx.r.n] };
+          }
+        });
+      }
     });
-    return last ? last.g.d[(last.i + 1) % last.g.d.length] : null;
+    return last ? last.d : null;
+  }
+  /* Named workouts outside a block done three times or more in the past year
+     and not yet kept in Your routines (such as an imported 5-day split):
+     offered in one tap at the top of Pick a ready workout. */
+  function freqRoutines() {
+    var skip = { 'workout': 1, 'morning workout': 1, 'midday workout': 1, 'afternoon workout': 1, 'evening workout': 1, 'night workout': 1 };
+    READY.forEach(function (g) { g.d.forEach(function (d) { skip[readyName(d).toLowerCase()] = 1; }); });
+    Object.keys(T.rt).forEach(function (k) { skip[String(T.rt[k].n || '').toLowerCase()] = 1; });
+    var cutoff = Date.now() - 365 * 86400000, byName = {};
+    ix().list.forEach(function (w) {
+      if (w.ms || w.st < cutoff) return;
+      var n = String(w.n || '').replace(XP, '').trim();
+      if (!n || n.length < 3 || skip[n.toLowerCase()]) return;
+      if (!byName[n]) byName[n] = { n: n, count: 0, latest: w, full: null };
+      byName[n].count++;
+      if (w.st >= byName[n].latest.st) byName[n].latest = w;
+      if (w.x && w.x.length >= 2 && (!byName[n].full || w.st >= byName[n].full.st)) byName[n].full = w;
+    });
+    return Object.keys(byName).map(function (n) { return byName[n]; })
+      .filter(function (g) { return g.count >= 3 && g.full; })
+      .sort(function (a, b) { return a.n.localeCompare(b.n, undefined, { numeric: true }); })
+      .slice(0, 7);
   }
   function startReady(id, xp, ef) {
     if (LIVE) return;
@@ -4322,7 +4360,7 @@
     scrollTop();
   }
   // a finished workout kept as a routine: its lifts in order, each with its working sets
-  function saveRoutine(wid, name) {
+  function saveRoutine(wid, name, optAt, noStamp) {
     var wo = T.wo[wid];
     if (!wo) return null;
     var x = wo.x.map(function (e) {
@@ -4331,8 +4369,8 @@
     var n = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 60) || String(wo.n || 'Routine').slice(0, 60);
     if (!x.length) return null;
     var id = 'r' + newId();
-    T.rt[id] = { n: n, x: x, at: Date.now() };
-    stamp('rt', id);
+    T.rt[id] = { n: n, x: x, at: optAt || Date.now() };
+    if (!noStamp) stamp('rt', id);
     return id;
   }
 
@@ -4367,12 +4405,16 @@
       return out + '</div>';
     };
     var nx = readyNext();
+    var nxRow = nx ? row(nx[0], '', 'nx:' + nx[0]) : '';
     var mine = Object.keys(T.rt).map(function (k) { return { id: k, r: T.rt[k] }; })
       .sort(function (a, b) { return (b.r.at || 0) - (a.r.at || 0); });
+    var freq = mine.length ? [] : freqRoutines();
     return '<div class="tr-sub">One session, ready to go. It doesn\u2019t start or move a block, and it\u2019s saved like any other workout.</div>' +
       (LIVE ? '<div class="tr-warn">A workout is already open. Finish it first.</div>' : '') +
       '<div class="tr-q">' + chips('rdxp', xp ? 1 : 0, [[0, 'Full session'], [1, '30 minutes']]) + '</div>' +
-      (nx ? '<div class="tr-rdg">Next up</div>' + row(nx[0], '', 'nx:' + nx[0]) : '') +
+      (freq.length ? '<div class="tr-note tr-rtseed">From your history: ' + esc(freq.map(function (g) { return g.n; }).join(' \u00b7 ')) +
+        '. <button class="tr-lnk" data-t="rtseed">Save ' + (freq.length === 1 ? 'it' : 'all ' + freq.length) + ' to Your routines</button></div>' : '') +
+      (nxRow ? '<div class="tr-rdg">Next up</div>' + nxRow : '') +
       (mine.length ? '<div class="tr-rdg">Your routines</div>' + mine.map(function (m) { return row(m.id, m.r.n); }).join('') : '') +
       READY.map(function (g) {
         return '<div class="tr-rdg">' + esc(g.g) + '</div>' + g.d.map(function (d) { return row(d[0]); }).join('');
@@ -11466,6 +11508,16 @@
       return;
     }
     if (t === 'rtsave') { openSheet({ k: 'rtnew', id: el.getAttribute('data-id'), eyebrow: 'Routine', title: 'Save as routine' }); return; }
+    if (t === 'rtseed') {
+      var fr = freqRoutines(), now0 = Date.now(), rts = [];
+      fr.forEach(function (g, idx) {
+        var rtid = saveRoutine(g.full.id, g.n, now0 + (fr.length - idx), true);
+        if (rtid) rts.push(rtid);
+      });
+      if (rts.length) stampMany('rt', rts);
+      drawSheet();
+      return;
+    }
     if (t === 'rtdo') {
       var rn = $('trRtN');
       if (saveRoutine(el.getAttribute('data-id'), rn ? rn.value : '')) { S.sheet.done = 1; drawSheet(); }

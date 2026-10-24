@@ -2922,6 +2922,37 @@ module.exports = {
     r = await p.evaluate(() => { const S = window.Train._.SHAPE.rt;
       return [S({ n: 'x', x: [{ e: 'bb-bench', n: 3 }] }), S({ n: '', x: [{ e: 'a', n: 3 }] }), S({ n: 'x', x: [] }), S({ n: 'x', x: [{ e: 'a', n: 40 }] })].join(); });
     t.ok('a routine from another device is let in only if it is shaped right', r === 'true,false,false,false', r);
+    // repeated custom split in history: offered in one tap and rotated by Next up
+    await p.evaluate(() => {
+      const _ = window.Train._, st = _.state(), T = st.T, now = Date.now(), D = 864e5;
+      T.rt = {}; T.wo = {};
+      ['Day 1 (Upper)', 'Day 2 (Lower)'].forEach((nm, di) => {
+        for (let k = 0; k < 3; k++) {
+          const id = 'bws_' + di + '_' + k, t0 = now - (10 - di * 3 - k) * D;
+          T.wo[id] = { id, st: t0, en: t0 + 36e5, dk: '2026-02-0' + (1 + di * 3 + k), n: nm, u: 'lb', ms: '', w: -1, d: -1, dl: 0,
+            x: [{ e: di ? 'bb-squat' : 'bb-bench', s: [{ w: 185, r: 8 }, { w: 185, r: 8 }] }, { e: di ? 'bb-rdl' : 'cb-row', s: [{ w: 135, r: 10 }] }], sr: {}, fb: {} };
+        }
+      });
+      localStorage.removeItem('sh.trainLive');
+      localStorage.removeItem('bsc.trainStamps');
+      localStorage.setItem('bsc.train', JSON.stringify(T));
+      _.reload();
+      _.draw();
+    });
+    await p.click('.tr-more [data-t="ready"]');
+    r = await p.evaluate(() => !!document.querySelector('#trainRoot .tr-rtseed [data-t="rtseed"]'));
+    t.ok('repeated custom workouts in history are offered in one tap when Your routines is empty', r);
+    await p.click('#trainRoot [data-t="rtseed"]');
+    r = await p.evaluate(() => {
+      window.Train._.reload();
+      window.Train._.draw();
+      return {
+        nx: (document.querySelector('#trainRoot .tr-rdb[data-v^="nx:"] .tr-rdn') || {}).textContent || '',
+        mine: [...document.querySelectorAll('#trainRoot .tr-rdb[data-v^="r"] .tr-rdn')].map((e) => e.textContent).join('|'),
+      };
+    });
+    t.ok('saving them populates Your routines in order (persisted across reload) and rotates Next up after the last one done',
+      r.mine === 'Day 1 (Upper)|Day 2 (Lower)' && r.nx === 'Day 1 (Upper)', JSON.stringify(r));
     await p.close();
     // ---- pull-ups, chin-ups and dips count you ---------------------------------------------
     p = await t.fresh();

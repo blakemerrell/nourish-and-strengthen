@@ -1279,8 +1279,8 @@ module.exports = nourish({
       const bad = combos.filter((r) => !r.parts || !r.parts.length || !r.spot || r.unit !== 'order');
       return { n: combos.length, bad: bad.length };
     });
-    t.ok('Price & Spanish Fork catalog registers 93 restaurant Smart Combos with parts and spots',
-      eatoutCatalog.n === 93 && eatoutCatalog.bad === 0, JSON.stringify(eatoutCatalog));
+    t.ok('Price & Spanish Fork catalog registers 100 restaurant Smart Combos with parts and spots',
+      eatoutCatalog.n === 100 && eatoutCatalog.bad === 0, JSON.stringify(eatoutCatalog));
 
     t.ok('the shelf rail carries an Eating out chip',
       !!(await lookPage.$('#mpShelves [data-mpshelf="eatout"]')));
@@ -1288,15 +1288,19 @@ module.exports = nourish({
     await lookPage.waitForTimeout(250);
     const eatoutRows = await lookPage.evaluate(() => {
       const rows = [...document.querySelectorAll('#mpList .mpick-row[data-mpick]')];
+      const firstId = rows[0] ? rows[0].dataset.mpick : null;
+      const firstRec = window.__macroLab.foods().find((r) => r.id === firstId);
       return {
         n: rows.length,
         allEatout: rows.every((r) => /^f:rc_/.test(r.dataset.mpick) && r.dataset.mpx === '1'),
-        firstId: rows[0] ? rows[0].dataset.mpick : null,
+        firstId,
+        firstMeals: firstRec ? firstRec.meals : '',
         firstTxt: rows[0] ? rows[0].textContent : ''
       };
     });
-    t.ok('tapping Eating out ranks restaurant Smart Combos at 1 order',
-      eatoutRows.n >= 20 && eatoutRows.allEatout && /1 order/.test(eatoutRows.firstTxt),
+    t.ok('tapping Eating out on Breakfast ranks breakfast Smart Combos first at 1 order',
+      eatoutRows.n >= 20 && eatoutRows.allEatout && /1 order/.test(eatoutRows.firstTxt) &&
+      eatoutRows.firstMeals.indexOf('b') >= 0,
       JSON.stringify(eatoutRows));
 
     /* Searching by restaurant or town narrows the list */

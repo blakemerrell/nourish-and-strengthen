@@ -552,6 +552,14 @@
        with the top ten is answering the shortlist question again. The old
        Recipes screen showed forty for exactly this reason and it went out
        with the mode. */
+    if (S.mpShelf === 'eatout' && S.mpSec === 'meal' && !q) {
+      var mt = (slot && (slot.t || slot.k)) || 'l';
+      var mHit = [], mRest = [];
+      ranked.forEach(function (e) {
+        (String(e.r.meals || 'bld').indexOf(mt) >= 0 ? mHit : mRest).push(e);
+      });
+      ranked = mHit.concat(mRest);
+    }
     if (S.mpSec === 'foods' || (S.mpShelf && S.mpShelf !== 'recipes')) {
       /* Stable: the fit/macro order is kept inside each group, and the
          condiments simply move below the foods. */

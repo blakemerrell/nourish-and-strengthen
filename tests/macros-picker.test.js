@@ -1279,8 +1279,8 @@ module.exports = nourish({
       const bad = combos.filter((r) => !r.parts || !r.parts.length || !r.spot || r.unit !== 'order');
       return { n: combos.length, bad: bad.length };
     });
-    t.ok('Price & Spanish Fork catalog registers 96 restaurant Smart Combos with parts and spots',
-      eatoutCatalog.n === 96 && eatoutCatalog.bad === 0, JSON.stringify(eatoutCatalog));
+    t.ok('Price & Spanish Fork catalog registers 93 restaurant Smart Combos with parts and spots',
+      eatoutCatalog.n === 93 && eatoutCatalog.bad === 0, JSON.stringify(eatoutCatalog));
 
     t.ok('the shelf rail carries an Eating out chip',
       !!(await lookPage.$('#mpShelves [data-mpshelf="eatout"]')));

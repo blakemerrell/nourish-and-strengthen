@@ -192,11 +192,8 @@
     ro_zero_greek_yog:  { name: 'Zero Sugar Greek Yogurt Cup', unit: 'cup', grams: 150, p: 12, c: 5, f: 0, na: 65, fib: 0 },
     ro_fresh_fruit_pc:  { name: 'Fresh Whole Apple or Banana', unit: 'whole', grams: 150, p: 1, c: 25, f: 0.5, na: 2, fib: 3.5 },
 
-    // Local Price Favorites (Grogg's, Big Don's, JB's, Sherald's, Mandarin Garden)
+    // Local Price Favorites (Grogg's, JB's, Sherald's, Mandarin Garden)
     ro_top_sirloin_8oz: { name: '8 oz Flame-Broiled Top Sirloin Steak', unit: 'piece', grams: 225, p: 52, c: 0, f: 14, na: 480, fib: 0, est: true },
-    ro_thin_chk_slice:  { name: 'Slice Thin-Crust Grilled Chicken & Veggie Pizza', unit: 'slice', grams: 95, p: 14, c: 22, f: 6, na: 460, fib: 1.5, est: true },
-    ro_thin_meat_slice: { name: 'Slice Thin-Crust All-Meat & Chicken Pizza', unit: 'slice', grams: 100, p: 16, c: 22, f: 8, na: 540, fib: 1.5, est: true },
-    ro_baked_wings_4:   { name: '4 Oven-Roasted Bone-In Chicken Wings', unit: 'portion', grams: 140, p: 26, c: 2, f: 12, na: 580, fib: 0, est: true },
     ro_egg_scrambler:   { name: '3-Egg & Egg-White Veggie Scrambler', unit: 'portion', grams: 185, p: 21, c: 4, f: 10, na: 420, fib: 1, est: true },
     ro_hash_browns:     { name: 'Griddled Shredded Hash Browns', unit: 'cup', grams: 135, p: 4, c: 32, f: 8, na: 360, fib: 3, est: true },
     ro_wheat_toast:     { name: 'Slice Dry Toasted Whole Wheat Bread', unit: 'slice', grams: 38, p: 4, c: 17, f: 1, na: 160, fib: 2.5, est: true },
@@ -421,18 +418,7 @@
       name: 'Grogg\u2019s Pinnacle \u2014 Lettuce-Wrapped Double Pinnacle Burger + Side Salad',
       parts: [['ro_beef_patty', 2.5], ['ro_lettuce_tom_oni', 1], ['ro_side_salad_lite', 1]] },
 
-    // 19. Big Don's Pizza (Price)
-    { id: 'bd_2slice_chk_salad', spot: 'Big Don\u2019s Pizza \u00b7 Price', meals: 'ld', est: true,
-      name: 'Big Don\u2019s Pizza \u2014 2 Slices Thin-Crust Chicken Veggie Pizza + Garden Salad',
-      parts: [['ro_thin_chk_slice', 2], ['ro_zupas_chk', 0.5], ['ro_side_salad_lite', 1]] },
-    { id: 'bd_8wings_salad', spot: 'Big Don\u2019s Pizza \u00b7 Price', meals: 'ld', est: true,
-      name: 'Big Don\u2019s Pizza \u2014 8 Oven-Roasted Bone-In Wings + Large Garden Salad',
-      parts: [['ro_baked_wings_4', 2], ['ro_side_salad_lite', 1.25]] },
-    { id: 'bd_3slice_combo_salad', spot: 'Big Don\u2019s Pizza \u00b7 Price', meals: 'ld', est: true,
-      name: 'Big Don\u2019s Pizza \u2014 3 Slices Thin-Crust All-Meat & Chicken Pizza + Side Salad',
-      parts: [['ro_thin_meat_slice', 3], ['ro_side_salad_lite', 1]] },
-
-    // 20. JB's Restaurant (Price)
+    // 19. JB's Restaurant (Price)
     { id: 'jb_veggie_ham_scrambler', spot: 'JB\u2019s Restaurant \u00b7 Price', meals: 'bld', est: true,
       name: 'JB\u2019s \u2014 3-Egg Veggie & Lean Ham Scrambler + Dry Wheat Toast + Fruit Cup',
       parts: [['ro_egg_scrambler', 1], ['ro_deli_ham', 1], ['ro_wheat_toast', 1], ['ro_fruit_cup', 1]] },

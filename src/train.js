@@ -3892,6 +3892,10 @@
        window, but it is not nothing either. */
     if (!c.n && !c.today) look.push({ h: 'No workouts this week', d: '' });
     if (nw && nw.days > 0 && nw.days < 4) look.push({ h: 'Only ' + nw.days + ' of 7 days logged', d: 'Calories are a partial picture' });
+    var cutWks = nw && fin(nw.cutWeeks) ? nw.cutWeeks : 0;
+    if (cut && cutWks >= 10 && look.length < 2) {
+      look.push({ h: 'Week ' + cutWks + ' of your cut', d: 'After 8\u201312 weeks of cutting, a 2\u20134 week maintenance break resets hormones and diet fatigue' });
+    }
     look.slice(0, 2).forEach(function (r) { out.push({ st: 'look', h: r.h, d: r.d }); });
     if (!out.length) {
       out.push(c.recomp ? { st: 'good', h: 'Strength up on ' + p.up + ' of ' + p.n + ' lifts', d: 'Scale is flat on a cut while strength climbs — trading fat for muscle' }
@@ -5468,9 +5472,8 @@
     '<div class="tr-acts tr-foot tr-endblk"><button class="ghost danger" data-t="endblock">End this block</button></div>';
     return html;
   }
-  function moreRow(t, n, sub) {
-    return '<button class="tr-mrow" data-t="' + t + '"><span class="tr-mrow-t"><span class="tr-mrow-n">' + esc(n) + '</span>' +
-      (sub ? '<span class="tr-mrow-s">' + esc(sub) + '</span>' : '') + '</span><span class="tr-mrow-c" aria-hidden="true">\u203a</span></button>';
+  function moreRow(t, n) {
+    return '<button class="tr-mrow" data-t="' + t + '"><span class="tr-mrow-n">' + esc(n) + '</span><span class="tr-mrow-c" aria-hidden="true">\u203a</span></button>';
   }
 
   /* How many days until the next session is due, going by the days you lift:
@@ -5570,7 +5573,7 @@
       body +
       restNote(p) +
       start +
-      '<div class="tr-acts tr-next-a">' + planBtn + skip + emptyLnk() + '</div>' +
+      '<div class="tr-acts tr-next-a">' + planBtn + skip + '</div>' +
     '</div>';
   }
 
@@ -7136,7 +7139,7 @@
     var rirHere = x.rir !== null && x.rir !== undefined && !(ms && x.rir === LIVE.rir);
     // the bar when it is not the usual one
     var barHere = onBar(ex) && (barSet(x.e) || barAt(x.e) !== T.pr.bar);
-    var first = fresh && (nb || newLift(x.e));
+    var first = fresh && nb;
     var armed = S.arm === 'rm:' + i, nDone = x.s.filter(function (z) { return z.t; }).length;
     var workSets = x.s.filter(function (z) { return !z.wu; });
     var allWorkDone = workSets.length > 0 && workSets.every(function (z) { return z.t; });
@@ -7160,9 +7163,9 @@
           (fin(x.tm) ? ' \u00b7 training max ' + fmtN(x.tm) + ' ' + T.pr.u : '') +
           (barHere ? ' \u00b7 <button class="tr-lnk tr-barl" data-t="barpick" data-e="' + esc(x.e) + '" aria-label="' + esc(barName(x.e)) + ' for ' + esc(ex.n) + ': ' +
             fmtN(barAt(x.e)) + ' ' + T.pr.u + '. Change">' + esc(barLabelAt(x.e)) + '</button>' : '') +
-          (nb || newLift(x.e) ? ' \u00b7 <button class="tr-lnk tr-barl" data-t="exhow" data-e="' + esc(x.e) + '">how to</button>' : '') + '</span>' +
+          (nb ? ' \u00b7 <button class="tr-lnk tr-barl" data-t="exhow" data-e="' + esc(x.e) + '">how to</button>' : '') + '</span>' +
         (x.s.some(function (s) { return s.am; }) ? '<span class="tr-cue">Last set: as many good reps as you can \u2014 stop when one slows to a grind. It sets your next wave\u2019s weights.</span>' : '') +
-        (x.s.some(function (s) { return s.wu; }) ? '<span class="tr-ex-m">W is a warm-up: done, not counted, and a short rest after it.</span>' : '') +
+        (nb && x.s.some(function (s) { return s.wu; }) ? '<span class="tr-ex-m">W is a warm-up: done, not counted, and a short rest after it.</span>' : '') +
         (cue ? '<span class="tr-cue">' + esc(cue) + '</span>' : '') +
         (x.swn ? '<span class="tr-ex-m">' + esc(x.swn) + '</span>' : '') +
         (ASST[x.e] ? '<span class="tr-ex-m">Type the machine\u2019s help as the weight: less help is progress.</span>' : '') +
@@ -7170,7 +7173,7 @@
         (fresh ? efNote(x, i) : '') +
         (wy && fresh ? '<span class="tr-ex-m tr-ovl tr-ovl-' + wyk + '">' + esc(wy) + '</span>' : '') +
         (first && SAFETY[x.e] ? '<div class="tr-first tr-safe"><b>Safety first.</b> ' + esc(SAFETY[x.e]) + '</div>' : '') +
-        firstTime(x) +
+        (nb ? firstTime(x) : '') +
         (note ? '<button class="tr-exnt" data-t="note" data-e="' + esc(x.e) + '" aria-label="Your note on ' + esc(ex.n) + ': ' + esc(note) + '. Edit">' +
           '<span class="tr-exnt-l">Note</span> ' + esc(note) + '</button>' : '') +
       '</div>' +
@@ -8024,9 +8027,9 @@
       var rank = { look: 0, info: 1, good: 2 };
       return (rank[a.st] || 1) - (rank[b.st] || 1);
     });
-    html += ordered.map(function (c) {
+    var ckRow = function (c, standalone) {
       var open = !!ckOpen[c.t];
-      return '<div class="tr-card tr-check tr-' + c.st + (open ? ' open' : '') + '">' +
+      return '<div class="' + (standalone ? 'tr-card ' : '') + 'tr-check tr-' + c.st + (open ? ' open' : '') + '">' +
         '<button class="tr-ck-h" data-t="ckopen" data-v="' + esc(c.t) + '" aria-expanded="' + open + '">' +
           '<span class="tr-ck-i" aria-hidden="true">' + ICON[c.st] + '</span>' +
           '<span class="tr-ck-t">' + esc(c.t) + '</span><span class="tr-ck-w">' + WORD[c.st] + '</span>' +
@@ -8037,7 +8040,18 @@
             return '<button class="tr-lnk tr-ref" data-t="ref" data-v="' + k + '">' + esc(REFS[k][0]) + '</button>';
           }).join(' \u00b7 ') + '</div>' : '') : '') +
       '</div>';
-    }).join('');
+    };
+    var looks = ordered.filter(function (c) { return c.st === 'look'; });
+    var rest = ordered.filter(function (c) { return c.st !== 'look'; });
+    html += looks.map(function (c) { return ckRow(c, true); }).join('');
+    if (rest.length === 1 && !looks.length) {
+      html += ckRow(rest[0], true);
+    } else if (rest.length) {
+      html += '<div class="tr-card tr-checks-group">' +
+        '<div class="tr-eyebrow">Training &amp; recovery checks</div>' +
+        rest.map(function (c) { return ckRow(c, false); }).join('') +
+      '</div>';
+    }
     html += '<details class="tr-how" id="trRefs"><summary>Where the numbers come from</summary>' +
       '<dl class="tr-refs">' + Object.keys(REFS).map(function (k) {
         return '<dt id="tr-ref-' + k + '">' + esc(REFS[k][0]) + '</dt>' +

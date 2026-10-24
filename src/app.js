@@ -8572,7 +8572,9 @@
         hit: f.hit, pDays: f.pDays, pd: f.pd,
         maint: meas ? meas.tdee : tdee !== null ? Math.round(tdee) : null, measured: !!meas,
         // the pace the plan is built for, as a share of your weight a week; positive is losing
-        plan: tdee !== null && base && pr.lb > 0 ? Math.round((tdee - base) * 7 / 3500 / pr.lb * 10000) / 10000 : null
+        plan: tdee !== null && base && pr.lb > 0 ? Math.round((tdee - base) * 7 / 3500 / pr.lb * 10000) / 10000 : null,
+        cutWeeks: pr.goalSet && (pr.goal === 'cut1' || pr.goal === 'cut2' || (pr.goalLb > 0 && pr.lb > pr.goalLb))
+          ? Math.max(0, Math.floor((mDayN(todayKey()) - mDayN(pr.goalSet)) / 7)) : 0
       };
     },
     daysMoved: function () {

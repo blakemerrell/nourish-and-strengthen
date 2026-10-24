@@ -5545,8 +5545,8 @@ body:has(#view-train.tr-focus:not(.hide)) #shareHint { display: none; }
 .tr-more { margin: 18px 0 0; background: var(--card); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
 .tr-more > .tr-ql { padding: 12px 16px 2px; }
 .tr-mrow {
-  display: flex; width: 100%; min-height: 56px; align-items: center; justify-content: space-between; gap: 12px;
-  background: none; border: 0; border-top: 1px solid var(--line-soft); padding: 10px 16px;
+  display: flex; width: 100%; min-height: 44px; align-items: center; justify-content: space-between; gap: 12px;
+  background: none; border: 0; border-top: 1px solid var(--line-soft); padding: 8px 16px;
   font: inherit; color: inherit; text-align: left; cursor: pointer;
 }
 .tr-more > .tr-ql + .tr-mrow { border-top: 0; }
@@ -5626,6 +5626,10 @@ button.tr-ck-h {
 }
 .tr-check { padding-top: 6px; padding-bottom: 6px; }
 .tr-check.open { padding-bottom: 14px; }
+.tr-checks-group > .tr-eyebrow { margin-bottom: 6px; }
+.tr-checks-group > .tr-check { padding: 4px 0; border-top: 1px solid var(--line-soft); }
+.tr-checks-group > .tr-eyebrow + .tr-check { border-top: 0; }
+.tr-checks-group > .tr-check.open { padding-bottom: 10px; }
 .tr-ck-c { width: 20px; text-align: center; font-size: 1.125rem; color: var(--muted); }
 .tr-whyb { padding: 0 2px; min-height: 0; font-size: 0.8125rem; }
 .tr-why-l { margin-top: 4px; color: var(--muted-2); }

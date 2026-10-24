@@ -324,8 +324,13 @@
     var gm = /^\s*(\d+(?:\.\d+)?)\s*(?:g|grams?|ml|milliliters?)\s*$/i.exec(m[3] || '');
     /* "1 order, NS as to size" is the USDA saying it does not know the
        size; the noun is the order. Kept, it filled a dial too narrow for it
-       and showed ", NS as t" (Blake's french fries, the same day). */
-    var noun = m[2].replace(/,?\s*\bNS as to\b.*$/i, '').trim() || m[2].trim();
+       and showed ", NS as t" (Blake's french fries, the same day). And
+       "1 small or thin/very thin slice (25 g)" is a slice whose weight is
+       already on the other half of the pill: strip trailing comma clauses
+       and leading size adjectives so it steps and reads as a slice. */
+    var noun = m[2].replace(/,.*$/, '')
+      .replace(/^(?:(?:small|medium|large|thin|thick|very|regular|extra|mini|jumbo|standard|average)(?:\s+or\s+|\s*\/\s*|\s+))+([a-z])/i, '$1')
+      .trim() || m[2].trim();
     /* A serving already said in grams weighs what it says. The USDA quotes a
        food with no household measure per "100 g", and so does Open Food
        Facts for a product with no serving size (src/foodsearch.js,

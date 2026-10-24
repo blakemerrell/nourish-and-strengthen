@@ -4906,6 +4906,7 @@
     // a meal's pills and a card's ring for given figures, as myday.js colours them (tests/macros-meal.test.js)
     caps: function (sub, aim) { return MYDAY.capsHTML(sub, aim, null, false); },
     ring: function (got, want, m) { return MYDAY.mRingOf(got, want, m); },
+    beadsSay: function (M) { return MYDAY.mBeadsSay(M, MYDAY.mBeadsOf(M)); },
     // what a tap puts down for a food never logged, sized to this meal (mMealFitX): the app's own number, not a test's copy
     mealFit: function (sk, id) { return mMealFitX(sk, BY_ID[id]); },
     slotFor: function (id) { var sl = mSlotForRecipe(BY_ID[id], mReadSlots()); return sl ? sl.k : null; },
@@ -6897,9 +6898,9 @@
         return;
       }
       var mcp = e.target.closest('[data-mcopy]');
-      if (mcp && S.mCopyFrom) {
-        var toK = mViewKey(), csk = S.mCopyFrom.slot, fromK = mcp.dataset.mcopy;
-        var its = mCopyItems(fromK, csk);
+      if (mcp && (S.mCopyFrom || S.macroPick)) {
+        var toK = mViewKey(), csk = S.mCopyFrom ? S.mCopyFrom.slot : S.macroPick.slot, fromK = mcp.dataset.mcopy;
+        var its = mCopyItems(fromK, csk), wasFrom = !!S.mCopyFrom;
         S.mCopyFrom = null;
         if (its.length) {
           var cate = mAddsEaten(toK, csk);
@@ -6911,7 +6912,7 @@
           mToast(its.length + (its.length === 1 ? ' plate' : ' plates') + ' from ' + esc(mLongDate(fromK)) +
             ' added to ' + esc(mSlotName(csk)) + '.');
         }
-        S.mBackPending = !!S.macroPick;
+        S.mBackPending = wasFrom && !!S.macroPick;
         close();
         renderMacros();
         return;

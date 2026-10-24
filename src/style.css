@@ -7888,3 +7888,11 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   font-size: 0.8125rem; color: var(--muted);
   font-variant-numeric: tabular-nums; line-height: 1.35;
 }
+.msh-yest {
+  min-height: 44px; min-width: 44px; padding: 6px 10px;
+  font-size: 0.78rem; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 5px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.msh-yest svg { width: 14px; height: 14px; flex-shrink: 0; }
+.tr-rtseed { margin-top: 8px; }

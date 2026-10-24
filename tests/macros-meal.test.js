@@ -225,6 +225,7 @@ module.exports = nourish({
         far: cls({ kcal: 90, p: 9, f: 6, c: 5 }, { kcal: 70, p: 8, f: 3, c: 2 }),
         big: cls({ kcal: 680, p: 50, f: 25, c: 66 }, { kcal: 640, p: 50, f: 22, c: 60 }),
         ring: [L.ring(7.6, 7, 'c').s, L.ring(9.5, 7, 'c').s, L.ring(4.6, 7, 'c').s, L.ring(62, 60, 'c').s, L.ring(70, 60, 'c').s].join(),
+        say: L.beadsSay({ live: 1, eatenAll: true, sub: { kcal: 73, p: 10, f: 3, c: 2.3 }, aim: { kcal: 70, p: 8, f: 3, c: 2 } }),
       };
     });
     t.ok('a snack at 2.3 g of carbs against 2 g, and 73 kcal against 70, has every pill on', tz.snack === 'on,on,on,on', JSON.stringify(tz));
@@ -232,6 +233,8 @@ module.exports = nourish({
     t.ok('more than 2 g or 15 kcal over a small share is still over (protein never is)', tz.far === 'over,on,over,over', tz.far);
     t.ok('a big meal keeps the 8%: 66 g of carbs against 60 is over, 25 g of fat against 22 is over', tz.big === 'on,on,over,over', tz.big);
     t.ok('a card’s ring: 7.6 and 4.6 of 7 g a gram or two off, on and under; 9.5 over; 62 of 60 on, 70 over', tz.ring === 'on,over,under,on,over', tz.ring);
+    t.ok('and the screen-reader summary says carbs on plan (only protein says over, which is fine)',
+      /protein over, which is fine/.test(tz.say) && /carbs on plan/.test(tz.say), tz.say);
     await tiny.context().close();
 
     /* ---- the picker speaks for the meal it is filling ---------------------

@@ -259,7 +259,7 @@
     if (!M.aim) return fmtK(M.sub.kcal) + ' kcal';
     return (M.eatenAll ? 'eaten: ' : 'planned: ') + B.map(function (b) {
       return b.word + ' ' + (b.s === 'none' ? 'none left' : b.s === 'over' ? 'over'
-        : b.s === 'on' ? (b.r > 1.1 ? 'over, which is fine' : 'on plan') : Math.round(b.r * 100) + '% there');
+        : b.s === 'on' ? (b.m === 'p' && b.r > 1.1 ? 'over, which is fine' : 'on plan') : Math.round(b.r * 100) + '% there');
     }).join(', ');
   }
   var VIEW_SAY = ['', 'its status', 'its foods', 'its details'];
@@ -538,9 +538,17 @@
     var n = 0;
     M.items.forEach(function (it) { if (LIVE.BY_ID[it.id]) n++; });
     if (!n) {
+      var yp = String(M.k || '').split('-');
+      var yd = yp.length === 3 ? new Date(+yp[0], +yp[1] - 1, +yp[2] - 1) : null;
+      var yestK = yd ? dayKey(yd) : '';
+      var yestItems = yestK ? ((MDAYS[yestK] || {})[M.sk] || []).filter(function (it) {
+        return LIVE.BY_ID[it.id] && Number(it.x) > 0;
+      }) : [];
       return '<section class="msh-on msh-on-empty no-print" aria-label="On ' + esc(M.name) + '">' +
-        '<div class="msh-trh"><span class="msh-trt"><b>On ' + esc(M.name) + '</b><small class="num">0 foods &middot; Tap a food below to add it</small></span></div>' +
-        '</section>';
+        '<div class="msh-trh"><span class="msh-trt"><b>On ' + esc(M.name) + '</b><small class="num">0 foods &middot; Tap a food below to add it</small></span>' +
+        (yestItems.length ? '<button class="ghost msh-yest" data-mcopy="' + esc(yestK) + '" aria-label="Copy yesterday\u2019s ' + esc(M.name) + ' (' + yestItems.length + (yestItems.length === 1 ? ' food' : ' foods') + ')">' +
+          mIcon('fromday') + 'Same as yesterday</button>' : '') +
+        '</div></section>';
     }
     return '<section class="msh-on no-print" aria-label="On ' + esc(M.name) + '">' +
       '<div class="msh-trh"><span class="msh-trt"><b>On ' + esc(M.name) + '</b><small class="num">' +
@@ -1011,5 +1019,5 @@
   }
 
   return { mViewsAll: mViewsAll, renderMacros: renderMacros, mMealSheetParts: mMealSheetParts, mMealNowHTML: mMealNowHTML,
-    capsHTML: capsHTML, mRingOf: mRingOf };
+    capsHTML: capsHTML, mRingOf: mRingOf, mBeadsOf: mBeadsOf, mBeadsSay: mBeadsSay };
 };

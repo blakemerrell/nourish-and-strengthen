@@ -169,7 +169,8 @@ module.exports = {
     t.ok('holding + down opens the same line, and does not open food search', (await emp()).open && !(await p.$('#modalRoot .msheet')));
     await p.click(card('s') + ' [data-mhold]');
     await p.waitForTimeout(500);
-    t.ok('while a plain tap on + goes straight to food search', !!(await p.$('#modalRoot .msheet #mpFind')));
+    t.ok('while a plain tap on + goes straight to food search, offering Same as yesterday when yesterday had that meal',
+      !!(await p.$('#modalRoot .msheet #mpFind')) && !!(await p.$('#modalRoot .msheet .msh-on-empty .msh-yest[data-mcopy="2026-10-09"]')));
     await shutSheet();
     await p.click(card('s') + ' [data-msaved]');
     await p.waitForTimeout(500);

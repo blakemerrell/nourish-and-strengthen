@@ -301,4 +301,14 @@ function nourish(def) {
   };
 }
 
-module.exports = { goDay, stepDay, nourish, openWeigh, openPlan, revealPlanFields, addOn, asPlanned, openBasket, openMeal, closeSheet, openTray, pickRecipe, pickerList, addTo, storedDay, weighIn, todayOn, openDay };
+/* A food's controls in a meal's sheet are behind a tap on its line since
+   2026-10-24 (Blake's layout "B", src/myday.js mOpenRow): open the line the
+   way a thumb does, if it is not open already. `tag` is the meal and the
+   food's place in it, "l:0"; with none, the sheet's first food. */
+async function openRow(pg, tag) {
+  const sel = tag ? '#modalRoot [data-mrowopen="' + tag + '"]' : '#modalRoot [data-mrowopen]';
+  const shut = await pg.evaluate((q) => { const b = document.querySelector(q); return !!b && b.getAttribute('aria-expanded') !== 'true'; }, sel);
+  if (shut) { await pg.click(sel); await pg.waitForTimeout(150); }
+}
+
+module.exports = { openRow, goDay, stepDay, nourish, openWeigh, openPlan, revealPlanFields, addOn, asPlanned, openBasket, openMeal, closeSheet, openTray, pickRecipe, pickerList, addTo, storedDay, weighIn, todayOn, openDay };

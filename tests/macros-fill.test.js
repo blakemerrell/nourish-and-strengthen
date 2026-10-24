@@ -5,7 +5,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, openWeigh, openPlan, pickerList, openMeal, closeSheet } = require('./fixtures/nourish.js');
+const { nourish, openWeigh, openPlan, pickerList, openMeal, closeSheet, openRow } = require('./fixtures/nourish.js');
 
 /* The day is trays and a meal opens as one sheet (Blake, 2026-10-04): the
    picker and a food's ⋯ live in the meal's sheet; Fill lives on the day's
@@ -620,6 +620,7 @@ module.exports = nourish({
     /* Remove is in the food's ⋯ menu on lunch's own screen (RP-style meal,
        2026-10-04), and Fill is back on the day. */
     await openMeal(q, 'l');
+    await openRow(q, 'l:0');
     await q.click('[data-mfmenu="l:0"]');
     await q.waitForTimeout(150);
     await q.click('[data-mdel="l:0"]');

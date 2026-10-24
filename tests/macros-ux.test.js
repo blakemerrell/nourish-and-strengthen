@@ -4,7 +4,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, goDay, stepDay } = require('./fixtures/nourish.js');
+const { nourish, goDay, stepDay, openRow } = require('./fixtures/nourish.js');
 
 /* Back to the day from a meal's sheet. While a meal's sheet is up (the
    trays and the meal sheet, 2026-10-04) the day's header — the day picker,
@@ -387,11 +387,14 @@ module.exports = nourish({
       const eggX = async () => (((await stored(WED)).d || [])[ei] || {}).x;
       const eggG = () => pg.evaluate((i) => (document.querySelector('#modalRoot [data-mtype="d:' + i + '"]') || {}).textContent, ei);
       const x0 = await eggX(), g0 = await eggG();
+      await openRow(pg, 'd:' + ei);
       await pg.click('#modalRoot [data-mstep="d:' + ei + ':up"]');
       await pg.waitForTimeout(200);
       const x1 = await eggX(), g1 = await eggG();
+      await openRow(pg, 'd:' + ei);
       await pg.click('#modalRoot [data-mstep="d:' + ei + ':down"]');
       await pg.waitForTimeout(150);
+      await openRow(pg, 'd:' + ei);
       await pg.click('#modalRoot [data-mstep="d:' + ei + ':down"]');
       await pg.waitForTimeout(200);
       const x2 = await eggX();

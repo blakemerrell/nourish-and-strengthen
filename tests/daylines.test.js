@@ -17,7 +17,7 @@
  * Also here, two plates that read wrong on his day the same evening: a
  * scanned can, "1 1 can (335 ml)", and a USDA food whose dial said
  * ", NS as t" (src/portion.js, mLabelServing). */
-const { goDay, stepDay } = require('./fixtures/nourish.js');
+const { goDay, stepDay, openRow } = require('./fixtures/nourish.js');
 const DAY = '2026-10-08';
 
 const SETUP = () => {
@@ -97,6 +97,7 @@ module.exports = {
 
     /* + moves the food, the meal and the day together */
     const meal0 = await textOf(p, card('l') + ' .mtray-caps'), day0 = await textOf(p, '#macroPills');
+    await openRow(p, 'l:0');
     await p.click('[data-mstep="l:0:up"]');
     await p.waitForTimeout(300);
     const l1 = await mealOf(p, 'l');

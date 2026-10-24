@@ -1,3 +1,4 @@
+const { openRow } = require('./fixtures/nourish.js');
 /* The meal re-fits itself as you add (Blake, 2026-10-05).
  *
  * "This needs to feel like magic. The pills are the way it's communicating...
@@ -118,6 +119,7 @@ module.exports = {
     t.ok('the plate card is open at the top of the page, with each food’s dial', rows.length === 3 && rows.every((r) => r.g > 0), JSON.stringify(rows));
     t.ok('no food past a plateful', rows.every((r) => r.g <= 400), JSON.stringify(rows));
 
+    await openRow(p, 'l:1');
     await p.click('#modalRoot .msh-on [data-mstep="l:1:up"]');
     await p.waitForTimeout(300);
     rows = await gramsOf(p);
@@ -148,6 +150,7 @@ module.exports = {
     await tap(p, 'egg white', 'f:egg_white');
     await tap(p, 'greek yogurt', 'f:greek_yogurt');
     const ewBefore = (await gramsOf(p))[0].g;
+    await openRow(p, 'l:1');
     await p.click('#modalRoot .msh-on [data-mtype="l:1"]');
     await p.waitForTimeout(200);
     await p.fill('#modalRoot [data-mtypein="l:1"]', '100');

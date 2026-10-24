@@ -5,7 +5,7 @@
  *
  * Split by topic: later sections are in tests/macros-*.test.js, and the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, goDay, stepDay, openWeigh, openPlan, pickerList, openTray } = require('./fixtures/nourish.js');
+const { nourish, goDay, stepDay, openWeigh, openPlan, pickerList, openTray, openRow } = require('./fixtures/nourish.js');
 
 /* The day is trays and a meal opens as its sheet (trays and the meal sheet,
    Blake 2026-10-04). The sheet stands over the day's header, the weigh card
@@ -1094,6 +1094,7 @@ module.exports = nourish({
     });
     const gramsOn = async () => parseInt((await p.textContent('#modalRoot [data-mtype="b:0"]')).replace(/[^\d]/g, ''), 10);
     const g0 = await gramsOn();
+    await openRow(p, 'b:0');
     await p.click('#modalRoot [data-mstep="b:0:up"]');
     await p.waitForTimeout(150);
     const g1 = await gramsOn(), x1 = await xb();
@@ -1102,9 +1103,11 @@ module.exports = nourish({
     t.ok('and the planned protein follows the portion',
       (await shown()) === (await expectP(x1)),
       (await shown()) + ' vs ' + (await expectP(x1)));
+    await openRow(p, 'b:0');
     await p.click('#modalRoot [data-mstep="b:0:down"]');
     await p.waitForTimeout(150);
     for (let i = 0; i < 400 && (await gramsOn()) > 5; i++) await p.click('#modalRoot [data-mstep="b:0:down"]');
+    await openRow(p, 'b:0');
     await p.click('#modalRoot [data-mstep="b:0:down"]');
     await p.waitForTimeout(150);
     t.ok('the portion clamps at five grams, not zero',
@@ -1114,6 +1117,7 @@ module.exports = nourish({
       xMin > 0 && (await shown()) === (await expectP(xMin)),
       (await shown()) + ' vs ' + (await expectP(xMin)));
     /* Typed back, the way a weigher does it: tap the grams, type, Enter. */
+    await openRow(p, 'b:0');
     await p.click('#modalRoot [data-mtype="b:0"]');
     await p.waitForTimeout(150);
     await p.fill('#modalRoot .mstep-in', String(g0));

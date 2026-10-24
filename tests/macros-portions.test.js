@@ -6,7 +6,7 @@
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
 /* Since 2026-10-04 the day is trays and a plate's controls live in its
    meal's sheet (#modalRoot): openMeal is the tray's own door. */
-const { nourish, openPlan, pickerList, openMeal } = require('./fixtures/nourish.js');
+const { nourish, openPlan, pickerList, openMeal, openRow } = require('./fixtures/nourish.js');
 
 module.exports = nourish({
   name: 'Macros — portions, and the fold',
@@ -144,6 +144,7 @@ module.exports = nourish({
       return ((days[k] || {}).b || [])[0].x;
     });
     for (let i = 0; i < 12; i++) {
+      await openRow(qty);
       await qty.click('#modalRoot [data-mstep$=":up"]');
       await qty.waitForTimeout(60);
     }
@@ -162,6 +163,7 @@ module.exports = nourish({
       await qty.textContent('#modalRoot .mstep-x'));
     /* The floor still holds: a portion never steps to nothing. */
     for (let i = 0; i < 40; i++) {
+      await openRow(qty);
       await qty.click('#modalRoot [data-mstep$=":down"]');
       await qty.waitForTimeout(40);
     }
@@ -271,6 +273,7 @@ module.exports = nourish({
        grid: a cup of cheddar is 113 g and goes to 115, not to 120. The chip
        only moves when the weight crosses an eighth of a cup; the dial moves
        every time. */
+    await openRow(wg);
     await wg.click('#modalRoot [data-mstep$=":up"]');
     await wg.waitForTimeout(250);
     t.ok('and a tap moves the weight up to the next five grams',

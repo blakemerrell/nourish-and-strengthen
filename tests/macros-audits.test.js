@@ -4,7 +4,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, goDay, stepDay, openMeal: openMeal0, closeSheet } = require('./fixtures/nourish.js');
+const { nourish, goDay, stepDay, openMeal: openMeal0, closeSheet, openRow } = require('./fixtures/nourish.js');
 
 /* Opens one meal's sheet the way a thumb does, if it is not open already.
    Since 2026-10-04 the day is trays, and a meal's plates and verbs are in
@@ -1370,6 +1370,7 @@ module.exports = nourish({
       const rawHalf = Math.round(pork.ingp.reduce((a, x) => a + x.g * (x.pe > 0 ? x.pe : 1), 0) / pork.servN * 0.5);
       t.ok('a recipe plate shows its weight, marked as an estimate until weighed',
         est && est.est && est.t === '~' + rawHalf + ' g', JSON.stringify({ est, rawHalf }));
+      await openRow(np, 'l:0');
       await np.click('#modalRoot [data-mfmenu="l:0"]');
       await np.waitForTimeout(150);
       await np.click('#modalRoot [data-mbatch="l:0"]');

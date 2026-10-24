@@ -7,7 +7,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, addOn, pickerList, closeSheet, openTray } = require('./fixtures/nourish.js');
+const { nourish, addOn, pickerList, closeSheet, openTray, openRow } = require('./fixtures/nourish.js');
 
 /* Since 2026-10-04 the day is trays and a meal's plates, its scales and its
    ⋯ live in the meal's sheet (#modalRoot .msheet), opened by its tray — the
@@ -684,6 +684,7 @@ module.exports = nourish({
        out of the reference table. */
     const favMenu = async () => {
       if (!(await tinyPhone.$('#modalRoot .mrow-menu'))) {
+        await openRow(tinyPhone, 'b:0');
         await tinyPhone.click('#modalRoot [data-mfmenu="b:0"]');
         await tinyPhone.waitForTimeout(250);
       }
@@ -752,6 +753,7 @@ module.exports = nourish({
     /* The food's ⋯ in the meal sheet (2026-10-04) is a short worded list:
        Lock, Swap, Pin, Favourite, then Remove last — the destructive one at
        the end, in the warning colour, never in the middle of the others. */
+    await openRow(spacePhone, 'b:0');
     await spacePhone.click('#modalRoot [data-mfmenu="b:0"]');
     await spacePhone.waitForTimeout(250);
     const spacing = await spacePhone.evaluate(() => {
@@ -805,6 +807,7 @@ module.exports = nourish({
     await heldPage.waitForTimeout(300);
     await openMeal(heldPage, 'b');                      // breakfast's sheet
     // the lock is in the food's ⋯ since 2026-10-04
+    await openRow(heldPage, 'b:0');
     await heldPage.click('#modalRoot [data-mfmenu="b:0"]');
     await heldPage.waitForTimeout(250);
     const heldOk = await heldPage.evaluate(() => document.querySelectorAll('#modalRoot [data-mlock]').length > 0);

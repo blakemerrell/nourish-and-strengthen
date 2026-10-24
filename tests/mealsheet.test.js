@@ -1,3 +1,4 @@
+const { openRow } = require('./fixtures/nourish.js');
 /* Trays and the meal sheet (Blake, 2026-10-04).
  *
  * Blake, of the RP-style day: "The main page is worse now. Way to fat and
@@ -113,6 +114,7 @@ module.exports = {
 
     /* + dials five grams */
     const x0 = (await mealOf(p, 'l'))[0].x;
+    await openRow(p, 'l:0');
     await p.click('#modalRoot [data-mstep="l:0:up"]');
     await p.waitForTimeout(250);
     const x1 = (await mealOf(p, 'l'))[0].x;
@@ -122,6 +124,7 @@ module.exports = {
     t.ok('and an amount you dial is yours: Kept, so the re-fit works around it', (await mealOf(p, 'l'))[0].l === 1);
 
     /* the food's ⋯ */
+    await openRow(p, 'l:5');
     await p.click('#modalRoot [data-mfmenu="l:5"]');
     await p.waitForTimeout(250);
     const menu = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrow-menu .mfood-mi')].map((b) => b.textContent.trim()));
@@ -192,6 +195,7 @@ module.exports = {
     }
 
     /* Swap: the marked plate is replaced by the next tap */
+    await openRow(p, 'd:1');
     await p.click('#modalRoot [data-mfmenu="d:1"]');
     await p.waitForTimeout(200);
     await p.click('#modalRoot .mrow-menu [data-mswap="d:1"]');
@@ -207,6 +211,7 @@ module.exports = {
       const r = [...document.querySelectorAll('#modalRoot .mrows .mrow')];
       return r.map((x) => x.querySelector('.mstep-x').textContent);
     });
+    await openRow(p, 'd:0');
     await p.click('#modalRoot [data-mstep="d:0:up"]');
     await p.waitForTimeout(250);
     const st2 = await p.evaluate(() => document.querySelector('#modalRoot [data-mtype="d:0"]').textContent);
@@ -288,6 +293,7 @@ module.exports = {
     const wi = (await mealOf(p, 'd')).findIndex((it) => it.id === 'f:whey');
     let whey = null;
     if (wi >= 0) {
+      await openRow(p, 'd:' + wi);
       await p.click('#modalRoot [data-mstep="d:' + wi + ':down"]');
       await p.waitForTimeout(250);
       whey = await p.evaluate((i) => ({ val: document.querySelector('#modalRoot [data-mtype="d:' + i + '"]').textContent,
@@ -399,6 +405,7 @@ module.exports = {
     t.ok('the shelf rail leads with All, Protein, Fats, Carbs, Recipes in macro-priority order',
       railOrder.join(',') === ',protein,fat,carb,recipes', JSON.stringify(railOrder));
     const savedBefore = await sp.evaluate(() => JSON.parse(localStorage.getItem('bsc.macroDays'))['2026-10-06'].b);
+    await openRow(sp, 'b:0');
     await sp.click('#modalRoot [data-mfmenu="b:0"]');
     await sp.waitForTimeout(200);
     t.ok('Save meal collapses the two breakfast foods into one saved meal row with Explode into foods in its ⋯ menu',
@@ -416,11 +423,13 @@ module.exports = {
     /* Explode it again so we have two foods on Breakfast, then Move one to Evening Snack
        and verify Undo restores both the moved food (including its properties) and the
        refitted sibling food on Breakfast, with no undefined values in the day. */
+    await openRow(sp, 'b:0');
     await sp.click('#modalRoot [data-mfmenu="b:0"]');
     await sp.waitForTimeout(200);
     await sp.click('#modalRoot .mrow-menu [data-mexplode="b:0"]');
     await sp.waitForTimeout(350);
     const beforeMove = await sp.evaluate(() => JSON.parse(localStorage.getItem('bsc.macroDays'))['2026-10-06'].b);
+    await openRow(sp, 'b:0');
     await sp.click('#modalRoot [data-mfmenu="b:0"]');
     await sp.waitForTimeout(200);
     await sp.click('#modalRoot .mrow-menu [data-mmove="b:0"]');

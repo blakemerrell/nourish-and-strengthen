@@ -4903,6 +4903,9 @@
     summary: mSummaryHTML,
     daySummary: mDaySummary,
     ask: function (sk) { return mMealAsk(sk, mDayTargets(mViewKey()), mReadSlots()); },
+    // a meal's pills and a card's ring for given figures, as myday.js colours them (tests/macros-meal.test.js)
+    caps: function (sub, aim) { return MYDAY.capsHTML(sub, aim, null, false); },
+    ring: function (got, want, m) { return MYDAY.mRingOf(got, want, m); },
     // what a tap puts down for a food never logged, sized to this meal (mMealFitX): the app's own number, not a test's copy
     mealFit: function (sk, id) { return mMealFitX(sk, BY_ID[id]); },
     slotFor: function (id) { var sl = mSlotForRecipe(BY_ID[id], mReadSlots()); return sl ? sl.k : null; },

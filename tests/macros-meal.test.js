@@ -205,6 +205,35 @@ module.exports = nourish({
       JSON.stringify(emptyOpen));
     await trimPg.context().close();
 
+    /* ---- a tiny share is on within a gram or two --------------------------
+     *
+     * Blake, 2026-10-24: a snack's carb pill red at "2/2". Its share was
+     * about 2 g, so 8% over was 0.16 g; three foods of a gram each came to
+     * 2.3 and read over. A pill is on within 8% or 2 g (15 kcal), whichever
+     * is more, and a card's ring within 10% or the same 2 g. */
+    const tiny = await t.fresh();
+    const tz = await tiny.evaluate(() => {
+      const L = window.__macroLab;
+      const cls = (sub, aim) => {
+        const d = document.createElement('div');
+        d.innerHTML = L.caps(sub, aim);
+        return [...d.querySelectorAll('.mcap')].map((e) => (e.classList.contains('over') ? 'over' : e.classList.contains('on') ? 'on' : '-')).join();
+      };
+      return {
+        snack: cls({ kcal: 73, p: 9, f: 3, c: 2.3 }, { kcal: 70, p: 8, f: 3, c: 2 }),
+        under: cls({ kcal: 56, p: 7, f: 0.8, c: 0.3 }, { kcal: 70, p: 8, f: 3, c: 2 }),
+        far: cls({ kcal: 90, p: 9, f: 6, c: 5 }, { kcal: 70, p: 8, f: 3, c: 2 }),
+        big: cls({ kcal: 680, p: 50, f: 25, c: 66 }, { kcal: 640, p: 50, f: 22, c: 60 }),
+        ring: [L.ring(7.6, 7, 'c').s, L.ring(9.5, 7, 'c').s, L.ring(4.6, 7, 'c').s, L.ring(62, 60, 'c').s, L.ring(70, 60, 'c').s].join(),
+      };
+    });
+    t.ok('a snack at 2.3 g of carbs against 2 g, and 73 kcal against 70, has every pill on', tz.snack === 'on,on,on,on', JSON.stringify(tz));
+    t.ok('within 2 g under is on too, and more than 2 g short of a 3 g share is not', tz.under === 'on,on,-,on', tz.under);
+    t.ok('more than 2 g or 15 kcal over a small share is still over (protein never is)', tz.far === 'over,on,over,over', tz.far);
+    t.ok('a big meal keeps the 8%: 66 g of carbs against 60 is over, 25 g of fat against 22 is over', tz.big === 'on,on,over,over', tz.big);
+    t.ok('a card’s ring: 7.6 and 4.6 of 7 g a gram or two off, on and under; 9.5 over; 62 of 60 on, 70 over', tz.ring === 'on,over,under,on,over', tz.ring);
+    await tiny.context().close();
+
     /* ---- the picker speaks for the meal it is filling ---------------------
      *
      * Blake, on a sheet headed ADD TO SNACKS showing 1745 kcal while Snacks

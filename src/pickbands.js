@@ -404,7 +404,8 @@
     var got = mMealHolds(k, sk);
     if (!want || !(got.p + got.f + got.c > 0)) return '';
     var short = [['p', 'protein'], ['f', 'fat'], ['c', 'carbs']].filter(function (m) {
-      return (want[m[0]] || 0) > 0 && (got[m[0]] || 0) < want[m[0]] * 0.92;
+      // short as the meal's pills have it: more than 8% or 2 g under (myday.js, mSlack)
+      return (want[m[0]] || 0) > 0 && (got[m[0]] || 0) < want[m[0]] - Math.max(want[m[0]] * 0.08, 2);
     }).map(function (m) { return m[1]; });
     if (!short.length || short.length === 3) return '';
     return ' <span class="mt-div-for">for ' + short.join(' and ') + '</span>';

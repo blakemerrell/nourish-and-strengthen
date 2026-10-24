@@ -841,6 +841,7 @@
     /* Which eaten plate has had its portion woken up for a correction. One at
        a time, and never persisted: it is a gesture, not a setting. */
     mEdit: '',
+    mRowOpen: null,
     /* Which plate has its portion open as a typed box, or null for none. One
        at a time and never persisted, for the same reason mEdit is not: it is
        a gesture. null rather than '' so "nothing is being typed" and "the box
@@ -5640,6 +5641,23 @@
          were; this focuses it and selects what is in it, so the first key
          replaces the portion rather than appending to it — nobody taps a
          portion in order to add a digit to the end of it. */
+      /* A food's line in a meal's sheet: tap it open for its amount, its
+         macros and its ⋯; tap it again, or another, and it shuts (myday.js,
+         mOpenRow). */
+      var ro = e.target.closest('[data-mrowopen]');
+      if (ro) {
+        var rp = ro.dataset.mrowopen.split(':'), ri = Number(rp.pop()), rsk = rp.join(':');
+        var rit = (mDay(mViewKey())[rsk] || [])[ri];
+        var wasOpen = ro.getAttribute('aria-expanded') === 'true';
+        S.mRowOpen = { k: mViewKey(), sk: rsk, i: ri, id: wasOpen || !rit ? null : rit.id };
+        S.mMenu = ''; S.mType = null; S.mEdit = '';
+        renderMacros();
+        if (S.macroPick) renderModal();
+        var back = document.querySelector((S.macroPick ? '#modalRoot ' : '#macroSlots ') + '[data-mrowopen="' + ro.dataset.mrowopen + '"]');
+        if (back) back.focus();
+        return;
+      }
+
       var ty = e.target.closest('[data-mtype]');
       if (ty) {
         S.mType = ty.dataset.mtype;
@@ -7224,6 +7242,7 @@
           });
           S.mpAt[nid] = nat;
           S.mMarks = { k: nk, sk: nsk, was: mRefitMeal(nk, nsk, nat, false, nat), fresh: mpFresh(nat, nid), snap: null };
+          S.mRowOpen = null;
           S.mpBasket[nid] = ((mDay(nk)[nsk] || [])[nat] || {}).x || nx;
           S.newFood = null;
           S.mpMode = 'home';
@@ -7271,6 +7290,7 @@
           S.mpSwap = null;
           S.mpAt[pid] = at2;
           S.mMarks = { k: pk, sk: psk, was: mRefitMeal(pk, psk, undefined, false, at2), fresh: mpFresh(at2, pid), snap: null };
+          S.mRowOpen = null;
           S.mpBasket[pid] = ((mDay(pk)[psk] || [])[at2] || {}).x || px;
         }
         if (S.mAmt && S.mAmt !== '*') S.mAmt = '';

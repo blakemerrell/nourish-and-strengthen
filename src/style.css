@@ -7444,6 +7444,30 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   text-align: left; cursor: pointer; text-decoration: none;
 }
 .mrow-nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* A food a line in the meal's sheet, one tapped open at a time (myday.js,
+   mOpenRow; Blake's "B", 2026-10-24): shut, its name, amount and calories;
+   open, the whole name and a drawer of its macros, dial and ⋯. */
+.msheet .mrow.mrow-x { display: block; min-height: 0; padding: 0; }
+.msheet .mrow-sum {
+  width: 100%; min-height: 44px; margin: 0; display: flex; align-items: center; gap: 8px;
+  padding: 0 10px 0 8px; border: 0; border-radius: inherit; background: none; color: var(--ink);
+  font-family: var(--sans); font-size: 0.90625rem; text-align: left; cursor: pointer;
+}
+.msheet .mrow-sum .mrow-nm { flex: 1 1 auto; min-width: 0; font-weight: 600; }
+.msheet .mrow-open .mrow-sum .mrow-nm { white-space: normal; overflow-wrap: anywhere; overflow: visible; }
+.msheet .mrow-sum .mrow-mk, .msheet .mrow-sum .leaf { flex: none; }
+.msheet .mrow-sg { flex: none; font-variant-numeric: tabular-nums; }
+.msheet .mrow-sk { flex: none; min-width: 4.4em; text-align: right; color: var(--note); font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+.msheet .mrow-open .mrow-sum { border-bottom: 1px solid var(--line-soft); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+/* The macros take a line of their own when the dial and ⋯ leave them less
+   than 150 px, as on a phone; on a wider screen the three share one. */
+.msheet .mrow-dr {
+  position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
+  gap: 2px 4px; padding: 6px 0 4px 8px;
+}
+.msheet .mrow-dr .mrow-m { flex: 1 1 150px; min-width: 0; overflow-wrap: anywhere; }
+.msheet .mrow-dr > .mwhy-strip { flex: 1 1 100%; }
 .msheet .mrow .mitem-name:hover .mrow-nm { text-decoration: underline; text-decoration-color: var(--line-firm); text-underline-offset: 3px; }
 .mrow-mk { flex: none; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ochre-text); display: inline-flex; align-items: center; gap: 2px; }
 .mrow-mk.new { color: var(--green); }
@@ -7541,10 +7565,9 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   flex-direction: column;
   gap: 4px;
 }
-.msh-on:not(:has(.mrow-menu)) .mrows {
-  max-height: 25vh;
-  overflow-y: auto;
-}
+/* No box of its own to scroll any more (2026-10-24): with a food a line,
+   six foods are shorter than the 25vh box was, and the box hid the first
+   of four half out of sight. */
 .msh-on .mrows .mrow {
   background: var(--card);
   border: 1px solid var(--line-firm);
@@ -7553,6 +7576,8 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   box-shadow: 0 1px 2px rgba(42, 33, 24, 0.04);
 }
 .msh-on .mrows .mrow.fresh { background: var(--tint-green); }
+.msh-on .mrows .mrow.mrow-x { padding: 0; }
+.msh-on .mrows .mrow.mrow-open { border-color: var(--ochre); }
 .msh-on .mrows .mrow.moved, .msh-on .mrows .mrow.swapping { background: var(--ochre-soft); border-color: var(--ochre); }
 .msheet .msh-tray.open .msh-trc { display: none; }
 .mp-shelves {

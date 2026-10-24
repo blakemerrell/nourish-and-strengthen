@@ -279,6 +279,12 @@
     mBuildFoods();
   }
 
+  /* src/shelves.js, handed what it reads of the app's and kept under its own
+     names here, as declarations, so they answer from anywhere in this file. */
+  var SHELVES = window.HiveParts.shelves({});
+  function mShelfKey(r) { return SHELVES.mShelfKey(r); }
+  var MSHELF = SHELVES.MSHELF;
+
   function mBuildFoods() {
     MFOODS = [];
     var mine = mReadMyFoods();
@@ -391,6 +397,58 @@
         }())
       });
       BY_ID[MFOODS[MFOODS.length - 1].id] = MFOODS[MFOODS.length - 1];
+    });
+    var eo = SHELVES.mEatoutCatalog();
+    Object.keys(eo.parts).forEach(function (pk) {
+      var pf = eo.parts[pk];
+      var mp = Math.round((pf.p || 0) * 10) / 10;
+      var mc = Math.round((pf.c || 0) * 10) / 10;
+      var mf = Math.round((pf.f || 0) * 10) / 10;
+      var prec = {
+        id: 'f:' + pk, food: true, side: false, eat: false, lever: false,
+        eatoutPart: true, meals: '', veg: !!pf.veg, starch: !!pf.starch, shelf: pf.shelf || '',
+        ext: true, zone: '', book: 0, secNum: 0, secName: 'Eating out',
+        name: pf.name, servings: '1 ' + (pf.unit || 'serving'), servN: 1,
+        unit: pf.unit || 'serving', grams: pf.grams || 0,
+        ing: [pf.name], steps: [], est: pf.est !== false, score: null, diff: 'Easy', time: '0 mins',
+        macro: { kcal: Math.round(4 * mp + 4 * mc + 9 * mf), p: mp, c: mc, f: mf,
+          na: Math.round(pf.na || 0), fib: Math.round((pf.fib || 0) * 10) / 10 }
+      };
+      BY_ID[prec.id] = prec;
+    });
+    eo.combos.forEach(function (cf) {
+      var cparts = [];
+      var cp = 0, cc = 0, cf2 = 0, cna = 0, cfib = 0, cg = 0;
+      (cf.parts || []).forEach(function (pt) {
+        var pid = 'f:' + pt[0], px = Number(pt[1]) || 1;
+        var pr = BY_ID[pid];
+        if (!pr) return;
+        cparts.push({ id: pid, x: px, name: pr.name, unit: pr.unit });
+        cp += (pr.macro.p || 0) * px;
+        cc += (pr.macro.c || 0) * px;
+        cf2 += (pr.macro.f || 0) * px;
+        cna += (pr.macro.na || 0) * px;
+        cfib += (pr.macro.fib || 0) * px;
+        cg += (pr.grams || 0) * px;
+      });
+      cp = Math.round(cp * 10) / 10;
+      cc = Math.round(cc * 10) / 10;
+      cf2 = Math.round(cf2 * 10) / 10;
+      var crec = {
+        id: 'f:rc_' + cf.id, food: true, side: false, eat: false, lever: false,
+        eatout: true, spot: cf.spot || 'Eating out',
+        meals: cf.meals || 'bld', veg: false, starch: false, shelf: 'eatout',
+        ext: true, zone: '', book: 0, secNum: 0, secName: cf.spot || 'Eating out',
+        name: cf.name, servings: '1 order', servN: 1, unit: 'order', grams: Math.round(cg),
+        ing: [cf.spot || '', cf.name].concat(cparts.map(function (pt) {
+          return fmtNum(pt.x) + ' \u00d7 ' + pt.unit + ' ' + pt.name;
+        })),
+        parts: cparts, steps: [], est: !!cf.est, score: null, diff: 'Easy', time: '0 mins',
+        macro: { kcal: Math.round(4 * cp + 4 * cc + 9 * cf2), p: cp, c: cc, f: cf2,
+          na: Math.round(cna), fib: Math.round(cfib * 10) / 10 }
+      };
+      MFOODS.push(crec);
+      BY_ID[crec.id] = crec;
     });
     MFOODS.sort(function (a2, b2) { return a2.name.localeCompare(b2.name); });
   }
@@ -659,7 +717,8 @@
     cup: 'cups', can: 'cans', slice: 'slices', clove: 'cloves', package: 'packages',
     packet: 'packets', stick: 'sticks', pint: 'pints', quart: 'quarts', scoop: 'scoops',
     head: 'heads', bunch: 'bunches', link: 'links', spear: 'spears', lb: 'lbs', box: 'boxes',
-    serving: 'servings', plate: 'plates', egg: 'eggs', piece: 'pieces'
+    serving: 'servings', plate: 'plates', egg: 'eggs', piece: 'pieces',
+    order: 'orders', bowl: 'bowls', tortilla: 'tortillas', patty: 'patties', bottle: 'bottles', bag: 'bags', portion: 'portions'
   };
   var SINGULAR = {};
   Object.keys(PLURAL).forEach(function (k) { SINGULAR[PLURAL[k]] = k; });
@@ -3339,12 +3398,6 @@
   var QUERY = window.HiveParts.query({ fmtNum: fmtNum, mDefaultX: mDefaultX, mMacLine: mMacLine, mRank: mRank, mSaltNote: mSaltNote, mpRowHTML: mpRowHTML, LIVE: LIVE });
   function mQueryKind(q) { return QUERY.mQueryKind(q); }
   function mQueryTopHTML(q, day, targets, pick) { return QUERY.mQueryTopHTML(q, day, targets, pick); }
-
-  /* src/shelves.js, handed what it reads of the app's and kept under its own
-     names here, as declarations, so they answer from anywhere in this file. */
-  var SHELVES = window.HiveParts.shelves({});
-  function mShelfKey(r) { return SHELVES.mShelfKey(r); }
-  var MSHELF = SHELVES.MSHELF;
 
   /* src/pickhome.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */

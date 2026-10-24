@@ -1268,6 +1268,97 @@ module.exports = nourish({
           !!first && /honey/i.test(first.textContent);
       }), await lookPage.evaluate(() =>
         document.getElementById('mpList').textContent.slice(0, 120)));
+
+    /* ---- Price & Spanish Fork Restaurant Smart Combos (🥡 Eating out) ---- */
+    await lookPage.fill('#mpFind', '');
+    await lookPage.waitForTimeout(250);
+    await lookPage.selectOption('#mpSec', 'meal');
+    await lookPage.waitForTimeout(200);
+    const eatoutCatalog = await lookPage.evaluate(() => {
+      const combos = window.__macroLab.foods().filter((r) => r.eatout);
+      const bad = combos.filter((r) => !r.parts || !r.parts.length || !r.spot || r.unit !== 'order');
+      return { n: combos.length, bad: bad.length };
+    });
+    t.ok('Price & Spanish Fork catalog registers 66 restaurant Smart Combos with parts and spots',
+      eatoutCatalog.n === 66 && eatoutCatalog.bad === 0, JSON.stringify(eatoutCatalog));
+
+    t.ok('the shelf rail carries an Eating out chip',
+      !!(await lookPage.$('#mpShelves [data-mpshelf="eatout"]')));
+    await lookPage.click('#mpShelves [data-mpshelf="eatout"]');
+    await lookPage.waitForTimeout(250);
+    const eatoutRows = await lookPage.evaluate(() => {
+      const rows = [...document.querySelectorAll('#mpList .mpick-row[data-mpick]')];
+      return {
+        n: rows.length,
+        allEatout: rows.every((r) => /^f:rc_/.test(r.dataset.mpick) && r.dataset.mpx === '1'),
+        firstId: rows[0] ? rows[0].dataset.mpick : null,
+        firstTxt: rows[0] ? rows[0].textContent : ''
+      };
+    });
+    t.ok('tapping Eating out ranks restaurant Smart Combos at 1 order',
+      eatoutRows.n >= 20 && eatoutRows.allEatout && /1 order/.test(eatoutRows.firstTxt),
+      JSON.stringify(eatoutRows));
+
+    /* Searching by restaurant or town narrows the list */
+    await lookPage.fill('#mpFind', 'Grogg');
+    await lookPage.waitForTimeout(300);
+    t.ok('searching a local Price restaurant finds its Smart Combos',
+      await lookPage.evaluate(() => {
+        const rows = [...document.querySelectorAll('#mpList .mpick-row[data-mpick]')];
+        return rows.length === 3 && rows.every((r) => /Grogg/.test(r.textContent));
+      }));
+
+    await lookPage.fill('#mpFind', 'Spanish Fork');
+    await lookPage.waitForTimeout(300);
+    t.ok('searching by town ("Spanish Fork") matches combos via their spot metadata',
+      await lookPage.evaluate(() =>
+        document.querySelectorAll('#mpList .mpick-row[data-mpick^="f:rc_"]').length >= 10));
+
+    /* Tapping a combo adds 1 order, wears no "A saved meal" badge, and Explode splits it into parts */
+    await lookPage.fill('#mpFind', 'Costa Vida');
+    await lookPage.waitForTimeout(300);
+    await lookPage.click('#mpList .mpick-row[data-mpick="f:rc_cv_baja_chk_tacos"]');
+    await lookPage.waitForTimeout(300);
+    const onPlate = await lookPage.evaluate(() => {
+      const hasSavedBadge = !!document.querySelector('#modalRoot .mrows .mfood-saved');
+      const sub = window.__macroLab.read().meals.find((m) => m.items.some((it) => it.id === 'f:rc_cv_baja_chk_tacos'));
+      return {
+        found: !!sub,
+        hasSavedBadge,
+        hasMenu: !!document.querySelector('#modalRoot .mrows [data-mfmenu]')
+      };
+    });
+    t.ok('adding a restaurant combo logs 1 order with an Explode menu and no saved-meal badge',
+      onPlate.found && !onPlate.hasSavedBadge && onPlate.hasMenu, JSON.stringify(onPlate));
+
+    const beforeExplode = await lookPage.evaluate(() => {
+      const m = window.__macroLab.read().meals.find((ml) => ml.items.some((it) => it.id === 'f:rc_cv_baja_chk_tacos'));
+      const it = m.items.find((x) => x.id === 'f:rc_cv_baja_chk_tacos');
+      return { sk: m.k, kcal: it.kcal, p: it.p, f: it.f, c: it.c };
+    });
+    await lookPage.click('#modalRoot .mrows [data-mfmenu]');
+    await lookPage.waitForTimeout(200);
+    await lookPage.click('#modalRoot .mrows [data-mexplode]');
+    await lookPage.waitForTimeout(300);
+    const afterExplode = await lookPage.evaluate((sk) => {
+      const m = window.__macroLab.read().meals.find((ml) => ml.k === sk);
+      const ro = m.items.filter((it) => /^f:ro_/.test(it.id));
+      const sum = ro.reduce((acc, it) => ({
+        kcal: acc.kcal + it.kcal * it.x,
+        p: acc.p + it.p * it.x,
+        f: acc.f + it.f * it.x,
+        c: acc.c + it.c * it.x
+      }), { kcal: 0, p: 0, f: 0, c: 0 });
+      return { n: ro.length, sum };
+    }, beforeExplode.sk);
+    t.ok('Explode into foods splits the restaurant combo into its atomic parts with identical macros',
+      afterExplode.n === 4 &&
+      Math.round(afterExplode.sum.kcal) === Math.round(beforeExplode.kcal) &&
+      Math.abs(afterExplode.sum.p - beforeExplode.p) < 0.01 &&
+      Math.abs(afterExplode.sum.f - beforeExplode.f) < 0.01 &&
+      Math.abs(afterExplode.sum.c - beforeExplode.c) < 0.01,
+      JSON.stringify({ beforeExplode, afterExplode }));
+
     await lookPage.context().close();
   },
 });

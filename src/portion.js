@@ -85,7 +85,7 @@
      the measurable ones keep their quarters. */
   var MSTEP_COUNT = { nut: 1, piece: 1, slice: 1, each: 1, whole: 1, egg: 1,
     bar: 1, cookie: 1, cracker: 1, chip: 1, wrap: 1, tortilla: 1, link: 1,
-    patty: 1, scoop: 0.25, packet: 1, can: 1, bag: 1 };
+    patty: 1, scoop: 0.25, packet: 1, can: 1, bag: 1, order: 1, bottle: 1 };
   /* A scoop is counted in quarters (Blake, 2026-10-04, of whey: "I might
      want a quarter scoop or half a scoop or 3/4 scoop. So whatever that is in
      grams"). Nobody halves an egg; plenty of people take half a scoop. */

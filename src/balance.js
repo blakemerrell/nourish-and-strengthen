@@ -150,7 +150,7 @@
            promise that the solver would size it, a promise this line used
            to break. What a hand placed stays where the hand put it. */
         if (own && it.by !== 'f' && it.by !== 'w') return;
-        if (!it.eaten && !it.l && r && r.macro) free.push(it);
+        if (!it.eaten && !it.l && r && !r.eatout && r.macro) free.push(it);
       });
     });
     if (!free.length) return;

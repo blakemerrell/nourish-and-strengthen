@@ -203,7 +203,23 @@
     ro_small_fries:     { name: 'Small Crinkle-Cut Fries Share', unit: 'portion', grams: 110, p: 4, c: 39, f: 11, na: 380, fib: 3.5, est: true },
     ro_wok_chk_broc:    { name: 'Wok-Seared Chicken & Broccoli (Light Garlic Sauce)', unit: 'bowl', grams: 280, p: 36, c: 16, f: 8, na: 780, fib: 4, est: true },
     ro_wok_beef_broc:   { name: 'Wok-Seared Flank Steak & Broccoli', unit: 'bowl', grams: 260, p: 32, c: 14, f: 10, na: 820, fib: 3.5, est: true },
-    ro_wok_shrimp_chk:  { name: 'Steamed Jumbo Shrimp, Chicken & Mixed Vegetables', unit: 'bowl', grams: 290, p: 44, c: 14, f: 5.5, na: 640, fib: 4.5, est: true }
+    ro_wok_shrimp_chk:  { name: 'Steamed Jumbo Shrimp, Chicken & Mixed Vegetables', unit: 'bowl', grams: 290, p: 44, c: 14, f: 5.5, na: 640, fib: 4.5, est: true },
+
+    // McDonald's, KFC, Dairy Queen, Taco Bell, Taco Time, Burger King, Sonic, Mo' Bettahs, Cupbop, Jimmy John's
+    ro_egg_mcmuffin:    { name: 'Egg McMuffin (Canadian Bacon, Egg, Cheese, English Muffin)', unit: 'piece', grams: 136, p: 17, c: 30, f: 13, na: 770, fib: 2 },
+    ro_qp_beef_patty:   { name: '4 oz Quarter Pounder 100% Beef Patty', unit: 'patty', grams: 85, p: 22, c: 0, f: 18, na: 260, fib: 0 },
+    ro_mcdouble_nomayo: { name: 'McDouble Burger (Mustard, Pickles, Onions, No Ketchup)', unit: 'piece', grams: 147, p: 22, c: 28, f: 19, na: 850, fib: 2 },
+    ro_apple_slices_bag:{ name: 'Fresh Sliced Apple Bag', unit: 'bag', grams: 40, p: 0, c: 4, f: 0, na: 0, fib: 1 },
+    ro_kfc_grill_breast:{ name: 'Kentucky Grilled Chicken Breast', unit: 'piece', grams: 145, p: 38, c: 0, f: 7, na: 520, fib: 0 },
+    ro_kfc_grill_drum:  { name: 'Kentucky Grilled Chicken Drumstick', unit: 'piece', grams: 58, p: 11, c: 0, f: 4, na: 180, fib: 0 },
+    ro_kfc_sweet_corn:  { name: 'Individual Sweet Kernel Corn', unit: 'cup', grams: 100, p: 2, c: 16, f: 0.5, na: 5, fib: 2 },
+    ro_kfc_tenders_5:   { name: '5 Crispy Chicken Breast Tenders', unit: 'portion', grams: 175, p: 51, c: 26, f: 22, na: 1450, fib: 2 },
+    ro_dq_rotiss_bites: { name: '6pc Rotisserie-Style Unbreaded Chicken Bites', unit: 'portion', grams: 140, p: 40, c: 5, f: 13, na: 980, fib: 0 },
+    ro_flame_whopper_pt:{ name: 'Flame-Broiled 4 oz Whopper Beef Patty', unit: 'patty', grams: 85, p: 24, c: 0, f: 17, na: 230, fib: 0 },
+    ro_whopper_jr_lite: { name: 'Whopper Jr. Burger (No Mayo, Mustard, Lettuce, Tomato, Onion)', unit: 'piece', grams: 135, p: 17, c: 28, f: 12, na: 510, fib: 1.5 },
+    ro_grill_chk_wrap:  { name: 'Grilled Chicken Tortilla Wrap (Lettuce, Tomato, Light Sauce)', unit: 'piece', grams: 130, p: 21, c: 25, f: 8, na: 590, fib: 2 },
+    ro_kalua_pork_lean: { name: 'Hawaiian Slow-Roasted Kalua Pork (Lean Pull)', unit: 'portion', grams: 125, p: 26, c: 1, f: 14, na: 640, fib: 0 },
+    ro_korean_bbq_beef: { name: 'Korean Bulgogi BBQ Seared Beef', unit: 'portion', grams: 115, p: 26, c: 9, f: 9, na: 580, fib: 0 }
   };
 
   var MEATOUT_COMBOS = [
@@ -447,7 +463,117 @@
       parts: [['ro_wok_beef_broc', 1.5], ['ro_white_rice', 1]] },
     { id: 'mg_shrimp_chk_veggies', spot: 'Mandarin Garden \u00b7 Price', meals: 'ld', est: true,
       name: 'Mandarin Garden \u2014 Steamed Shrimp & Chicken with Mixed Veggies + Half Rice',
-      parts: [['ro_wok_shrimp_chk', 1], ['ro_white_rice', 0.5]] }
+      parts: [['ro_wok_shrimp_chk', 1], ['ro_white_rice', 0.5]] },
+
+    // 23. McDonald's (Price & Spanish Fork)
+    { id: 'mcd_2_egg_mcmuffin', spot: 'McDonald\u2019s \u00b7 Price & Spanish Fork', meals: 'bs',
+      name: 'McDonald\u2019s \u2014 2 Egg McMuffins (Canadian Bacon, Egg & English Muffin)',
+      parts: [['ro_egg_mcmuffin', 2]] },
+    { id: 'mcd_dbl_qp_nobun', spot: 'McDonald\u2019s \u00b7 Price & Spanish Fork', meals: 'ld',
+      name: 'McDonald\u2019s \u2014 Double Quarter Pounder Lettuce-Wrapped (No Bun, Mustard, Apple Slices)',
+      parts: [['ro_qp_beef_patty', 2], ['ro_am_cheese', 1], ['ro_lettuce_tom_oni', 1], ['ro_apple_slices_bag', 1]] },
+    { id: 'mcd_2_mcdouble_plain', spot: 'McDonald\u2019s \u00b7 Price & Spanish Fork', meals: 'lds',
+      name: 'McDonald\u2019s \u2014 2 McDoubles (No Ketchup, Mustard, Pickles & Onions)',
+      parts: [['ro_mcdouble_nomayo', 2]] },
+
+    // 24. KFC (Price & Spanish Fork)
+    { id: 'kfc_grilled_2pc_beans_corn', spot: 'KFC \u00b7 Price & Spanish Fork', meals: 'ld',
+      name: 'KFC \u2014 2pc Kentucky Grilled Chicken (Breast & Drum) + Green Beans + Sweet Corn',
+      parts: [['ro_kfc_grill_breast', 1], ['ro_kfc_grill_drum', 1], ['ro_bbq_green_beans', 1], ['ro_kfc_sweet_corn', 1]] },
+    { id: 'kfc_breast_mash_beans', spot: 'KFC \u00b7 Price & Spanish Fork', meals: 'ld',
+      name: 'KFC \u2014 Grilled or Skin-Off Chicken Breast + Mashed Potatoes & Gravy + Green Beans',
+      parts: [['ro_kfc_grill_breast', 1], ['ro_cu_mash_gravy', 1], ['ro_bbq_green_beans', 1]] },
+    { id: 'kfc_5_tenders_beans', spot: 'KFC \u00b7 Price & Spanish Fork', meals: 'ld',
+      name: 'KFC \u2014 5 Chicken Breast Tenders + Green Beans + Side Salad',
+      parts: [['ro_kfc_tenders_5', 1], ['ro_bbq_green_beans', 1], ['ro_side_salad_lite', 1]] },
+
+    // 25. Dairy Queen (Price & Spanish Fork)
+    { id: 'dq_rotiss_salad_bowl', spot: 'Dairy Queen \u00b7 Price & Spanish Fork', meals: 'ld',
+      name: 'Dairy Queen \u2014 Rotisserie Chicken Bites Salad Bowl (Light Dressing)',
+      parts: [['ro_romaine_base', 1], ['ro_dq_rotiss_bites', 1.25], ['ro_pico_salsa', 1], ['ro_chimichurri', 1]] },
+    { id: 'dq_6pc_rotiss_side_salad', spot: 'Dairy Queen \u00b7 Price & Spanish Fork', meals: 'lds',
+      name: 'Dairy Queen \u2014 6pc Rotisserie-Style Chicken Bites + Side Salad (No Toast)',
+      parts: [['ro_dq_rotiss_bites', 1], ['ro_side_salad_lite', 1]] },
+    { id: 'dq_dbl_stackburger_salad', spot: 'Dairy Queen \u00b7 Price & Spanish Fork', meals: 'ld',
+      name: 'Dairy Queen \u2014 Double Stackburger (No Mayo, Mustard & Pickles) + Side Salad',
+      parts: [['ro_beef_patty', 2], ['ro_am_cheese', 1], ['ro_burger_bun', 1], ['ro_side_salad_lite', 1]] },
+
+    // 26. Taco Bell (Price & Spanish Fork)
+    { id: 'tb_cantina_chk_bowl_dbl', spot: 'Taco Bell \u00b7 Price & Spanish Fork', meals: 'ld',
+      name: 'Taco Bell \u2014 Cantina Chicken Bowl with Extra Chicken (No Sour Cream, Light Sauce)',
+      parts: [['ro_grill_chk_mex', 1.5], ['ro_black_beans', 1], ['ro_cilantro_rice', 0.75], ['ro_romaine_base', 1], ['ro_pico_salsa', 1]] },
+    { id: 'tb_3_fresco_steak_tacos', spot: 'Taco Bell \u00b7 Price & Spanish Fork', meals: 'lds',
+      name: 'Taco Bell \u2014 3 Fresco Style Grilled Steak Tacos (Pico de Gallo, No Cheese/Sauce)',
+      parts: [['ro_grill_steak_mex', 1.25], ['ro_corn_tortilla', 3], ['ro_pico_salsa', 1.5]] },
+    { id: 'tb_power_steak_chk_bowl', spot: 'Taco Bell \u00b7 Price & Spanish Fork', meals: 'ld',
+      name: 'Taco Bell \u2014 Steak & Chicken Power Bowl (Black Beans, Seasoned Rice, Guacamole)',
+      parts: [['ro_grill_chk_mex', 0.75], ['ro_grill_steak_mex', 0.75], ['ro_black_beans', 1], ['ro_spanish_rice', 0.75], ['ro_avocado_slices', 1], ['ro_pico_salsa', 1]] },
+
+    // 27. Taco Time (Price & Spanish Fork)
+    { id: 'tt_fit_hit_chk_bowl', spot: 'Taco Time \u00b7 Price & Spanish Fork', meals: 'ld',
+      name: 'Taco Time \u2014 Fit-Hit Chicken Bowl (Grilled Chicken, Black Beans, Corn, Salsa Fresca)',
+      parts: [['ro_grill_chk_mex', 1.25], ['ro_black_beans', 1], ['ro_kfc_sweet_corn', 0.5], ['ro_romaine_base', 1], ['ro_pico_salsa', 1]] },
+    { id: 'tt_2_chk_tacos_beans', spot: 'Taco Time \u00b7 Price & Spanish Fork', meals: 'lds',
+      name: 'Taco Time \u2014 2 Soft Grilled Chicken Tacos + Side Pinto Beans',
+      parts: [['ro_grill_chk_mex', 1.25], ['ro_corn_tortilla', 2], ['ro_pinto_beans', 1], ['ro_pico_salsa', 1]] },
+    { id: 'tt_steak_taco_salad', spot: 'Taco Time \u00b7 Price & Spanish Fork', meals: 'ld',
+      name: 'Taco Time \u2014 Grilled Steak Taco Salad (No Fried Shell, Black Beans, Salsa Fresca)',
+      parts: [['ro_romaine_base', 1.25], ['ro_grill_steak_mex', 1.25], ['ro_black_beans', 1], ['ro_pico_salsa', 1], ['ro_tomatillo_dr', 0.5]] },
+
+    // 28. Burger King (Price & Spanish Fork)
+    { id: 'bk_dbl_whopper_nobun', spot: 'Burger King \u00b7 Price & Spanish Fork', meals: 'ld',
+      name: 'Burger King \u2014 Double Whopper Protein Bowl (No Bun, No Mayo, Lettuce, Tomato, Pickles)',
+      parts: [['ro_flame_whopper_pt', 2], ['ro_lettuce_tom_oni', 1.5]] },
+    { id: 'bk_2_whopper_jr_nomayo', spot: 'Burger King \u00b7 Price & Spanish Fork', meals: 'lds',
+      name: 'Burger King \u2014 2 Whopper Jr. Burgers (No Mayo, Mustard, Lettuce, Tomato, Onion)',
+      parts: [['ro_whopper_jr_lite', 2]] },
+    { id: 'bk_2_royal_chk_wraps', spot: 'Burger King \u00b7 Price & Spanish Fork', meals: 'lds',
+      name: 'Burger King \u2014 2 Grilled Chicken Royal Wraps (Light Sauce, Lettuce & Tomato)',
+      parts: [['ro_grill_chk_wrap', 2]] },
+
+    // 29. Sonic Drive-In (Spanish Fork)
+    { id: 'so_dbl_smash_lettuce', spot: 'Sonic Drive-In \u00b7 Spanish Fork', meals: 'lds',
+      name: 'Sonic \u2014 Double Sonic Smasher Lettuce-Wrapped (No Sauce, Mustard & Pickles)',
+      parts: [['ro_beef_patty', 2.5], ['ro_am_cheese', 1], ['ro_lettuce_tom_oni', 1]] },
+    { id: 'so_2_grill_chk_wraps', spot: 'Sonic Drive-In \u00b7 Spanish Fork', meals: 'lds',
+      name: 'Sonic \u2014 2 Grilled Chicken Tender Wraps + Fresh Apple Slices',
+      parts: [['ro_grill_chk_wrap', 2], ['ro_apple_slices_bag', 1]] },
+    { id: 'so_breakfast_scrambler_bowl', spot: 'Sonic Drive-In \u00b7 Spanish Fork', meals: 'bs',
+      name: 'Sonic \u2014 High-Protein Bacon & Egg Breakfast Bowl (No Tortilla, Salsa)',
+      parts: [['ro_egg_scrambler', 1.5], ['ro_bacon_strips', 2], ['ro_pico_salsa', 1]] },
+
+    // 30. Mo' Bettahs Hawaiian Style Food (Spanish Fork)
+    { id: 'mb_mini_teriyaki_chk_veg', spot: 'Mo\u2019 Bettahs \u00b7 Spanish Fork', meals: 'ld',
+      name: 'Mo\u2019 Bettahs \u2014 Mini Teriyaki Chicken (1 Scoop Rice, All Shredded Cabbage, No Mac Salad)',
+      parts: [['ro_teriyaki_chk', 1.25], ['ro_white_rice', 0.75], ['ro_cabbage_slaw', 1.5], ['ro_teriyaki_glaze', 0.5]] },
+    { id: 'mb_reg_dbl_chk_cabbage', spot: 'Mo\u2019 Bettahs \u00b7 Spanish Fork', meals: 'ld',
+      name: 'Mo\u2019 Bettahs \u2014 Regular Teriyaki Chicken (All Cabbage Base, No Rice, No Mac Salad)',
+      parts: [['ro_teriyaki_chk', 2], ['ro_cabbage_slaw', 2]] },
+    { id: 'mb_chk_kalua_pork_light', spot: 'Mo\u2019 Bettahs \u00b7 Spanish Fork', meals: 'ld',
+      name: 'Mo\u2019 Bettahs \u2014 Teriyaki Chicken & Kalua Pork (1 Scoop Rice, Extra Cabbage, No Mac)',
+      parts: [['ro_teriyaki_chk', 1], ['ro_kalua_pork_lean', 1], ['ro_white_rice', 0.75], ['ro_cabbage_slaw', 1.5]] },
+
+    // 31. Cupbop Korean BBQ (Spanish Fork)
+    { id: 'cb_kko_kko_bop_nodang', spot: 'Cupbop Korean BBQ \u00b7 Spanish Fork', meals: 'ld',
+      name: 'Cupbop \u2014 Kko Kko Bop BBQ Chicken (Extra Cabbage, Half Rice, No Noodles)',
+      parts: [['ro_teriyaki_chk', 1.5], ['ro_white_rice', 0.75], ['ro_cabbage_slaw', 1.5]] },
+    { id: 'cb_b_bop_beef_chk_combo', spot: 'Cupbop Korean BBQ \u00b7 Spanish Fork', meals: 'ld',
+      name: 'Cupbop \u2014 B Bop Korean BBQ Beef + Chicken Combo (Half Rice, Extra Cabbage, No Noodles)',
+      parts: [['ro_korean_bbq_beef', 1], ['ro_teriyaki_chk', 1], ['ro_white_rice', 0.75], ['ro_cabbage_slaw', 1.5]] },
+    { id: 'cb_lowcarb_dbl_chk', spot: 'Cupbop Korean BBQ \u00b7 Spanish Fork', meals: 'ld',
+      name: 'Cupbop \u2014 Low-Carb Double BBQ Chicken Bowl (All Cabbage, No Rice, No Noodles)',
+      parts: [['ro_teriyaki_chk', 1.75], ['ro_cabbage_slaw', 2]] },
+
+    // 32. Jimmy John's (Spanish Fork)
+    { id: 'jj_beach_club_unwich_dbl', spot: 'Jimmy John\u2019s \u00b7 Spanish Fork', meals: 'lds',
+      name: 'Jimmy John\u2019s \u2014 #12 Beach Club Unwich Lettuce Wrap (Double Turkey, Avocado, No Mayo)',
+      parts: [['ro_deli_turkey', 2], ['ro_am_cheese', 1], ['ro_avocado_slices', 1], ['ro_lettuce_tom_oni', 1.5]] },
+    { id: 'jj_hunters_club_unwich', spot: 'Jimmy John\u2019s \u00b7 Spanish Fork', meals: 'lds',
+      name: 'Jimmy John\u2019s \u2014 #10 Hunter\u2019s Club Unwich Lettuce Wrap (Double Roast Beef, Provolone, Mustard)',
+      parts: [['ro_arby_roast_beef', 2.5], ['ro_am_cheese', 1], ['ro_lettuce_tom_oni', 1.5]] },
+    { id: 'jj_turkey_tom_8in_dbl', spot: 'Jimmy John\u2019s \u00b7 Spanish Fork', meals: 'ld',
+      name: 'Jimmy John\u2019s \u2014 #4 Turkey Tom 8\" Sub (Double Turkey, No Mayo, Mustard, Lettuce & Tomato)',
+      parts: [['ro_deli_turkey', 2], ['ro_sub_wheat_roll', 1.25], ['ro_lettuce_tom_oni', 1]] }
   ];
 
   function mEatoutCatalog() {

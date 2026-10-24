@@ -2943,11 +2943,15 @@ module.exports = {
     r = await p.evaluate(() => !!document.querySelector('#trainRoot .tr-rtseed [data-t="rtseed"]'));
     t.ok('repeated custom workouts in history are offered in one tap when Your routines is empty', r);
     await p.click('#trainRoot [data-t="rtseed"]');
-    r = await p.evaluate(() => ({
-      nx: (document.querySelector('#trainRoot .tr-rdb[data-v^="nx:"] .tr-rdn') || {}).textContent || '',
-      mine: [...document.querySelectorAll('#trainRoot .tr-rdb[data-v^="r"] .tr-rdn')].map((e) => e.textContent).join('|'),
-    }));
-    t.ok('saving them populates Your routines in order and rotates Next up after the last one done',
+    r = await p.evaluate(() => {
+      window.Train._.reload();
+      window.Train._.draw();
+      return {
+        nx: (document.querySelector('#trainRoot .tr-rdb[data-v^="nx:"] .tr-rdn') || {}).textContent || '',
+        mine: [...document.querySelectorAll('#trainRoot .tr-rdb[data-v^="r"] .tr-rdn')].map((e) => e.textContent).join('|'),
+      };
+    });
+    t.ok('saving them populates Your routines in order (persisted across reload) and rotates Next up after the last one done',
       r.mine === 'Day 1 (Upper)|Day 2 (Lower)' && r.nx === 'Day 1 (Upper)', JSON.stringify(r));
     await p.close();
     // ---- pull-ups, chin-ups and dips count you ---------------------------------------------

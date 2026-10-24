@@ -1287,8 +1287,8 @@ module.exports = nourish({
       const bad = combos.filter((r) => !r.parts || !r.parts.length || !r.spot || r.unit !== 'order');
       return { n: combos.length, menus: menus.length, bad: bad.length };
     });
-    t.ok('Price & Spanish Fork catalog registers 211 restaurant Smart Combos and 140+ individual Menu Items',
-      eatoutCatalog.n === 211 && eatoutCatalog.menus >= 140 && eatoutCatalog.bad === 0, JSON.stringify(eatoutCatalog));
+    t.ok('Price & Spanish Fork catalog registers 214 restaurant Smart Combos and 135+ orderable Menu Items',
+      eatoutCatalog.n === 214 && eatoutCatalog.menus >= 135 && eatoutCatalog.bad === 0, JSON.stringify(eatoutCatalog));
 
     t.ok('the shelf rail carries an Eating out chip, and #mpSpots is hidden until Eating out is active',
       !!(await lookPage.$('#mpShelves [data-mpshelf="eatout"]')) && !(await lookPage.$('#mpSpots')));
@@ -1410,10 +1410,42 @@ module.exports = nourish({
       }));
 
     await lookPage.fill('#mpFind', 'Spanish Fork');
+    /* Searching by town ("Spanish Fork") matches combos via their spot metadata */
+    await lookPage.fill('#mpFind', 'Spanish Fork');
     await lookPage.waitForTimeout(300);
     t.ok('searching by town ("Spanish Fork") matches combos via their spot metadata',
       await lookPage.evaluate(() =>
         document.querySelectorAll('#mpList .mpick-row[data-mpick^="f:rc_"]').length >= 10));
+
+    /* Searching a standalone menu item from the home screen (no shelf selected) finds it and counts it in Eating out */
+    await lookPage.click('#mpShelves [data-mpshelf=""]');
+    await lookPage.waitForTimeout(200);
+    await lookPage.fill('#mpFind', 'cole slaw');
+    await lookPage.waitForTimeout(300);
+    const homeMenuSearch = await lookPage.evaluate(() => {
+      const row = document.querySelector('#mpList .mpick-row[data-mpick="f:ro_kfc_coleslaw"]');
+      const eoChip = document.querySelector('#mpShelves [data-mpshelf="eatout"] .mp-shn');
+      return { found: !!row, eoCount: eoChip ? Number(eoChip.textContent) : 0 };
+    });
+    t.ok('searching a menu item from the home screen finds it and updates the Eating out chip count',
+      homeMenuSearch.found && homeMenuSearch.eoCount >= 1, JSON.stringify(homeMenuSearch));
+
+    /* Returning to Eating out shows orderable menu items while hiding raw combo building blocks (partOnly) */
+    await lookPage.fill('#mpFind', '');
+    await lookPage.waitForTimeout(200);
+    await lookPage.click('#mpShelves [data-mpshelf="eatout"]');
+    await lookPage.waitForTimeout(250);
+    const menuCheck = await lookPage.evaluate(() => {
+      const ids = window.__macroLab.foods().map((r) => r.id);
+      return {
+        hasEggWhite: !!document.querySelector('#mpList .mpick-row[data-mpick="f:ro_cfa_egg_white"]'),
+        hasColeslawInPool: ids.includes('f:ro_kfc_coleslaw'),
+        hasProvolone: ids.includes('f:ro_sw_provolone'),
+        hasLettuceWrap: ids.includes('f:ro_lettuce_wrap')
+      };
+    });
+    t.ok('Menu items band surfaces orderable menu items and hides raw combo building blocks',
+      menuCheck.hasEggWhite && menuCheck.hasColeslawInPool && !menuCheck.hasProvolone && !menuCheck.hasLettuceWrap, JSON.stringify(menuCheck));
 
     /* Tapping a combo adds 1 order, wears no "A saved meal" badge, and Explode splits it into parts */
     await lookPage.fill('#mpFind', 'Costa Vida');

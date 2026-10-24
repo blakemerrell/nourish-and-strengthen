@@ -409,6 +409,12 @@
       });
       return out;
     };
+    // the same, place by place, for a menu item more than one place sells
+    var spotKindsOf = function (names) {
+      var out = {};
+      names.forEach(function (nm) { out[nm] = (eo.kinds || {})[nm] || 'fast'; });
+      return out;
+    };
     eo.combos.forEach(function (cf) {
       var sp0 = cf.spot || '';
       var spClean = String(sp0).split(/\s*\u00b7\s*/)[0].trim();
@@ -427,20 +433,22 @@
       var mf = Math.round((pf.f || 0) * 10) / 10;
       var spots = pf.spots || (pSpots[pk] && pSpots[pk].length <= 2 ? pSpots[pk] : []);
       var spotRaw = pf.spot || (spots.length === 1 ? pSpot[pk] : spots.length === 2 ? spots.join(' / ') : '');
-      var sp = spotRaw ? String(spotRaw).split(/\s*\u00b7\s*/)[0].trim() : '';
+      var isMenu = !pf.partOnly && !!spotRaw;
+      var sp = isMenu ? String(spotRaw).split(/\s*\u00b7\s*/)[0].trim() : '';
       var dname = sp && pf.name.indexOf(sp) !== 0 ? (sp + ' \u2014 ' + pf.name) : pf.name;
       var prec = {
         id: 'f:' + pk, food: true, side: false, eat: false, lever: false,
-        eatoutPart: true, eatoutMenu: !!spotRaw, spot: spotRaw, spots: spots, kinds: kindsOf(spots.length ? spots : sp ? [sp] : []),
-        meals: pf.meals || pMeals[pk] || 'blds', veg: !!pf.veg, starch: !!pf.starch, shelf: spotRaw ? 'eatout' : (pf.shelf || ''),
-        ext: true, zone: '', book: 0, secNum: 0, secName: spotRaw || 'Eating out',
+        eatoutPart: true, eatoutMenu: isMenu, spot: isMenu ? spotRaw : '', spots: isMenu ? spots : [],
+        kinds: isMenu ? kindsOf(spots.length ? spots : [sp]) : [], spotKinds: isMenu ? spotKindsOf(spots.length ? spots : [sp]) : {},
+        meals: pf.meals || pMeals[pk] || 'blds', veg: !!pf.veg, starch: !!pf.starch, shelf: isMenu ? 'eatout' : (pf.shelf || ''),
+        ext: true, zone: '', book: 0, secNum: 0, secName: (isMenu && spotRaw) || 'Eating out',
         name: dname, rawName: pf.name, servings: '1 ' + (pf.unit || 'serving'), servN: 1,
         unit: pf.unit || 'serving', grams: pf.grams || 0,
-        ing: spotRaw ? [spotRaw, dname] : [pf.name], steps: [], est: pf.est !== false, score: null, diff: 'Easy', time: '0 mins',
+        ing: isMenu ? [spotRaw, dname] : [pf.name], steps: [], est: pf.est !== false, score: null, diff: 'Easy', time: '0 mins',
         macro: { kcal: Math.round(4 * mp + 4 * mc + 9 * mf), p: mp, c: mc, f: mf,
           na: Math.round(pf.na || 0), fib: Math.round((pf.fib || 0) * 10) / 10 }
       };
-      if (spotRaw) MFOODS.push(prec);
+      if (isMenu) MFOODS.push(prec);
       BY_ID[prec.id] = prec;
     });
     eo.combos.forEach(function (cf) {

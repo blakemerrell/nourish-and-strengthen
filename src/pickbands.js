@@ -128,7 +128,7 @@
   }
   var MP_KINDS = [['fast', '\uD83C\uDF54', 'Fast food'], ['sit', '\uD83C\uDF7D\uFE0F', 'Sit-down'], ['grab', '\u26FD', 'Grab & go']];
   function mpShelfOK(r) {
-    if (!S.mpShelf) return !r.eatoutMenu;
+    if (!S.mpShelf) return !r.eatoutMenu || !!mpQ();
     if (S.mpShelf === 'eatout') return !!(r.eatout || r.eatoutMenu) && mpKindMatch(r, S.mpKind) && mpSpotMatch(r, S.mpSpot);
     if (r.eatout || r.eatoutMenu) return false;
     if (S.mpShelf === 'recipes') return !r.food;
@@ -197,18 +197,23 @@
     if (S.mpShelf !== 'eatout') return '';
     var mt = (slot && (slot.t || slot.k)) || 'l';
     var counts = {}, mealHit = {}, seen = [], kindN = {}, allN = 0;
-    mpEatoutPool().forEach(function (r) {
-      var sp = mpSpotOf(r);
-      if (!sp) return;
-      var hit = !q || mpTextMatch(r, q);
-      if (hit) {
+    mpEatoutPool().concat(mpEatoutMenus()).forEach(function (r) {
+      var sps = (r.spots && r.spots.length) ? r.spots : [mpSpotOf(r)];
+      var match = !q || mpTextMatch(r, q);
+      if (match) {
         allN++;
         (r.kinds || []).forEach(function (kd) { kindN[kd] = (kindN[kd] || 0) + 1; });
       }
       if (!mpKindMatch(r, S.mpKind)) return;
-      if (counts[sp] === undefined) { counts[sp] = 0; seen.push(sp); }
-      if (String(r.meals || 'bld').indexOf(mt) >= 0) mealHit[sp] = 1;
-      if (hit) counts[sp]++;
+      var mhit = String(r.meals || 'bld').indexOf(mt) >= 0;
+      sps.forEach(function (sp) {
+        if (!sp) return;
+        // a menu item two places sell is counted only under the kind each is
+        if (S.mpKind && r.spotKinds && r.spotKinds[sp] && r.spotKinds[sp] !== S.mpKind) return;
+        if (counts[sp] === undefined) { counts[sp] = 0; seen.push(sp); }
+        if (mhit) mealHit[sp] = 1;
+        if (match) counts[sp]++;
+      });
     });
     seen.sort(function (a, b) {
       var ma = mealHit[a] ? 0 : 1, mb = mealHit[b] ? 0 : 1;
@@ -251,13 +256,13 @@
     if (!slot) return '';
     var q = mpQ();
     var n = { protein: 0, fat: 0, carb: 0 }, anyRecipe = false, anyEatout = false, total = 0, cooked = 0, eatout = 0;
-    mMealPool(slot, true).concat(mpEatoutPool()).forEach(function (r) {
+    mMealPool(slot, true).concat(mpEatoutPool()).concat(mpEatoutMenus()).forEach(function (r) {
       if (!r.food) anyRecipe = anyRecipe || !q;
-      if (r.eatout) anyEatout = anyEatout || !q;
+      if (r.eatout || r.eatoutMenu) anyEatout = anyEatout || !q;
       if (q && !mpTextMatch(r, q)) return;
       total++;
       if (!r.food) { anyRecipe = true; cooked++; return; }
-      if (r.eatout) { anyEatout = true; eatout++; return; }
+      if (r.eatout || r.eatoutMenu) { anyEatout = true; eatout++; return; }
       var k = mpMacroDomKey(r);
       if (k) n[k] = (n[k] || 0) + 1;
     });

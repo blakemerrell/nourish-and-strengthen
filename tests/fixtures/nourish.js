@@ -319,4 +319,14 @@ async function openRowOf(pg, inner) {
   if (tag) await openRow(pg, tag);
 }
 
-module.exports = { openRowOf, openRow, goDay, stepDay, nourish, openWeigh, openPlan, revealPlanFields, addOn, asPlanned, openBasket, openMeal, closeSheet, openTray, pickRecipe, pickerList, addTo, storedDay, weighIn, todayOn, openDay };
+/* Sync & sharing, the way a thumb reaches it: the top line's pill, or on
+   Nourish, where the pill is a dot on the menu since 2026-10-24, ☰ and then
+   Sync & sharing. Both open the same sheet. */
+async function openSync(pg) {
+  const pill = await pg.evaluate(() => { const b = document.getElementById('syncBtn'); return !!b && getComputedStyle(b).display !== 'none'; });
+  if (pill) { await pg.click('#syncBtn'); return; }
+  await pg.click('#macroMore');
+  await pg.click('#macroMenu [data-mmore="you"]');
+}
+
+module.exports = { openSync, openRowOf, openRow, goDay, stepDay, nourish, openWeigh, openPlan, revealPlanFields, addOn, asPlanned, openBasket, openMeal, closeSheet, openTray, pickRecipe, pickerList, addTo, storedDay, weighIn, todayOn, openDay };

@@ -1,4 +1,3 @@
-const { openRow } = require('./fixtures/nourish.js');
 /* The meal re-fits itself as you add (Blake, 2026-10-05).
  *
  * "This needs to feel like magic. The pills are the way it's communicating...
@@ -17,6 +16,7 @@ const { openRow } = require('./fixtures/nourish.js');
  * and every food in cups and spoons before grams.
  *
  * Mockup: https://claude.ai/artifact/TQTp3xjDsvsEabnWYfFF7y */
+const { openRow } = require('./fixtures/nourish.js');
 const DAY = '2026-10-06';
 
 const SETUP = (opt) => {

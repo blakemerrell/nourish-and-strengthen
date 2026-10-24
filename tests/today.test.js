@@ -6,6 +6,7 @@
  * Strengthen and the list already hold, ordered by the clock, and every
  * button is a door into the full tab. Expectations are read off the app's
  * own data (window.Hive.today(), window.Train.today()), never typed in. */
+const { openSync } = require('./fixtures/nourish.js');
 const MORNING = new Date(2026, 9, 1, 9, 0, 0);     // a Thursday
 const EVENING = new Date(2026, 9, 1, 16, 10, 0);
 
@@ -325,7 +326,7 @@ module.exports = {
     /* A sheet left open is something in the middle of being done: the
        tab stays under it. */
     await p.click('.tab[data-view="macros"]');
-    await p.click('#syncBtn');
+    await openSync(p);
     await p.waitForSelector('#modalRoot .scrim');
     await flip(true);
     await p.clock.setFixedTime(new Date(MORNING.getTime() + 20 * 60e3 + 6 * 3600e3));

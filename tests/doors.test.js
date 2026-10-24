@@ -1,4 +1,3 @@
-const { openRowOf } = require('./fixtures/nourish.js');
 /* Doors from the day to the recipe, and the way back (Blake, 2026-10-06).
  *
  * "I tried to open the recipe card for my meal. And it just opened the meal
@@ -17,6 +16,7 @@ const { openRowOf } = require('./fixtures/nourish.js');
  * next meal sheet pushed on top of that entry; Done stepped back onto it and
  * the popstate handler put the meatloaf up. An entry a previous load left
  * behind is the bottom of the stack now, whatever it carries. */
+const { openRowOf } = require('./fixtures/nourish.js');
 const DAY = '2026-10-06';
 
 const SETUP = () => {

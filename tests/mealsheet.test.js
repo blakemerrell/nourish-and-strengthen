@@ -1,4 +1,3 @@
-const { openRow, openRowOf } = require('./fixtures/nourish.js');
 /* Trays and the meal sheet (Blake, 2026-10-04).
  *
  * Blake, of the RP-style day: "The main page is worse now. Way to fat and
@@ -9,6 +8,7 @@ const { openRow, openRowOf } = require('./fixtures/nourish.js');
  * picker under them, where a tap puts a food straight on the meal. No basket,
  * no "Add N", no per-meal Add, no Open all. Mockup:
  * https://claude.ai/artifact/SseR1TPa4JAFNanYYsGP4k */
+const { openRow, openRowOf } = require('./fixtures/nourish.js');
 const DAY = '2026-10-06';
 const LUNCH = ['chicken_breast', 'rice_cooked', 'broccoli', 'black_beans', 'salsa', 'avocado', 'olive_oil'];
 

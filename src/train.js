@@ -298,7 +298,21 @@
     ['cb-pull-thru', 'Cable Pull-Through', 'glutes', 'c', 'cb', 'hinge', 10, 15],
     ['cb-woodchop', 'Cable Woodchop', 'abs', 'i', 'cb', '', 10, 15],
     ['arnold', 'Arnold Press', 'front', 'c', 'db', 'press', 8, 12],
-    ['db-rev-lunge', 'Dumbbell Reverse Lunge', 'quads', 'c', 'db', 'single', 8, 12]
+    ['db-rev-lunge', 'Dumbbell Reverse Lunge', 'quads', 'c', 'db', 'single', 8, 12],
+    ['tri-dip', 'Triceps Dip', 'triceps', 'c', 'bw', 'dip', 6, 15],
+    ['capt-raise', 'Captain\u2019s Chair Leg Raise', 'abs', 'i', 'bw', '', 10, 20],
+    ['kb-halo', 'Kettlebell Halo', 'front', 'i', 'db', 'raise', 8, 15],
+    ['sl-leg-curl', 'Single-Leg Curl', 'hams', 'i', 'mc', 'curl', 10, 15],
+    ['situp', 'Sit-Up', 'abs', 'i', 'bw', '', 12, 25],
+    ['cb-ohp', 'Cable Shoulder Press', 'front', 'c', 'cb', 'press', 8, 12],
+    ['plate-front', 'Plate Front Raise', 'front', 'i', 'db', 'raise', 10, 15],
+    ['mc-dip', 'Seated Dip Machine', 'triceps', 'c', 'mc', 'dip', 8, 12],
+    ['bw-lunge', 'Bodyweight Lunge', 'quads', 'c', 'bw', 'single', 10, 20],
+    ['db-upright', 'Dumbbell Upright Row', 'side', 'i', 'db', 'raise', 10, 15],
+    ['kb-inc-press', 'Single-Arm Incline Press', 'chest', 'c', 'db', 'incline', 8, 12],
+    ['dec-crunch', 'Decline Crunch', 'abs', 'i', 'bw', '', 10, 20],
+    ['lm-lunge', 'Landmine Reverse Lunge', 'quads', 'c', 'bb', 'single', 8, 12],
+    ['v-up', 'V-Up', 'abs', 'i', 'bw', '', 10, 20]
   ];
 
   /* ------------------------------------------------------------ the back
@@ -322,13 +336,13 @@
   var BACK = {
     'bb-row': 'Fc', 'lm-row': 'Fc', 'lm-1arm-row': 'f', 'pendlay': 'Fc', 'cb-row': 'f', 'db-row': 'f', 'kb-row': 'f', 'db-pullover': 'x',
     'bb-squat': 'FC', 'bb-front': 'fC', 'sm-squat': 'fc', 'goblet': 'fc', 'kb-goblet': 'fc', 'kb-thruster': 'fc', 'hack': 'c',
-    'leg-press': 'f', 'db-bss': 'c', 'db-lunge': 'c', 'db-rev-lunge': 'c', 'db-stepup': 'c',
+    'leg-press': 'f', 'db-bss': 'c', 'db-lunge': 'c', 'db-rev-lunge': 'c', 'lm-lunge': 'c', 'db-stepup': 'c',
     'bb-rdl': 'F', 'db-rdl': 'F', 'bb-sldl': 'F', 'bb-dl': 'FC', 'sumo-dl': 'FC', 'trap-dl': 'fC', 'good-am': 'F', 'kb-swing': 'F',
     'hip-thrust': 'x', 'mc-thrust': 'x', 'db-thrust': 'x', 'sm-thrust': 'x', 'back-ext': 'Fx', 'mc-kick': 'x', 'seated-lp': 'f', 'cb-pull-thru': 'f',
-    'db-rear': 'f', 'bb-rear-row': 'f', 'cb-rev-bo': 'f', 'bb-ohp': 'Cx', 'kb-tgu': 'c', 'calf-stand': 'C', 'bb-calf': 'C',
+    'db-rear': 'f', 'bb-rear-row': 'f', 'cb-rev-bo': 'f', 'bb-ohp': 'Cx', 'cb-ohp': 'c', 'kb-tgu': 'c', 'calf-stand': 'C', 'bb-calf': 'C',
     'db-shrug': 'c', 'bb-shrug': 'C', 'cb-shrug': 'c',
-    'cb-crunch': 'F', 'hang-raise': 'F', 'mc-crunch': 'F', 'crunch': 'F', 'ab-wheel': 'X',
-    'sl-rdl': 'F', 'bw-squat': '', 'split-squat': '', 'prone-y': 'x'
+    'cb-crunch': 'F', 'hang-raise': 'F', 'capt-raise': 'f', 'mc-crunch': 'F', 'crunch': 'F', 'situp': 'F', 'dec-crunch': 'F', 'v-up': 'F', 'ab-wheel': 'X',
+    'sl-rdl': 'F', 'bw-squat': '', 'split-squat': '', 'bw-lunge': '', 'prone-y': 'x'
   };
 
   /* ------------------------------------------------------------ the joints
@@ -346,26 +360,26 @@
    * what yours says that these do not. Neck and foot are the thin ones: few
    * gym lifts load them much, so they mostly carry cues. */
   var JT = {
-    'bb-bench': 'Sw', 'db-bench': 's', 'kb-floor': 'sw', 'mc-press': 's', 'bb-incline': 'Sw', 'db-incline': 's', 'sm-incline': 's',
-    'dip': 'SEw', 'as-dip': 'Sew', 'pushup-flat': 'sW', 'inc-pushup': 'w', 'pushup': 'sW', 'archer': 'SW',
+    'bb-bench': 'Sw', 'db-bench': 's', 'kb-floor': 'sw', 'mc-press': 's', 'bb-incline': 'Sw', 'db-incline': 's', 'kb-inc-press': 's', 'sm-incline': 's',
+    'dip': 'SEw', 'tri-dip': 'SEw', 'mc-dip': 'Sew', 'as-dip': 'Sew', 'pushup-flat': 'sW', 'inc-pushup': 'w', 'pushup': 'sW', 'archer': 'SW',
     'cb-fly': 's', 'cb-low-fly': 's', 'cb-high-fly': 's', 'pec-deck': 's', 'db-fly': 'S',
     'lat-pd': 's', 'as-pullup': 's', 'bd-pullup': 'se', 'pullup': 'se', 'lat-pd-n': 's', 'chinup': 'sew', 'pullup-neg': 'se', 'inv-row': 'w',
     'bb-row': 'w', 'lm-row': 'w', 'lm-1arm-row': 'w', 'pendlay': 'w', 'kb-row': 'w', 'db-pullover': 'S',
     'bb-squat': 'KhSwn', 'hack': 'K', 'bb-front': 'KW', 'sm-squat': 'K', 'leg-press': 'kh', 'seated-lp': 'kh', 'belt-squat': 'k',
-    'db-bss': 'Kh', 'goblet': 'k', 'kb-goblet': 'k', 'kb-thruster': 'KS', 'db-lunge': 'Ka', 'db-rev-lunge': 'Ka', 'db-stepup': 'k', 'leg-ext': 'k', 'bd-leg-ext': 'k',
+    'db-bss': 'Kh', 'goblet': 'k', 'kb-goblet': 'k', 'kb-thruster': 'KS', 'db-lunge': 'Ka', 'db-rev-lunge': 'Ka', 'lm-lunge': 'Ka', 'bw-lunge': 'k', 'db-stepup': 'k', 'leg-ext': 'k', 'bd-leg-ext': 'k',
     'bw-squat': 'k', 'split-squat': 'k', 'bw-bss': 'Kh',
-    'bb-rdl': 'h', 'db-rdl': 'h', 'bb-sldl': 'h', 'bb-dl': 'hw', 'sumo-dl': 'hkw', 'trap-dl': 'hkw', 'good-am': 'hs', 'kb-swing': 'h', 'cb-pull-thru': 'h', 'nordic': 'k', 'slide-curl': 'k', 'sl-rdl': 'ha',
+    'bb-rdl': 'h', 'db-rdl': 'h', 'bb-sldl': 'h', 'bb-dl': 'hw', 'sumo-dl': 'hkw', 'trap-dl': 'hkw', 'good-am': 'hs', 'kb-swing': 'h', 'cb-pull-thru': 'h', 'nordic': 'k', 'slide-curl': 'k', 'sl-leg-curl': 'k', 'sl-rdl': 'ha',
     'hip-thrust': 'h', 'mc-thrust': 'h', 'db-thrust': 'h', 'sm-thrust': 'h', 'bw-hip-thrust': 'h', 'back-ext': 'h', 'abduct': 'h', 'bd-abduct': 'h', 'cb-kick': 'h', 'mc-kick': 'h',
     'glute-bridge': '', 'sl-bridge': 'h',
-    'db-lat': 's', 'cb-lat': 's', 'cb-1arm-lat': 's', 'lm-lat': 's', 'mc-lat': 's', 'cb-upright': 'SW', 'bb-upright': 'SW',
+    'db-lat': 's', 'cb-lat': 's', 'cb-1arm-lat': 's', 'lm-lat': 's', 'mc-lat': 's', 'cb-upright': 'SW', 'bb-upright': 'SW', 'db-upright': 'SW',
     'bb-rear-row': 'sw', 'bd-rev-fly': 's', 'cb-rear-seat': 's', 'cb-rear-sup': 's',
-    'bb-ohp': 'SWn', 'db-ohp': 'S', 'arnold': 'S', 'kb-tgu': 'Skh', 'mc-ohp': 'S', 'db-front': 's', 'bb-front-raise': 's', 'pike-pushup': 'SWn',
+    'bb-ohp': 'SWn', 'db-ohp': 'S', 'cb-ohp': 'S', 'arnold': 'S', 'kb-halo': 's', 'kb-tgu': 'Skh', 'mc-ohp': 'S', 'db-front': 's', 'bb-front-raise': 's', 'plate-front': 's', 'pike-pushup': 'SWn',
     'bb-curl': 'eW', 'ez-curl': 'e', 'db-curl': 'e', 'inc-curl': 'se', 'hammer': 'e', 'cb-curl': 'e', 'preacher': 'E', 'bb-wrist-curl': 'W',
     'pushdown': 'e', 'cb-oh-ext': 'sE', 'skull': 'E', 'db-oh-ext': 'sE', 'mc-tri': 'e', 'cgbp': 'ew',
     'bench-dip': 'SW', 'diamond': 'eW',
     'calf-stand': 'a', 'bb-calf': 'a', 'calf-seat': 'a', 'calf-lp': 'a', 'calf-db': 'a', 'calf-bw': 'a',
     'db-shrug': 'n', 'bb-shrug': 'n', 'cb-shrug': 'n',
-    'cb-crunch': 'n', 'crunch': 'N', 'mc-crunch': 'n', 'hang-raise': 'sw', 'ab-wheel': 'sw', 'bird-dog': 'w', 'lm-180': 's'
+    'cb-crunch': 'n', 'crunch': 'N', 'situp': 'n', 'dec-crunch': 'n', 'v-up': 'h', 'mc-crunch': 'n', 'hang-raise': 'sw', 'capt-raise': 's', 'ab-wheel': 'sw', 'bird-dog': 'w', 'lm-180': 's'
   };
   var JOINTS = [['N', 'Neck'], ['S', 'Shoulder'], ['E', 'Elbow'], ['W', 'Wrist'], ['H', 'Hip'], ['K', 'Knee'], ['A', 'Ankle or foot']];
   var JNAME = {};
@@ -398,7 +412,8 @@
   var GEAR = {
     'pullup': 'a pull-up bar', 'chinup': 'a pull-up bar', 'pullup-neg': 'a pull-up bar', 'hang-raise': 'a pull-up bar',
     'bd-pullup': 'a pull-up bar and a resistance band', 'bd-rev-fly': 'a resistance band', 'bd-abduct': 'a resistance band', 'bd-leg-ext': 'a resistance band',
-    'inv-row': 'a low bar or a sturdy table', 'dip': 'parallel bars or two sturdy chairs', 'bench-dip': 'a bench or chair', 'bw-hip-thrust': 'a bench or couch',
+    'inv-row': 'a low bar or a sturdy table', 'dip': 'parallel bars or two sturdy chairs', 'tri-dip': 'parallel bars or two sturdy chairs', 'bench-dip': 'a bench or chair', 'bw-hip-thrust': 'a bench or couch',
+    'capt-raise': 'a captain\u2019s chair or dip station', 'dec-crunch': 'a decline bench',
     'ab-wheel': 'an ab wheel', 'ball-curl': 'a stability ball', 'nordic': 'something to hook your heels under',
     'back-ext': 'a back-extension bench'
   };
@@ -569,7 +584,21 @@
     'cb-pull-thru': ['Stand facing away from a low pulley with the rope straddled between your legs, feet wide.', 'Push your hips back into a deep hinge, letting the cable pull your hands back between your thighs with a flat back.', 'Drive your hips forward and squeeze your glutes to stand tall.'],
     'cb-woodchop': ['Stand side-on to a pulley at chest or high height, holding the handle with both hands and arms extended.', 'Brace your core and rotate your torso and hips to pull the cable across your body.', 'Return slowly without letting the stack jerk you back. All reps on one side, then the other.'],
     'arnold': ['Sit tall holding dumbbells in front of your chin with palms facing you, elbows tucked.', 'As you press overhead, rotate your wrists smoothly so your palms face forward at the top.', 'Lower back down while rotating your palms back toward you.'],
-    'db-rev-lunge': ['Stand tall holding dumbbells at your sides.', 'Step one foot backward and lower until your back knee nearly touches the floor, front shin vertical.', 'Drive through your front heel to return to standing.']
+    'db-rev-lunge': ['Stand tall holding dumbbells at your sides.', 'Step one foot backward and lower until your back knee nearly touches the floor, front shin vertical.', 'Drive through your front heel to return to standing.'],
+    'tri-dip': ['Support yourself on parallel bars with straight arms, shoulders pressed down and torso upright.', 'Keeping your body vertical and elbows tucked close to your sides, lower until your upper arms are about level with the bars.', 'Press straight up to locked arms, focusing on the triceps.'],
+    'capt-raise': ['Forearms on the pads, back pressed flat against the backrest, legs hanging.', 'Raise your knees or straight legs toward your chest by curling your pelvis up rather than swinging.', 'Lower slowly under control.'],
+    'kb-halo': ['Stand tall holding a kettlebell upside-down by the horns in front of your chest, core braced.', 'Circle the bell tightly around your head — past one ear, behind your neck, and past the other ear — keeping your ribs down.', 'Alternate directions cleanly each rep.'],
+    'sl-leg-curl': ['Kneel or stand on the single-leg curl machine with the pad just above your heel and your thigh against the pad.', 'Curl your heel toward your glute and squeeze your hamstring at the top.', 'Lower slowly to full extension. All reps on one leg, then the other.'],
+    'situp': ['Lie on your back with knees bent and feet flat on the floor, hands across your chest or beside your ears.', 'Curl your torso all the way up toward your thighs without yanking on your neck.', 'Lower your back to the floor under control.'],
+    'cb-ohp': ['Stand holding low-pulley handles at shoulder height, cables behind your forearms, core braced.', 'Press the handles straight overhead until your arms are extended.', 'Lower slowly back to shoulder height.'],
+    'plate-front': ['Stand tall holding the sides of a weight plate at 3 and 9 o\u2019clock in front of your thighs.', 'Raise the plate to shoulder height with arms nearly straight — optionally rotating it like a steering wheel at the top.', 'Lower slowly under control.'],
+    'mc-dip': ['Sit in the dip machine with your back against the pad, gripping the handles with elbows tucked.', 'Press the handles down until your arms are straight without letting your shoulders shrug up.', 'Return slowly until your forearms pass level.'],
+    'bw-lunge': ['Stand tall with hands on your hips or in front of your chest.', 'Step forward or backward and lower until your back knee nearly touches the floor, front knee tracking over your toes.', 'Push through your front foot to return to standing.'],
+    'db-upright': ['Stand tall holding dumbbells in front of your thighs, palms facing your body.', 'Pull the dumbbells up along your body to lower-chest height, elbows leading out to the side.', 'Lower slowly under control.'],
+    'kb-inc-press': ['Set the bench to 30–45° and hold a kettlebell or dumbbell at shoulder height in one hand, free hand braced.', 'Press straight up over your upper chest while keeping your ribs and shoulders level on the bench.', 'Lower under control into a stretch. All reps on one arm, then the other.'],
+    'dec-crunch': ['Hook your feet under the pads of a decline bench and lie back with hands across your chest or beside your head.', 'Curl your ribs toward your pelvis to lift your upper back off the pad.', 'Lower slowly under control.'],
+    'lm-lunge': ['Stand facing the landmine holding the sleeve at your chest or in one hand on the stepping-back side.', 'Step backward into a reverse lunge until your back knee nearly touches the floor.', 'Drive through your front heel to stand tall.'],
+    'v-up': ['Lie flat on your back with arms extended overhead and legs straight.', 'Fold at the hips to lift your torso and straight legs together, reaching your hands toward your toes in a V.', 'Lower back down under control without dropping your feet.']
   };
 
   /* A picture or a clip of the lift, when there is one. Put a file at
@@ -1501,7 +1530,7 @@
   /* Landmine lifts load plates onto one sleeve of the bar, with the other end
      in the floor pivot: the plate counter counts each plate once on the post
      rather than doubling for two sides plus an Olympic bar. */
-  var POST = { 'lm-row': 1, 'lm-1arm-row': 1, 'lm-lat': 1, 'lm-180': 1 };
+  var POST = { 'lm-row': 1, 'lm-1arm-row': 1, 'lm-lat': 1, 'lm-180': 1, 'lm-lunge': 1 };
   // lifts loaded with plates on two sides: on a bar, or on a sled
   function onBar(ex) { return ((ex.q === 'bb' || ex.q === 'sm') && !POST[ex.id]) || !!SLED[ex.id]; }
 
@@ -1722,7 +1751,7 @@
      weigh-ins (see bwInfo). Nothing older than a fortnight, so a stale
      number never moves a record. Without one, these lifts are counted in
      reps alone, as before. */
-  var BWL = { pullup: 1, chinup: 1, 'pullup-neg': 1, dip: 1 };
+  var BWL = { pullup: 1, chinup: 1, 'pullup-neg': 1, dip: 1, 'tri-dip': 1 };
   /* The assisted machine versions: the weight typed is the help, so less of
      it is progress, and your weight counts too — you, less the help. */
   var ASST = { 'as-pullup': 1, 'as-dip': 1 };
@@ -2495,7 +2524,9 @@
     'lm-row': 1, 'lm-1arm-row': 1, 'lm-lat': 1, 'lm-180': 1, 'bb-upright': 1, 'bb-rear-row': 1, 'bb-calf': 1, 'pendlay': 1, 'bb-wrist-curl': 1, 'bb-front-raise': 1,
     'kb-swing': 1, 'kb-goblet': 1, 'kb-row': 1, 'kb-floor': 1, 'kb-tgu': 1, 'kb-thruster': 1,
     'bd-pullup': 1, 'bd-rev-fly': 1, 'bd-abduct': 1, 'bd-leg-ext': 1, 'bw-hip-thrust': 1,
-    'cb-low-fly': 1, 'cb-high-fly': 1, 'cb-rear-seat': 1, 'cb-rear-sup': 1, 'cb-1arm-lat': 1, 'cb-pull-thru': 1, 'cb-woodchop': 1, 'arnold': 1, 'db-rev-lunge': 1
+    'cb-low-fly': 1, 'cb-high-fly': 1, 'cb-rear-seat': 1, 'cb-rear-sup': 1, 'cb-1arm-lat': 1, 'cb-pull-thru': 1, 'cb-woodchop': 1, 'arnold': 1, 'db-rev-lunge': 1,
+    'tri-dip': 1, 'capt-raise': 1, 'kb-halo': 1, 'sl-leg-curl': 1, 'situp': 1, 'cb-ohp': 1, 'plate-front': 1, 'mc-dip': 1, 'bw-lunge': 1, 'db-upright': 1,
+    'kb-inc-press': 1, 'dec-crunch': 1, 'lm-lunge': 1, 'v-up': 1
   };
   function pickEx(m, k, p, eq, used, seed, pf, today, known) {
     var cand = allEx().filter(function (ex) { return ex.m === m && eq.indexOf(ex.q) >= 0 && !barred(ex, pf) && !NOPICK[ex.id]; });
@@ -7873,9 +7904,9 @@
     if (!ex) return [];
     if (ex.k === 'i') {
       if (ex.m === 'rear') return ['traps', 'back'];
-      if (ex.id === 'cb-upright' || ex.id === 'bb-upright') return ['traps'];
+      if (ex.id === 'cb-upright' || ex.id === 'bb-upright' || ex.id === 'db-upright') return ['traps'];
       if (ex.id === 'back-ext') return ['hams', 'back'];
-      if (ex.id === 'ab-wheel' || ex.id === 'hang-raise') return ['front'];
+      if (ex.id === 'ab-wheel' || ex.id === 'hang-raise' || ex.id === 'capt-raise') return ['front'];
       return [];
     }
     if (ex.m === 'chest') return ['front', 'triceps'];
@@ -8887,8 +8918,28 @@
     '</div>';
   }
 
+  function mediaFor(e, ex) {
+    if (MEDIA[e]) return MEDIA[e];
+    if (!ex) return null;
+    var hit = sgMatch(ex.n);
+    if (hit && MEDIA[hit]) return MEDIA[hit];
+    var best = null;
+    for (var i = 0; i < LIB_LIST.length; i++) {
+      var cand = LIB_LIST[i];
+      if (cand.m === ex.m && cand.q === ex.q && MEDIA[cand.id]) {
+        if (cand.p === ex.p) return MEDIA[cand.id];
+        if (!best) best = MEDIA[cand.id];
+      }
+    }
+    if (best) return best;
+    for (var j = 0; j < LIB_LIST.length; j++) {
+      if (LIB_LIST[j].m === ex.m && MEDIA[LIB_LIST[j].id]) return MEDIA[LIB_LIST[j].id];
+    }
+    return null;
+  }
+
   function exAbout(e, ex) {
-    var steps = HOWTO[e], m = MEDIA[e], link = linkOf(e), note = noteOf(e), cue = backCue(ex);
+    var steps = HOWTO[e], m = mediaFor(e, ex), link = linkOf(e), note = noteOf(e), cue = backCue(ex);
     return (m ? (m.kind === 'video'
         ? '<video class="tr-media" data-e="' + esc(e) + '" src="' + esc(m.src) + '" muted loop playsinline autoplay aria-label="' + esc(ex.n) + '"></video>'
         : '<img class="tr-media" data-e="' + esc(e) + '" src="' + esc(m.src) + '" alt="' + esc(ex.n) + '">') +
@@ -10469,10 +10520,20 @@
     'seated cable rear delt fly': 'cb-rear-seat', 'lying cable reverse fly': 'cb-rear-sup',
     'one arm cable lateral raise': 'cb-1arm-lat', 'single arm cable lateral raise': 'cb-1arm-lat',
     'cable pull through': 'cb-pull-thru', 'cable twist': 'cb-woodchop', 'cable woodchop': 'cb-woodchop',
-    'arnold press dumbbell': 'arnold', 'arnold press': 'arnold', 'reverse lunge dumbbell': 'db-rev-lunge', 'rear lunge dumbbell': 'db-rev-lunge'
+    'arnold press dumbbell': 'arnold', 'arnold press': 'arnold', 'reverse lunge dumbbell': 'db-rev-lunge', 'rear lunge dumbbell': 'db-rev-lunge',
+    'triceps dip': 'tri-dip', 'triceps dips': 'tri-dip', 'knee raise captains chair': 'capt-raise', 'knee raise captain s chair': 'capt-raise', 'captains chair knee raise': 'capt-raise',
+    'halos': 'kb-halo', 'halo': 'kb-halo', 'kettlebell halo': 'kb-halo', 'single leg leg curl': 'sl-leg-curl', 'one leg leg curl': 'sl-leg-curl',
+    'sit up': 'situp', 'situp': 'situp', 'overhead press cable': 'cb-ohp', 'cable overhead press': 'cb-ohp', 'cable shoulder press': 'cb-ohp',
+    'steering wheel': 'plate-front', 'front raise plate': 'plate-front', 'plate front raise': 'plate-front',
+    'triceps press': 'mc-dip', 'machine dip': 'mc-dip', 'seated dip machine': 'mc-dip',
+    'lunge bodyweight': 'bw-lunge', 'bodyweight lunge': 'bw-lunge', 'upright row dumbbell': 'db-upright', 'dumbbell upright row': 'db-upright',
+    'kettlebell single arm incline chest press': 'kb-inc-press', 'incline press kettlebell': 'kb-inc-press',
+    'decline crunch': 'dec-crunch', 'landmine lunge': 'lm-lunge', 'landmine reverse lunge': 'lm-lunge', 'v up': 'v-up', 'v sit up': 'v-up',
+    'kettlebell hammer curl': 'hammer', 'triceps extension': 'mc-tri', 'dumbbell high incline': 'db-incline',
+    'back extension machine': 'back-ext', 'squat machine': 'hack', 'chest fly': 'pec-deck', 'machine leg press calf raise': 'calf-lp'
   };
   function sgKey(n) {
-    return String(n || '').toLowerCase().replace(/\btricep\b/g, 'triceps').replace(/[^a-z0-9]+/g, ' ').trim()
+    return String(n || '').toLowerCase().replace(/['\u2019]/g, '').replace(/\btricep\b/g, 'triceps').replace(/[^a-z0-9]+/g, ' ').trim()
       .replace(/\bdb\b/g, 'dumbbell').replace(/\bbb\b/g, 'barbell').replace(/\bkb\b/g, 'kettlebell')
       .replace(/\bohp\b/g, 'overhead press').replace(/\brdl\b/g, 'romanian deadlift')
       .replace(/\bpush ups?\b/g, 'push up').replace(/\bpull ups?\b/g, 'pull up').replace(/\bchin ups?\b/g, 'chin up')

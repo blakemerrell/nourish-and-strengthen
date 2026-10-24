@@ -111,9 +111,12 @@
   function mpEatoutPool() {
     return LIVE.MFOODS.filter(function (r) { return !!r.eatout; });
   }
+  function mpSpotOf(r) {
+    return r && r.spot ? String(r.spot).split(/\s*\u00b7\s*/)[0].trim() : '';
+  }
   function mpShelfOK(r) {
     if (!S.mpShelf) return true;
-    if (S.mpShelf === 'eatout') return !!r.eatout;
+    if (S.mpShelf === 'eatout') return !!r.eatout && (!S.mpSpot || mpSpotOf(r) === S.mpSpot);
     if (r.eatout) return false;
     if (S.mpShelf === 'recipes') return !r.food;
     if (S.mpShelf === 'protein' || S.mpShelf === 'fat' || S.mpShelf === 'carb') {
@@ -169,6 +172,43 @@
         : '') + '</span>';
   }
 
+  var MP_SPOT_ORDER = [
+    'McDonald\u2019s', 'Chick-fil-A', 'Wendy\u2019s', 'Arby\u2019s', 'KFC', 'Dairy Queen',
+    'Costa Vida', 'Cafe Rio', 'Chipotle', 'Subway', 'Jersey Mike\u2019s', 'Jimmy John\u2019s',
+    'Taco Bell', 'Taco Time', 'Culver\u2019s', 'In-N-Out', 'Panda Express', 'Cafe Zupas',
+    'R&R BBQ', 'Kneaders', 'Mo\u2019 Bettahs', 'Teriyaki Grill', 'Cupbop', 'Sonic Drive-In',
+    'Burger King', 'Maverik', 'Walmart Deli', 'Grogg\u2019s Pinnacle Brewing',
+    'JB\u2019s Restaurant', 'Wingers', 'Sherald\u2019s', 'Domino\u2019s', 'Little Caesars'
+  ];
+  function mpSpotsHTML(slot, q) {
+    if (S.mpShelf !== 'eatout') return '';
+    var mt = (slot && (slot.t || slot.k)) || 'l';
+    var counts = {}, mealHit = {}, seen = [];
+    mpEatoutPool().forEach(function (r) {
+      var sp = mpSpotOf(r);
+      if (!sp) return;
+      if (counts[sp] === undefined) { counts[sp] = 0; seen.push(sp); }
+      if (String(r.meals || 'bld').indexOf(mt) >= 0) mealHit[sp] = 1;
+      if (!q || mpTextMatch(r, q)) counts[sp]++;
+    });
+    seen.sort(function (a, b) {
+      var ma = mealHit[a] ? 0 : 1, mb = mealHit[b] ? 0 : 1;
+      if (ma !== mb) return ma - mb;
+      var ia = MP_SPOT_ORDER.indexOf(a), ib = MP_SPOT_ORDER.indexOf(b);
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+    });
+    var chips = '<button class="mp-spot' + (S.mpSpot ? '' : ' on') +
+      '" data-mpspot="" aria-pressed="' + (S.mpSpot ? 'false' : 'true') + '">All</button>';
+    seen.forEach(function (sp) {
+      var c = counts[sp] || 0;
+      if (q && c < 1 && S.mpSpot !== sp) return;
+      var on = S.mpSpot === sp;
+      chips += '<button class="mp-spot' + (on ? ' on' : '') +
+        '" data-mpspot="' + esc(sp) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' +
+        esc(sp) + '</button>';
+    });
+    return '<div class="mp-shelves mp-spots" id="mpSpots" role="group" aria-label="Restaurant">' + chips + '</div>';
+  }
   function mpShelvesHTML() {
     if (!S.macroPick) return '';
     var slot = null;
@@ -179,7 +219,7 @@
     mMealPool(slot, true).concat(mpEatoutPool()).forEach(function (r) {
       if (!r.food) anyRecipe = anyRecipe || !q;
       if (r.eatout) anyEatout = anyEatout || !q;
-      if (q && !mpMatches(r, q)) return;
+      if (q && !mpTextMatch(r, q)) return;
       total++;
       if (!r.food) { anyRecipe = true; cooked++; return; }
       if (r.eatout) { anyEatout = true; eatout++; return; }
@@ -215,14 +255,16 @@
         '" aria-label="Eating out' + (q ? ', ' + eatout + ' of them' : '') +
         '"><i>\uD83E\uDD61</i><span class="mp-shl"> Eating out</span>' + tag(eatout) + '</button>';
     }
-    return '<div class="mp-shelves" id="mpShelves">' + chips + '</div>';
+    return '<div class="mp-shelves" id="mpShelves">' + chips + '</div>' + mpSpotsHTML(slot, q);
   }
-  function mpMatches(r, qs) {
-    if (!r) return false;
-    if (!mpShelfOK(r)) return false;
+  function mpTextMatch(r, qs) {
     if (!qs) return true;
     if (r.eatout) return searchScore(r.name + ' ' + (r.spot || ''), qs) >= 0;
     return r.food ? searchScore(r.name, qs) >= 0 : !!matchRank(r, qs);
+  }
+  function mpMatches(r, qs) {
+    if (!r || !mpShelfOK(r)) return false;
+    return mpTextMatch(r, qs);
   }
 
   function mpMacroShare(r, sh) {

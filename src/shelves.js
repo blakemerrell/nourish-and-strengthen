@@ -160,6 +160,10 @@
     ro_wd_patty: { name: 'Single Beef Patty (1/4 lb)', unit: 'patty', grams: 90, p: 21, c: 0, f: 16, na: 270, fib: 0 },
     ro_ab_roast_beef: { name: 'Arby\u2019s Roast Beef, 3 oz', unit: 'portion', grams: 85, p: 18, c: 1, f: 7, na: 480, fib: 0 },
     ro_ab_bun: { name: 'Arby\u2019s Sesame Bun', unit: 'piece', grams: 70, p: 6, c: 33, f: 4, na: 400, fib: 1 },
+    ro_kfc_nug12: { name: 'KFC Secret Recipe Nuggets, 12 pc', unit: 'order', grams: 192, p: 42, c: 15, f: 18, na: 1470, fib: 1, est: false },
+    ro_kfc_nug8: { name: 'KFC Secret Recipe Nuggets, 8 pc', unit: 'order', grams: 128, p: 28, c: 10, f: 12, na: 980, fib: 1, est: false },
+    ro_kfc_or_peeled: { name: 'Original Recipe Chicken Breast, skin & breading peeled off', unit: 'piece', grams: 135, p: 35, c: 2, f: 6, na: 680, fib: 0 },
+    ro_kfc_grn_beans: { name: 'KFC Green Beans (individual)', unit: 'cup', grams: 99, p: 1, c: 4, f: 0, na: 290, fib: 2, est: false },
     ro_tb_cantina_chk: { name: 'Cantina Chicken, extra scoop', unit: 'portion', grams: 70, p: 12, c: 1, f: 4, na: 400, fib: 0 },
     ro_tb_bowl_norice: { name: 'Cantina Chicken Bowl, no rice', unit: 'bowl', grams: 330, p: 22, c: 22, f: 20, na: 1100, fib: 7 },
     ro_tb_bowl: { name: 'Cantina Chicken Bowl', unit: 'bowl', grams: 420, p: 25, c: 54, f: 23, na: 1300, fib: 8, est: false },
@@ -364,6 +368,17 @@
     { id: 'ab_classic', spot: 'Arby\u2019s \u00b7 Price & Spanish Fork', meals: 'ld', est: true,
       name: 'Arby\u2019s \u2014 Classic roast beef sandwich',
       parts: [['ro_ab_roast_beef', 1], ['ro_ab_bun', 1]] },
+
+    // KFC
+    { id: 'kfc_nug12_beans', spot: 'KFC \u00b7 Spanish Fork', meals: 'ld',
+      name: 'KFC \u2014 12 pc Secret Recipe Nuggets + two green bean sides',
+      parts: [['ro_kfc_nug12', 1], ['ro_kfc_grn_beans', 2]] },
+    { id: 'kfc_nug8_beans', spot: 'KFC \u00b7 Spanish Fork', meals: 'lds',
+      name: 'KFC \u2014 8 pc Secret Recipe Nuggets + green beans',
+      parts: [['ro_kfc_nug8', 1], ['ro_kfc_grn_beans', 1]] },
+    { id: 'kfc_peeled_breast', spot: 'KFC \u00b7 Spanish Fork', meals: 'ld', est: true,
+      name: 'KFC \u2014 2 Original Recipe chicken breasts (skin & breading peeled off) + green beans',
+      parts: [['ro_kfc_or_peeled', 2], ['ro_kfc_grn_beans', 1]] },
 
     // Taco Bell
     { id: 'tb_bowl_norice_xchk', spot: 'Taco Bell \u00b7 Price & Spanish Fork', meals: 'ld', est: true,

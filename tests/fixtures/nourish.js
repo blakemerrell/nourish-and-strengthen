@@ -301,4 +301,32 @@ function nourish(def) {
   };
 }
 
-module.exports = { goDay, stepDay, nourish, openWeigh, openPlan, revealPlanFields, addOn, asPlanned, openBasket, openMeal, closeSheet, openTray, pickRecipe, pickerList, addTo, storedDay, weighIn, todayOn, openDay };
+/* A food's controls in a meal's sheet are behind a tap on its line since
+   2026-10-24 (Blake's layout "B", src/myday.js mOpenRow): open the line the
+   way a thumb does, if it is not open already. `tag` is the meal and the
+   food's place in it, "l:0"; with none, the sheet's first food. */
+async function openRow(pg, tag) {
+  const sel = tag ? '#modalRoot [data-mrowopen="' + tag + '"]' : '#modalRoot [data-mrowopen]';
+  const shut = await pg.evaluate((q) => { const b = document.querySelector(q); return !!b && b.getAttribute('aria-expanded') !== 'true'; }, sel);
+  if (shut) { await pg.click(sel); await pg.waitForTimeout(150); }
+}
+
+/* The same, for the line that holds `inner` (a selector inside a food's
+   drawer, say its Details door), wherever in the sheet that food is. */
+async function openRowOf(pg, inner) {
+  const tag = await pg.evaluate((q) => { const e = document.querySelector(q), row = e && e.closest('.mrow');
+    const b = row && row.querySelector('[data-mrowopen]'); return b ? b.dataset.mrowopen : null; }, inner);
+  if (tag) await openRow(pg, tag);
+}
+
+/* Sync & sharing, the way a thumb reaches it: the top line's pill, or on
+   Nourish, where the pill is a dot on the menu since 2026-10-24, ☰ and then
+   Sync & sharing. Both open the same sheet. */
+async function openSync(pg) {
+  const pill = await pg.evaluate(() => { const b = document.getElementById('syncBtn'); return !!b && getComputedStyle(b).display !== 'none'; });
+  if (pill) { await pg.click('#syncBtn'); return; }
+  await pg.click('#macroMore');
+  await pg.click('#macroMenu [data-mmore="you"]');
+}
+
+module.exports = { openSync, openRowOf, openRow, goDay, stepDay, nourish, openWeigh, openPlan, revealPlanFields, addOn, asPlanned, openBasket, openMeal, closeSheet, openTray, pickRecipe, pickerList, addTo, storedDay, weighIn, todayOn, openDay };

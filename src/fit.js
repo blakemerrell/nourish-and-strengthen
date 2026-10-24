@@ -92,9 +92,10 @@
     // the share in calories, which is the thing a portion can be too big for
     var roof = MX_OVER * (4 * (T.p || 0) + 4 * (T.c || 0) + 9 * (T.f || 0));
     var kc = (r.macro && r.macro.kcal) || 0;
-    for (var i = 0; i < MX.length; i++) {
-      var x = MX[i], pen = 0;
-      if (r.food && r.grams && r.grams * x > MFOOD_G_MAX) break;   // rungs only go up
+    var rungs = r.eatout ? [1] : MX;
+    for (var i = 0; i < rungs.length; i++) {
+      var x = rungs[i], pen = 0;
+      if (!r.eatout && r.food && r.grams && r.grams * x > MFOOD_G_MAX) break;   // rungs only go up
       for (var m in MW) {
         var s = (r.macro[m] || 0) * x;
         pen += MW[m][0] * Math.max(0, T[m] - s) / D[m];

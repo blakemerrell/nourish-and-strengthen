@@ -10116,7 +10116,7 @@
         /* Signed in with no signal is not signed out: Nourish knows which, and
            telling somebody to sign in who already has was the wrong door. */
         '<div class="tr-sub">' + (!doc && syncSay() === 'offline' ? '<b>Signed in, can\u2019t reach the server.</b> Kept on this phone meanwhile; it goes to your account when there\u2019s signal.'
-          : !doc ? '<b>Only on this phone.</b> Sign in under Nourish \u2192 \u2699 \u2192 Sync &amp; sharing and it travels with your account, the same as your day.'
+          : !doc ? '<b>Only on this phone.</b> Sign in under Nourish \u2192 \u2630 \u2192 Sync &amp; sharing and it travels with your account, the same as your day.'
           : SY.err ? '<b>Not saved to your account yet</b> \u2014 it keeps trying. Safe on this phone meanwhile.'
           : SY.ok ? 'Saved to your account ' + agoSay(SY.ok) + ', and kept on this phone.' : 'Kept on this phone and in your account.') + '</div>' +
         '<div class="tr-sub">' + Object.keys(T.wo).length + ' workouts' + (!doc ? ' \u00b7 about ' + kb + ' KB'

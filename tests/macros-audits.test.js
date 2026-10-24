@@ -4,7 +4,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, goDay, stepDay, openMeal: openMeal0, closeSheet } = require('./fixtures/nourish.js');
+const { nourish, goDay, stepDay, openMeal: openMeal0, closeSheet, openRow, openRowOf } = require('./fixtures/nourish.js');
 
 /* Opens one meal's sheet the way a thumb does, if it is not open already.
    Since 2026-10-04 the day is trays, and a meal's plates and verbs are in
@@ -577,6 +577,7 @@ module.exports = nourish({
       await dp.click('.tab[data-view="macros"]');
       await dp.waitForTimeout(300);
       await openMeal(dp, 's');
+      await openRowOf(dp, '#modalRoot .mitem [data-open="' + cookie + '"]');
       await dp.click('.mitem [data-open="' + cookie + '"]');
       await dp.waitForTimeout(300);
       const sheet = await dp.evaluate(() => (document.querySelector('.sheet') || {}).textContent || '');
@@ -1237,6 +1238,7 @@ module.exports = nourish({
         t.ok('with a chip beside its name: "Added for fiber"', chip === 'Added for fiber', chip);
         /* Blake chose the chip as the button (option 1): it opens a strip
            inside the plate, in the style of the app's other in-meal cards. */
+        await openRow(np, tag);
         await np.click('[data-mwhy="' + tag + '"]');
         await np.waitForTimeout(150);
         const strip = await np.evaluate(() => {
@@ -1370,6 +1372,7 @@ module.exports = nourish({
       const rawHalf = Math.round(pork.ingp.reduce((a, x) => a + x.g * (x.pe > 0 ? x.pe : 1), 0) / pork.servN * 0.5);
       t.ok('a recipe plate shows its weight, marked as an estimate until weighed',
         est && est.est && est.t === '~' + rawHalf + ' g', JSON.stringify({ est, rawHalf }));
+      await openRow(np, 'l:0');
       await np.click('#modalRoot [data-mfmenu="l:0"]');
       await np.waitForTimeout(150);
       await np.click('#modalRoot [data-mbatch="l:0"]');

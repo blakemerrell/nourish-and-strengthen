@@ -9,6 +9,7 @@
  * to 7px. Typing the 50 on the dial logged five kilos. The food's own page
  * offered the same "× 100 g". A unit said in grams is now a weight on both,
  * and the typed box keeps room for four digits whatever its unit says. */
+const { openRow } = require('./fixtures/nourish.js');
 const SETUP = () => {
   localStorage.setItem('bsc.macroProfile', JSON.stringify({ sex: 'm', age: 43, ft: 5, inch: 11, lb: 192, act: 1.55, goal: 'cut1' }));
   localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 190, f: 70, c: 230 }));
@@ -51,6 +52,7 @@ module.exports = {
     t.ok('a “100 g” food dials in grams: half of it is 50 g', dial.dial === '50 g', JSON.stringify(dial));
     t.ok('and the small print does not say the same 50 g again', dial.small === '', JSON.stringify(dial));
 
+    await openRow(p, dial.tag);
     await p.click('[data-mtype="' + dial.tag + '"]');
     await p.waitForTimeout(300);
     const box = await p.evaluate((tag) => {
@@ -68,6 +70,7 @@ module.exports = {
 
     // a long unit beside the box goes under it rather than squeezing it
     const tm = await p.evaluate((rowSrc) => { const row = eval(rowSrc); return row('Trail mix').querySelector('[data-mtype]').dataset.mtype; }, '(' + row.toString() + ')');
+    await openRow(p, tm);
     await p.click('[data-mtype="' + tm + '"]');
     await p.waitForTimeout(300);
     const box2 = await p.evaluate((tag) => {

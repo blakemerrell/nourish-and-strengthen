@@ -4,7 +4,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, goDay, stepDay, pickerList, pickRecipe, closeSheet, storedDay, weighIn, todayOn } = require('./fixtures/nourish.js');
+const { nourish, goDay, stepDay, pickerList, pickRecipe, closeSheet, storedDay, weighIn, todayOn, openSync } = require('./fixtures/nourish.js');
 
 /* A dish onto the nth meal of the day, the way a thumb adds one since the
    trays (Blake, 2026-10-04): the meal's tray opens its sheet, the first
@@ -419,7 +419,7 @@ module.exports = nourish({
       t.ok('signed in with no signal, the menu says so rather than "Not signed in"',
         /Signed in/.test(off.who) && /reach the server/.test(off.who), JSON.stringify(off));
       t.ok('and Strengthen can ask: offline, not signed out', off.state === 'offline', off.state);
-      await op.click('#syncBtn');
+      await openSync(op);
       await op.waitForTimeout(300);
       const sheet = await op.evaluate(() => ({ text: document.getElementById('modalRoot').innerText,
         google: !!document.querySelector('#myGoogleFallback') }));

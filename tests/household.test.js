@@ -11,6 +11,7 @@
  *
  * Nothing reaches the real project: the SDK is injected before the page
  * loads, and sync.js skips its own loader when firebase is already there. */
+const { openSync } = require('./fixtures/nourish.js');
 
 const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -271,7 +272,7 @@ module.exports = {
     const kept2 = await K.p.evaluate(() => window.Store.removed());
     t.ok('a recipe deleted on this phone is not mistaken for one taken from it',
       !kept2.some((x) => x.id === 'u3'), JSON.stringify(kept2));
-    await K.p.click('#syncBtn');
+    await openSync(K.p);
     await K.p.waitForTimeout(250);
     const sheet = await K.p.evaluate(() => (document.querySelector('.sync-gone') || {}).innerText || '');
     t.ok('Sync & sharing lists them by name', /Grandma.s bread/.test(sheet) && /Next/.test(sheet), sheet);
@@ -342,7 +343,7 @@ module.exports = {
 
     // ---- one tap on where the staples come from is one write -------------
     n = since();
-    await J.p.click('#syncBtn');
+    await openSync(J.p);
     await J.p.waitForTimeout(250);
     await J.p.click('[data-sync="where"]');
     await J.p.waitForTimeout(250);
@@ -368,7 +369,7 @@ module.exports = {
       say: (document.querySelector('.sync-diner') || {}).textContent || '' }));
     SRV.db[HP] = seedHouse({ members: ['bob'], diners: { bob: dn('Bob', 400, 40) } });
     const G = await phone({ house: CODE });
-    await G.p.click('#syncBtn');
+    await openSync(G.p);
     await G.p.waitForTimeout(250);
     let ds = await dinerSay(G.p);
     t.ok('signed out, the sheet says what sharing dinner numbers needs, and offers no switch',
@@ -380,7 +381,7 @@ module.exports = {
     await G.ctx.close();
 
     const L = await phone({ user: ALICE });
-    await L.p.click('#syncBtn');
+    await openSync(L.p);
     await L.p.waitForTimeout(250);
     ds = await dinerSay(L.p);
     t.ok('signed in with no pantry, it says to join one, and there is nothing to write to',
@@ -400,7 +401,7 @@ module.exports = {
     SRV.db['users/alice'] = { house: CODE };
     const A2 = await phone({ house: CODE, user: ALICE });
     await A2.p.evaluate(() => localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 210, c: 90, f: 50 })));
-    await A2.p.click('#syncBtn');
+    await openSync(A2.p);
     await A2.p.waitForTimeout(250);
     ds = await dinerSay(A2.p);
     t.ok('signed in and in a pantry: a switch, off, a name box holding the first word of the account’s name, and what goes',
@@ -424,7 +425,7 @@ module.exports = {
     await A2.p.reload();
     await A2.p.waitForFunction(() => window.Store.status === 'synced', null, { timeout: 5000 });
     await A2.p.waitForTimeout(300);
-    await A2.p.click('#syncBtn');
+    await openSync(A2.p);
     await A2.p.waitForTimeout(250);
     t.ok('the switch is remembered across a reload, and nothing is sent again for it',
       (await dinerSay(A2.p)).sw === 'true' && !writesFrom(n).some((x) => Object.keys(x.data).some((k) => /^diners/.test(k))),
@@ -465,7 +466,7 @@ module.exports = {
       bigger.kc > moved.kc && same(SRV.db[HP].diners.alice, dn('Alice', bigger.kc, bigger.p)), JSON.stringify({ moved, bigger, d: SRV.db[HP].diners }));
     // and back to the sharing sheet the rest of this runs on
     if (await A2.p.$('#modalRoot .scrim')) { await A2.p.keyboard.press('Escape'); await A2.p.waitForTimeout(200); }
-    await A2.p.click('#syncBtn');
+    await openSync(A2.p);
     await A2.p.waitForTimeout(250);
 
     // a new name, typed and left
@@ -495,7 +496,7 @@ module.exports = {
     const R = await phone({ house: CODE, user: ALICE });
     await R.p.evaluate(() => localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 210, c: 90, f: 50 })));
     SRV.refuse = /^diners\./;
-    await R.p.click('#syncBtn');
+    await openSync(R.p);
     await R.p.waitForTimeout(250);
     await R.p.click('[data-sync="diner"]');
     await R.p.waitForTimeout(300);
@@ -546,7 +547,7 @@ module.exports = {
     SRV.db['households/' + OTHER] = { favs: [], weeks: {}, mine: {}, edits: {}, members: ['carol'] };
     SRV.db['users/wife'] = { house: OWN };
     const W = await phone({ house: OWN, user: WIFE });
-    await W.p.click('#syncBtn');
+    await openSync(W.p);
     await W.p.waitForTimeout(250);
     const wbox = await W.p.evaluate(() => ({ code: (document.querySelector('.sync-code') || {}).textContent,
       box: !!document.getElementById('joinCode'), btn: !!document.querySelector('[data-sync="join"]') }));
@@ -581,7 +582,7 @@ module.exports = {
     await W.p.click('[data-dlg="cancel"]');
     await W.p.waitForTimeout(250);
     t.ok('and Cancel leaves it where it was', (await wsay()).house === CODE);
-    if (!await W.p.$('#joinCode')) { await W.p.click('#syncBtn'); await W.p.waitForTimeout(250); }
+    if (!await W.p.$('#joinCode')) { await openSync(W.p); await W.p.waitForTimeout(250); }
     await W.p.fill('#joinCode', OTHER);
     await W.p.click('[data-sync="join"]');
     await W.p.waitForTimeout(250);

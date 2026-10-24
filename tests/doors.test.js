@@ -16,6 +16,7 @@
  * next meal sheet pushed on top of that entry; Done stepped back onto it and
  * the popstate handler put the meatloaf up. An entry a previous load left
  * behind is the bottom of the stack now, whatever it carries. */
+const { openRowOf } = require('./fixtures/nourish.js');
 const DAY = '2026-10-06';
 
 const SETUP = () => {
@@ -151,6 +152,7 @@ module.exports = {
     await p.waitForTimeout(500);
     await p.click('#modalRoot .msh-tray [data-mtray="1"]').catch(() => {});
     await p.waitForTimeout(300);
+    await openRowOf(p, '#modalRoot .mrow .mitem-name[data-open="351"]');
     const door = await p.$('#modalRoot .mrow .mitem-name[data-open="351"]');
     if (door) {
       await door.click();

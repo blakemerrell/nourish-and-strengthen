@@ -5,7 +5,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, openMeal, closeSheet } = require('./fixtures/nourish.js');
+const { nourish, openMeal, closeSheet, openRowOf } = require('./fixtures/nourish.js');
 
 module.exports = nourish({
   name: 'Macros — trained today, Plan today, the week strip, and Balance',
@@ -735,6 +735,7 @@ module.exports = nourish({
         const c = getComputedStyle(document.querySelector('#modalRoot .mrows .mstep-x'));
         return 'eaten ' + c.fontSize + '/' + c.fontWeight;
       }));
+    await openRowOf(wake, '#modalRoot .mstep-wake');
     await wake.click('#modalRoot .mstep-wake');
     await wake.waitForTimeout(400);
     const woke = await wake.evaluate(() => {

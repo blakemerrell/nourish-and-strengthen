@@ -6,7 +6,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, openWeigh, openPlan, openMeal, closeSheet } = require('./fixtures/nourish.js');
+const { nourish, openWeigh, openPlan, openMeal, closeSheet, openRowOf } = require('./fixtures/nourish.js');
 
 module.exports = nourish({
   name: 'Macros — the plan\'s arithmetic, the floor, and the burn switch',
@@ -206,6 +206,7 @@ module.exports = nourish({
       await cookPg.click('.tab[data-view="macros"]');
       await cookPg.waitForTimeout(300);
       await openMeal(cookPg, 'l');
+      await openRowOf(cookPg, '#modalRoot .mitem [data-open="' + seed.id + '"]');
       await cookPg.click('#modalRoot .mitem [data-open="' + seed.id + '"]');
       await cookPg.waitForTimeout(300);
       const label = await cookPg.evaluate(() => (document.querySelector('.addto-x') || {}).textContent || '(no label)');

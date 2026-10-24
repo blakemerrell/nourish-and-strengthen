@@ -66,6 +66,36 @@ module.exports = {
       /rgba\(0, 0, 0, 0\)|transparent/.test(head.bg) && /inset/.test(head.ring) && /1\.5px/.test(head.ring) && head.over, JSON.stringify(head));
     t.ok('on a 390 px phone the title gives the date its room (the tab above says Nourish)', head.title <= 1 && head.w > 140, JSON.stringify(head));
 
+    /* Blake, 2026-10-24: the gear a hamburger, no "Nourish" word on the row,
+       and the top line's sync pill moved onto it as a dot. */
+    const hdr = await p.evaluate(() => {
+      const g = document.getElementById('macroMore'), d = document.getElementById('macroSyncDot');
+      return { burger: !!g.querySelector('svg.mday-burger') && !/\u2699/.test(g.textContent),
+        label: g.getAttribute('aria-label'), dot: d && d.getBoundingClientRect().width > 0 ? d.className : 'unseen',
+        inGear: !!d && g.contains(d), pill: getComputedStyle(document.getElementById('syncBtn')).display,
+        say: (document.getElementById('macroSyncSay') || {}).textContent };
+    });
+    t.ok('the menu is three lines wearing the sync dot, and the top line\u2019s sync pill is not on Nourish',
+      hdr.burger && hdr.inGear && hdr.dot === 'dot mday-sd' && hdr.pill === 'none', JSON.stringify(hdr));
+    t.ok('the dot says what it means, on the menu and inside it: on this phone only',
+      hdr.label === 'Nourish menu. On this phone only' && hdr.say === 'On this phone only', JSON.stringify(hdr));
+    const tones = await p.evaluate(() => {
+      const f = window.__macroLab.syncTone, r = (a, b, c) => { const x = f(a, b, c); return (x.tone || 'grey') + ':' + x.say; };
+      return [r('synced', false, false), r('local', false, true), r('sending', false, true), r('waiting', false, false),
+        r('error', false, true), r('synced', true, true), r('local', false, false)].join('|');
+    });
+    t.ok('green when the household or your account has it all, amber on its way or with no signal, red when it stopped, grey on this phone only',
+      tones === 'on:All synced|on:All synced|wait:Sending\u2026|wait:No signal|off:Sync has stopped|off:Sync has stopped|grey:On this phone only', tones);
+    await p.click('.tab[data-view="browse"]');
+    const pillBack = await p.evaluate(() => getComputedStyle(document.getElementById('syncBtn')).display);
+    await p.click('.tab[data-view="macros"]');
+    await p.waitForTimeout(200);
+    t.ok('every other tab keeps the pill', pillBack !== 'none', pillBack);
+    const wide = await open({ width: 1280, height: 900 });
+    const wideTitle = await wide.evaluate(() => document.querySelector('.mday-title').getBoundingClientRect().width);
+    t.ok('and the title is for a screen reader at every width, not only on a phone', wideTitle <= 1, wideTitle);
+    await wide.context().close();
+
     let b = await button(p);
     t.ok('meals all on their foods: the button’s middle pip lit, and it says what a press shows next',
       (await views(p)) === '222' && b.lit === 2 && b.say === 'Every meal: show their details' && b.w >= 44 && b.h >= 44, JSON.stringify(b));

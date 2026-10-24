@@ -279,6 +279,12 @@
     mBuildFoods();
   }
 
+  /* src/shelves.js, handed what it reads of the app's and kept under its own
+     names here, as declarations, so they answer from anywhere in this file. */
+  var SHELVES = window.HiveParts.shelves({});
+  function mShelfKey(r) { return SHELVES.mShelfKey(r); }
+  var MSHELF = SHELVES.MSHELF;
+
   function mBuildFoods() {
     MFOODS = [];
     var mine = mReadMyFoods();
@@ -391,6 +397,58 @@
         }())
       });
       BY_ID[MFOODS[MFOODS.length - 1].id] = MFOODS[MFOODS.length - 1];
+    });
+    var eo = SHELVES.mEatoutCatalog();
+    Object.keys(eo.parts).forEach(function (pk) {
+      var pf = eo.parts[pk];
+      var mp = Math.round((pf.p || 0) * 10) / 10;
+      var mc = Math.round((pf.c || 0) * 10) / 10;
+      var mf = Math.round((pf.f || 0) * 10) / 10;
+      var prec = {
+        id: 'f:' + pk, food: true, side: false, eat: false, lever: false,
+        eatoutPart: true, meals: '', veg: !!pf.veg, starch: !!pf.starch, shelf: pf.shelf || '',
+        ext: true, zone: '', book: 0, secNum: 0, secName: 'Eating out',
+        name: pf.name, servings: '1 ' + (pf.unit || 'serving'), servN: 1,
+        unit: pf.unit || 'serving', grams: pf.grams || 0,
+        ing: [pf.name], steps: [], est: pf.est !== false, score: null, diff: 'Easy', time: '0 mins',
+        macro: { kcal: Math.round(4 * mp + 4 * mc + 9 * mf), p: mp, c: mc, f: mf,
+          na: Math.round(pf.na || 0), fib: Math.round((pf.fib || 0) * 10) / 10 }
+      };
+      BY_ID[prec.id] = prec;
+    });
+    eo.combos.forEach(function (cf) {
+      var cparts = [];
+      var cp = 0, cc = 0, cf2 = 0, cna = 0, cfib = 0, cg = 0;
+      (cf.parts || []).forEach(function (pt) {
+        var pid = 'f:' + pt[0], px = Number(pt[1]) || 1;
+        var pr = BY_ID[pid];
+        if (!pr) return;
+        cparts.push({ id: pid, x: px, name: pr.name, unit: pr.unit });
+        cp += (pr.macro.p || 0) * px;
+        cc += (pr.macro.c || 0) * px;
+        cf2 += (pr.macro.f || 0) * px;
+        cna += (pr.macro.na || 0) * px;
+        cfib += (pr.macro.fib || 0) * px;
+        cg += (pr.grams || 0) * px;
+      });
+      cp = Math.round(cp * 10) / 10;
+      cc = Math.round(cc * 10) / 10;
+      cf2 = Math.round(cf2 * 10) / 10;
+      var crec = {
+        id: 'f:rc_' + cf.id, food: true, side: false, eat: false, lever: false,
+        eatout: true, spot: cf.spot || 'Eating out',
+        meals: cf.meals || 'bld', veg: false, starch: false, shelf: 'eatout',
+        ext: true, zone: '', book: 0, secNum: 0, secName: cf.spot || 'Eating out',
+        name: cf.name, servings: '1 order', servN: 1, unit: 'order', grams: Math.round(cg),
+        ing: [cf.spot || '', cf.name].concat(cparts.map(function (pt) {
+          return fmtNum(pt.x) + ' \u00d7 ' + pt.unit + ' ' + pt.name;
+        })),
+        parts: cparts, steps: [], est: !!cf.est, score: null, diff: 'Easy', time: '0 mins',
+        macro: { kcal: Math.round(4 * cp + 4 * cc + 9 * cf2), p: cp, c: cc, f: cf2,
+          na: Math.round(cna), fib: Math.round(cfib * 10) / 10 }
+      };
+      MFOODS.push(crec);
+      BY_ID[crec.id] = crec;
     });
     MFOODS.sort(function (a2, b2) { return a2.name.localeCompare(b2.name); });
   }
@@ -659,7 +717,8 @@
     cup: 'cups', can: 'cans', slice: 'slices', clove: 'cloves', package: 'packages',
     packet: 'packets', stick: 'sticks', pint: 'pints', quart: 'quarts', scoop: 'scoops',
     head: 'heads', bunch: 'bunches', link: 'links', spear: 'spears', lb: 'lbs', box: 'boxes',
-    serving: 'servings', plate: 'plates', egg: 'eggs', piece: 'pieces'
+    serving: 'servings', plate: 'plates', egg: 'eggs', piece: 'pieces',
+    order: 'orders', bowl: 'bowls', tortilla: 'tortillas', patty: 'patties', bottle: 'bottles', bag: 'bags', portion: 'portions'
   };
   var SINGULAR = {};
   Object.keys(PLURAL).forEach(function (k) { SINGULAR[PLURAL[k]] = k; });
@@ -841,6 +900,7 @@
     /* Which eaten plate has had its portion woken up for a correction. One at
        a time, and never persisted: it is a gesture, not a setting. */
     mEdit: '',
+    mRowOpen: null,
     /* Which plate has its portion open as a typed box, or null for none. One
        at a time and never persisted, for the same reason mEdit is not: it is
        a gesture. null rather than '' so "nothing is being typed" and "the box
@@ -3340,12 +3400,6 @@
   function mQueryKind(q) { return QUERY.mQueryKind(q); }
   function mQueryTopHTML(q, day, targets, pick) { return QUERY.mQueryTopHTML(q, day, targets, pick); }
 
-  /* src/shelves.js, handed what it reads of the app's and kept under its own
-     names here, as declarations, so they answer from anywhere in this file. */
-  var SHELVES = window.HiveParts.shelves({});
-  function mShelfKey(r) { return SHELVES.mShelfKey(r); }
-  var MSHELF = SHELVES.MSHELF;
-
   /* src/pickhome.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
   var PICKHOME = window.HiveParts.pickhome({ S: S, keepingFocus: keepingFocus, mDay: mDay, mDayTargets: mDayTargets, mQueryKind: mQueryKind, mQueryTopHTML: mQueryTopHTML, mViewKey: mViewKey, mpComboHTML: mpComboHTML, mpElseHTML: mpElseHTML, mpFitsHTML: mpFitsHTML, mpKnownIds: mpKnownIds, mpLastXs: mpLastXs, mpFavsHTML: mpFavsHTML, mpNamedHTML: mpNamedHTML, mpPinsHTML: mpPinsHTML, mpQ: mpQ, mpRecentHTML: mpRecentHTML, mpShelvesHTML: mpShelvesHTML, LIVE: LIVE });
@@ -4907,6 +4961,8 @@
     caps: function (sub, aim) { return MYDAY.capsHTML(sub, aim, null, false); },
     ring: function (got, want, m) { return MYDAY.mRingOf(got, want, m); },
     beadsSay: function (M) { return MYDAY.mBeadsSay(M, MYDAY.mBeadsOf(M)); },
+    // the menu's sync dot, from a sync state, account trouble and an account (tests/mealviews.test.js)
+    syncTone: function (st, bad, acct) { return DAYSYNC.mSyncTone(st, bad, acct); },
     // what a tap puts down for a food never logged, sized to this meal (mMealFitX): the app's own number, not a test's copy
     mealFit: function (sk, id) { return mMealFitX(sk, BY_ID[id]); },
     slotFor: function (id) { var sl = mSlotForRecipe(BY_ID[id], mReadSlots()); return sl ? sl.k : null; },
@@ -5111,6 +5167,8 @@
     if (st === 'synced' && window.Store.lastSync) tip += ' Last confirmed ' + agoWords(window.Store.lastSync) + '.';
     $('syncBtn').setAttribute('title', tip);
     renderShareHint();
+    // and the dot on Nourish's menu, which stands in for this pill there
+    if (DAYSYNC) mMarkAccountUI();
   }
 
   // ----------------------------------------------------------------- pantry
@@ -5191,6 +5249,9 @@
     ['today', 'browse', 'plan', 'macros', 'train', 'list', 'pantry', 'book', 'where'].forEach(function (v) {
       $('view-' + v).classList.toggle('hide', S.view !== v);
     });
+    /* On Nourish the sync pill is the dot on its menu (Blake, 2026-10-24);
+       every other tab keeps the pill. */
+    $('syncBtn').classList.toggle('in-nourish', S.view === 'macros');
     /* The book has no tab of its own any more; it opens from Recipes, so
        Recipes is the tab that stays lit while it is up. Plan stays lit
        through all four of its steps. */
@@ -5449,6 +5510,21 @@
       if (!e.target.closest || !e.target.closest('.msheet')) return;
       // × closes the sheet, menu or no menu: the document's listener does it
       if (e.target.closest('.sheet-x, .sheet-done')) return;
+      /* A food opened because it was just added stays open once you use it:
+         its dial, its amount or its ⋯ pin it open, so the first − does not
+         shut it as the "just added" mark is cleared. Here, before an open
+         menu is shut and the sheet drawn again, or the tap's own button is
+         no longer in the page to say which food it was. */
+      var inRow = e.target.closest('#modalRoot .mrow-open [data-mstep], #modalRoot .mrow-open [data-mtype], #modalRoot .mrow-open [data-mfmenu]');
+      if (inRow) {
+        var pinB = inRow.closest('.mrow').querySelector('[data-mrowopen]');
+        if (pinB) {
+          var pp = pinB.dataset.mrowopen.split(':'), pi = Number(pp.pop()), psk = pp.join(':');
+          var pit = (mDay(mViewKey())[psk] || [])[pi];
+          if (pit) S.mRowOpen = { k: mViewKey(), sk: psk, i: pi, id: pit.id };
+        }
+      }
+
       if (S.mMenu && !e.target.closest('.mfood-menu, [data-mfmenu], [data-mmenu]')) {
         S.mMenu = '';
         if (!e.target.closest('button, input, select')) { renderModal(); return; }
@@ -5641,6 +5717,23 @@
          were; this focuses it and selects what is in it, so the first key
          replaces the portion rather than appending to it — nobody taps a
          portion in order to add a digit to the end of it. */
+      /* A food's line in a meal's sheet: tap it open for its amount, its
+         macros and its ⋯; tap it again, or another, and it shuts (myday.js,
+         mOpenRow). */
+      var ro = e.target.closest('[data-mrowopen]');
+      if (ro) {
+        var rp = ro.dataset.mrowopen.split(':'), ri = Number(rp.pop()), rsk = rp.join(':');
+        var rit = (mDay(mViewKey())[rsk] || [])[ri];
+        var wasOpen = ro.getAttribute('aria-expanded') === 'true';
+        S.mRowOpen = { k: mViewKey(), sk: rsk, i: ri, id: wasOpen || !rit ? null : rit.id };
+        S.mMenu = ''; S.mType = null; S.mEdit = '';
+        renderMacros();
+        if (S.macroPick) renderModal();
+        var back = document.querySelector((S.macroPick ? '#modalRoot ' : '#macroSlots ') + '[data-mrowopen="' + ro.dataset.mrowopen + '"]');
+        if (back) back.focus();
+        return;
+      }
+
       var ty = e.target.closest('[data-mtype]');
       if (ty) {
         S.mType = ty.dataset.mtype;
@@ -6266,7 +6359,14 @@
         renderModal();
         return;
       }
-      if (b.dataset.mmore === 'you') { S.macroTargOpen = false; S.syncOpen = true; }
+      /* The same as the top line's pill does, which is not shown on
+         Nourish since 2026-10-24: wake a stuck account, and have a code
+         ready to share. */
+      if (b.dataset.mmore === 'you') {
+        S.macroTargOpen = false; S.syncOpen = true; S.myErr = '';
+        if ((!mAuthKnown || mSyncUnreachable) && mSuspectAccount()) mSyncStart();
+        if (!S.pendingCode) S.pendingCode = window.Store.newCode();
+      }
       /* Any day, closed or not — the card is a reading of the day, and a day
          does not have to be finished with to be read. */
       if (b.dataset.mmore === 'went') { S.macroTargOpen = false; S.mDoneOpen = mViewKey(); }
@@ -7229,6 +7329,7 @@
           });
           S.mpAt[nid] = nat;
           S.mMarks = { k: nk, sk: nsk, was: mRefitMeal(nk, nsk, nat, false, nat), fresh: mpFresh(nat, nid), snap: null };
+          S.mRowOpen = null;
           S.mpBasket[nid] = ((mDay(nk)[nsk] || [])[nat] || {}).x || nx;
           S.newFood = null;
           S.mpMode = 'home';
@@ -7276,6 +7377,7 @@
           S.mpSwap = null;
           S.mpAt[pid] = at2;
           S.mMarks = { k: pk, sk: psk, was: mRefitMeal(pk, psk, undefined, false, at2), fresh: mpFresh(at2, pid), snap: null };
+          S.mRowOpen = null;
           S.mpBasket[pid] = ((mDay(pk)[psk] || [])[at2] || {}).x || px;
         }
         if (S.mAmt && S.mAmt !== '*') S.mAmt = '';

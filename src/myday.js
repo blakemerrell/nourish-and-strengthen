@@ -152,6 +152,17 @@
     return out;
   }
 
+  /* How far a meal's figure can sit from its share and still be on it: a
+     fraction of the share, or 2 g (15 kcal), whichever is more. Blake,
+     2026-10-24, on a snack's carb pill red at "2/2": its share was about
+     2 g, so 8% was 0.16 g, and three foods of a gram each rounded to the
+     share and still read over. The day's bars have always allowed 10 g
+     (mVerdict); a meal is smaller, so the floor is smaller, but a gram or
+     two either side of a tiny share is the same plate. */
+  function mSlack(m, want, frac) {
+    return Math.max(want * frac, m === 'kcal' ? 15 : 2);
+  }
+
   /* The meal's four, against its share: the figure over the target, filled
      toward it and coloured by where it stands. */
   function capsHTML(sub, aim, spent, capped) {
@@ -172,7 +183,8 @@
       }
       var have = sub[x[0]] || 0, a = x[0] === 'kcal' ? (aim.kcal || (4 * aim.p + 9 * aim.f + 4 * aim.c)) : (aim[x[0]] || 0);
       var pct = a > 0 ? Math.min(100, have * 100 / a) : 0;
-      var cls = x[0] !== 'p' && have > a * 1.08 ? 'over' : have >= a * 0.92 ? 'on' : '';
+      var sl = mSlack(x[0], a, 0.08);
+      var cls = x[0] !== 'p' && have > a + sl ? 'over' : have >= a - sl ? 'on' : '';
       /* The calorie pill of a meal asked for as much (or as little) as a meal
          can be: the number is the limit the arithmetic ran into, not its
          answer — the old day pills' mark (mmp-cap), kept. */
@@ -218,8 +230,8 @@
   var I_FLAME = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.6 2.5c.5 3.1 4.9 5.2 4.9 10.3a5.5 5.5 0 0 1-11 0c0-2.6 1.3-4.3 2.7-5.5.1 1.7.9 2.9 2.1 3.4-.3-3.5.6-6.1 1.3-8.2Z"/></svg>';
   function mRingOf(got, want, m) {
     if (!(want > 0)) return { s: 'none', f: 0, r: 0 };
-    var r = got / want;
-    return { s: r >= 0.9 && (m === 'p' || r <= 1.1) ? 'on' : r > 1.1 ? 'over' : 'under', f: Math.min(1, r), r: r };
+    var r = got / want, sl = mSlack(m, want, 0.1);
+    return { s: got >= want - sl && (m === 'p' || got <= want + sl) ? 'on' : got > want + sl ? 'over' : 'under', f: Math.min(1, r), r: r };
   }
   function mBeadsOf(M) {
     var spent = (M.ask && M.ask.spent) || {};
@@ -998,5 +1010,6 @@
     return '<div class="mcaps">' + capsHTML(sub, M.aim, M.ask && M.ask.spent, !!(M.ask && M.ask.capped)) + '</div>';
   }
 
-  return { mViewsAll: mViewsAll, renderMacros: renderMacros, mMealSheetParts: mMealSheetParts, mMealNowHTML: mMealNowHTML };
+  return { mViewsAll: mViewsAll, renderMacros: renderMacros, mMealSheetParts: mMealSheetParts, mMealNowHTML: mMealNowHTML,
+    capsHTML: capsHTML, mRingOf: mRingOf };
 };

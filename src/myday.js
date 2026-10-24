@@ -905,8 +905,8 @@
          easy links to the recipes when I click on the recipe names"); the
          pills and + are the door to the meal, where food is added. S.mAmt
          says which line is open, with the day in it, so a line left open on
-         one day is not open on the next. These lines are the card's Details
-         now; its Foods and Status are below. */
+         one day is not open on the next. Foods and Details both draw these
+         lines; Details adds what each costs under it. */
       var live = M.live, anyEaten = items.some(function (it) { return it.eaten; });
       if (!live && onPlan) return emptyHTML(M, sk, name) + mCascadeLineHTML(sk, targets, slots);
       var view = mViewOf(k, sk, M, nextSk);
@@ -915,7 +915,7 @@
         lines = items.map(function (it, i) {
           var r = LIVE.BY_ID[it.id];
           if (!r) return '';
-          var tag = sk + ':' + i, open = (view === 3 && !S.mViewAll) || S.mAmt === k + '|' + tag;
+          var tag = sk + ':' + i, open = S.mAmt === k + '|' + tag;
           var byG = mDialG(r);
           var kitchen = byG ? mDialMeasure(r, it.x) : mDialText(r, it.x);
           var weight = byG ? mDialText(r, it.x) : mDialMeasure(r, it.x);
@@ -937,8 +937,16 @@
               '<input class="mitem-ate" type="checkbox" data-meat="' + esc(tag) + '" aria-label="Eaten, ' + name + '"' +
                 (it.eaten ? ' checked' : '') + (ahead ? ' disabled' : '') + '>' +
             '</div>';
+          /* Details used to open every line at once, each with its verbs
+             and dial, so three foods filled the phone and a fourth went off
+             it. Blake chose "one open, macros under each" (2026-10-24,
+             mockup https://claude.ai/artifact/LyyEvDjgiF94XKqV5u9tJf): in
+             Details each shut line says what it costs on a quiet line of its
+             own, and the keys are on the one you tap, as on Foods. */
+          var quiet = view === 3 && !open && !S.mViewAll
+            ? '<div class="mfl-q no-print"><span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mSaltChip(r, it.x) + '</div>' : '';
           return '<div class="mtray-f' + (r.food ? '' : ' mtray-go') + (it.eaten ? ' eaten' : '') + (it.l ? ' held' : '') + (open ? ' open' : '') + '">' +
-            line + (open ? mLineOpenHTML(M, r, it, i) : '') + '</div>';
+            line + (open ? mLineOpenHTML(M, r, it, i) : quiet) + '</div>';
         }).join('');
       }
 

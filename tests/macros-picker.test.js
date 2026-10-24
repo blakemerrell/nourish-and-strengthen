@@ -1287,8 +1287,8 @@ module.exports = nourish({
       const bad = combos.filter((r) => !r.parts || !r.parts.length || !r.spot || r.unit !== 'order');
       return { n: combos.length, menus: menus.length, bad: bad.length };
     });
-    t.ok('Price & Spanish Fork catalog registers 160+ restaurant Smart Combos and 135+ orderable Menu Items',
-      eatoutCatalog.n >= 160 && eatoutCatalog.menus >= 135 && eatoutCatalog.bad === 0, JSON.stringify(eatoutCatalog));
+    t.ok('Price & Spanish Fork catalog registers 214 restaurant Smart Combos and 135+ orderable Menu Items',
+      eatoutCatalog.n === 214 && eatoutCatalog.menus >= 135 && eatoutCatalog.bad === 0, JSON.stringify(eatoutCatalog));
 
     t.ok('the shelf rail carries an Eating out chip, and #mpSpots is hidden until Eating out is active',
       !!(await lookPage.$('#mpShelves [data-mpshelf="eatout"]')) && !(await lookPage.$('#mpSpots')));
@@ -1365,6 +1365,39 @@ module.exports = nourish({
     await lookPage.waitForTimeout(200);
     t.ok('tapping All on the restaurant bar restores the full Eating out list',
       await lookPage.evaluate(() => document.querySelectorAll('#mpList .mpick-row[data-mpick]').length >= 30));
+
+    /* The three kinds of place lead the row (2026-10-24): one picked, the
+       places after the line and the list are only that kind; picked again,
+       or All, every place is back. */
+    const kindsOf = () => lookPage.evaluate(() => {
+      const foods = window.__macroLab.foods();
+      const rows = [...document.querySelectorAll('#mpList .mpick-row[data-mpick]')].map((r) => foods.find((f) => f.id === r.dataset.mpick));
+      return {
+        kinds: [...document.querySelectorAll('#mpSpots [data-mpkind]')].map((b) => b.dataset.mpkind + (b.getAttribute('aria-pressed') === 'true' ? '*' : '')),
+        places: [...document.querySelectorAll('#mpSpots [data-mpspot]')].map((b) => b.dataset.mpspot).filter((x) => x),
+        rows: rows.length,
+        rowKinds: [...new Set(rows.map((r) => (r && r.kinds || []).join('/')))],
+        tap: Math.min(...[...document.querySelectorAll('#mpSpots [data-mpkind]')].map((b) => Math.round(b.getBoundingClientRect().height)))
+      };
+    });
+    const k0 = await kindsOf();
+    t.ok('the restaurant row leads with Fast food, Sit-down and Grab & go, none picked',
+      k0.kinds.join() === 'fast,sit,grab' && k0.tap >= 44 && k0.places.length >= 40, JSON.stringify(k0));
+    await lookPage.click('#mpSpots [data-mpkind="sit"]');
+    await lookPage.waitForTimeout(250);
+    const kSit = await kindsOf();
+    t.ok('Sit-down narrows the places and the list to sit-down places, Texas Roadhouse and JB’s among them, McDonald’s not',
+      kSit.kinds.join() === 'fast,sit*,grab' && kSit.places.indexOf('Texas Roadhouse') >= 0 && kSit.places.indexOf('JB\u2019s Restaurant') >= 0 &&
+      kSit.places.indexOf('McDonald\u2019s') < 0 && kSit.rows > 10 && kSit.rowKinds.every((k) => k.split('/').indexOf('sit') >= 0), JSON.stringify(kSit));
+    await lookPage.click('#mpSpots [data-mpkind="grab"]');
+    await lookPage.waitForTimeout(250);
+    const kGrab = await kindsOf();
+    t.ok('Grab & go is Maverik and the Walmart deli',
+      kGrab.places.slice().sort().join() === 'Maverik,Walmart Deli' && kGrab.rowKinds.every((k) => k.split('/').indexOf('grab') >= 0), JSON.stringify(kGrab));
+    await lookPage.click('#mpSpots [data-mpkind="grab"]');
+    await lookPage.waitForTimeout(250);
+    const kOff = await kindsOf();
+    t.ok('and tapped again, every place is back', kOff.kinds.join() === 'fast,sit,grab' && kOff.places.length === k0.places.length, JSON.stringify(kOff));
 
     /* Searching by restaurant or town narrows the list */
     await lookPage.fill('#mpFind', 'Grogg');

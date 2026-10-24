@@ -356,14 +356,15 @@ module.exports = nourish({
       const dot = document.querySelector('#modalRoot .msh-h [data-mdot="b"]');
       return {
         n: rows.length,
-        nameLefts: rows.map((r) => Math.round(r.querySelector('.mitem-name').getBoundingClientRect().left)),
+        nameLefts: rows.map((r) => Math.round(r.querySelector('.mrow-sum').getBoundingClientRect().left)),
         leaves: rows.map((r) => !!r.querySelector('.leaf-sm .leaf-n')),
         noFoodTick: rows.every((r) => !r.querySelector('input[type="checkbox"], [data-meat], [data-mdot]')),
         mealTick: !!dot && /eaten/i.test(dot.getAttribute('aria-label') || ''),
         mealVerbsOutside: rows.every((r) => !r.querySelector('[data-mbal], [data-mskip], [data-mopen], [data-mtry], [data-mkeep]')),
-        bar: rows.every((r) => shown(r.querySelector('.mstep-x')) &&
-          shown(r.querySelector('[data-mstep$=":down"]')) && shown(r.querySelector('[data-mstep$=":up"]')) &&
-          shown(r.querySelector('[data-mfmenu]'))),
+        /* Blake's "B" (2026-10-24): a food is a line, its − grams + and ⋯
+           a tap away, so the sheet is not a wall of steppers. */
+        bar: rows.every((r) => shown(r.querySelector('.mrow-sum')) && !shown(r.querySelector('.mstep-x')) &&
+          !shown(r.querySelector('[data-mstep$=":up"]')) && !shown(r.querySelector('[data-mfmenu]'))),
       };
     });
     t.ok('the plate is seeded with a scored recipe and a bare food',
@@ -375,7 +376,7 @@ module.exports = nourish({
       new Set(plated.nameLefts).size === 1, JSON.stringify(plated.nameLefts));
     t.ok('no food carries a tick of its own; the meal’s tick says what it does',
       plated.noFoodTick && plated.mealTick, JSON.stringify(plated));
-    t.ok('every food shows − grams + and its ⋯ without a tap',
+    t.ok('every food is a line, its − grams + and ⋯ a tap away',
       plated.bar, JSON.stringify(plated));
     t.ok('and no meal verb sits inside a food',
       plated.mealVerbsOutside, JSON.stringify(plated));

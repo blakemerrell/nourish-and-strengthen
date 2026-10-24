@@ -4,7 +4,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, goDay, stepDay, openMeal: openMeal0, closeSheet, openRow } = require('./fixtures/nourish.js');
+const { nourish, goDay, stepDay, openMeal: openMeal0, closeSheet, openRow, openRowOf } = require('./fixtures/nourish.js');
 
 /* Opens one meal's sheet the way a thumb does, if it is not open already.
    Since 2026-10-04 the day is trays, and a meal's plates and verbs are in
@@ -577,6 +577,7 @@ module.exports = nourish({
       await dp.click('.tab[data-view="macros"]');
       await dp.waitForTimeout(300);
       await openMeal(dp, 's');
+      await openRowOf(dp, '#modalRoot .mitem [data-open="' + cookie + '"]');
       await dp.click('.mitem [data-open="' + cookie + '"]');
       await dp.waitForTimeout(300);
       const sheet = await dp.evaluate(() => (document.querySelector('.sheet') || {}).textContent || '');

@@ -5,7 +5,7 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, openPlan, pickRecipe, pickerList, openRow } = require('./fixtures/nourish.js');
+const { nourish, openPlan, pickRecipe, pickerList, openRow, openRowOf } = require('./fixtures/nourish.js');
 
 /* Trays and the meal sheet (Blake, 2026-10-04): the day is a small tray a
    meal, and a meal opens as its sheet — the one place food is added or
@@ -161,6 +161,7 @@ module.exports = nourish({
       if (e8 === 0) return String(wh || 0); if (e8 === 8) return String(wh + 1);
       return (wh ? wh + ' ' : '') + { 1: '⅛', 2: '¼', 3: '⅜', 4: '½', 5: '⅝', 6: '¾', 7: '⅞' }[e8];
     };
+    await openRowOf(m, '#modalRoot .mitem-name');
     await m.click('#modalRoot .mitem-name');
     await m.waitForTimeout(250);
     t.ok('opening a plate opens its recipe at the batch that makes the portion',

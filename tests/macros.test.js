@@ -5,7 +5,7 @@
  *
  * Split by topic: later sections are in tests/macros-*.test.js, and the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, goDay, stepDay, openWeigh, openPlan, pickerList, openTray, openRow } = require('./fixtures/nourish.js');
+const { nourish, goDay, stepDay, openWeigh, openPlan, pickerList, openTray, openRow, openRowOf } = require('./fixtures/nourish.js');
 
 /* The day is trays and a meal opens as its sheet (trays and the meal sheet,
    Blake 2026-10-04). The sheet stands over the day's header, the weigh card
@@ -821,7 +821,7 @@ module.exports = nourish({
     t.ok('and it is there for next time, in its own words',
       await p.evaluate(() => {
         const el = [...document.querySelectorAll('.mitem-food')]
-          .find((x) => /Chicken tamale/.test(x.textContent));
+          .find((x) => /Chicken tamale/.test(x.closest('.mitem').textContent));
         // its own unit, on the amount where the buttons that change it are
         return !!el && /tamale/.test(el.closest('.mitem').querySelector('.mstep-x').textContent);
       }));
@@ -1249,7 +1249,8 @@ module.exports = nourish({
       await p.evaluate(() => /out of 100/.test(
         document.querySelector('.mitem .leaf').getAttribute('aria-label'))));
 
-    // the name opens the recipe; the back gesture walks home to the day
+    // the name opens the recipe (Details, in its line's drawer); the back gesture walks home to the day
+    await openRowOf(p, '#modalRoot .mitem-name');
     await p.click('.mitem-name');
     await p.waitForTimeout(250);
     t.ok('tapping the name opens the recipe itself',

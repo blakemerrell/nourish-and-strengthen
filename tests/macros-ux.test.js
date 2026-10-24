@@ -239,8 +239,9 @@ module.exports = nourish({
           const a = lum(getComputedStyle(el).color), b = lum(bgOf(el));
           return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
         };
-        const ate = document.querySelector('#modalRoot .mitem.eaten .mitem-name');
-        const plan = document.querySelector('#modalRoot .mitem:not(.eaten) .mitem-name');
+        // the plate's name on its line (since 2026-10-24 the name opens the line; Details is the door)
+        const ate = document.querySelector('#modalRoot .mitem.eaten .mrow-sum .mrow-nm');
+        const plan = document.querySelector('#modalRoot .mitem:not(.eaten) .mrow-sum .mrow-nm');
         return {
           ateLine: ate && getComputedStyle(ate).textDecorationLine,
           ateTick: !!ate && !!ate.closest('.msheet').querySelector('.msh-h .mday-dot[aria-pressed="true"]'),

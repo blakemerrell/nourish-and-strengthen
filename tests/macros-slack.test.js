@@ -655,7 +655,7 @@ module.exports = nourish({
       const n = document.querySelector('#modalRoot .msheet .mrow .mitem-name');
       if (!n) return null;
       return { tag: n.tagName, id: n.dataset.open || n.dataset.mfood || '',
-        food: n.dataset.mfood !== undefined, name: n.textContent.trim() };
+        food: n.dataset.mfood !== undefined, name: n.closest('.mrow').querySelector('.mrow-sum .mrow-nm').textContent.trim() };
     });
     t.ok('a food’s name is a door, not a label',
       !!door && door.tag === 'BUTTON' && door.id !== '', JSON.stringify(door));
@@ -717,7 +717,8 @@ module.exports = nourish({
     await reachPage.click('#macroSlots .mtray .mtray-b');
     await reachPage.waitForTimeout(400);
     await openTray(reachPage);
-    Object.assign(reach, { key: await hit('#modalRoot .msheet .mrow [data-mstep$=":up"]'),
+    await openRow(reachPage);
+    Object.assign(reach, { key: await hit('#modalRoot .msheet .mrow-open [data-mstep$=":up"]'),
       add: await box('#modalRoot .msheet .mp-find') });
     await reachPage.click('#modalRoot .msheet [data-mmenu]');
     await reachPage.waitForTimeout(250);

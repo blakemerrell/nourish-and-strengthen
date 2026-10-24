@@ -318,7 +318,12 @@ module.exports = nourish({
     }, n);
 
     // by position among the food rows of the meal's sheet
-    const typeOn = (i) => typ.locator('#modalRoot .mrows .mitem').nth(i).locator('[data-mtype]').click();
+    // by position among the food rows of the meal's sheet, its line tapped open first
+    const typeOn = async (i) => {
+      const row = typ.locator('#modalRoot .mrows .mitem').nth(i), line = row.locator('[data-mrowopen]');
+      if ((await line.getAttribute('aria-expanded')) !== 'true') { await line.click(); await typ.waitForTimeout(150); }
+      await row.locator('[data-mtype]').click();
+    };
     await typeOn(0);
     await typ.waitForTimeout(200);
     t.ok('tapping a portion opens an empty box, the number that was there shown faint in it',

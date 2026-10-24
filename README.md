@@ -59,6 +59,9 @@ nugget" finds Tyson's bag), then its plain foods. A food looked up or scanned op
 short page — its grades and allergens as one line, how much with − and +, the plate's
 P, F and C, and Add, all on the first screen — with the packet's whole Nutrition Facts
 panel and its ingredients folded under it, still there to correct a figure.
+At the top of the sheet the meal's foods are a line each: name, amount and calories.
+Tap one to open it for its macros, − and +, Details (its page) and ⋯; one is open at a
+time, a food just added opens by itself, and one you are setting stays open.
 The day's head says the day as a date; tap it for the phone's calendar, any day from the
 first you ever logged (or 120 days back, if that is further) to a week ahead. Nothing is
 let go of: every day and every weigh-in stays, on the phone and in your account. ‹ and › step a week, and so does a swipe

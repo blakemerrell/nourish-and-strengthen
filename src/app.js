@@ -398,22 +398,39 @@
       });
       BY_ID[MFOODS[MFOODS.length - 1].id] = MFOODS[MFOODS.length - 1];
     });
-    var eo = SHELVES.mEatoutCatalog();
+    var eo = SHELVES.mEatoutCatalog(), pSpot = {}, pSpots = {}, pMeals = {};
+    eo.combos.forEach(function (cf) {
+      var sp0 = cf.spot || '';
+      var spClean = String(sp0).split(/\s*\u00b7\s*/)[0].trim();
+      (cf.parts || []).forEach(function (pt) {
+        var pk = pt[0];
+        if (!pSpot[pk]) pSpot[pk] = sp0;
+        if (!pSpots[pk]) pSpots[pk] = [];
+        if (spClean && pSpots[pk].indexOf(spClean) < 0) pSpots[pk].push(spClean);
+        pMeals[pk] = (pMeals[pk] || '') + (cf.meals || 'bld');
+      });
+    });
     Object.keys(eo.parts).forEach(function (pk) {
       var pf = eo.parts[pk];
       var mp = Math.round((pf.p || 0) * 10) / 10;
       var mc = Math.round((pf.c || 0) * 10) / 10;
       var mf = Math.round((pf.f || 0) * 10) / 10;
+      var spots = pf.spots || (pSpots[pk] && pSpots[pk].length <= 2 ? pSpots[pk] : []);
+      var spotRaw = pf.spot || (spots.length === 1 ? pSpot[pk] : spots.length === 2 ? spots.join(' / ') : '');
+      var sp = spotRaw ? String(spotRaw).split(/\s*\u00b7\s*/)[0].trim() : '';
+      var dname = sp && pf.name.indexOf(sp) !== 0 ? (sp + ' \u2014 ' + pf.name) : pf.name;
       var prec = {
         id: 'f:' + pk, food: true, side: false, eat: false, lever: false,
-        eatoutPart: true, meals: '', veg: !!pf.veg, starch: !!pf.starch, shelf: pf.shelf || '',
-        ext: true, zone: '', book: 0, secNum: 0, secName: 'Eating out',
-        name: pf.name, servings: '1 ' + (pf.unit || 'serving'), servN: 1,
+        eatoutPart: true, eatoutMenu: !!spotRaw, spot: spotRaw, spots: spots,
+        meals: pf.meals || pMeals[pk] || 'blds', veg: !!pf.veg, starch: !!pf.starch, shelf: spotRaw ? 'eatout' : (pf.shelf || ''),
+        ext: true, zone: '', book: 0, secNum: 0, secName: spotRaw || 'Eating out',
+        name: dname, rawName: pf.name, servings: '1 ' + (pf.unit || 'serving'), servN: 1,
         unit: pf.unit || 'serving', grams: pf.grams || 0,
-        ing: [pf.name], steps: [], est: pf.est !== false, score: null, diff: 'Easy', time: '0 mins',
+        ing: spotRaw ? [spotRaw, dname] : [pf.name], steps: [], est: pf.est !== false, score: null, diff: 'Easy', time: '0 mins',
         macro: { kcal: Math.round(4 * mp + 4 * mc + 9 * mf), p: mp, c: mc, f: mf,
           na: Math.round(pf.na || 0), fib: Math.round((pf.fib || 0) * 10) / 10 }
       };
+      if (spotRaw) MFOODS.push(prec);
       BY_ID[prec.id] = prec;
     });
     eo.combos.forEach(function (cf) {
@@ -423,7 +440,7 @@
         var pid = 'f:' + pt[0], px = Number(pt[1]) || 1;
         var pr = BY_ID[pid];
         if (!pr) return;
-        cparts.push({ id: pid, x: px, name: pr.name, unit: pr.unit });
+        cparts.push({ id: pid, x: px, name: pr.rawName || pr.name, unit: pr.unit });
         cp += (pr.macro.p || 0) * px;
         cc += (pr.macro.c || 0) * px;
         cf2 += (pr.macro.f || 0) * px;
@@ -3936,7 +3953,7 @@
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
-    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave'];
+    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpspot', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave'];
 
   function focusKey(el) {
     if (!el || el === document.body || !el.getAttribute) return null;
@@ -7068,10 +7085,27 @@
       if (msh && S.macroPick) {
         var want = msh.dataset.mpshelf;
         S.mpShelf = S.mpShelf === want ? '' : want;
+        S.mpSpot = '';
         var rail = $('mpShelves');
         if (rail) {
           Array.prototype.forEach.call(rail.querySelectorAll('[data-mpshelf]'), function (b2) {
             var on = b2.dataset.mpshelf === S.mpShelf;
+            b2.setAttribute('aria-pressed', String(on));
+            b2.classList.toggle('on', on);
+          });
+        }
+        refreshMacroPicker();
+        return;
+      }
+
+      var msp = e.target.closest('[data-mpspot]');
+      if (msp && S.macroPick) {
+        var wantSpot = msp.dataset.mpspot;
+        S.mpSpot = (!wantSpot || S.mpSpot === wantSpot) ? '' : wantSpot;
+        var spots = $('mpSpots');
+        if (spots) {
+          Array.prototype.forEach.call(spots.querySelectorAll('[data-mpspot]'), function (b2) {
+            var on = b2.dataset.mpspot === S.mpSpot;
             b2.setAttribute('aria-pressed', String(on));
             b2.classList.toggle('on', on);
           });
@@ -8290,6 +8324,7 @@
     S.mDoneOpen = '';
     S.mpQuery = '';
     S.mpShelf = '';
+    S.mpSpot = '';
     // a basket left behind would silently refill the next meal you opened
     S.mpBasket = {};
     /* A Train sheet is an entry in the same history, so the same back

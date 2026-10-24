@@ -232,7 +232,7 @@ module.exports = nourish({
       const minTop = Math.max(250, findEl ? findEl.getBoundingClientRect().bottom + 4 : 250);
       const w = [...document.querySelectorAll('#modalRoot .mpick-wrap')]
         .find((x) => !x.classList.contains('in') &&
-          x.getBoundingClientRect().top > minTop && x.getBoundingClientRect().bottom < 560);
+          x.getBoundingClientRect().top > minTop && x.getBoundingClientRect().bottom < window.innerHeight - 10);
       if (!w) return null;
       const r = w.querySelector('.mpick-row').getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + 12, id: w.querySelector('.mpick-row').dataset.mpick };

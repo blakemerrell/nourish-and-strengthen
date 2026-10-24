@@ -1283,40 +1283,97 @@ module.exports = nourish({
     await lookPage.waitForTimeout(200);
     const eatoutCatalog = await lookPage.evaluate(() => {
       const combos = window.__macroLab.foods().filter((r) => r.eatout);
+      const menus = window.__macroLab.foods().filter((r) => r.eatoutMenu);
       const bad = combos.filter((r) => !r.parts || !r.parts.length || !r.spot || r.unit !== 'order');
-      return { n: combos.length, bad: bad.length };
+      return { n: combos.length, menus: menus.length, bad: bad.length };
     });
-    t.ok('Price & Spanish Fork catalog registers 126 restaurant Smart Combos with parts and spots',
-      eatoutCatalog.n === 126 && eatoutCatalog.bad === 0, JSON.stringify(eatoutCatalog));
+    t.ok('Price & Spanish Fork catalog registers 160 restaurant Smart Combos and 140+ individual Menu Items',
+      eatoutCatalog.n === 160 && eatoutCatalog.menus >= 140 && eatoutCatalog.bad === 0, JSON.stringify(eatoutCatalog));
 
-    t.ok('the shelf rail carries an Eating out chip',
-      !!(await lookPage.$('#mpShelves [data-mpshelf="eatout"]')));
+    t.ok('the shelf rail carries an Eating out chip, and #mpSpots is hidden until Eating out is active',
+      !!(await lookPage.$('#mpShelves [data-mpshelf="eatout"]')) && !(await lookPage.$('#mpSpots')));
     await lookPage.click('#mpShelves [data-mpshelf="eatout"]');
     await lookPage.waitForTimeout(250);
     const eatoutRows = await lookPage.evaluate(() => {
       const rows = [...document.querySelectorAll('#mpList .mpick-row[data-mpick]')];
+      const comboRows = [...document.querySelectorAll('#mpList .mpick-row[data-mpick^="f:rc_"]')];
+      const menuRows = [...document.querySelectorAll('#mpList .mpick-row[data-mpick^="f:ro_"]')];
+      const hasMenuBand = [...document.querySelectorAll('#mpList .mt-div')].some((d) => d.textContent.trim() === 'Menu items');
       const firstId = rows[0] ? rows[0].dataset.mpick : null;
       const firstRec = window.__macroLab.foods().find((r) => r.id === firstId);
+      const spotsEl = document.getElementById('mpSpots');
+      const spotChips = spotsEl ? [...spotsEl.querySelectorAll('[data-mpspot]')] : [];
       return {
         n: rows.length,
-        allEatout: rows.every((r) => /^f:rc_/.test(r.dataset.mpick) && r.dataset.mpx === '1'),
+        comboN: comboRows.length,
+        menuN: menuRows.length,
+        hasMenuBand,
+        allEatout: rows.every((r) => /^f:r[co]_/.test(r.dataset.mpick) && r.dataset.mpx === '1'),
         firstId,
         firstMeals: firstRec ? firstRec.meals : '',
-        firstTxt: rows[0] ? rows[0].textContent : ''
+        firstTxt: rows[0] ? rows[0].textContent : '',
+        spotCount: spotChips.length,
+        allPressed: spotChips[0] && spotChips[0].dataset.mpspot === '' && spotChips[0].getAttribute('aria-pressed') === 'true',
+        hasChains: ['McDonald\u2019s', 'Arby\u2019s', 'KFC', 'Dairy Queen', 'Costa Vida'].every((s) =>
+          spotChips.some((c) => c.dataset.mpspot === s)),
+        noTownInChip: spotChips.every((c) => !/Spanish Fork|Price/.test(c.textContent)),
+        minTapH: spotChips.length ? Math.min(...spotChips.map((c) => Math.round(c.getBoundingClientRect().height))) : 0,
+        minTapW: spotChips.length ? Math.min(...spotChips.map((c) => Math.round(c.getBoundingClientRect().width))) : 0
       };
     });
-    t.ok('tapping Eating out on Breakfast ranks breakfast Smart Combos first at 1 order',
-      eatoutRows.n >= 20 && eatoutRows.allEatout && /1 order/.test(eatoutRows.firstTxt) &&
-      eatoutRows.firstMeals.indexOf('b') >= 0,
+    t.ok('tapping Eating out on Breakfast ranks breakfast Smart Combos first at 1 order and shows the Menu items band below',
+      eatoutRows.comboN >= 20 && eatoutRows.menuN >= 15 && eatoutRows.hasMenuBand && eatoutRows.allEatout &&
+      /1 order/.test(eatoutRows.firstTxt) && eatoutRows.firstMeals.indexOf('b') >= 0,
       JSON.stringify(eatoutRows));
+    t.ok('tapping Eating out reveals a horizontal swipeable row of 44px restaurant filter chips without town suffixes',
+      eatoutRows.spotCount >= 30 && eatoutRows.allPressed && eatoutRows.hasChains &&
+      eatoutRows.noTownInChip && eatoutRows.minTapH >= 44 && eatoutRows.minTapW >= 44,
+      JSON.stringify(eatoutRows));
+
+    /* Tapping a restaurant chip filters to only that restaurant's combos and menu items, and tapping All restores all */
+    await lookPage.click('#mpSpots [data-mpspot="McDonald\u2019s"]');
+    await lookPage.waitForTimeout(200);
+    const mcFiltered = await lookPage.evaluate(() => {
+      const rows = [...document.querySelectorAll('#mpList .mpick-row[data-mpick]')];
+      const combos = [...document.querySelectorAll('#mpList .mpick-row[data-mpick^="f:rc_"]')];
+      const menus = [...document.querySelectorAll('#mpList .mpick-row[data-mpick^="f:ro_"]')];
+      const active = [...document.querySelectorAll('#mpSpots [data-mpspot][aria-pressed="true"]')].map((b) => b.dataset.mpspot);
+      return {
+        n: rows.length,
+        comboN: combos.length,
+        menuN: menus.length,
+        allMc: rows.length > 0 && rows.every((r) => /McDonald/.test(r.textContent)),
+        active
+      };
+    });
+    t.ok('tapping a restaurant chip filters the list to only that restaurant’s combos and individual menu items',
+      mcFiltered.comboN === 7 && mcFiltered.menuN >= 6 && mcFiltered.allMc && mcFiltered.active.join(',') === 'McDonald\u2019s',
+      JSON.stringify(mcFiltered));
+
+    await lookPage.click('#mpSpots [data-mpspot="KFC"]');
+    await lookPage.waitForTimeout(200);
+    const kfcFiltered = await lookPage.evaluate(() => {
+      const rows = [...document.querySelectorAll('#mpList .mpick-row[data-mpick]')];
+      const combos = [...document.querySelectorAll('#mpList .mpick-row[data-mpick^="f:rc_"]')];
+      const menus = [...document.querySelectorAll('#mpList .mpick-row[data-mpick^="f:ro_"]')];
+      return { comboN: combos.length, menuN: menus.length, allKfc: rows.length >= 10 && rows.every((r) => /KFC/.test(r.textContent)) };
+    });
+    t.ok('switching to another restaurant chip (KFC) shows its combos and individual menu items immediately',
+      kfcFiltered.comboN === 5 && kfcFiltered.menuN >= 6 && kfcFiltered.allKfc, JSON.stringify(kfcFiltered));
+
+    await lookPage.click('#mpSpots [data-mpspot=""]');
+    await lookPage.waitForTimeout(200);
+    t.ok('tapping All on the restaurant bar restores the full Eating out list',
+      await lookPage.evaluate(() => document.querySelectorAll('#mpList .mpick-row[data-mpick]').length >= 30));
 
     /* Searching by restaurant or town narrows the list */
     await lookPage.fill('#mpFind', 'Grogg');
     await lookPage.waitForTimeout(300);
-    t.ok('searching a local Price restaurant finds its Smart Combos',
+    t.ok('searching a local Price restaurant finds its Smart Combos and menu items',
       await lookPage.evaluate(() => {
         const rows = [...document.querySelectorAll('#mpList .mpick-row[data-mpick]')];
-        return rows.length === 4 && rows.every((r) => /Grogg/.test(r.textContent));
+        const combos = [...document.querySelectorAll('#mpList .mpick-row[data-mpick^="f:rc_"]')];
+        return combos.length === 4 && rows.length >= 7 && rows.every((r) => /Grogg/.test(r.textContent));
       }));
 
     await lookPage.fill('#mpFind', 'Spanish Fork');

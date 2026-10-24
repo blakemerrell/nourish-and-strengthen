@@ -143,7 +143,7 @@
       var naRoom = Math.min(MTOP_NA, Math.max(0, LIVE.MNA_CAP - (tot.all.na || 0)));
       var best = null;
       LIVE.MFOODS.forEach(function (r) {
-        if (r.eatout) return;
+        if (r.eatout || r.eatoutPart) return;
         var mac = r.macro || {};
         if (r.ext && !mExtOk()) return;     // Fill does not shop
         if (!r.side) return;
@@ -240,7 +240,7 @@
   function mTopPick(day, slot, R, D, near, naRoom, why) {
       var best = null;
       LIVE.MFOODS.forEach(function (r) {
-        if (r.eatout) return;
+        if (r.eatout || r.eatoutPart) return;
         var mac = r.macro || {};
         if (r.ext && !mExtOk()) return;     // Fill does not shop
         if (!mFoodMealOK(r, slot)) return;

@@ -6372,13 +6372,13 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
 /* -- the shared compact shape ---------------------------------------- */
 :is(.ghost, .pw-back, .copy-order, .favbtn, .day-add,
     .hint-x, .day-x, .day-sw, .pw-swap, .iconbtn, .mday-icon, .pitem-x, .ad-plus, .sheet-x, .cal-arrow,
-    .pw-chip, .daybtn, .pk, .mp-shelf, .day-x2, .fp-chip):not(#u#u) {
+    .pw-chip, .daybtn, .pk, .mp-shelf, .mp-spot, .day-x2, .fp-chip):not(#u#u) {
   position: relative; isolation: isolate; min-height: 44px;
   border: 0; background: transparent; box-shadow: none; color: var(--ink); font: inherit;
 }
 :is(.ghost, .pw-back, .copy-order, .favbtn, .day-add,
     .hint-x, .day-x, .day-sw, .pw-swap, .iconbtn, .mday-icon, .pitem-x, .ad-plus, .sheet-x, .cal-arrow,
-    .pw-chip, .daybtn, .pk, .mp-shelf, .day-x2, .fp-chip):not(#u#u)::after {
+    .pw-chip, .daybtn, .pk, .mp-shelf, .mp-spot, .day-x2, .fp-chip):not(#u#u)::after {
   content: ''; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
   z-index: -1; pointer-events: none; border: 1px solid var(--line-firm); background: var(--card);
 }
@@ -6473,19 +6473,19 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
 .mp-cam:not(#u#u) { width: 44px; height: 44px; }
 
 /* -- choice chip: a 32px pill, ink when chosen ------------------------ */
-:is(.pw-chip, .daybtn, .pk, .mp-shelf, .day-x2):not(#u#u) {
+:is(.pw-chip, .daybtn, .pk, .mp-shelf, .mp-spot, .day-x2):not(#u#u) {
   padding: 0 12px; font-size: 0.84375rem; font-weight: 500; letter-spacing: 0; min-width: 44px; width: auto;
   display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; line-height: 1.2;
 }
-:is(.pw-chip, .daybtn, .pk, .mp-shelf, .day-x2):not(#u#u)::after { top: 6px; bottom: 6px; height: auto; transform: none; border-radius: 99px; }
+:is(.pw-chip, .daybtn, .pk, .mp-shelf, .mp-spot, .day-x2):not(#u#u)::after { top: 6px; bottom: 6px; height: auto; transform: none; border-radius: 99px; }
 /* The print picks sit in a bar with a height budget (print.test): 36px to
    tap, a 28px pill to see — still more than the 33px they had. */
 .pk:not(#u#u) { min-height: 36px; }
 .pk:not(#u#u)::after { top: 4px; bottom: 4px; }
 .dl-live .ghost:not(#u#u) { min-height: 36px; display: inline-flex; align-items: center; }
 .dl-live .ghost:not(#u#u)::after { top: 2px; bottom: 2px; }
-:is(.pw-chip[aria-pressed="true"], .daybtn[aria-pressed="true"], .pk.on, .mp-shelf.on):not(#u#u) { color: var(--paper); font-weight: 600; }
-:is(.pw-chip[aria-pressed="true"], .daybtn[aria-pressed="true"], .pk.on, .mp-shelf.on):not(#u#u)::after { background: var(--ink); border-color: var(--ink); }
+:is(.pw-chip[aria-pressed="true"], .daybtn[aria-pressed="true"], .pk.on, .mp-shelf.on, .mp-spot.on):not(#u#u) { color: var(--paper); font-weight: 600; }
+:is(.pw-chip[aria-pressed="true"], .daybtn[aria-pressed="true"], .pk.on, .mp-shelf.on, .mp-spot.on):not(#u#u)::after { background: var(--ink); border-color: var(--ink); }
 .pw-chip.pw-x[aria-pressed="true"]:not(#u#u) { color: var(--on-over); }
 .pw-chip.pw-x[aria-pressed="true"]:not(#u#u)::after { background: var(--dial-over); border-color: var(--dial-over); }
 
@@ -7612,6 +7612,15 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   white-space: nowrap;
 }
 .mp-shelf i { font-size: 0.875rem; }
+.mp-spots { margin-top: 2px; }
+.mp-spot:not(#u#u) {
+  flex: none;
+  min-width: 44px;
+  padding: 0 11px;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
 .msh-acts { display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; padding: 6px 12px 0; }
 .msh-bal {
   min-height: 50px; margin: 0; border-radius: 11px; border: 1px solid var(--line-firm); background: var(--card); color: var(--ink);

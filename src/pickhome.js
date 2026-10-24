@@ -181,15 +181,28 @@
   function mRailSync() {
     var rail = $('mpShelves');
     if (!rail) return;
-    var q = mpQ();
-    if (rail.getAttribute('data-q') === q) return;
+    var q = mpQ(), spots = $('mpSpots'), wantSpots = S.mpShelf === 'eatout';
+    var needRail = (rail.getAttribute('data-q') || '') !== q;
+    var needSpots = wantSpots ? (!spots || (spots.getAttribute('data-q') || '') !== q) : !!spots;
+    if (!needRail && !needSpots) return;
     keepingFocus(function () {
       var tmp = document.createElement('div');
       tmp.innerHTML = mpShelvesHTML();
-      var next = tmp.firstChild;
-      if (!next) return;
-      next.setAttribute('data-q', q);
-      rail.parentNode.replaceChild(next, rail);
+      if (needRail) {
+        var next = tmp.querySelector('#mpShelves');
+        if (next) {
+          next.setAttribute('data-q', q);
+          rail.parentNode.replaceChild(next, rail);
+          rail = next;
+        }
+      }
+      if (needSpots) {
+        var nextSpots = tmp.querySelector('#mpSpots');
+        if (nextSpots) nextSpots.setAttribute('data-q', q);
+        if (spots && nextSpots) spots.parentNode.replaceChild(nextSpots, spots);
+        else if (spots) spots.parentNode.removeChild(spots);
+        else if (nextSpots) rail.parentNode.insertBefore(nextSpots, rail.nextSibling);
+      }
     });
   }
 

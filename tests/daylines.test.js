@@ -190,7 +190,9 @@ module.exports = {
     const want = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-caps .mcap')].map((c) => ({
       want: Number(c.dataset.want), have: Number(c.querySelector('.mcap-t').childNodes[1].textContent.replace(/,/g, '')) })), card('l'));
 
-    /* Stepping Lunch from State 2 (mv-2) -> State 3 (mv-3): all foods open simultaneously, header carries +, ↻, ⚖, ⊘ without inline quick-add drawer */
+    /* Stepping Lunch from State 2 (mv-2) -> State 3 (mv-3): every food says what it costs under its line, header carries +, ↻, ⚖, ⊘ without inline quick-add drawer.
+       It used to open every line with its keys at once; three foods filled
+       the phone. Blake chose "one open, macros under each" (2026-10-24). */
     await p.click(card('l') + ' [data-mview]');
     await p.waitForTimeout(250);
     t.ok('State 3 carries the scale in the header as well', (await verbs(card('l'))).join() === 'mopen,mtry,mbal,mskipask', JSON.stringify(await verbs(card('l'))));
@@ -201,14 +203,28 @@ module.exports = {
       const bordered = ls.every((l) => parseFloat(getComputedStyle(l).borderBottomWidth) >= 1 && parseFloat(getComputedStyle(l).borderTopWidth) >= 1);
       return {
         mv3: c.classList.contains('mv-3'),
-        allOpen: ls.length === 2 && ls.every((l) => l.classList.contains('open') && l.querySelectorAll('[data-mstep]').length === 2),
+        costs: ls.length === 2 && ls.every((l) => !l.classList.contains('open') && !l.querySelector('[data-mstep]') &&
+          /kcal/.test((l.querySelector('.mfl-q') || {}).textContent || '')),
         noAddDrawer: !c.querySelector('.mtray-add'),
         gap: gap,
         bordered: bordered
       };
     }, card('l'));
-    t.ok('State 3 opens all food rows simultaneously with clear visual separation between foods and no inline quick-add drawer',
-      s3.mv3 && s3.allOpen && s3.noAddDrawer && s3.gap >= 6 && s3.bordered, JSON.stringify(s3));
+    t.ok('State 3 shows each food’s cost on a quiet line under it, keys on none until one is tapped, and no inline quick-add drawer',
+      s3.mv3 && s3.costs && s3.noAddDrawer, JSON.stringify(s3));
+    await p.click(line('l', 0) + ' [data-mamt]');
+    await p.waitForTimeout(250);
+    const s3one = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-f')].map((l) => ({
+      open: l.classList.contains('open'), keys: l.querySelectorAll('[data-mstep]').length, quiet: !!l.querySelector('.mfl-q') })), card('l'));
+    t.ok('and a tap on a line opens that one alone with its dial, its cost moving into the open line',
+      s3one.length === 2 && s3one[0].open && s3one[0].keys === 2 && !s3one[0].quiet && !s3one[1].open && s3one[1].keys === 0 && s3one[1].quiet,
+      JSON.stringify(s3one));
+    await p.click(line('l', 1) + ' [data-mamt]');
+    await p.waitForTimeout(250);
+    const s3two = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-f')].map((l) => l.classList.contains('open')), card('l'));
+    t.ok('and opening another shuts the first: one open at a time on Details too', s3two.join() === 'false,true', JSON.stringify(s3two));
+    await p.click(line('l', 0) + ' [data-mamt]');
+    await p.waitForTimeout(250);
 
     /* The scale on the card balances the meal there, on the day. A food
        Locked holds its amount through it (#103, 2026-10-15: Balance clears
@@ -219,7 +235,8 @@ module.exports = {
     const held = await mealOf(p, 'l');
     t.ok('the card’s scale leaves a Locked food at its amount, and opens no sheet',
       held[0].l === 2 && held[0].x === locked[0].x && !(await p.$('#modalRoot .msheet')), JSON.stringify({ locked, held }));
-    // unlocked, it balances the whole meal, and says so
+    // unlocked, it balances the whole meal, and says so (Balance shut the line, so open it again)
+    if (!(await p.$(line('l', 0) + '.open'))) { await p.click(line('l', 0) + ' [data-mamt]'); await p.waitForTimeout(200); }
     await p.click(line('l', 0) + ' [data-mlock]');
     await p.waitForTimeout(200);
     const before = await mealOf(p, 'l');
@@ -270,9 +287,9 @@ module.exports = {
     await p.waitForTimeout(250);
     const reExpanded = await p.evaluate((sel) => {
       const ls = [...document.querySelectorAll(sel + ' .mtray-f')];
-      return ls.length === 2 && ls.every((l) => l.classList.contains('open') && !!l.querySelector('.mfl-amt') && !!l.querySelector('input.mitem-ate'));
+      return ls.length === 2 && ls.every((l) => !l.classList.contains('open') && !!l.querySelector('.mfl-q') && !!l.querySelector('.mfl-amt') && !!l.querySelector('input.mitem-ate'));
     }, card('l'));
-    t.ok('and once more back to State 3 (Details), all lines open with their dials', reExpanded);
+    t.ok('and once more back to State 3 (Details), every line with its cost, none open', reExpanded);
 
     /* the meal’s pills open the meal sheet, where food is added */
     await p.click(card('l') + ' .mtray-caps');

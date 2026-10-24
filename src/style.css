@@ -7231,6 +7231,10 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .mfl-x { display: grid; gap: 6px; padding: 0 0 10px 10px; }
 .mfl-mac { margin-top: -4px; padding-left: 36px; font-size: 0.8125rem; line-height: 1.35; color: var(--note); }
 .mfl-mac .mitem-mac { font-size: inherit; }
+/* Details, shut: the same cost line, where the open line's would sit, with
+   nothing under it. */
+.mfl-q { margin-top: -4px; padding: 0 0 8px 46px; font-size: 0.8125rem; line-height: 1.35; color: var(--note); }
+.mfl-q .mitem-mac { font-size: inherit; }
 .mfl-ctl { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
 /* The four verbs as one row of keys, edge to edge, so a thumb between two
    lands on one of them. */

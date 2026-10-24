@@ -5033,6 +5033,26 @@ module.exports = {
       r.ready && r.reopened && r.autoTucked && r.sets3 === '195×8 · 185×8 · 185×8',
       JSON.stringify(r));
 
+    const simp = await p.evaluate(() => {
+      const c1 = document.querySelector('.tr-ex[data-xi="1"]');
+      const hTxt = (c1 && c1.querySelector('.tr-ex-h') || {}).textContent || '';
+      const noWuBlurb = !/W is a warm-up: done, not counted/.test(hTxt);
+      const origWeek = window.Hive.week;
+      window.Hive.week = () => ({
+        from: '2026-10-01', to: '2026-10-07', lb: 195,
+        w: { now: 195, n: 6, was: 196, m: 6 },
+        days: 6, kcal: 1700, target: 1700, curTarget: 1700,
+        p: 185, tp: 185, hit: 6, pDays: 6, pd: [1, 1, 1, 1, 1, 1],
+        maint: 2400, measured: true, plan: 0.0072, cutWeeks: 11
+      });
+      const ci = window.Train._.checkin();
+      window.Hive.week = origWeek;
+      const cutRead = ci.reads.some((x) => /Week 11 of your cut/.test(x.h) && /maintenance break/.test(x.d));
+      return { noWuBlurb, cutRead };
+    });
+    t.ok('experienced lifter cards omit warm-up tutorial blurbs and 10+ week cuts surface a maintenance break reminder',
+      simp.noWuBlurb && simp.cutRead, JSON.stringify(simp));
+
     await p.close();
     }
   },

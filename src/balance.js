@@ -99,7 +99,10 @@
       if (mSkipped(vk0, s0.k) && !(day[s0.k] || []).length) return;
       var a0 = mMealAsk(s0.k, targets, slots0);
       var w0 = a0 && (a0.now || a0.plan);
-      if (w0 && w0.kcal > 0) asks.push({ k: s0.k, want: w0.kcal });
+      if (w0 && w0.kcal > 0) {
+        var main = s0.t === 'b' || s0.t === 'l' || s0.t === 'd';
+        asks.push({ k: s0.k, want: w0.kcal, wantP: main && w0.p > 0 ? Math.min(w0.p, 30) : 0 });
+      }
     });
     return asks;
   }
@@ -175,12 +178,18 @@
       s += MNA_W * Math.max(0, (tot.all.na || 0) - MNA_CAP) / MNA_CAP;
       /* And where it lands. See MSHARE_W. */
       for (var ai = 0; ai < asks.length; ai++) {
-        var kc = 0, items = day[asks[ai].k] || [];
+        var kc = 0, mp = 0, items = day[asks[ai].k] || [];
         for (var ii = 0; ii < items.length; ii++) {
           var ri = LIVE.BY_ID[items[ii].id];
-          if (ri && ri.macro) kc += (ri.macro.kcal || 0) * items[ii].x;
+          if (ri && ri.macro) {
+            kc += (ri.macro.kcal || 0) * items[ii].x;
+            mp += (ri.macro.p || 0) * items[ii].x;
+          }
         }
         s += MSHARE_W * Math.abs(kc - asks[ai].want) / dayK;
+        if (items.length && asks[ai].wantP > 0 && mp < asks[ai].wantP) {
+          s += 0.35 * (asks[ai].wantP - mp) / Math.max(1, targets.p);
+        }
       }
       return s;
     };

@@ -258,9 +258,14 @@
              reading the day, with the thumb already at the bottom of the
              screen, so it went down to the bar with the rest of the verbs —
              Blake: "the auto expander button at the very top, I think I want
-             to move to the bottom rail." -->
+             to move to the bottom rail." Drawn as a menu (☰) since
+             2026-10-24, wearing the sync dot the top line's pill had: Blake,
+             "Move the sync icon into the hamburger with a green dot only that
+             shows me things are all ok or not" (src/daysync.js paints it). -->
         <button class="ghost mday-icon mday-more" id="macroMore" aria-haspopup="true"
-          aria-expanded="false" aria-label="Set up Nourish">&#9881;</button>
+          aria-expanded="false" aria-label="Nourish menu"><svg class="mday-burger" viewBox="0 0 24 24" aria-hidden="true"
+          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span
+          class="dot mday-sd" id="macroSyncDot"></span></button>
         <div class="mday-menu hide" id="macroMenu" role="menu">
           <!-- One entry for the plan sheet, not three. "Craft my plan",
                "Meals & shares" and "How My Day works" all opened the SAME
@@ -276,6 +281,7 @@
                sheet. Empty until the SDK has actually answered — see
                mMarkAccountUI. -->
           <button role="menuitem" tabindex="-1" data-mmore="you">Sync &amp; sharing<span
+            class="mmenu-who mmenu-sync" id="macroSyncSay"></span><span
             class="mmenu-who" id="macroWho"></span></button>
           <button role="menuitem" tabindex="-1" data-mmore="went">How today went</button>
         </div>

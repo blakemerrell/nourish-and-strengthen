@@ -113,11 +113,26 @@
      answered, because "Not signed in" before we have asked is a lie that
      happens to be true half the time. */
   function mMarkAccountUI() {
-    var g = $('macroMore');
+    var g = $('macroMore'), bad = mSyncTrouble();
     if (g) {
-      var bad = mSyncTrouble();
       // a no-op toggle still rewrites the attribute, and something is watching
       if (g.classList.contains('mday-warn') !== bad) g.classList.toggle('mday-warn', bad);
+    }
+    /* And beside it, since 2026-10-24, a dot that is always there: the
+       top line's sync pill comes off on Nourish (app.js, renderView), and
+       Blake wanted "a green dot only that shows me things are all ok or
+       not". Green when the household or your account has it all, amber
+       while something is on its way or there is no signal, red when it has
+       stopped, grey when it is kept on this phone only. The warning above
+       is the red one, so this one steps aside for it (style.css). */
+    var sd = $('macroSyncDot');
+    if (sd) {
+      var T = mSyncTone((window.Store && window.Store.status) || 'local', bad, !!mAccount()), tone = T.tone, say = T.say;
+      var cls = 'dot mday-sd' + (tone ? ' ' + tone : '');
+      if (sd.className !== cls) sd.className = cls;
+      if (g && g.getAttribute('aria-label') !== 'Nourish menu. ' + say) g.setAttribute('aria-label', 'Nourish menu. ' + say);
+      var ss = $('macroSyncSay');
+      if (ss && ss.textContent !== say) ss.textContent = say;
     }
     var el = $('macroWho');
     if (el) {
@@ -131,6 +146,16 @@
       if (el.textContent !== says) el.textContent = says;
     }
   }
+  /* The dot's colour and its words, from the household's sync state, the
+     account's trouble and whether there is an account at all. */
+  function mSyncTone(st, bad, acct) {
+    var tone = bad || st === 'error' ? 'off'
+      : (st === 'sending' || st === 'waiting' || st === 'connecting') ? 'wait'
+        : (st === 'synced' || acct) ? 'on' : '';
+    return { tone: tone, say: tone === 'off' ? 'Sync has stopped' : st === 'waiting' ? 'No signal'
+      : tone === 'wait' ? 'Sending\u2026' : tone === 'on' ? 'All synced' : 'On this phone only' };
+  }
+
   /* Signed in as far as this device knows, and the server out of reach. */
   function mSyncAway() { return !mAccount() && LIVE.mSyncUnreachable && mSuspectAccount(); }
 
@@ -190,5 +215,5 @@
     return st;
   })();
 
-  return { mBootTargets: mBootTargets, mSyncState: mSyncState, mMarkAccountUI: mMarkAccountUI, mSyncAway: mSyncAway, mPut: mPut, mLsFull: mLsFull, mLsFullSay: mLsFullSay, MSTAMPS: MSTAMPS };
+  return { mBootTargets: mBootTargets, mSyncState: mSyncState, mMarkAccountUI: mMarkAccountUI, mSyncTone: mSyncTone, mSyncAway: mSyncAway, mPut: mPut, mLsFull: mLsFull, mLsFullSay: mLsFullSay, MSTAMPS: MSTAMPS };
 };

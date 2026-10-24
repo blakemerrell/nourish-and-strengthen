@@ -4907,6 +4907,8 @@
     // a meal's pills and a card's ring for given figures, as myday.js colours them (tests/macros-meal.test.js)
     caps: function (sub, aim) { return MYDAY.capsHTML(sub, aim, null, false); },
     ring: function (got, want, m) { return MYDAY.mRingOf(got, want, m); },
+    // the menu's sync dot, from a sync state, account trouble and an account (tests/mealviews.test.js)
+    syncTone: function (st, bad, acct) { return DAYSYNC.mSyncTone(st, bad, acct); },
     // what a tap puts down for a food never logged, sized to this meal (mMealFitX): the app's own number, not a test's copy
     mealFit: function (sk, id) { return mMealFitX(sk, BY_ID[id]); },
     slotFor: function (id) { var sl = mSlotForRecipe(BY_ID[id], mReadSlots()); return sl ? sl.k : null; },
@@ -5111,6 +5113,8 @@
     if (st === 'synced' && window.Store.lastSync) tip += ' Last confirmed ' + agoWords(window.Store.lastSync) + '.';
     $('syncBtn').setAttribute('title', tip);
     renderShareHint();
+    // and the dot on Nourish's menu, which stands in for this pill there
+    if (DAYSYNC) mMarkAccountUI();
   }
 
   // ----------------------------------------------------------------- pantry
@@ -5191,6 +5195,9 @@
     ['today', 'browse', 'plan', 'macros', 'train', 'list', 'pantry', 'book', 'where'].forEach(function (v) {
       $('view-' + v).classList.toggle('hide', S.view !== v);
     });
+    /* On Nourish the sync pill is the dot on its menu (Blake, 2026-10-24);
+       every other tab keeps the pill. */
+    $('syncBtn').classList.toggle('in-nourish', S.view === 'macros');
     /* The book has no tab of its own any more; it opens from Recipes, so
        Recipes is the tab that stays lit while it is up. Plan stays lit
        through all four of its steps. */
@@ -6298,7 +6305,14 @@
         renderModal();
         return;
       }
-      if (b.dataset.mmore === 'you') { S.macroTargOpen = false; S.syncOpen = true; }
+      /* The same as the top line's pill does, which is not shown on
+         Nourish since 2026-10-24: wake a stuck account, and have a code
+         ready to share. */
+      if (b.dataset.mmore === 'you') {
+        S.macroTargOpen = false; S.syncOpen = true; S.myErr = '';
+        if ((!mAuthKnown || mSyncUnreachable) && mSuspectAccount()) mSyncStart();
+        if (!S.pendingCode) S.pendingCode = window.Store.newCode();
+      }
       /* Any day, closed or not — the card is a reading of the day, and a day
          does not have to be finished with to be read. */
       if (b.dataset.mmore === 'went') { S.macroTargOpen = false; S.mDoneOpen = mViewKey(); }

@@ -2793,6 +2793,13 @@ select { max-width: 280px; }
   max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .mmenu-who:empty { display: none; }
+
+/* Nourish's menu, drawn as three lines, and its sync dot on its corner (src/
+   daysync.js mMarkAccountUI). The top line's pill is not shown on Nourish. */
+.mday-more .mday-burger { width: 20px; height: 20px; display: block; }
+.mday-more .mday-sd { position: absolute; top: 5px; right: 6px; width: 9px; height: 9px; box-shadow: 0 0 0 2px var(--paper); }
+.mday-more.mday-warn .mday-sd { display: none; }
+.synbtn.in-nourish { display: none; }
 /* the menu opens upward: there is nothing below the bar to open into */
 .mday-menu {
   position: absolute; right: 0; bottom: calc(100% - 4px); z-index: var(--z-dock-over);
@@ -6446,16 +6453,15 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
 .mday-head .mday-views .mtray-pips:not(#u#u) { display: inline-flex; gap: 4px; }
 .mday-head .mday-views .mtray-pips:not(#u#u) i { display: block; width: 6px; height: 6px; }
 .mday-head .mday-views[hidden] { display: none; }
-/* A phone has no room for the title as well: at 390 px it cut the date to
-   "Thu, …", and at 320 px the day box it replaced came out 24 px wide. The
-   tab above already says Nourish, lit, so the title goes to the screen
-   reader only and the date takes its room. */
-@media (max-width: 400px) {
-  .mday-head:not(#u#u) .mday-title {
-    position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
-  }
-  .mday-date { flex: 1 1 auto; justify-content: center; }
+/* The title is for the screen reader only, at every width: the tab above
+   already says Nourish, lit. It went on phones first (at 390 px it cut the
+   date to "Thu, …"), and everywhere on 2026-10-24, Blake: "Remove the word
+   Nourish in that header row. I can see that in nourish cuz of the tab
+   above." The date takes its room. */
+.mday-head:not(#u#u) .mday-title {
+  position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
 }
+.mday-date { flex: 1 1 auto; justify-content: center; }
 /* and at the narrowest the calendar's mark goes too, so the date is whole */
 @media (max-width: 340px) {
   .mday-date { padding: 0 6px; }

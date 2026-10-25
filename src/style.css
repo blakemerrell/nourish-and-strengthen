@@ -562,7 +562,8 @@ h1, h2, h3 { margin: 0; }
 }
 /* One row on every screen: the beehive skep logo leads on the left as the
    Share & settings button, and the tabs follow on the same row. */
-.tabs { display: flex; gap: 6px; align-items: center; order: 2; margin-left: 0; flex: 1 1 auto; min-width: 0; }
+.tabs { display: flex; gap: 6px; align-items: center; order: 2; margin-left: 0; flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
 .t-short { display: none; }
 /* Between the household's tabs and yours: a hairline, and everything after
    it pushed to the far end of the row. Where the row is full, the auto
@@ -586,7 +587,7 @@ h1, h2, h3 { margin: 0; }
   padding: 0;
   display: inline-flex; align-items: center; justify-content: center;
 }
-.synbtn:hover { border-color: var(--ochre); color: var(--on-chrome-hi); }
+.synbtn:hover { background: rgba(255,255,255,0.08); border-color: var(--ochre); color: var(--on-chrome-hi); }
 .synbtn[data-tone="on"] { color: var(--dot-on); border-color: var(--dot-on); }
 .synbtn[data-tone="wait"] { color: var(--dot-wait); border-color: var(--dot-wait); }
 .synbtn[data-tone="off"] { color: var(--dot-off); border-color: var(--dot-off); }
@@ -3732,7 +3733,7 @@ p.sync-diner { font-size: 0.8125rem; line-height: 1.6; color: var(--muted); }
   .tabs-fade {
     position: absolute; right: 0; bottom: 8px; width: 26px; height: 32px;
     pointer-events: none;
-    background: linear-gradient(to right, transparent, var(--ink) 78%);
+    background: linear-gradient(to right, transparent, var(--chrome) 78%);
   }
   .t-long { display: none; }
   .t-short { display: inline; }

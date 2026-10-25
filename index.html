@@ -43,7 +43,7 @@
     <!-- The skep logo is the Share & settings button on one row with the tabs:
          tinted green when synced, amber while sending or without signal, red
          when sync has stopped, and warm cream when kept on this phone only. -->
-    <button class="synbtn" id="syncBtn" data-tone="local" aria-label="Hive &amp; Hearth — Share &amp; settings" title="Saving on this phone only. Tap to share one list with another phone.">
+    <button class="synbtn" id="syncBtn" data-tone="local" title="Saving on this phone only. Tap to share one list with another phone.">
       <svg class="brand-skep" viewBox="96 150 320 230" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
         <path d="M136 366c0-152 34-206 120-206s120 54 120 206"/>
         <path d="M192 186q64-26 128 0"/>
@@ -51,7 +51,7 @@
         <path d="M148 288q108-32 216 0"/>
         <path d="M104 366h304"/>
         <path d="M230 366v-22q0-26 26-26t26 26v22z" fill="currentColor" stroke-width="16"/>
-      </svg><span class="sr-only" id="syncLabel" role="status">Share</span>
+      </svg><span class="sr-only">Hive &amp; Hearth — </span><span class="sr-only" id="syncLabel" role="status">Share</span>
     </button>
     <!-- Two labels each, and the media query picks one. A tab called "Shopping
          List" on a 390px screen is a tab you cannot see; "List" beside a basket
@@ -103,7 +103,7 @@
      hand, the week's meals, and getting it. List and Pantry are its steps now,
      not tabs of their own. -->
 
-<!-- A new person has no reason to look at the top right corner of a header,
+<!-- A new person has no reason to look at the top left corner of a header,
      and nothing else on the screen says that two phones can be put on one
      list. The badge saying "Share" only helps somebody already looking at it.
 

@@ -122,9 +122,16 @@
        tab: green when the household or your account has it all, amber while
        something is on its way or there is no signal, red when sync has
        stopped, and warm cream when kept on this phone only. */
-    var T = mSyncTone((window.Store && window.Store.status) || 'local', bad, !!mAccount()), tone = T.tone || 'local', say = T.say;
-    var sb = $('syncBtn');
+    var hst = (window.Store && window.Store.status) || 'local';
+    var T = mSyncTone(hst, bad, !!mAccount()), tone = T.tone || 'local', say = T.say;
+    var sb = $('syncBtn'), sl = $('syncLabel');
     if (sb && sb.getAttribute('data-tone') !== tone) sb.setAttribute('data-tone', tone);
+    if (hst === 'local') {
+      var lbl = (bad || mAccount()) ? say : 'Share';
+      var tip = (bad || mAccount()) ? say + '. Tap for Share & settings.' : 'Saving on this phone only. Tap to share one list with another phone.';
+      if (sl && sl.textContent !== lbl) sl.textContent = lbl;
+      if (sb && sb.title !== tip) sb.title = tip;
+    }
     if (g && g.getAttribute('aria-label') !== 'Nourish menu. ' + say) g.setAttribute('aria-label', 'Nourish menu. ' + say);
     var ss = $('macroSyncSay');
     if (ss && ss.textContent !== say) ss.textContent = say;
@@ -140,7 +147,7 @@
       if (el.textContent !== says) el.textContent = says;
     }
   }
-  /* The dot's colour and its words, from the household's sync state, the
+  /* The skep logo's colour and its words, from the household's sync state, the
      account's trouble and whether there is an account at all. */
   function mSyncTone(st, bad, acct) {
     var tone = bad || st === 'error' ? 'off'

@@ -91,7 +91,7 @@ module.exports = {
     const pillBack = await p.evaluate(() => getComputedStyle(document.getElementById('syncBtn')).display);
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(200);
-    t.ok('every other tab keeps the pill', pillBack !== 'none', pillBack);
+    t.ok('every tab keeps the top-left skep logo button visible', pillBack !== 'none', pillBack);
     const wide = await open({ width: 1280, height: 900 });
     const wideTitle = await wide.evaluate(() => document.querySelector('.mday-title').getBoundingClientRect().width);
     t.ok('and the title is for a screen reader at every width, not only on a phone', wideTitle <= 1, wideTitle);

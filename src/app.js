@@ -3116,6 +3116,7 @@
     S.mMarks = null;
     var res = PLACING.mEditDay(k, fn, seed);
     if (!seed && mDoneAt(k) > 0 && !mAllSlotsDone(k)) mSetDone(k, false);
+    if (!seed && S.view === 'today' && window.Today) window.Today.render();
     return res;
   }
   function kcalOf(t) { return PLACING.kcalOf(t); }
@@ -3311,7 +3312,11 @@
   /* src/myday.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
   var MYDAY = window.HiveParts.myday({ MDAYS: MDAYS, MWEIGHTS: MWEIGHTS, M_MONS: M_MONS, S: S, WGAPI: WGAPI, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mpIcon: mpIcon, leaf: leaf, mAhead: mAhead, mBatchStrip: mBatchStrip, mCanFav: mCanFav, mCascadeLineHTML: mCascadeLineHTML, mCopyItems: mCopyItems, mDay: mDay, mDayTargets: mDayTargets, mDialUnit: mDialUnit, mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mEditDay: mEditDay, mFillRoom: mFillRoom, mFoldForget: mFoldForget, mIcon: mIcon, mIsFav: mIsFav, mLatestKey: mLatestKey, mLongDate: mLongDate, mMacLine: mMacLine, mMarkAccountUI: mMarkAccountUI, mMealAsk: mMealAsk, mMealPillsSay: mMealPillsSay, mReadSlots: mReadSlots, mSaltChip: mSaltChip, mServeG: mServeG, mSkipped: mSkipped, mSnapTargets: mSnapTargets, mViewKey: mViewKey, mWeekHTML: mWeekHTML, mWhyChip: mWhyChip, mWhyStrip: mWhyStrip, macroFootHTML: macroFootHTML, macroWeighHTML: macroWeighHTML, syncShrunk: syncShrunk, todayKey: todayKey, mDialFromX: mDialFromX, mDialG: mDialG, mDialMeasure: mDialMeasure, mDialText: mDialText, LIVE: LIVE });
-  function renderMacros() { return MYDAY.renderMacros(); }
+  function renderMacros() {
+    var r = MYDAY.renderMacros();
+    if (S.view === 'today' && window.Today) window.Today.render();
+    return r;
+  }
   function mMealSheetParts(sk) { return MYDAY.mMealSheetParts(sk); }
   function mMealNowHTML(sk, add) { return MYDAY.mMealNowHTML(sk, add); }
 
@@ -8598,7 +8603,7 @@
     swap: function (id, day) { planSwap(idOf(id), day); },
     planWeek: function () { goView('plan'); pwOpen(); },
     addTonight: function () { goView('plan'); rememberOpener(); addOpen(CAL_DAYS[new Date().getDay()][0]); },
-    addFood: function () { S.macroDate = null; goView('macros'); var b = $('macroAdd'); if (b) b.click(); },
+    addFood: function () { S.macroDate = null; goView('macros'); mOpenPicker(null, 'home'); },
     /* Nourish on today (not whichever day it was last left on), and its own
        answer to whether today can be filled, then its own Fill. */
     fill: function () {
@@ -8628,7 +8633,6 @@
        your own plate of it ticked eaten in Nourish, and asked how it was. */
     cooked: function (id, day, tk) {
       var k = /^\d{4}-\d{2}-\d{2}$/.test(tk || '') ? tk : todayKey();
-      window.Store.setCooked(day, true);
       /* The whole meal the dinner is on, not just its plate: a meal is
          completed as one (Blake, 2026-10-04: "I'll complete the whole
          meal"), so sides on that dinner are eaten with it. */
@@ -8638,6 +8642,7 @@
           if (list.some(function (it) { return String(it.id) === String(id); })) list.forEach(function (it) { it.eaten = 1; });
         });
       });
+      window.Store.setCooked(day, true);
       tdSheetOpen({ k: 'rate', id: idOf(id), day: day, tk: k });
     },
     rate: function (id, day) { tdSheetOpen({ k: 'rate', id: idOf(id), day: day, tk: todayKey() }); },

@@ -126,11 +126,14 @@
     var T = mSyncTone(hst, bad, !!mAccount()), tone = T.tone || 'local', say = T.say;
     var sb = $('syncBtn'), sl = $('syncLabel');
     if (sb && sb.getAttribute('data-tone') !== tone) sb.setAttribute('data-tone', tone);
-    if (hst === 'local') {
+    if (bad || hst === 'local') {
       var lbl = (bad || mAccount()) ? say : 'Share';
       var tip = (bad || mAccount()) ? say + '. Tap for Share & settings.' : 'Saving on this phone only. Tap to share one list with another phone.';
       if (sl && sl.textContent !== lbl) sl.textContent = lbl;
       if (sb && sb.title !== tip) sb.title = tip;
+    } else if (sl && sl.textContent === 'Sync has stopped' && hst === 'synced') {
+      sl.textContent = 'Synced';
+      if (sb) sb.title = 'The other phones have everything this one has. Tap for the code.';
     }
     if (g && g.getAttribute('aria-label') !== 'Nourish menu. ' + say) g.setAttribute('aria-label', 'Nourish menu. ' + say);
     var ss = $('macroSyncSay');

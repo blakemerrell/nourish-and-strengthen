@@ -36,17 +36,22 @@
 
 <header class="topbar no-print">
   <div class="topbar-in">
-    <div class="brand">
+    <div class="brand sr-only">
       <div class="brand-name">Hive &amp; Hearth</div>
       <div class="brand-sub">365 recipes &middot; two volumes</div>
     </div>
-    <!-- The sync button is a sibling of the tabs rather than one of them. On a
-         phone it stays up on the brand row and the five tabs get the whole
-         second row to themselves; with it in here, two of the five were off the
-         side of the screen with nothing to say so. CSS order keeps the desktop
-         arrangement exactly as it was. -->
-    <button class="synbtn" id="syncBtn" title="Saving on this phone only. Tap to share one list with another phone.">
-      <span class="dot" id="syncDot"></span><span id="syncLabel" role="status">Share</span>
+    <!-- The skep logo is the Share & settings button on one row with the tabs:
+         tinted green when synced, amber while sending or without signal, red
+         when sync has stopped, and warm cream when kept on this phone only. -->
+    <button class="synbtn" id="syncBtn" data-tone="local" title="Saving on this phone only. Tap to share one list with another phone.">
+      <svg class="brand-skep" viewBox="96 150 320 230" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M136 366c0-152 34-206 120-206s120 54 120 206"/>
+        <path d="M192 186q64-26 128 0"/>
+        <path d="M164 236q92-32 184 0"/>
+        <path d="M148 288q108-32 216 0"/>
+        <path d="M104 366h304"/>
+        <path d="M230 366v-22q0-26 26-26t26 26v22z" fill="currentColor" stroke-width="16"/>
+      </svg><span class="sr-only">Hive &amp; Hearth — </span><span class="sr-only" id="syncLabel" role="status">Share</span>
     </button>
     <!-- Two labels each, and the media query picks one. A tab called "Shopping
          List" on a 390px screen is a tab you cannot see; "List" beside a basket
@@ -98,7 +103,7 @@
      hand, the week's meals, and getting it. List and Pantry are its steps now,
      not tabs of their own. -->
 
-<!-- A new person has no reason to look at the top right corner of a header,
+<!-- A new person has no reason to look at the top left corner of a header,
      and nothing else on the screen says that two phones can be put on one
      list. The badge saying "Share" only helps somebody already looking at it.
 
@@ -254,18 +259,11 @@
         <!-- Every meal's view at once, round the same three a meal's name
              steps through (src/myday.js, mViewsNow): Blake, 2026-10-18. -->
         <button class="ghost mday-icon mday-views" id="macroViews" hidden></button>
-        <!-- The gear alone now. Opening every meal is a thing you do WHILE
-             reading the day, with the thumb already at the bottom of the
-             screen, so it went down to the bar with the rest of the verbs —
-             Blake: "the auto expander button at the very top, I think I want
-             to move to the bottom rail." Drawn as a menu (☰) since
-             2026-10-24, wearing the sync dot the top line's pill had: Blake,
-             "Move the sync icon into the hamburger with a green dot only that
-             shows me things are all ok or not" (src/daysync.js paints it). -->
+        <!-- Drawn as a menu (☰) since 2026-10-24; the top-left skep logo now
+             carries the sync colour across every tab. -->
         <button class="ghost mday-icon mday-more" id="macroMore" aria-haspopup="true"
           aria-expanded="false" aria-label="Nourish menu"><svg class="mday-burger" viewBox="0 0 24 24" aria-hidden="true"
-          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span
-          class="dot mday-sd" id="macroSyncDot"></span></button>
+          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
         <div class="mday-menu hide" id="macroMenu" role="menu">
           <!-- One entry for the plan sheet, not three. "Craft my plan",
                "Meals & shares" and "How My Day works" all opened the SAME

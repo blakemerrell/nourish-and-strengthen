@@ -5190,19 +5190,13 @@
 
   function renderSyncBadge() {
     var st = window.Store.status;
-    var dot = $('syncDot'), label = $('syncLabel');
-    /* Green only when the others actually have it. Amber while something is in
-       flight or missing, which is the state worth noticing and the one that was
-       previously drawn the same as an error. */
-    dot.className = 'dot' + (st === 'synced' ? ' on'
-      : (st === 'error') ? ' off'
-        : (st === 'sending' || st === 'waiting') ? ' wait' : '');
+    var label = $('syncLabel');
     label.textContent = SYNC_WORD[st] || SYNC_WORD.local;
     var tip = SYNC_TIP[st] || SYNC_TIP.local;
     if (st === 'synced' && window.Store.lastSync) tip += ' Last confirmed ' + agoWords(window.Store.lastSync) + '.';
     $('syncBtn').setAttribute('title', tip);
     renderShareHint();
-    // and the dot on Nourish's menu, which stands in for this pill there
+    // mMarkAccountUI paints the skep logo's sync tone for both household and account
     if (DAYSYNC) mMarkAccountUI();
   }
 
@@ -5284,9 +5278,6 @@
     ['today', 'browse', 'plan', 'macros', 'train', 'list', 'pantry', 'book', 'where'].forEach(function (v) {
       $('view-' + v).classList.toggle('hide', S.view !== v);
     });
-    /* On Nourish the sync pill is the dot on its menu (Blake, 2026-10-24);
-       every other tab keeps the pill. */
-    $('syncBtn').classList.toggle('in-nourish', S.view === 'macros');
     /* The book has no tab of its own any more; it opens from Recipes, so
        Recipes is the tab that stays lit while it is up. Plan stays lit
        through all four of its steps. */

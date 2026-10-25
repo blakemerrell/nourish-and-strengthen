@@ -382,20 +382,21 @@ module.exports = {
     const tabs = await p.evaluate(() => {
       const t = document.querySelector('.tabs');
       const box = t.getBoundingClientRect();
+      const s = document.querySelector('.synbtn').getBoundingClientRect();
       return {
         labels: [...t.querySelectorAll('.tab')].filter((b) => b.offsetParent).map((b) => b.innerText.trim()),
         offscreen: [...t.querySelectorAll('.tab')]
           .filter((b) => b.getBoundingClientRect().right > box.right + 1)
           .map((b) => b.innerText.trim()),
-        // and the sync button is no longer competing with them for the row
-        syncAbove: document.querySelector('.synbtn').getBoundingClientRect().top < box.top,
+        // the skep logo button leads on the left of the same single row
+        sameRow: s.right <= box.left + 1 && Math.abs((s.top + s.height / 2) - (box.top + box.height / 2)) < 8,
       };
     });
     t.ok('every tab is on the screen without scrolling for it',
       tabs.offscreen.length === 0, 'off the edge: ' + tabs.offscreen.join(', '));
     t.ok('under a short name each, on a phone',
       tabs.labels.join('|') === 'Today|Recipes|Plan|Nourish|Strengthen', tabs.labels.join(' '));
-    t.ok('with the sync button up on the brand line, out of their way', tabs.syncAbove);
+    t.ok('with the skep logo button leading the same single row on the left', tabs.sameRow);
 
     /* It used to say "Local", which is a state and not an invitation, and
        nothing on the screen said that pressing it was how two phones end up on

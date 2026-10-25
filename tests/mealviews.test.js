@@ -67,17 +67,18 @@ module.exports = {
     t.ok('on a 390 px phone the title gives the date its room (the tab above says Nourish)', head.title <= 1 && head.w > 140, JSON.stringify(head));
 
     /* Blake, 2026-10-24: the gear a hamburger, no "Nourish" word on the row,
-       and the top line's sync pill moved onto it as a dot. */
+       and the top-left skep logo button carries the sync colour across every tab. */
     const hdr = await p.evaluate(() => {
-      const g = document.getElementById('macroMore'), d = document.getElementById('macroSyncDot');
+      const g = document.getElementById('macroMore'), sb = document.getElementById('syncBtn');
       return { burger: !!g.querySelector('svg.mday-burger') && !/\u2699/.test(g.textContent),
-        label: g.getAttribute('aria-label'), dot: d && d.getBoundingClientRect().width > 0 ? d.className : 'unseen',
-        inGear: !!d && g.contains(d), pill: getComputedStyle(document.getElementById('syncBtn')).display,
+        label: g.getAttribute('aria-label'),
+        skep: !!sb.querySelector('svg.brand-skep'), tone: sb.getAttribute('data-tone'),
+        pill: getComputedStyle(sb).display,
         say: (document.getElementById('macroSyncSay') || {}).textContent };
     });
-    t.ok('the menu is three lines wearing the sync dot, and the top line\u2019s sync pill is not on Nourish',
-      hdr.burger && hdr.inGear && hdr.dot === 'dot mday-sd' && hdr.pill === 'none', JSON.stringify(hdr));
-    t.ok('the dot says what it means, on the menu and inside it: on this phone only',
+    t.ok('the menu is three lines, and the top-left skep logo button stays visible on Nourish with its sync tone',
+      hdr.burger && hdr.skep && hdr.tone === 'local' && hdr.pill !== 'none', JSON.stringify(hdr));
+    t.ok('the sync status says what it means, on the menu and inside it: on this phone only',
       hdr.label === 'Nourish menu. On this phone only' && hdr.say === 'On this phone only', JSON.stringify(hdr));
     const tones = await p.evaluate(() => {
       const f = window.__macroLab.syncTone, r = (a, b, c) => { const x = f(a, b, c); return (x.tone || 'grey') + ':' + x.say; };
@@ -90,7 +91,7 @@ module.exports = {
     const pillBack = await p.evaluate(() => getComputedStyle(document.getElementById('syncBtn')).display);
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(200);
-    t.ok('every other tab keeps the pill', pillBack !== 'none', pillBack);
+    t.ok('every tab keeps the top-left skep logo button visible', pillBack !== 'none', pillBack);
     const wide = await open({ width: 1280, height: 900 });
     const wideTitle = await wide.evaluate(() => document.querySelector('.mday-title').getBoundingClientRect().width);
     t.ok('and the title is for a screen reader at every width, not only on a phone', wideTitle <= 1, wideTitle);

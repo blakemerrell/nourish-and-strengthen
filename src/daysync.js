@@ -118,22 +118,23 @@
       // a no-op toggle still rewrites the attribute, and something is watching
       if (g.classList.contains('mday-warn') !== bad) g.classList.toggle('mday-warn', bad);
     }
-    /* And beside it, since 2026-10-24, a dot that is always there: the
-       top line's sync pill comes off on Nourish (app.js, renderView), and
-       Blake wanted "a green dot only that shows me things are all ok or
-       not". Green when the household or your account has it all, amber
-       while something is on its way or there is no signal, red when it has
-       stopped, grey when it is kept on this phone only. The warning above
-       is the red one, so this one steps aside for it (style.css). */
-    var sd = $('macroSyncDot');
-    if (sd) {
-      var T = mSyncTone((window.Store && window.Store.status) || 'local', bad, !!mAccount()), tone = T.tone, say = T.say;
-      var cls = 'dot mday-sd' + (tone ? ' ' + tone : '');
-      if (sd.className !== cls) sd.className = cls;
-      if (g && g.getAttribute('aria-label') !== 'Nourish menu. ' + say) g.setAttribute('aria-label', 'Nourish menu. ' + say);
-      var ss = $('macroSyncSay');
-      if (ss && ss.textContent !== say) ss.textContent = say;
+    /* The top-left skep logo (#syncBtn) carries the sync colour across every
+       tab: green when the household or your account has it all, amber while
+       something is on its way or there is no signal, red when sync has
+       stopped, and warm cream when kept on this phone only. */
+    var hst = (window.Store && window.Store.status) || 'local';
+    var T = mSyncTone(hst, bad, !!mAccount()), tone = T.tone || 'local', say = T.say;
+    var sb = $('syncBtn'), sl = $('syncLabel');
+    if (sb && sb.getAttribute('data-tone') !== tone) sb.setAttribute('data-tone', tone);
+    if (hst === 'local') {
+      var lbl = (bad || mAccount()) ? say : 'Share';
+      var tip = (bad || mAccount()) ? say + '. Tap for Share & settings.' : 'Saving on this phone only. Tap to share one list with another phone.';
+      if (sl && sl.textContent !== lbl) sl.textContent = lbl;
+      if (sb && sb.title !== tip) sb.title = tip;
     }
+    if (g && g.getAttribute('aria-label') !== 'Nourish menu. ' + say) g.setAttribute('aria-label', 'Nourish menu. ' + say);
+    var ss = $('macroSyncSay');
+    if (ss && ss.textContent !== say) ss.textContent = say;
     var el = $('macroWho');
     if (el) {
       var who = mAccount();
@@ -146,7 +147,7 @@
       if (el.textContent !== says) el.textContent = says;
     }
   }
-  /* The dot's colour and its words, from the household's sync state, the
+  /* The skep logo's colour and its words, from the household's sync state, the
      account's trouble and whether there is an account at all. */
   function mSyncTone(st, bad, acct) {
     var tone = bad || st === 'error' ? 'off'

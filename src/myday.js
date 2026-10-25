@@ -425,7 +425,7 @@
     var spent = it.eaten && S.mEdit !== tag;
     var moveOpen = S.mMenu === 'move:' + tag;
     var menuOpen = S.mMenu === tag || moveOpen;
-    var isSavedMeal = !!(r.parts && r.parts.some(function (pt) { return LIVE.BY_ID[pt.id]; }));
+    var isSavedMeal = !!(r.parts && (r.parts.length > 1 || (r.parts.length === 1 && r.parts[0].x !== 1)) && r.parts.some(function (pt) { return LIVE.BY_ID[pt.id]; }));
     var sg = !r.food && mServeG(r);
     var measure = mDialMeasure(r, it.x);
     var dialU = mDialG(r) ? 'g' : mDialUnit(r);

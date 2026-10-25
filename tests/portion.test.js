@@ -22,6 +22,7 @@ module.exports = {
         byG: P({ food: 1, unit: '0.5 cup (113 g)', grams: 113 }, 4),
         plain: P({ food: 1, unit: 'slice', grams: 25 }, 2),
         usdaSlice: P({ food: 1, unit: '1 small or thin/very thin slice (25 g)' }, 0.25),
+        miniMuffin: P({ food: 1, unit: '1 mini muffin (28 g)' }, 1),
       };
     });
     t.ok('a label serving that says its own amount is multiplied out: 4 of “0.5 cup (113 g)” is 2 cups, 452 g',
@@ -31,8 +32,8 @@ module.exports = {
     t.ok('measured in grams, the small print says the cups too, not the label again',
       r.byG.head === '452 g' && r.byG.detail === '2 cups', JSON.stringify(r.byG));
     t.ok('a food whose serving is only a word is said as before', r.plain.head === '2 slices', JSON.stringify(r.plain));
-    t.ok('a USDA slice with size adjectives (“1 small or thin/very thin slice (25 g)”) reads as “slice”, not the whole qualifier chain',
-      r.usdaSlice.head === '¼ slice' && r.usdaSlice.detail === '6 g', JSON.stringify(r.usdaSlice));
+    t.ok('a USDA slice with size adjectives (“1 small or thin/very thin slice (25 g)”) reads as “slice”, while “1 mini muffin” keeps “mini”',
+      r.usdaSlice.head === '¼ slice' && r.usdaSlice.detail === '6 g' && r.miniMuffin.head === '1 mini muffin', JSON.stringify([r.usdaSlice, r.miniMuffin]));
 
     /* Typing: one row. */
     await p.click('.tab[data-view="macros"]');

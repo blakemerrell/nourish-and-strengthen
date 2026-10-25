@@ -329,7 +329,7 @@
        already on the other half of the pill: strip trailing comma clauses
        and leading size adjectives so it steps and reads as a slice. */
     var noun = m[2].replace(/,.*$/, '')
-      .replace(/^(?:(?:small|medium|large|thin|thick|very|regular|extra|mini|jumbo|standard|average)(?:\s+or\s+|\s*\/\s*|\s+))+([a-z])/i, '$1')
+      .replace(/^(?:(?:small|medium|large|thin|thick|very|regular|extra|jumbo|standard|average)(?:\s+or\s+|\s*\/\s*|\s+))+([a-z])/i, '$1')
       .trim() || m[2].trim();
     /* A serving already said in grams weighs what it says. The USDA quotes a
        food with no household measure per "100 g", and so does Open Food

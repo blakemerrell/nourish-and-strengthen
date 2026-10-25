@@ -6390,6 +6390,13 @@
         renderModal();
         return;
       }
+      if (b.dataset.mmore === 'eatout') {
+        S.macroTargOpen = false;
+        mOpenPicker(null, 'home');
+        S.mpShelf = 'eatout';
+        renderModal();
+        return;
+      }
       /* The same as the top line's pill does, which is not shown on
          Nourish since 2026-10-24: wake a stuck account, and have a code
          ready to share. */
@@ -8546,11 +8553,13 @@
             '<span class="td-step"><button data-tdstep="-1" aria-label="Less">\u2212</button><b>' + fmtNum(single.x) + '</b><button data-tdstep="1" aria-label="More">+</button></span></div>' : '') +
           (allEaten ? '' : tdRow('swap', 'Swap for another that fits', 'Near the same calories and protein')) +
           tdRow('else', 'I ate something else', 'Search the food list, or build it') +
+          tdRow('eatout', 'Eating out', 'Fast food, sit-down & grab-and-go spots') +
           (single ? tdRow('recipe', 'Open the recipe', '') : '') +
           tdRow('nourish', 'Open the day in Nourish', 'Portions, shares, Fill, your plan') +
         '</div>'
         : '<h2 class="dsh-h">Nothing planned for ' + esc(slot.n.toLowerCase()) + '</h2><div class="dsh-rows">' +
           tdRow('else', 'Add food', 'Search the food list, or build it', 'dsh-main') +
+          tdRow('eatout', 'Eating out', 'Fast food, sit-down & grab-and-go spots') +
           tdRow('nourish', 'Open the day in Nourish', 'Fill it there, to your numbers') + '</div>';
     }
     return '<div class="scrim no-print" data-close="1">' +
@@ -8588,6 +8597,7 @@
     }
     if (act === 'swap') { S.macroDate = null; mTryAgain(T.sk); renderModal(); return; }
     if (act === 'else') { S.macroDate = null; var sk = T.sk; S.tdSheet = null; mOpenPicker(sk, 'home'); return; }
+    if (act === 'eatout') { S.macroDate = null; var esk = T.sk; S.tdSheet = null; mOpenPicker(esk, 'home'); S.mpShelf = 'eatout'; renderModal(); return; }
     if (act === 'recipe') { var one = tdItems(T.sk)[0]; if (one) { rememberOpener(); openRecipe(idOf(one.id)); } return; }
     if (act === 'nourish') { close(); S.macroDate = null; goView('macros'); }
   });
@@ -8604,6 +8614,7 @@
     planWeek: function () { goView('plan'); pwOpen(); },
     addTonight: function () { goView('plan'); rememberOpener(); addOpen(CAL_DAYS[new Date().getDay()][0]); },
     addFood: function () { S.macroDate = null; goView('macros'); mOpenPicker(null, 'home'); },
+    eatOut: function (sk) { S.macroDate = null; goView('macros'); mOpenPicker(sk || null, 'home'); S.mpShelf = 'eatout'; renderModal(); },
     /* Nourish on today (not whichever day it was last left on), and its own
        answer to whether today can be filled, then its own Fill. */
     fill: function () {

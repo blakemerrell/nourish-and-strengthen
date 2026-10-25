@@ -85,7 +85,7 @@ module.exports = nourish({
              more doors into the plan sheet the first entry already opens —
              three of six landing in one room — and both destinations are
              accordions that sheet already shows. */
-          .join() === 'plan,foods,you,went'));
+          .join() === 'plan,foods,eatout,you,went'));
     await p.click('.mday-rail');
     await p.waitForTimeout(80);
     t.ok('and a press anywhere else closes it',

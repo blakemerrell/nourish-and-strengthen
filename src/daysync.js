@@ -118,22 +118,16 @@
       // a no-op toggle still rewrites the attribute, and something is watching
       if (g.classList.contains('mday-warn') !== bad) g.classList.toggle('mday-warn', bad);
     }
-    /* And beside it, since 2026-10-24, a dot that is always there: the
-       top line's sync pill comes off on Nourish (app.js, renderView), and
-       Blake wanted "a green dot only that shows me things are all ok or
-       not". Green when the household or your account has it all, amber
-       while something is on its way or there is no signal, red when it has
-       stopped, grey when it is kept on this phone only. The warning above
-       is the red one, so this one steps aside for it (style.css). */
-    var sd = $('macroSyncDot');
-    if (sd) {
-      var T = mSyncTone((window.Store && window.Store.status) || 'local', bad, !!mAccount()), tone = T.tone, say = T.say;
-      var cls = 'dot mday-sd' + (tone ? ' ' + tone : '');
-      if (sd.className !== cls) sd.className = cls;
-      if (g && g.getAttribute('aria-label') !== 'Nourish menu. ' + say) g.setAttribute('aria-label', 'Nourish menu. ' + say);
-      var ss = $('macroSyncSay');
-      if (ss && ss.textContent !== say) ss.textContent = say;
-    }
+    /* The top-left skep logo (#syncBtn) carries the sync colour across every
+       tab: green when the household or your account has it all, amber while
+       something is on its way or there is no signal, red when sync has
+       stopped, and warm cream when kept on this phone only. */
+    var T = mSyncTone((window.Store && window.Store.status) || 'local', bad, !!mAccount()), tone = T.tone || 'local', say = T.say;
+    var sb = $('syncBtn');
+    if (sb && sb.getAttribute('data-tone') !== tone) sb.setAttribute('data-tone', tone);
+    if (g && g.getAttribute('aria-label') !== 'Nourish menu. ' + say) g.setAttribute('aria-label', 'Nourish menu. ' + say);
+    var ss = $('macroSyncSay');
+    if (ss && ss.textContent !== say) ss.textContent = say;
     var el = $('macroWho');
     if (el) {
       var who = mAccount();

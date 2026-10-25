@@ -164,12 +164,12 @@
     if (!meals.some(function (m) { return !m.empty; })) {
       return card('eating', 'Eating', big + title('Nothing planned for today') +
         note('Nourish can fill your day from the recipes, to your ' + fmt(e.kcal.want) + ' calories and ' + fmt(e.p.want) + ' g of protein. Or add what you eat as you go.') +
-        bars + acts(btn(main, 'fill', 'Fill my day') + btn(false, 'addfood', 'Add food')), '', 'macros');
+        bars + acts(btn(main, 'fill', 'Fill my day') + btn(false, 'addfood', 'Add food') + quiet('eatout', 'Eating out')), '', 'macros');
     }
     var eaten = meals.filter(function (m) { return m.eaten; }), open = meals.filter(function (m) { return !m.eaten && !m.empty; });
     return card('eating', 'Eating', big + (eaten.length ? eatenLine(eaten) : '') +
       (open.length ? '<div class="td-meals">' + open.map(function (m, i) { return mealRow(m, i === 0, e.key); }).join('') + '</div>' : '') +
-      bars, '', 'macros');
+      bars + (open.length ? acts(quiet('eatout', 'Eating out')) : ''), '', 'macros');
   }
 
   // ---------------------------------------------------------------- workout
@@ -344,6 +344,7 @@
     else if (a === 'plan') H.go('plan');
     else if (a === 'numbers') H.numbers();
     else if (a === 'addfood') H.addFood();
+    else if (a === 'eatout') H.eatOut();
     else if (a === 'fill') H.fill();
     else if (a === 'list') H.go('list');
     else if (a === 'start') { if (window.Train && window.Train.startToday) window.Train.startToday(); H.go('train'); }

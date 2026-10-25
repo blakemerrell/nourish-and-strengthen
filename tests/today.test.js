@@ -244,6 +244,20 @@ module.exports = {
     t.ok('Nourish parked on yesterday, Add food from Today opens the picker on today', parked === '2026-09-30' && back.view === 'macros' && back.day === '2026-10-01' && back.picker, JSON.stringify({ parked, back }));
     await p.keyboard.press('Escape');
     await p.waitForTimeout(200);
+    await p.click('.tab[data-view="today"]');
+    await p.waitForTimeout(200);
+    await p.click('[data-card="eating"] [data-td="eatout"]');
+    await p.waitForTimeout(400);
+    const eatOut = await p.evaluate(() => ({
+      view: document.querySelector('.tab[aria-selected="true"]').dataset.view,
+      shelf: ((document.querySelector('[data-mpshelf][aria-pressed="true"]') || {}).dataset || {}).mpshelf,
+      kinds: [...document.querySelectorAll('#mpSpots [data-mpkind]')].map((b) => b.dataset.mpkind).join(),
+      spotsCount: document.querySelectorAll('#mpSpots [data-mpspot]').length,
+    }));
+    t.ok('Eating out from Today opens the picker directly on the Eating out shelf with restaurant group chips',
+      eatOut.view === 'macros' && eatOut.shelf === 'eatout' && eatOut.kinds === 'fast,sit,grab' && eatOut.spotsCount > 20, JSON.stringify(eatOut));
+    await p.keyboard.press('Escape');
+    await p.waitForTimeout(200);
     // whatever is planned tonight is tonight's dinner, a breakfast or a recipe of your own included
     const bk = await p.evaluate(() => {
       const r = window.RECIPES.find((x) => /oatmeal|pancake|granola|smoothie/i.test(x.name));

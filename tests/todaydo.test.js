@@ -91,7 +91,7 @@ module.exports = {
     await p.waitForTimeout(300);
     let ms = await p.evaluate(() => ({ eyebrow: document.querySelector('.td-sheet .sheet-eyebrow').textContent,
       acts: [...document.querySelectorAll('.td-sheet [data-tdact]')].map((b) => b.dataset.tdact).join(), step: !!document.querySelector('[data-tdstep]') }));
-    t.ok('a meal tapped opens its sheet: I ate it, swap, something else, the recipe, Nourish', ms.eyebrow === meal0.n && /^eat,swap,else,(recipe,)?nourish$/.test(ms.acts), JSON.stringify(ms));
+    t.ok('a meal tapped opens its sheet: I ate it, swap, something else, eating out, the recipe, Nourish', ms.eyebrow === meal0.n && /^eat,swap,else,eatout,(recipe,)?nourish$/.test(ms.acts), JSON.stringify(ms));
     const x0 = await p.evaluate((k) => { const d = JSON.parse(localStorage.getItem('bsc.macroDays'))['2026-10-06'][k]; return d.length === 1 ? d[0].x : null; }, meal0.k);
     if (ms.step && x0 !== null) {
       await p.click('[data-tdstep="1"]');

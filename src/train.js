@@ -5345,7 +5345,12 @@
      render, and drawn once the finger is out (the focusout in wire). */
   function drawIfShowing() {
     var v = $('view-train');
-    if (!v || v.classList.contains('hide')) { markTab(); return; }
+    if (!v || v.classList.contains('hide')) {
+      markTab();
+      var td = $('view-today');
+      if (td && !td.classList.contains('hide') && window.Today) window.Today.render();
+      return;
+    }
     if (typing()) { S.drawDue = 1; markTab(); return; }
     draw();
   }

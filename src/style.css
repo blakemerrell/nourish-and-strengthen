@@ -583,14 +583,14 @@ h1, h2, h3 { margin: 0; }
 .synbtn {
   order: 1; flex: 0 0 44px; width: 44px; height: 44px;
   background: transparent; color: var(--on-chrome-2);
-  border: 1px solid var(--chrome-line); border-radius: 6px;
+  border: none; border-radius: 6px;
   padding: 0;
   display: inline-flex; align-items: center; justify-content: center;
 }
-.synbtn:hover { background: rgba(255,255,255,0.08); border-color: var(--ochre); color: var(--on-chrome-hi); }
-.synbtn[data-tone="on"] { color: var(--dot-on); border-color: var(--dot-on); }
-.synbtn[data-tone="wait"] { color: var(--dot-wait); border-color: var(--dot-wait); }
-.synbtn[data-tone="off"] { color: var(--dot-off); border-color: var(--dot-off); }
+.synbtn:hover { background: rgba(255,255,255,0.08); color: var(--on-chrome-hi); }
+.synbtn[data-tone="on"] { color: var(--dot-on); }
+.synbtn[data-tone="wait"] { color: var(--dot-wait); }
+.synbtn[data-tone="off"] { color: var(--dot-off); }
 .brand-skep { width: 26px; height: 20px; display: block; flex: none; }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dot); flex: none; }
 .dot.on { background: var(--dot-on); }
@@ -2756,7 +2756,7 @@ select { max-width: 280px; }
   stroke-linecap: round; stroke-linejoin: round;
 }
 .mday-ic .thin { stroke-width: 0.9; }
-.mday-acts #macroFill, .mday-acts #macroAdd {
+.mday-acts #macroFill {
   grid-column: span 2;
   min-height: 48px;
   min-width: 0;
@@ -2769,14 +2769,6 @@ select { max-width: 280px; }
   hyphens: none;
   padding: 6px 12px;
 }
-/* The door to the food sheet: the biggest thing on the bar, in ink, with
-   its plus drawn in the same set as the tools. */
-.mday-acts #macroAdd {
-  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-  background: var(--ink); color: var(--paper);
-}
-.mday-acts #macroAdd:hover { background: var(--ink-hover); }
-.mday-acts #macroAdd .mday-ic { width: 20px; height: 20px; stroke-width: 2.2; }
 .mday-more { flex: 0 0 auto; padding-left: 12px; padding-right: 12px; position: relative; }
 /* The mark that says the day is not reaching the account it belongs to.
    Only ever drawn for a device that has one — see mSyncTrouble — so a visitor

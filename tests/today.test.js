@@ -240,8 +240,8 @@ module.exports = {
     await p.waitForTimeout(300);
     await p.click('[data-card="eating"] [data-td="addfood"]');
     await p.waitForTimeout(400);
-    const back = await p.evaluate(() => ({ day: document.querySelector('[data-mweek][aria-pressed="true"]').dataset.mweek, view: document.querySelector('.tab[aria-selected="true"]').dataset.view }));
-    t.ok('Nourish parked on yesterday, Add food from Today adds to today', parked === '2026-09-30' && back.view === 'macros' && back.day === '2026-10-01', JSON.stringify({ parked, back }));
+    const back = await p.evaluate(() => ({ day: document.querySelector('[data-mweek][aria-pressed="true"]').dataset.mweek, view: document.querySelector('.tab[aria-selected="true"]').dataset.view, picker: !!document.getElementById('mpFind') }));
+    t.ok('Nourish parked on yesterday, Add food from Today opens the picker on today', parked === '2026-09-30' && back.view === 'macros' && back.day === '2026-10-01' && back.picker, JSON.stringify({ parked, back }));
     await p.keyboard.press('Escape');
     await p.waitForTimeout(200);
     // whatever is planned tonight is tonight's dinner, a breakfast or a recipe of your own included

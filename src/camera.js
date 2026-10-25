@@ -100,7 +100,8 @@
       }
       mCam = { stream: stream, raf: 0, gen: gen };
       vid.srcObject = stream;
-      vid.play();
+      var playP = vid.play();
+      if (playP && playP.then) playP.then(null, function () {});
       var tick = function () {
         if (!mCam || mCam.gen !== gen) return;
         mCam.raf = requestAnimationFrame(tick);

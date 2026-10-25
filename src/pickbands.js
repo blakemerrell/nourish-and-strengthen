@@ -199,8 +199,11 @@
   function mpSpotsHTML(slot, q) {
     if (S.mpShelf !== 'eatout') return '';
     var mt = (slot && (slot.t || slot.k)) || 'l';
-    var counts = {}, mealHit = {}, seen = [], kindN = {}, allN = 0;
-    mpEatoutPool().concat(mpEatoutMenus()).forEach(function (r) {
+    var counts = {}, mealHit = {}, seen = [], kindN = {}, allN = 0, pool = mpEatoutPool(), solo = {};
+    pool.forEach(function (c) {
+      if (c.parts && c.parts.length === 1 && c.parts[0].x === 1 && (!q || mpTextMatch(c, q))) solo[c.parts[0].id] = 1;
+    });
+    pool.concat(mpEatoutMenus().filter(function (r) { return !solo[r.id]; })).forEach(function (r) {
       var sps = (r.spots && r.spots.length) ? r.spots : [mpSpotOf(r)];
       var match = !q || mpTextMatch(r, q);
       if (match) {
@@ -456,6 +459,12 @@
      Only when something is typed. With an empty box the ranked bands ARE the
      answer and a fifth band of everything in the book underneath them is not
      help. */
+  function mpSoloOrderShown(r, skip) {
+    if (!r || !r.eatoutMenu || !skip) return false;
+    return mpEatoutPool().some(function (c) {
+      return skip[c.id] && c.parts && c.parts.length === 1 && c.parts[0].x === 1 && c.parts[0].id === r.id;
+    });
+  }
   function mpElseHTML(shown) {
     var q = mpQ();
     if (!q || !S.macroPick) return '';
@@ -463,7 +472,7 @@
     var slot = null;
     mReadSlots().list.forEach(function (sl) { if (sl.k === S.macroPick.slot) slot = sl; });
     var pool = [];
-    LIVE.MFOODS.forEach(function (r) { if (!shown[r.id] && mpMatches(r, q)) pool.push(r); });
+    LIVE.MFOODS.forEach(function (r) { if (!shown[r.id] && !mpSoloOrderShown(r, shown) && mpMatches(r, q)) pool.push(r); });
     LIVE.RECIPES.forEach(function (r) { if (!shown[r.id] && mpMatches(r, q)) pool.push(r); });
     if (!pool.length) return '';
     var ranked = mRank(pool, day, targets, slot || { k: S.macroPick.slot, w: S.macroPick.w });
@@ -719,7 +728,7 @@
   function mpMenuHTML(skip, slot, targets, planned, q) {
     if (S.mpShelf !== 'eatout') return '';
     var mpool = mpEatoutMenus().filter(function (r) {
-      return !skip[r.id] && mpMatches(r, q);
+      return !skip[r.id] && !mpSoloOrderShown(r, skip) && mpMatches(r, q);
     });
     if (!mpool.length) return '';
     var mranked = planned

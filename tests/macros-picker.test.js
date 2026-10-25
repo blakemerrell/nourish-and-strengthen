@@ -1447,6 +1447,77 @@ module.exports = nourish({
     t.ok('Menu items band surfaces orderable menu items and hides raw combo building blocks',
       menuCheck.hasEggWhite && menuCheck.hasColeslawInPool && !menuCheck.hasProvolone && !menuCheck.hasLettuceWrap, JSON.stringify(menuCheck));
 
+    const auditCheck = await lookPage.evaluate(() => {
+      const foods = window.__macroLab.foods();
+      const byId = {};
+      foods.forEach((r) => { byId[r.id] = r; });
+      const gone = [
+        'f:ro_dq_grill_salad', 'f:ro_dq_grill_sand', 'f:ro_dq_crispy_salad',
+        'f:rc_dq_grill_salad', 'f:rc_dq_grill_sand_salad',
+        'f:ro_sn_grill_chk', 'f:rc_sn_grill_nobun', 'f:rc_cfa_eggwhite_nug8'
+      ].filter((id) => byId[id]);
+      const cvSpots = foods.filter((r) => /^f:rc_cv_/.test(r.id)).map((r) => r.spot);
+      const l2aHasCabbage = (byId['f:rc_l2a_chk_tacos']?.parts || []).some((p) => p.id === 'f:ro_mx_cabbage');
+      const l2pHasCabbage = (byId['f:rc_l2p_chk_tacos']?.parts || []).some((p) => p.id === 'f:ro_mx_cabbage');
+      const vegCup = byId['f:ro_wm_veg_cup'];
+      const refried = byId['f:ro_mx_refried'];
+      const blackBeans = byId['f:ro_mx_black_beans'];
+      const cfaSand = byId['f:ro_cfa_grill_sand'];
+      const inDblPs = byId['f:ro_in_dbl_ps'];
+      const jj4 = byId['f:ro_jj_4_unwich'];
+      const jj12 = byId['f:ro_jj_12_unwich'];
+      const snTenders = byId['f:ro_sn_tenders3'];
+      return {
+        gone,
+        cvAllSame: cvSpots.length === 5 && cvSpots.every((s) => s === 'Costa Vida \u00b7 Spanish Fork'),
+        l2aHasCabbage,
+        l2pHasCabbage,
+        vegCupSpots: vegCup ? vegCup.spots : [],
+        vegCupName: vegCup ? vegCup.name : '',
+        refriedSpots: refried ? refried.spots : [],
+        refriedName: refried ? refried.name : '',
+        blackBeansSpots: blackBeans ? blackBeans.spots : [],
+        blackBeansName: blackBeans ? blackBeans.name : '',
+        cfaSandF: cfaSand ? cfaSand.macro.f : -1,
+        inDblPsP: inDblPs ? inDblPs.macro.p : -1,
+        inDblPsF: inDblPs ? inDblPs.macro.f : -1,
+        jj4P: jj4 ? jj4.macro.p : -1,
+        jj12P: jj12 ? jj12.macro.p : -1,
+        snTendersP: snTenders ? snTenders.macro.p : -1,
+        snTendersNa: snTenders ? snTenders.macro.na : -1
+      };
+    });
+    t.ok('discontinued DQ/Sonic items and duplicate CFA combos are removed, chain macros and Mexican/Walmart spot tags are accurate',
+      auditCheck.gone.length === 0 && auditCheck.cvAllSame && auditCheck.l2aHasCabbage && auditCheck.l2pHasCabbage &&
+      auditCheck.vegCupSpots.join(',') === 'Walmart Deli' && !/Wingers/.test(auditCheck.vegCupName) &&
+      auditCheck.refriedSpots.length === 4 && auditCheck.refriedName === 'Refried Beans, half order' &&
+      auditCheck.blackBeansSpots.length === 6 && auditCheck.blackBeansName === 'Black Beans, half scoop' &&
+      auditCheck.cfaSandF === 6 && auditCheck.inDblPsP === 30 && auditCheck.inDblPsF === 26 &&
+      auditCheck.jj4P === 16 && auditCheck.jj12P === 29 &&
+      auditCheck.snTendersP === 21 && auditCheck.snTendersNa === 730,
+      JSON.stringify(auditCheck));
+
+    await lookPage.click('#mpSpots [data-mpspot="Wendy\u2019s"]');
+    await lookPage.waitForTimeout(200);
+    const wdDedup = await lookPage.evaluate(() => ({
+      hasComboCaesar: !!document.querySelector('#mpList .mpick-row[data-mpick="f:rc_wd_caesar"]'),
+      hasMenuCaesar: !!document.querySelector('#mpList .mpick-row[data-mpick="f:ro_wd_caesar_chk"]'),
+      hasMenuWrap: !!document.querySelector('#mpList .mpick-row[data-mpick="f:ro_wd_grill_wrap"]'),
+      chipCount: Number(document.querySelector('#mpSpots [data-mpspot="Wendy\u2019s"] .mp-spn')?.textContent || 0),
+      rowCount: document.querySelectorAll('#mpList .mpick-row[data-mpick]').length
+    }));
+    t.ok('Menu items band and restaurant chip count skip 1x single-part items already shown as Smart Combos above',
+      wdDedup.hasComboCaesar && !wdDedup.hasMenuCaesar && wdDedup.hasMenuWrap && wdDedup.chipCount === wdDedup.rowCount,
+      JSON.stringify(wdDedup));
+    await lookPage.click('#mpSpots [data-mpspot="Los 2 Amigos"]');
+    await lookPage.waitForTimeout(200);
+    const l2aMenuTxt = await lookPage.evaluate(() =>
+      document.querySelector('#mpList .mpick-row[data-mpick="f:ro_mx_refried"] .mp-name')?.textContent || '');
+    t.ok('shared Mexican menu items display the active restaurant prefix when a restaurant chip is selected',
+      /Los 2 Amigos \u2014 Refried Beans, half order/.test(l2aMenuTxt), l2aMenuTxt);
+    await lookPage.click('#mpSpots [data-mpspot=""]');
+    await lookPage.waitForTimeout(200);
+
     /* Tapping a combo adds 1 order, wears no "A saved meal" badge, and Explode splits it into parts */
     await lookPage.fill('#mpFind', 'Costa Vida');
     await lookPage.waitForTimeout(300);

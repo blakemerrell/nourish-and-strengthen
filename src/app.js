@@ -432,9 +432,9 @@
       var mc = Math.round((pf.c || 0) * 10) / 10;
       var mf = Math.round((pf.f || 0) * 10) / 10;
       var spots = pf.spots || (pSpots[pk] && pSpots[pk].length <= 2 ? pSpots[pk] : []);
-      var spotRaw = pf.spot || (spots.length === 1 ? pSpot[pk] : spots.length === 2 ? spots.join(' / ') : '');
+      var spotRaw = pf.spot || (spots.length === 1 ? pSpot[pk] : spots.length === 2 ? spots.join(' / ') : spots.length > 2 ? 'Eating out' : '');
       var isMenu = !pf.partOnly && !!spotRaw;
-      var sp = isMenu ? String(spotRaw).split(/\s*\u00b7\s*/)[0].trim() : '';
+      var sp = isMenu && spotRaw !== 'Eating out' ? String(spotRaw).split(/\s*\u00b7\s*/)[0].trim() : '';
       var dname = sp && pf.name.indexOf(sp) !== 0 ? (sp + ' \u2014 ' + pf.name) : pf.name;
       var prec = {
         id: 'f:' + pk, food: true, side: false, eat: false, lever: false,

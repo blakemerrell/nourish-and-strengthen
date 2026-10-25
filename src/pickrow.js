@@ -108,6 +108,8 @@
       : (mDialG(r) ? esc(mDialText(r, x)) + (meas ? ' &middot; ' + esc(meas) : '')
         : r.food ? esc(mPortionText(r, x)) : '&times;' + fmtNum(x)) + ' &middot; ' +
         mMacLine(r, x, !inB) + mSaltNote(r, x);
+    var rName = (S.mpShelf === 'eatout' && S.mpSpot && r.eatoutMenu && r.spots && r.spots.length > 1 && r.spots.indexOf(S.mpSpot) >= 0 && r.rawName)
+      ? (S.mpSpot + ' \u2014 ' + r.rawName) : r.name;
     return '<div class="mpick-wrap' + (inB ? ' in' : '') + '">' +
       '<button class="mpick-row" data-mpick="' + esc(String(r.id)) + '" data-mpx="' + x + '"' +
         ' aria-pressed="' + (inB ? 'true' : 'false') + '">' +
@@ -116,7 +118,7 @@
         '<span class="mp-body">' +
           '<span class="mp-name">' +
             (mIsFav(r) ? '<span class="mp-fav">&#9733;</span> ' : '') +
-            esc(r.name) +
+            esc(rName) +
             /* The badge sits with the NAME, not out on the row's edge: it is
                a fact about this dish at this portion, and a column of its own
                would have to be reserved on every row that cannot earn it. */

@@ -23,6 +23,7 @@
   var MSYNC_SHAPE = app.MSYNC_SHAPE;
   var MSYNC_SIMPLE = app.MSYNC_SIMPLE;
   var mBuildFoods = app.mBuildFoods;
+  var mDrinksClean = app.mDrinksClean;
   var mLsJson = app.mLsJson;
   var mNow = app.mNow;
   var mNum = app.mNum;
@@ -208,6 +209,11 @@
         if (v[k] && v[k].s > 0) LIVE.MBATCHG[k] = { s: Number(v[k].s), on: String(v[k].on || '') };
       });
       return mPut('bsc.macroBatchG', LIVE.MBATCHG);
+    });
+    /* Your drinks and their milligrams, whole: the list is small and one
+       person's, and the newest list is the one you meant. */
+    take('dk', 'bsc.macroDrinks', function (v) {
+      return mPut('bsc.macroDrinks', mDrinksClean(v));
     });
     take('nv', 'bsc.macroNever', function (v) {
       Object.keys(LIVE.MNEVER).forEach(function (k) { delete LIVE.MNEVER[k]; });

@@ -1041,12 +1041,18 @@
     /* The scale's box is a draft like the join code and the picker's search:
        a sync emit arriving mid-keystroke must not replace "187.4" with the
        last saved value while the pending save still holds what was typed. */
-    var wIn = $('macroWeigh').querySelector('#mWeight');
-    var wDraft = wIn && document.activeElement === wIn ? wIn.value : null;
+    /* The same holds for every box on the card since the check-in joined it
+       (steps, a drink's milligrams): whichever one has the cursor keeps what
+       is in it, found again by its id or its drink. */
+    var wIn = document.activeElement, wSel = null;
+    if (wIn && wIn.tagName === 'INPUT' && $('macroWeigh').contains(wIn)) {
+      wSel = wIn.id ? '#' + wIn.id : wIn.getAttribute('data-ammg') ? '[data-ammg="' + wIn.getAttribute('data-ammg') + '"]' : null;
+    }
+    var wDraft = wSel ? wIn.value : null;
     $('macroWeigh').innerHTML = macroWeighHTML(k);
     if (WGAPI.week) WGAPI.week();
     if (wDraft !== null) {
-      var wBack = $('macroWeigh').querySelector('#mWeight');
+      var wBack = $('macroWeigh').querySelector(wSel);
       if (wBack) { wBack.value = wDraft; wBack.focus(); }
     }
     // the first stop of the day fills in once the scale has been read

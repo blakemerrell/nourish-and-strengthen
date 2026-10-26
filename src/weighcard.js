@@ -21,6 +21,7 @@
   var mLineHTML = app.mLineHTML;
   var mLsFull = app.mLsFull;
   var mLsFullSay = app.mLsFullSay;
+  var mCheckinHTML = app.mCheckinHTML;
   var mMorningHTML = app.mMorningHTML;
   var mMovedHTML = app.mMovedHTML;
   var mPlanDetail = app.mPlanDetail;
@@ -282,7 +283,16 @@
             (face.has ? '<button class="ghost mplan-go" id="macroTargBtn">Adjust my plan</button>' : '') +
             (mWeekOn() ? '<button class="ghost mplan-go" id="macroWeekBtn">This week</button>' : '') + '</div>'
           : '') +
-      '</div>');
+      '</div>') +
+      /* The rest of the morning, after everything the scale decides, so the
+         weight and what it means stay together at the top: last night's
+         sleep, yesterday's steps, the creatine and the day's drinks
+         (src/checkin.js). On every state of the card, shut
+         included, because the card is only ever seen in the sheet Today
+         opens — and a check-in that shut itself the moment the scale was
+         read would ask the other four questions of nobody. Not on a morning
+         still ahead: nobody has slept it yet. */
+      (ahead ? '' : mCheckinHTML(k));
   }
 
   return { macroWeighHTML: macroWeighHTML };

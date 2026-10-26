@@ -6905,6 +6905,50 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 /* the weigh-in sheet */
 .wg-sheet { padding-bottom: 22px; }
 .wg-sheet #macroWeigh { margin: 4px 0 10px; }
+/* The morning check-in under the weigh-in (src/checkin.js): one row a
+   question, its control at the right, each tap a save. Mocked up on
+   2026-10-26 and shown in the app before it was built: a row a drink, and
+   only the drinks you use, because four counters for drinks you never have
+   was a card twice the height of the weigh-in it sits under. */
+.am { padding: 0 14px 6px; border-top: 1px solid var(--line-soft); }
+.am-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; padding: 4px 0; border-top: 1px solid var(--line-soft); }
+.am-row:first-child { border-top: 0; }
+.am-l { display: flex; flex-direction: column; min-width: 0; font-size: 0.9375rem; font-weight: 600; color: var(--ink); }
+.am-l label { font: inherit; color: inherit; }
+.am-l small { font-size: 0.8125rem; font-weight: 400; color: var(--muted); }
+.am-short .am-l small { color: var(--warn); }
+.am-step { flex: none; display: flex; align-items: center; gap: 4px; }
+.am-step b { min-width: 66px; text-align: center; font-variant-numeric: tabular-nums; font-size: 1rem; }
+.am-b { flex: none; width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  font: inherit; font-size: 1.2rem; cursor: pointer; padding: 0; }
+.am-b:disabled { opacity: 0.35; cursor: default; }
+#macroWeigh .am-in { width: 96px; flex: none; font-weight: 600; font-size: 1rem; }
+.am-tog { flex: none; min-height: 44px; min-width: 100px; border-radius: 999px; border: 1px solid var(--line-firm); background: var(--card);
+  color: var(--ink); font: inherit; font-weight: 600; font-size: 0.875rem; padding: 0 14px; cursor: pointer; }
+.am-tog[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
+.am-caf { border-top: 1px solid var(--line-soft); }
+.am-caf .am-row { border-top: 0; min-height: 44px; }
+.am-drinks { display: flex; flex-direction: column; gap: 6px; padding: 0 0 6px; }
+.am-drink { display: flex; align-items: center; gap: 2px; border: 1px solid var(--line); border-radius: 10px; padding: 0 0 0 12px; background: var(--card); }
+.am-drink > span { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 8px; font-size: 0.875rem; color: var(--ink); }
+.am-drink > span small { font-size: 0.8125rem; color: var(--muted); }
+.am-drink .am-b { border: 0; background: none; }
+.am-n { width: 22px; text-align: center; font-variant-numeric: tabular-nums; }
+.am-add { min-height: 44px; }
+.am-panel { border: 1px solid var(--line-soft); border-radius: 10px; padding: 4px 12px 6px; margin: 2px 0 6px; background: var(--paper-soft); }
+.am-ph { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 8px 0 2px; }
+.am-prow { display: flex; align-items: center; gap: 8px; min-height: 48px; }
+.am-prow > span { flex: 1 1 auto; min-width: 0; font-size: 0.875rem; }
+.am-mg { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8125rem; color: var(--muted); }
+#macroWeigh .am-mg .am-in { width: 64px; }
+#macroWeigh .am-nn { flex: 1 1 auto; width: auto; min-width: 0; text-align: left; }
+.am-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.am-chip { min-height: 44px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  font: inherit; font-size: 0.875rem; padding: 0 12px; cursor: pointer; }
+.am-chip small { font-size: 0.8125rem; color: var(--muted); }
+.am-note { display: block; font-size: 0.8125rem; color: var(--warn); min-height: 0; }
+.am-note:empty { display: none; }
+.td-wt small.td-am { color: var(--ink); opacity: 0.82; }
 #weighWeek { display: flex; flex-direction: column; }
 .wg-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 2px; border: 0; border-top: 1px solid var(--line-soft);
   background: none; font: inherit; color: var(--ink); text-align: left; cursor: pointer; flex-wrap: wrap; }

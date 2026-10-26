@@ -21,9 +21,7 @@ module.exports = {
     await p.evaluate(SEED);
     await p.reload();
     await p.waitForTimeout(900);
-    // Nourish once, as a person opening the app would, so the intake log is written
-    await p.click('.tab[data-view="macros"]');
-    await p.waitForTimeout(500);
+    // Open Strengthen -> Review directly (cold boot without visiting Nourish first)
     await p.click('.tab[data-view="train"]');
     await p.waitForTimeout(500);
     await p.click('.tr-seg [data-v="review"]');
@@ -82,5 +80,29 @@ module.exports = {
     const empty = await q.evaluate(() => [...document.querySelectorAll('.tr-pg')].map((c) => !!c.querySelector('.tr-pg-wait')));
     t.ok('with nothing logged, each card says what it needs instead of drawing nothing', empty.length === 5 && empty.every(Boolean), JSON.stringify(empty));
     t.ok('and nothing is wider than a 320 px phone', await q.evaluate(() => document.documentElement.scrollWidth <= 320), String(await q.evaluate(() => document.documentElement.scrollWidth)));
+
+    // when remote database records arrive while viewing Review, the stats cards redraw live
+    await q.clock.setFixedTime(new Date(2026, 9, 26, 7, 30, 0));
+    await q.evaluate(SEED);
+    await q.evaluate(() => {
+      const at = Date.now();
+      const tr = JSON.parse(localStorage.getItem('bsc.train') || '{}');
+      const wo = {};
+      Object.keys(tr.wo || {}).forEach((k) => { wo[k] = { v: tr.wo[k], at }; });
+      if (window.Train && window.Train.remote) window.Train.remote({ wo }, true);
+      const mapAt = (obj) => { const m = {}; Object.keys(obj || {}).forEach((k) => { m[k] = at; }); return m; };
+      localStorage.setItem('bsc.myStamps', JSON.stringify({
+        profile: at, targets: at, slots: at, drinks: at,
+        w: mapAt(JSON.parse(localStorage.getItem('bsc.macroWeights') || '{}')),
+        d: mapAt(JSON.parse(localStorage.getItem('bsc.macroDays') || '{}')),
+        am: mapAt(JSON.parse(localStorage.getItem('bsc.macroAm') || '{}'))
+      }));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'bsc.myStamps' }));
+    });
+    await q.clock.runFor(200);
+    const liveCards = await cards(q);
+    t.ok('and when database records sync in, Review automatically redraws with the live stats',
+      /of the way to 180 lb/.test(liveCards[0].text) && /After you ate your protein/.test(liveCards[3].text) && /After 7 or more hours of sleep/.test(liveCards[4].text),
+      liveCards.map((c) => c.text).join(' || '));
   }
 };

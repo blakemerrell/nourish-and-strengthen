@@ -8132,18 +8132,31 @@
   function pgData(span) {
     var h = hive(), today = dayKey(new Date()), ms = active();
     var list = ix().list.filter(function (wo) { return !wo.dl; });
+    var fd = h && h.firstDay ? h.firstDay() : null;
+    list.forEach(function (wo) { var k = wo.dk || dayKey(new Date(wo.st)); if (!fd || k < fd) fd = k; });
+    var b6 = new Date(); b6.setDate(b6.getDate() - 42);
+    var b6Key = dayKey(b6);
+    var msFrom = ms ? (ms.st || (fin(ms.at) && ms.at > 0 ? dayKey(new Date(ms.at)) : '')) : '';
     var from;
-    if (span === 'block' && ms && ms.st) from = ms.st;
-    else if (span === 'block') { var b6 = new Date(); b6.setDate(b6.getDate() - 42); from = dayKey(b6); }
-    else {
-      var fd = h && h.firstDay ? h.firstDay() : null;
-      list.forEach(function (wo) { var k = wo.dk || dayKey(new Date(wo.st)); if (!fd || k < fd) fd = k; });
+    if (span === 'block' && msFrom) {
+      from = msFrom;
+      if (pgWeek(today, from) < 2 && fd && fd < from) from = fd > b6Key ? fd : b6Key;
+    } else if (span === 'block') {
+      from = b6Key;
+    } else {
       from = fd || today;
     }
     var nd = null;
     try { nd = h && h.progress ? h.progress(from, today) : null; } catch (e) { nd = null; }
     var days = nd ? nd.days : [], byK = {};
     days.forEach(function (d) { byK[d.k] = d; });
+    list.forEach(function (wo) {
+      var k = wo.dk || dayKey(new Date(wo.st));
+      if (k < from || k > today || !(wo.bw > 0)) return;
+      if (!byK[k]) { byK[k] = { k: k, w: wo.bw }; days.push(byK[k]); }
+      else if (!(byK[k].w > 0)) byK[k].w = wo.bw;
+    });
+    days.sort(function (a, b) { return a.k < b.k ? -1 : a.k > b.k ? 1 : 0; });
     var wos = list.filter(function (wo) { var k = wo.dk || dayKey(new Date(wo.st)); return k >= from && k <= today; })
       .sort(function (a, b) { return a.st - b.st; });
     /* Each session against the last time each of its lifts was done: the
@@ -8191,13 +8204,15 @@
       var u = up(l), say = u + ' of ' + l.length + ' workouts were stronger';
       return '<div class="tr-pg-grp"><div>' + esc(label) + '</div>' + pgDots(u, l.length, say) + '<small>' + esc(say) + '</small></div>';
     };
-    return { a: a, b: b, ok: a.length >= PG_MIN && b.length >= PG_MIN, html: grp(yes, a) + grp(no, b) };
+    var hasA = a.length >= PG_MIN, hasB = b.length >= PG_MIN;
+    return { a: a, b: b, ok: hasA && hasB, any: hasA || hasB,
+      html: (hasA ? grp(yes, a) : '') + (hasB ? grp(no, b) : '') };
   }
 
   // ---- on pace
   function pgPace(D) {
     var ws = D.days.filter(function (d) { return d.w > 0; });
-    if (ws.length < 5 || pgWeek(ws[ws.length - 1].k, ws[0].k) < 2) {
+    if (ws.length < 2) {
       return pgCard('On pace', pgWait('Weigh in on a few more mornings, across two weeks or more, and your pace appears here.'));
     }
     // the trend: an exponentially weighted average, which a single salty morning barely moves
@@ -8206,7 +8221,8 @@
     var d0 = ws[0].k, xs = ws.map(function (d) { return (new Date(d.k + 'T12:00:00') - new Date(d0 + 'T12:00:00')) / (7 * DAY_MS); });
     var recent = ws.filter(function (d, i) { return xs[i] >= xs[xs.length - 1] - 3; });
     var rf = pgFit(recent.map(function (d) { return (new Date(d.k + 'T12:00:00') - new Date(d0 + 'T12:00:00')) / (7 * DAY_MS); }), recent.map(function (d) { return d.w; }));
-    var start = tr[0], now = tr[tr.length - 1], rate = rf ? rf.b : (now - start) / Math.max(1, xs[xs.length - 1]);
+    var start = tr[0], now = ws.length >= 5 ? tr[tr.length - 1] : ws[ws.length - 1].w;
+    var rate = rf ? rf.b : (now - start) / Math.max(1 / 7, xs[xs.length - 1]);
     var noise = Math.sqrt(pgMean(ws.map(function (d, i) { return (d.w - tr[i]) * (d.w - tr[i]); })));
     var goal = D.goalLb, toGo = goal ? now - goal : null, losing = rate < 0;
     var wks = goal && losing && toGo > 0 ? toGo / -rate : null;
@@ -8226,7 +8242,7 @@
         (goal ? '' : ' Set a goal weight in your plan and this shows how far along you are.');
     }
     var planLb = D.plan !== null && D.lb ? -D.plan * D.lb : null;
-    var math = [['Rate, last 3 weeks', pgSigned(rate, 2) + ' lb/wk', rf ? '± ' + (1.96 * rf.se).toFixed(2) + ' (95% CI), n = ' + rf.n : '']];
+    var math = [['Rate, last 3 weeks', pgSigned(rate, 2) + ' lb/wk', rf ? '± ' + (1.96 * rf.se).toFixed(2) + ' (95% CI), n = ' + rf.n : 'n = ' + ws.length]];
     if (planLb !== null && Math.abs(planLb) > 0.05) math.push(['Plan', pgSigned(planLb, 2) + ' lb/wk', 'on pace: ' + Math.round(rate / planLb * 100) + '%']);
     math.push(['Day-to-day noise', '± ' + noise.toFixed(1) + ' lb', 'water, salt, timing']);
     if (wks !== null && rf && rf.se > 0) {
@@ -8239,10 +8255,13 @@
   // ---- keeping muscle: weight and strength, as change from the first week
   function pgMuscle(D) {
     var nW = pgWeek(D.to, D.from) + 1;
-    if (nW < 2) return pgCard('Keeping muscle', pgWait('Two weeks in, this shows your weight and your strength side by side.'));
+    var ws = D.days.filter(function (d) { return d.w > 0; });
+    var lifts = Object.keys(D.per).filter(function (e) { return D.per[e].length >= 2; });
+    if (ws.length < 2 || !lifts.length) {
+      return pgCard('Keeping muscle', pgWait(nW < 2 ? 'Two weeks in, this shows your weight and your strength side by side.' : 'Needs two weeks of weigh-ins and lifts done more than once.'));
+    }
     var wBy = [], sBy = [];
     D.days.forEach(function (d) { if (d.w > 0) { var i = pgWeek(d.k, D.from); (wBy[i] = wBy[i] || []).push(d.w); } });
-    var lifts = Object.keys(D.per).filter(function (e) { return D.per[e].length >= 2; });
     lifts.forEach(function (e) {
       var base = D.per[e][0].v;
       D.per[e].forEach(function (p) { var i = pgWeek(p.k, D.from); (sBy[i] = sBy[i] || []).push(p.v / base - 1); });
@@ -8254,8 +8273,15 @@
       Sx.push(sBy[i] ? pgMean(sBy[i]) : null);
     }
     var wl = W.filter(fin), sl = Sx.filter(fin);
-    if (wl.length < 2 || sl.length < 2 || !lifts.length) {
-      return pgCard('Keeping muscle', pgWait('Needs two weeks of weigh-ins and lifts done more than once.'));
+    if (wl.length < 2 || sl.length < 2) {
+      nW = Math.max(2, nW);
+      var wInit = ws[0].w, wLatest = ws[ws.length - 1].w;
+      var sLatest = pgMean(lifts.map(function (e) { var p = D.per[e]; return p[p.length - 1].v / p[0].v - 1; }));
+      W = []; Sx = [];
+      for (var k = 0; k < nW; k++) { W.push(null); Sx.push(null); }
+      W[0] = 0; W[nW - 1] = wLatest / wInit - 1;
+      Sx[0] = 0; Sx[nW - 1] = sLatest;
+      wl = W.filter(fin); sl = Sx.filter(fin);
     }
     var wNow = wl[wl.length - 1], sNow = sl[sl.length - 1];
     var all = wl.concat(sl), lo = Math.min.apply(null, all.concat([0])) - 0.005, hi = Math.max.apply(null, all.concat([0])) + 0.005;
@@ -8334,17 +8360,19 @@
       'After you ate your protein', 'After a short protein day');
     var carb = pgSplit(sess, function (s) { var b = pgBefore(D, s.k); return b && b.tc > 0 ? b.c >= 0.9 * b.tc : null; },
       'After a day at your carbs', 'After a low-carb day');
-    if (!pro.ok && !carb.ok) return pgCard('Food → lifts', pgWait('Log your food and lift for a few more weeks: this needs at least ' + PG_MIN + ' workouts after each kind of day.'));
+    var hit = D.days.filter(function (d) { return d.tp > 0; }), hitN = hit.filter(function (d) { return d.p >= 0.9 * d.tp; }).length;
+    if (!pro.any && !carb.any && !hit.length) return pgCard('Food → lifts', pgWait('Log your food and lift for a few more weeks: this needs at least ' + PG_MIN + ' workouts after each kind of day.'));
     var pairs = sess.map(function (s) { var b = pgBefore(D, s.k); return b && b.tp > 0 ? [b.p / b.tp, s.ch] : null; }).filter(Boolean);
     var cp = sess.map(function (s) { var b = pgBefore(D, s.k); return b && b.tc > 0 ? [b.c / b.tc, s.ch] : null; }).filter(Boolean);
     var fitP = pgFit(pairs.map(function (q) { return q[0]; }), pairs.map(function (q) { return q[1]; }));
     var fitC = pgFit(cp.map(function (q) { return q[0]; }), cp.map(function (q) { return q[1]; }));
-    var hit = D.days.filter(function (d) { return d.tp > 0; }), hitN = hit.filter(function (d) { return d.p >= 0.9 * d.tp; }).length;
     var math = [];
     if (fitP && pairs.length >= 10) math.push(['Protein vs next lift', 'r = ' + fitP.r.toFixed(2), 'n = ' + fitP.n + ', p = ' + pgP(fitP.r, fitP.n).toFixed(2)]);
     if (fitC && cp.length >= 10) math.push(['Carbs vs next lift', 'r = ' + fitC.r.toFixed(2), 'n = ' + fitC.n + ', p = ' + pgP(fitC.r, fitC.n).toFixed(2)]);
     if (hit.length) math.push(['Days you hit protein', hitN + ' of ' + hit.length, Math.round(hitN / hit.length * 100) + '%']);
-    return pgCard('Food → lifts', (pro.ok ? pro.html : '') + (carb.ok ? carb.html : '') +
+    var summary = (!pro.any && !carb.any && hit.length)
+      ? pgSay('Protein target hit on <b>' + hitN + ' of ' + hit.length + '</b> logged days (' + Math.round(hitN / hit.length * 100) + '%).') : '';
+    return pgCard('Food → lifts', (pro.any ? pro.html : '') + (carb.any ? carb.html : '') + summary +
       (!pro.ok || !carb.ok ? pgWait((pro.ok ? 'Carbs' : 'Protein') + ' needs ' + PG_MIN + ' or more workouts after each kind of day first.') : ''), math);
   }
 
@@ -8354,10 +8382,12 @@
     var slp = pgSplit(sess, function (s) { var d = D.byK[s.k]; return d && fin(d.sl) ? d.sl >= 7 : null; },
       'After 7 or more hours of sleep', 'After under 7 hours');
     var st = D.days.filter(function (d) { return fin(d.sy); }), cr = D.days.filter(function (d) { return d.cr !== undefined; });
-    if (!slp.ok && !st.length && !cr.length) {
+    var slDays = D.days.filter(function (d) { return fin(d.sl); });
+    if (!slp.any && !st.length && !cr.length && !slDays.length) {
       return pgCard('Sleep &amp; steps → lifts', pgWait('Fill in the morning check-in (Today › Weighed in) for about three weeks and this shows whether sleep and steps help your lifts.'));
     }
     var last7 = st.slice(-7), prev7 = st.slice(-14, -7), say = '';
+    if (!slp.any && slDays.length) say += 'Sleep: <b>' + pgMean(slDays.map(function (d) { return d.sl; })).toFixed(1) + ' hr</b> average across ' + slDays.length + ' mornings. ';
     if (last7.length) say += 'Steps: <b>' + fmtBig(pgMean(last7.map(function (d) { return d.sy; }))) + '</b> a day lately' +
       (prev7.length >= 3 ? ', from ' + fmtBig(pgMean(prev7.map(function (d) { return d.sy; }))) + ' the week before' : '') + '. ';
     if (cr.length) say += 'Creatine: ' + cr.filter(function (d) { return d.cr === 1; }).length + ' of ' + cr.length + ' mornings.';
@@ -8372,7 +8402,9 @@
     sess.forEach(function (s) { lk[s.k] = 1; });
     var on = D.days.filter(function (d) { return fin(d.mg) && lk[d.k]; }), off = D.days.filter(function (d) { return fin(d.mg) && !lk[d.k]; });
     if (on.length >= PG_MIN && off.length >= PG_MIN) math.push(['Caffeine on lift days', Math.round(pgMean(on.map(function (d) { return d.mg; }))) + ' mg avg', 'vs ' + Math.round(pgMean(off.map(function (d) { return d.mg; }))) + ' mg other days']);
-    return pgCard('Sleep &amp; steps → lifts', (slp.ok ? slp.html : pgWait('Sleep needs ' + PG_MIN + ' or more workouts after each kind of night first.')) +
+    if (!math.length && slDays.length) math.push(['Average sleep', pgMean(slDays.map(function (d) { return d.sl; })).toFixed(1) + ' hr', slDays.length + ' mornings']);
+    return pgCard('Sleep &amp; steps → lifts', (slp.any ? slp.html : '') +
+      (!slp.ok ? pgWait('Sleep needs ' + PG_MIN + ' or more workouts after each kind of night first.') : '') +
       (say ? pgSay(say) : ''), math);
   }
 

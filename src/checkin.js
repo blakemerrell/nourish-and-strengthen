@@ -288,19 +288,21 @@
   }
   /* Typing: steps and a drink's milligrams. Saved without a redraw, so the box
      you are typing in is not rebuilt under your thumb; refused while it holds
-     something that is not a number. */
+     something that is not a number, and then false, so the caller does not
+     redraw either: a redraw put the last good number back and took the
+     warning with it, and the box looked as if it had taken the word. */
   function mCheckinInput(el, k) {
     var t = String(el.value || '').replace(/[,\s]/g, '');
     if (el.id === 'amSteps') {
       if (!t) { mAmWrite(k, 'sy', undefined); return true; }
-      if (!/^\d{1,6}$/.test(t)) { el.setAttribute('aria-invalid', 'true'); return true; }
+      if (!/^\d{1,6}$/.test(t)) { el.setAttribute('aria-invalid', 'true'); return false; }
       el.setAttribute('aria-invalid', 'false');
       mAmWrite(k, 'sy', Number(t));
       return true;
     }
     var id = el.getAttribute('data-ammg');
     if (id) {
-      if (!/^\d{1,4}$/.test(t) || Number(t) > 1000) { el.setAttribute('aria-invalid', 'true'); return true; }
+      if (!/^\d{1,4}$/.test(t) || Number(t) > 1000) { el.setAttribute('aria-invalid', 'true'); return false; }
       el.setAttribute('aria-invalid', 'false');
       var dk = mDrinks();
       dk.list.forEach(function (d) { if (d.id === id) d.mg = Number(t); });

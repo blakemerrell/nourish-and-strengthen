@@ -7982,3 +7982,44 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 }
 .msh-yest svg { width: 14px; height: 14px; flex-shrink: 0; }
 .tr-rtseed { margin-top: 8px; }
+
+/* Review's longer view (train.js, progressHTML): This block and All time.
+   Blue is stronger, ochre is the scale, a warm orange is slipping — the
+   same three the mockup used, set as tokens so dark mode has its own. */
+:root { --pg-up: #2f6f9f; --pg-down: #b8561a; --pg-hold: #c9b99f; }
+[data-theme="dark"] { --pg-up: #7fb3dc; --pg-down: #f0a25a; --pg-hold: #6d6253; }
+.tr-pg-seg { margin: 0 0 10px; }
+.tr-pg-head { margin: 0 0 10px; font-size: 0.8125rem; color: var(--muted); }
+.tr-pg-say { margin: 8px 0 0; font-size: 0.9375rem; line-height: 1.4; color: var(--ink); }
+.tr-pg-wait { margin: 6px 0 0; font-size: 0.875rem; line-height: 1.4; color: var(--muted); }
+.tr-pg-svg { display: block; width: 100%; height: auto; margin-top: 4px; }
+.tr-pg-svg .tr-pg-t { font-size: 13px; fill: var(--muted); }
+.tr-pg-trail, .tr-pg-walked { fill: none; stroke-width: 10; stroke-linecap: round; }
+.tr-pg-trail { stroke: var(--line); }
+.tr-pg-walked { stroke: var(--ochre); }
+.tr-pg-grid { stroke: var(--line-soft); stroke-dasharray: 3 4; }
+.tr-pg-grid.z { stroke: var(--line-firm); stroke-dasharray: none; }
+.tr-pg-w, .tr-pg-s { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.tr-pg-w { stroke: var(--ochre); }
+.tr-pg-s { stroke: var(--pg-up); }
+.tr-pg-lab { font-size: 13px; font-weight: 700; }
+.tr-pg-lab.s { fill: var(--pg-up); }
+.tr-pg-lab.w { fill: var(--ochre-text); }
+.tr-pg-grp { margin: 10px 0 0; }
+.tr-pg-grp > div { font-size: 0.875rem; font-weight: 600; color: var(--ink); }
+.tr-pg-grp small { font-size: 0.8125rem; color: var(--muted); }
+.tr-pg-dots { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 2px; }
+.tr-pg-dots i { width: 15px; height: 15px; border-radius: 50%; background: var(--pg-hold); }
+.tr-pg-dots i.on { background: var(--pg-up); }
+.tr-pg-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+.tr-pg-chip { font-size: 0.8125rem; border-radius: 999px; padding: 6px 10px; border: 1px solid var(--line); color: var(--ink); background: var(--card); }
+.tr-pg-chip i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; background: var(--pg-hold); }
+.tr-pg-chip.pg-up { border-color: var(--pg-up); } .tr-pg-chip.pg-up i { background: var(--pg-up); }
+.tr-pg-chip.pg-down { border-color: var(--pg-down); } .tr-pg-chip.pg-down i { background: var(--pg-down); }
+.tr-pg-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0 0; }
+.tr-pg-stats div { border: 1px solid var(--line-soft); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+.tr-pg-stats small { display: block; font-size: 0.8125rem; color: var(--muted); overflow-wrap: anywhere; }
+.tr-pg-stats b { font-size: 1rem; font-variant-numeric: tabular-nums; }
+.tr-hm-svg .pg-up .belly { fill: var(--pg-up); }
+.tr-hm-svg .pg-hold .belly { fill: var(--pg-hold); }
+.tr-hm-svg .pg-down .belly { fill: var(--pg-down); }

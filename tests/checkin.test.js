@@ -1,0 +1,145 @@
+/* The morning check-in under the weigh-in (Blake, 2026-10-26).
+ *
+ * "Add sleep, steps, and creatine; caffeine, I'll type them in", in the place
+ * he already weighs in: "One place to do it all as far as stats go." The
+ * sheet Today opens is Good morning, with a row a question under the scale.
+ * Only the drinks you use are on it; Crio Bru counts about 10 mg a cup.
+ * Mockup: https://claude.ai/artifact/F95PhNPeLVtGRVhi7ynvqe (Morning.dc.html) */
+const SETUP = () => {
+  localStorage.setItem('bsc.macroProfile', JSON.stringify({ sex: 'm', age: 43, ft: 5, inch: 11, lb: 200, act: 1.55, goal: 'cut1' }));
+  localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 190, f: 70, c: 230 }));
+  const ws = {};
+  for (let i = 1; i <= 10; i++) { const d = new Date(2026, 9, 26 - i); ws[d.toISOString().slice(0, 10)] = 200 - i * 0.1; }
+  localStorage.setItem('bsc.macroWeights', JSON.stringify(ws));
+  // three mornings of steps before today, so the average has something to say
+  localStorage.setItem('bsc.macroAm', JSON.stringify({ '2026-10-23': { sy: 7000, cr: 1 }, '2026-10-24': { sy: 8000, cr: 1 }, '2026-10-25': { sy: 9000, cr: 1 } }));
+};
+const am = (p) => p.evaluate(() => JSON.parse(localStorage.getItem('bsc.macroAm') || '{}')['2026-10-26'] || {});
+const txt = (p, sel) => p.evaluate((s) => (document.querySelector(s) || {}).textContent || '', sel);
+
+module.exports = {
+  name: 'Morning check-in: sleep, steps, creatine and caffeine under the weigh-in',
+  async run(t) {
+    const p = await t.fresh({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    await p.clock.setFixedTime(new Date(2026, 9, 26, 7, 30, 0));
+    await p.reload();
+    await p.waitForTimeout(500);
+    await p.evaluate(SETUP);
+    await p.reload();
+    await p.waitForTimeout(900);
+
+    await p.click('.td-weigh');
+    await p.waitForTimeout(500);
+    t.ok('the sheet Today opens is Good morning', /Good morning/.test(await txt(p, '.wg-sheet .sheet-eyebrow')));
+    const rows = await p.evaluate(() => [...document.querySelectorAll('#weighSheet .am .am-l > span')].map((s) => s.textContent));
+    t.ok('under the scale: sleep, steps, creatine and caffeine, in that order',
+      rows.join('|') === 'Sleep last night|Steps yesterday|Creatine|Caffeine today', rows.join('|'));
+    t.ok('the weight box is still first on the card', await p.evaluate(() => {
+      const c = document.querySelector('#weighSheet #macroWeigh');
+      return !!c.querySelector('#mWeight') && c.querySelector('#mWeight').compareDocumentPosition(c.querySelector('.am')) & Node.DOCUMENT_POSITION_FOLLOWING;
+    }));
+    t.ok('the steps row says the week’s average', /7-day average 8,000/.test(await txt(p, '#weighSheet .am')));
+    t.ok('creatine counts the mornings in a row already taken', /3 days in a row/.test(await txt(p, '#weighSheet .am')));
+    t.ok('no drink is on the card until you add one', await p.evaluate(() => !document.querySelector('#weighSheet .am-drink')));
+
+    // sleep: the first tap is 7 hours, then quarter hours
+    await p.click('[data-am="sl:1"]');
+    t.ok('the first tap on sleep starts at 7 hours', (await am(p)).sl === 7, JSON.stringify(await am(p)));
+    await p.click('[data-am="sl:1"]');
+    await p.click('[data-am="sl:-1"]');
+    await p.click('[data-am="sl:-1"]');
+    const s = await am(p);
+    t.ok('then a quarter hour a tap: 6h 45m', s.sl === 6.75, JSON.stringify(s));
+    t.ok('under 7 hours, it says what that costs on a cut', /short sleep costs muscle/.test(await txt(p, '#weighSheet .am')));
+    t.ok('and focus stays on the button tapped', await p.evaluate(() => document.activeElement && document.activeElement.getAttribute('data-am') === 'sl:-1'));
+
+    // steps, with a comma the way a step count is written
+    await p.fill('#amSteps', '8,412');
+    await p.press('#amSteps', 'Enter');
+    await p.locator('#amSteps').blur();
+    await p.waitForTimeout(200);
+    t.ok('steps typed with a comma are kept as a number', (await am(p)).sy === 8412, JSON.stringify(await am(p)));
+    await p.fill('#amSteps', 'lots');
+    await p.locator('#amSteps').blur();
+    await p.waitForTimeout(200);
+    t.ok('and words are refused, the last good number kept', (await am(p)).sy === 8412);
+    t.ok('the box says it is not a number', await p.evaluate(() => document.getElementById('amSteps').getAttribute('aria-invalid') === 'true'));
+    await p.fill('#amSteps', '8412');
+    await p.locator('#amSteps').blur();
+
+    await p.click('[data-am="cr"]');
+    t.ok('creatine is one tap', (await am(p)).cr === 1);
+    t.ok('and the streak counts today', /4 days in a row/.test(await txt(p, '#weighSheet .am')));
+
+    // drinks: only the ones you use
+    await p.click('[data-am="add"]');
+    const chips = await p.evaluate(() => [...document.querySelectorAll('#weighSheet .am-chip')].map((c) => c.textContent));
+    t.ok('Add a drink offers the usual ones, Crio Bru at 10 mg', chips.some((c) => /Crio Bru 10 mg/.test(c)) && chips.length >= 5, chips.join(', '));
+    await p.click('[data-am="on:crio"]');
+    await p.fill('#amNewN', 'Celsius');
+    await p.fill('#amNewMg', '200');
+    await p.click('[data-am="new"]');
+    await p.click('[data-am="done"]');
+    const shown = await p.evaluate(() => [...document.querySelectorAll('#weighSheet .am-drink b:first-child')].map((b) => b.textContent));
+    t.ok('the card then shows only your drinks: Crio Bru and the one you made', shown.join('|') === 'Crio Bru|Celsius', shown.join('|'));
+    await p.click('[data-am="cf:crio:1"]');
+    await p.click('[data-am="cf:crio:1"]');
+    t.ok('two Crio Bru is 20 mg', /20 mg/.test(await txt(p, '#weighSheet .am-cafh')), await txt(p, '#weighSheet .am-cafh'));
+    const cel = await p.evaluate(() => JSON.parse(localStorage.getItem('bsc.macroDrinks')).list.find((d) => d.n === 'Celsius').id);
+    await p.click('[data-am="cf:' + cel + ':1"]');
+    await p.click('[data-am="cf:' + cel + ':1"]');
+    await p.click('[data-am="cf:' + cel + ':1"]');
+    t.ok('past 400 mg, it says so', /over the usual 400 mg ceiling/.test(await txt(p, '#weighSheet .am-cafh')));
+    await p.click('[data-am="cf:' + cel + ':-1"]');
+    t.ok('and less is a tap: 420 mg is 20 plus two of 200', /420 mg/.test(await txt(p, '#weighSheet .am-cafh')));
+
+    // a drink's milligrams are yours
+    await p.click('[data-am="add"]');
+    await p.fill('[data-ammg="crio"]', '15');
+    await p.locator('[data-ammg="crio"]').blur();
+    await p.waitForTimeout(200);
+    t.ok('changing Crio Bru to 15 mg changes the total: 430 mg', /430 mg/.test(await txt(p, '#weighSheet .am-cafh')), await txt(p, '#weighSheet .am-cafh'));
+    await p.click('[data-am="done"]');
+
+    // the stamps that carry it to your other phone
+    const st = await p.evaluate(() => JSON.parse(localStorage.getItem('bsc.myStamps')));
+    t.ok('the morning is stamped for sync, per morning', st && st.am && st.am['2026-10-26'] > 0, JSON.stringify(st && st.am));
+    t.ok('and the drinks list as a part of its own', st && st.dk > 0);
+
+    // Today says it
+    await p.click('.wg-sheet .sheet-x');
+    await p.waitForTimeout(500);
+    const line = await txt(p, '.td-weigh .td-am');
+    t.ok('Today’s weigh-in line carries the morning: sleep, steps, creatine, caffeine',
+      /6h 45m sleep/.test(line) && /8\.4k steps/.test(line) && /creatine ✓/.test(line) && /430 mg caffeine/.test(line), line);
+
+    await p.reload();
+    await p.waitForTimeout(800);
+    const back = await am(p);
+    t.ok('all of it is still there after a reload', back.sl === 6.75 && back.sy === 8412 && back.cr === 1 && back.cf.crio === 2, JSON.stringify(back));
+
+    // what another phone sends is let in only in the right shape
+    const merged = await p.evaluate(() => {
+      const H = window.Hive;
+      return typeof H.progress === 'function';
+    });
+    t.ok('Review can read the mornings back (Hive.progress)', merged);
+    const prog = await p.evaluate(() => window.Hive.progress('2026-10-24', '2026-10-26').days);
+    const d25 = prog.find((d) => d.k === '2026-10-25');
+    t.ok('steps said this morning are moved back onto yesterday, the day they were walked', d25 && d25.sy === 8412, JSON.stringify(d25));
+    const d26 = prog.find((d) => d.k === '2026-10-26');
+    t.ok('and today keeps its sleep, creatine and caffeine', d26 && d26.sl === 6.75 && d26.cr === 1 && d26.mg === 430, JSON.stringify(d26));
+
+    // a morning not weighed but slept on still asks about sleep only once weighed
+    const q = await t.fresh({ viewport: { width: 390, height: 844 } });
+    await q.clock.setFixedTime(new Date(2026, 9, 26, 7, 30, 0));
+    await q.reload();
+    await q.evaluate(() => {
+      localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 190, f: 70, c: 230 }));
+      localStorage.setItem('bsc.macroWeights', JSON.stringify({ '2026-10-26': 199 }));
+    });
+    await q.reload();
+    await q.waitForTimeout(800);
+    t.ok('weighed but not checked in: Today asks how you slept', /How did you sleep\?/.test(await txt(q, '.td-weigh')), await txt(q, '.td-weigh'));
+  }
+};

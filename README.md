@@ -62,6 +62,12 @@ panel and its ingredients folded under it, still there to correct a figure.
 At the top of the sheet the meal's foods are a line each: name, amount and calories.
 Tap one to open it for its macros, − and +, Details (its page) and ⋯; one is open at a
 time, a food just added opens by itself, and one you are setting stays open.
+The weigh-in opens from Today as *Good morning*: the scale first, then a row a question —
+sleep last night (− and + by the quarter hour), steps yesterday, creatine (one tap, with its
+streak) and caffeine counted by the drink. Only the drinks you use are on it; *Add a drink*
+has the usual ones (Crio Bru at 10 mg: its caffeine, not its theobromine) and your own, at
+milligrams you can change. Today's weighed-in line carries what you said, and it syncs per
+morning like the weigh-ins.
 The day's head says the day as a date; tap it for the phone's calendar, any day from the
 first you ever logged (or 120 days back, if that is further) to a week ahead. Nothing is
 let go of: every day and every weigh-in stays, on the phone and in your account. ‹ and › step a week, and so does a swipe
@@ -211,7 +217,13 @@ three ideas in one tab:
   workout, more of both for a record; none of the confetti for a phone set to reduce
   motion, and Options can turn both off. Finishing a workout ticks "trained today" on
   Nourish.
-- *The review* holds the last seven days against the research, as rules rather than
+- *The review* is *This week*, *This block* or *All time*. The longer two are five cards —
+  on pace (the trend to your goal weight and when you get there), keeping muscle (weight
+  against strength), the body map coloured by how each muscle's lifts moved, and your
+  workouts after protein, carb and sleep days of each kind — each a sentence and a picture,
+  with *The math* under it: rates with their 95% intervals, r with its n and p, and nothing
+  said until each kind of day has three workouts behind it.
+- *This week* holds the last seven days against the research, as rules rather than
   opinions: weekly hard sets per muscle against the 10–20 band, how often each muscle
   is trained, reps per set against 5–30, rest measured from the gap between ticks,
   and whether each lift's estimated max is climbing or has slid two sessions running.

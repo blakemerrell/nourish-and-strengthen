@@ -8811,6 +8811,43 @@
           ? Math.max(0, Math.floor((mDayN(todayKey()) - mDayN(pr.goalSet)) / 7)) : 0
       };
     },
+    /* Every day from `from` to `to` as Nourish saw it, for Review's longer
+       spans (This block, All time): the morning's weight, what was eaten
+       against the day's own target, and what the morning check-in said
+       (src/checkin.js). Steps are said the morning AFTER the day they were
+       walked, so they are moved back onto that day here, once, rather than
+       in every chart that reads them. A day with nothing to say is left out:
+       a gap, not a zero. */
+    progress: function (from, to) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(from || '') || !/^\d{4}-\d{2}-\d{2}$/.test(to || '') || from > to) return null;
+      mLogIntake();
+      var am = mAmDays(), out = [], guard = 0;
+      for (var d = keyDate(from); dayKey(d) <= to && guard < 3700; d.setDate(d.getDate() + 1), guard++) {
+        var k = dayKey(d), nx = new Date(d); nx.setDate(nx.getDate() + 1);
+        var row = { k: k }, any = false, t = mDayTargets(k), day = MDAYS[k];
+        if (MWEIGHTS[k] > 0) { row.w = MWEIGHTS[k]; any = true; }
+        if (MINTAKE[k] > 0 && day) {
+          var tot = mTotals(day), got = mDoneAt(k) ? tot.all : tot.eaten;
+          row.kc = MINTAKE[k]; row.p = Math.round(got.p); row.c = Math.round(got.c);
+          row.tp = t.p || 0; row.tc = t.c || 0; row.tk = kcalOf(t) || 0;
+          any = true;
+        }
+        var a = am[k] || {}, an = am[dayKey(nx)] || {};
+        if (a.sl !== undefined) { row.sl = a.sl; any = true; }
+        if (a.cr !== undefined) { row.cr = a.cr; any = true; }
+        if (a.mg !== undefined) { row.mg = a.mg; any = true; }
+        if (an.sy !== undefined) { row.sy = an.sy; any = true; }
+        if (any) out.push(row);
+      }
+      var pr = mReadProfile(), nw = window.Hive.week();
+      return { days: out, goalLb: pr.goalLb > 0 ? pr.goalLb : null, lb: pr.lb > 0 ? pr.lb : null,
+        plan: nw && nw.plan !== null ? nw.plan : null };
+    },
+    // the earliest day Nourish has anything for: All time starts there
+    firstDay: function () {
+      var ks = Object.keys(MWEIGHTS).concat(Object.keys(MINTAKE).filter(function (k) { return MINTAKE[k] > 0; }), Object.keys(MAM)).sort();
+      return ks[0] || null;
+    },
     daysMoved: function () {
       /* Strengthen's list as Strengthen now has it. This read mTrainDays(),
          which falls back to the profile's copy when Strengthen's list is

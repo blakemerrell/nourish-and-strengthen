@@ -2802,7 +2802,15 @@
   function mSyncPayload(seen) { return DAYUP.mSyncPayload(seen); }
   function mSyncPartial() { return DAYUP.mSyncPartial(); }
   function mSyncTake(seen) { return DAYUP.mSyncTake(seen); }
-  function mMergeRemote(md) { return DAYUP.mMergeRemote(md); }
+  function mMergeRemote(md) {
+    var moved = DAYUP.mMergeRemote(md);
+    if (moved) {
+      try { mLogIntake(); } catch (e) {}
+      if (S.view === 'train' && window.Train && window.Train.render) window.Train.render();
+      if (S.view === 'today' && window.Today && window.Today.render) window.Today.render();
+    }
+    return moved;
+  }
 
   var mFoldTimer = null;
 
@@ -8821,15 +8829,22 @@
     progress: function (from, to) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(from || '') || !/^\d{4}-\d{2}-\d{2}$/.test(to || '') || from > to) return null;
       mLogIntake();
-      var am = mAmDays(), out = [], guard = 0;
+      var am = mAmDays(), tk = todayKey(), out = [], guard = 0;
       for (var d = keyDate(from); dayKey(d) <= to && guard < 3700; d.setDate(d.getDate() + 1), guard++) {
         var k = dayKey(d), nx = new Date(d); nx.setDate(nx.getDate() + 1);
         var row = { k: k }, any = false, t = mDayTargets(k), day = MDAYS[k];
         if (MWEIGHTS[k] > 0) { row.w = MWEIGHTS[k]; any = true; }
-        if (MINTAKE[k] > 0 && day) {
-          var tot = mTotals(day), got = mDoneAt(k) ? tot.all : tot.eaten;
-          row.kc = MINTAKE[k]; row.p = Math.round(got.p); row.c = Math.round(got.c);
-          row.tp = t.p || 0; row.tc = t.c || 0; row.tk = kcalOf(t) || 0;
+        if (day) {
+          var tot = mTotals(day), done = mDoneAt(k);
+          var got = done ? tot.all : (tot.eaten.kcal > 400 ? tot.eaten : (k < tk && tot.all.kcal > 400 ? tot.all : null));
+          var kc = MINTAKE[k] > 0 ? MINTAKE[k] : (got && got.kcal > 400 ? Math.round(got.kcal) : 0);
+          if (kc > 0 && got) {
+            row.kc = kc; row.p = Math.round(got.p); row.c = Math.round(got.c);
+            row.tp = t.p || 0; row.tc = t.c || 0; row.tk = kcalOf(t) || 0;
+            any = true;
+          }
+        } else if (MINTAKE[k] > 0) {
+          row.kc = MINTAKE[k]; row.tp = t.p || 0; row.tc = t.c || 0; row.tk = kcalOf(t) || 0;
           any = true;
         }
         var a = am[k] || {}, an = am[dayKey(nx)] || {};
@@ -8845,7 +8860,12 @@
     },
     // the earliest day Nourish has anything for: All time starts there
     firstDay: function () {
-      var ks = Object.keys(MWEIGHTS).concat(Object.keys(MINTAKE).filter(function (k) { return MINTAKE[k] > 0; }), Object.keys(MAM)).sort();
+      mLogIntake();
+      var ks = Object.keys(MWEIGHTS).filter(function (k) { return MWEIGHTS[k] > 0; }).concat(
+        Object.keys(MINTAKE).filter(function (k) { return MINTAKE[k] > 0; }),
+        Object.keys(MDAYS).filter(function (k) { var t = mTotals(MDAYS[k]); return (t.all && t.all.kcal > 0) || (t.eaten && t.eaten.kcal > 0); }),
+        Object.keys(MAM)
+      ).filter(function (k) { return /^\d{4}-\d{2}-\d{2}$/.test(k); }).sort();
       return ks[0] || null;
     },
     daysMoved: function () {

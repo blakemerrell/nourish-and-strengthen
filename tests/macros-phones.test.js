@@ -266,7 +266,7 @@ module.exports = nourish({
          of meals the miss was sent to; a bare string there renders and throws,
          which is how this fixture found out. */
       const val = { w: 201.4, d: { b: [{ id: 150, x: 1, eaten: 0 }] }, dn: 1234567,
-        tn: 1234567, sp: ['s'], sn: { to: ['l'] } };
+        tn: 1234567, sp: ['s'], sn: { to: ['l'] }, am: { sl: 7.5, cr: 1 } };
       const doc = {};
       keyed.forEach((k) => { doc[k] = { [enc]: { v: val[k], at: Date.now() } }; });
       L.merge(doc);

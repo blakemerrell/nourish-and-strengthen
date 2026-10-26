@@ -4163,6 +4163,9 @@
       } catch (e) { return 'block'; }
     })(),
     qz: null,             // the quiz, while it is being answered; see quiz()
+    // Review's span, kept: This week, This block or All time (progressHTML)
+    rvSpan: (function () { try { var v = localStorage.getItem('bsc.trainSpan'); return v === 'block' || v === 'all' ? v : 'week'; } catch (e) { return 'week'; } })(),
+    rvDeep: false,        // The math, rather than Simple, on the longer spans
     lib: false,           // the whole library, rather than the picks
     browse: false,        // the picks, looked at with a block already running
     opt: null,            // a program's own choices, being set; see optFor()
@@ -7871,7 +7874,9 @@
     var mp = readLS('bsc.macroProfile');
     return mp && mp.sex === 'f' ? 'f' : 'm';
   }
-  var HM_RANK = { 'hm-0': 0, 'hm-low': 1, 'hm-mid': 2, 'hm-sec': 2, 'hm-hit': 3, 'hm-pri': 4 };
+  var HM_RANK = { 'hm-0': 0, 'hm-low': 1, 'hm-mid': 2, 'hm-sec': 2, 'hm-hit': 3, 'hm-pri': 4,
+    // Review's longer view colours by how a muscle's lifts moved (pgMuscles)
+    'pg-down': 1, 'pg-hold': 2, 'pg-up': 3 };
   function bestHm(clsMap, keys) {
     var best = 'hm-0', bestR = 0;
     for (var i = 0; i < keys.length; i++) {
@@ -8064,7 +8069,330 @@
       (r.n ? '' : '<div class="tr-acts">' + goBtn() + '</div>') +
     '</div>';
   }
+  /* ------------------------------------------------------- the longer view
+   *
+   * Review, over more than a week: This block, or All time. Blake asked for
+   * "visuals that my 11 year old can understand but comprehensive enough that
+   * a PhD would be proud", to answer four questions — am I keeping muscle on
+   * the cut, which muscles are growing or lagging, is my eating helping my
+   * lifts, am I on pace — and, once the morning check-in existed, whether
+   * sleep and steps help too. Mocked up on 2026-10-26 and shown inside the
+   * app before it was built.
+   *
+   * Inside Review rather than a fifth tab: Review already held the body map
+   * and the week, so a Progress tab would have said those twice, and five
+   * buttons in that row do not fit a narrow phone. This week is the Review as
+   * it was.
+   *
+   * Simple says it in a sentence and a picture; The math puts the numbers
+   * under each one — the rate with its 95% interval, r with its n and p — and
+   * never a correlation without saying how many sessions it stands on. Every
+   * card that compares two kinds of day refuses to say anything until each
+   * kind has at least three sessions behind it. */
+  var PG_MIN = 3;
+  function pgSpanSeg() {
+    var sp = S.rvSpan || 'week';
+    return '<div class="seg tr-pg-seg" role="group" aria-label="How far back">' +
+      [['week', 'This week'], ['block', 'This block'], ['all', 'All time']].map(function (o) {
+        return '<button data-t="rvspan" data-v="' + o[0] + '" aria-pressed="' + (sp === o[0]) + '">' + o[1] + '</button>';
+      }).join('') + '</div>';
+  }
+  // the week's Monday-free index of a day from the start: whole weeks since `from`
+  function pgWeek(k, from) { return Math.floor((new Date(k + 'T12:00:00') - new Date(from + 'T12:00:00')) / (7 * DAY_MS)); }
+  function pgMean(a) { return a.length ? a.reduce(function (s, v) { return s + v; }, 0) / a.length : 0; }
+  /* Least squares, with the slope's standard error and Pearson's r. */
+  function pgFit(xs, ys) {
+    var n = xs.length;
+    if (n < 3) return null;
+    var mx = pgMean(xs), my = pgMean(ys), sxx = 0, sxy = 0, syy = 0;
+    for (var i = 0; i < n; i++) { sxx += (xs[i] - mx) * (xs[i] - mx); sxy += (xs[i] - mx) * (ys[i] - my); syy += (ys[i] - my) * (ys[i] - my); }
+    if (!(sxx > 0)) return null;
+    var b = sxy / sxx, a = my - b * mx, rss = 0;
+    for (var j = 0; j < n; j++) { var e = ys[j] - a - b * xs[j]; rss += e * e; }
+    var se = n > 2 ? Math.sqrt(rss / (n - 2) / sxx) : 0;
+    return { a: a, b: b, se: se, n: n, r: syy > 0 ? sxy / Math.sqrt(sxx * syy) : 0 };
+  }
+  /* Two-sided p for Pearson's r on n pairs, through t with n-2 degrees of
+     freedom. The t tail by a normal approximation that is close past a
+     dozen pairs, which is as few as the cards ever report. */
+  function pgP(r, n) {
+    if (n < 4 || Math.abs(r) >= 1) return n < 4 ? 1 : 0;
+    var t = Math.abs(r) * Math.sqrt((n - 2) / (1 - r * r)), df = n - 2;
+    var z = t * (1 - 1 / (4 * df)) / Math.sqrt(1 + t * t / (2 * df));
+    // erfc by Abramowitz and Stegun 7.1.26
+    var x = z / Math.SQRT2, k = 1 / (1 + 0.3275911 * x);
+    var erfc = k * (0.254829592 + k * (-0.284496736 + k * (1.421413741 + k * (-1.453152027 + k * 1.061405429)))) * Math.exp(-x * x);
+    return Math.max(0, Math.min(1, erfc));
+  }
+  function pgPct(v, d) { return (v > 0 ? '+' : v < 0 ? '−' : '') + fmtN(Math.round(Math.abs(v) * Math.pow(10, d || 1) * 100) / Math.pow(10, d || 1)) + '%'; }
+  function pgSigned(v, d) { return (v < 0 ? '−' : v > 0 ? '+' : '') + Math.abs(v).toFixed(d); }
+  function pgDate(k) { return new Date(k + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
+
+  /* What the span covers and what was done in it, worked out once a draw. */
+  function pgData(span) {
+    var h = hive(), today = dayKey(new Date()), ms = active();
+    var list = ix().list.filter(function (wo) { return !wo.dl; });
+    var from;
+    if (span === 'block' && ms && ms.st) from = ms.st;
+    else if (span === 'block') { var b6 = new Date(); b6.setDate(b6.getDate() - 42); from = dayKey(b6); }
+    else {
+      var fd = h && h.firstDay ? h.firstDay() : null;
+      list.forEach(function (wo) { var k = wo.dk || dayKey(new Date(wo.st)); if (!fd || k < fd) fd = k; });
+      from = fd || today;
+    }
+    var nd = null;
+    try { nd = h && h.progress ? h.progress(from, today) : null; } catch (e) { nd = null; }
+    var days = nd ? nd.days : [], byK = {};
+    days.forEach(function (d) { byK[d.k] = d; });
+    var wos = list.filter(function (wo) { var k = wo.dk || dayKey(new Date(wo.st)); return k >= from && k <= today; })
+      .sort(function (a, b) { return a.st - b.st; });
+    /* Each session against the last time each of its lifts was done: the
+       mean change in estimated max across the lifts it shares with earlier
+       sessions. "Stronger" is better than half a percent, so a rounding
+       difference in the plates is not a win. */
+    var last = {}, sess = [], per = {};
+    list.slice().sort(function (a, b) { return a.st - b.st; }).forEach(function (wo) {
+      var k = wo.dk || dayKey(new Date(wo.st)), ch = [];
+      wo.x.forEach(function (x) {
+        if (!x.s.length) return;
+        var v = liftE1(x, wo);
+        if (!(v > 0)) return;
+        if (k >= from && k <= today) {
+          if (last[x.e] > 0) ch.push(v / last[x.e] - 1);
+          (per[x.e] = per[x.e] || []).push({ k: k, v: v });
+        }
+        last[x.e] = v;
+      });
+      if (k >= from && k <= today && ch.length) sess.push({ k: k, ch: pgMean(ch), up: pgMean(ch) > 0.005 });
+    });
+    return { span: span, from: from, to: today, ms: span === 'block' ? ms : null, days: days, byK: byK, wos: wos, sess: sess, per: per,
+      goalLb: nd ? nd.goalLb : null, plan: nd ? nd.plan : null, lb: nd ? nd.lb : null };
+  }
+
+  function pgCard(eye, body, math) {
+    return '<div class="tr-card tr-pg">' + '<div class="tr-eyebrow">' + eye + '</div>' + body +
+      (S.rvDeep && math ? '<div class="tr-pg-stats">' + math.map(function (m) {
+        return '<div><small>' + esc(m[0]) + '</small><b>' + esc(m[1]) + '</b>' + (m[2] ? '<small>' + esc(m[2]) + '</small>' : '') + '</div>';
+      }).join('') + '</div>' : '') + '</div>';
+  }
+  function pgSay(t) { return '<p class="tr-pg-say">' + t + '</p>'; }
+  function pgWait(t) { return '<p class="tr-pg-wait">' + esc(t) + '</p>'; }
+  function pgDots(on, n, say) {
+    var s = '';
+    for (var i = 0; i < n; i++) s += '<i class="' + (i < on ? 'on' : '') + '"></i>';
+    return '<span class="tr-pg-dots" role="img" aria-label="' + esc(say) + '">' + s + '</span>';
+  }
+  /* Sessions split by a kind of day, each half a row of dots: blue for a
+     stronger session, grey for not. */
+  function pgSplit(sess, test, yes, no) {
+    var a = sess.filter(function (s) { return test(s) === true; }), b = sess.filter(function (s) { return test(s) === false; });
+    var up = function (l) { return l.filter(function (s) { return s.up; }).length; };
+    var grp = function (label, l) {
+      var u = up(l), say = u + ' of ' + l.length + ' workouts were stronger';
+      return '<div class="tr-pg-grp"><div>' + esc(label) + '</div>' + pgDots(u, l.length, say) + '<small>' + esc(say) + '</small></div>';
+    };
+    return { a: a, b: b, ok: a.length >= PG_MIN && b.length >= PG_MIN, html: grp(yes, a) + grp(no, b) };
+  }
+
+  // ---- on pace
+  function pgPace(D) {
+    var ws = D.days.filter(function (d) { return d.w > 0; });
+    if (ws.length < 5 || pgWeek(ws[ws.length - 1].k, ws[0].k) < 2) {
+      return pgCard('On pace', pgWait('Weigh in on a few more mornings, across two weeks or more, and your pace appears here.'));
+    }
+    // the trend: an exponentially weighted average, which a single salty morning barely moves
+    var tr = [], e = null;
+    ws.forEach(function (d) { e = e === null ? d.w : e + 0.1 * (d.w - e); tr.push(e); });
+    var d0 = ws[0].k, xs = ws.map(function (d) { return (new Date(d.k + 'T12:00:00') - new Date(d0 + 'T12:00:00')) / (7 * DAY_MS); });
+    var recent = ws.filter(function (d, i) { return xs[i] >= xs[xs.length - 1] - 3; });
+    var rf = pgFit(recent.map(function (d) { return (new Date(d.k + 'T12:00:00') - new Date(d0 + 'T12:00:00')) / (7 * DAY_MS); }), recent.map(function (d) { return d.w; }));
+    var start = tr[0], now = tr[tr.length - 1], rate = rf ? rf.b : (now - start) / Math.max(1, xs[xs.length - 1]);
+    var noise = Math.sqrt(pgMean(ws.map(function (d, i) { return (d.w - tr[i]) * (d.w - tr[i]); })));
+    var goal = D.goalLb, toGo = goal ? now - goal : null, losing = rate < 0;
+    var wks = goal && losing && toGo > 0 ? toGo / -rate : null;
+    var when = function (w) { var d = new Date(); d.setDate(d.getDate() + Math.round(w * 7)); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: d.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined }); };
+    var body = '', kid;
+    if (goal && start > goal) {
+      var frac = Math.max(0, Math.min(1, (start - now) / (start - goal)));
+      body += '<svg class="tr-pg-svg" viewBox="0 0 330 130" role="img" aria-label="' + Math.round(frac * 100) + '% of the way from ' + Math.round(start) + ' to ' + goal + ' lb">' +
+        '<path d="M14 108 C90 108 90 40 180 52 S280 22 316 18" class="tr-pg-trail"/>' +
+        '<path d="M14 108 C90 108 90 40 180 52 S280 22 316 18" class="tr-pg-walked" pathLength="100" stroke-dasharray="' + (frac * 100).toFixed(1) + ' 100"/>' +
+        '<text x="14" y="126" class="tr-pg-t">' + Math.round(start) + ' lb · ' + esc(pgDate(d0)) + '</text>' +
+        '<text x="316" y="10" class="tr-pg-t" text-anchor="end">' + goal + ' lb</text></svg>';
+      kid = 'You’re <b>' + Math.round(frac * 100) + '%</b> of the way to ' + goal + ' lb' +
+        (wks !== null ? '. At this pace you get there around <b>' + esc(when(wks)) + '</b>.' : '. The trend isn’t heading down right now.');
+    } else {
+      kid = 'Your trend is <b>' + fmtN(Math.round(now * 10) / 10) + ' lb</b>, ' + (Math.abs(rate) < 0.1 ? 'holding steady' : (losing ? 'down ' : 'up ') + fmtN(Math.round(Math.abs(rate) * 10) / 10) + ' lb a week') + '.' +
+        (goal ? '' : ' Set a goal weight in your plan and this shows how far along you are.');
+    }
+    var planLb = D.plan !== null && D.lb ? -D.plan * D.lb : null;
+    var math = [['Rate, last 3 weeks', pgSigned(rate, 2) + ' lb/wk', rf ? '± ' + (1.96 * rf.se).toFixed(2) + ' (95% CI), n = ' + rf.n : '']];
+    if (planLb !== null && Math.abs(planLb) > 0.05) math.push(['Plan', pgSigned(planLb, 2) + ' lb/wk', 'on pace: ' + Math.round(rate / planLb * 100) + '%']);
+    math.push(['Day-to-day noise', '± ' + noise.toFixed(1) + ' lb', 'water, salt, timing']);
+    if (wks !== null && rf && rf.se > 0) {
+      var fast = -(rate - 1.28 * rf.se), slow = -(rate + 1.28 * rf.se);
+      math.push([goal + ' lb by', when(wks), slow > 0 ? '80% range ' + when(toGo / fast) + ' – ' + when(toGo / slow) : 'too uncertain for a range']);
+    }
+    return pgCard('On pace', body + pgSay(kid), math);
+  }
+
+  // ---- keeping muscle: weight and strength, as change from the first week
+  function pgMuscle(D) {
+    var nW = pgWeek(D.to, D.from) + 1;
+    if (nW < 2) return pgCard('Keeping muscle', pgWait('Two weeks in, this shows your weight and your strength side by side.'));
+    var wBy = [], sBy = [];
+    D.days.forEach(function (d) { if (d.w > 0) { var i = pgWeek(d.k, D.from); (wBy[i] = wBy[i] || []).push(d.w); } });
+    var lifts = Object.keys(D.per).filter(function (e) { return D.per[e].length >= 2; });
+    lifts.forEach(function (e) {
+      var base = D.per[e][0].v;
+      D.per[e].forEach(function (p) { var i = pgWeek(p.k, D.from); (sBy[i] = sBy[i] || []).push(p.v / base - 1); });
+    });
+    var w0 = null, W = [], Sx = [];
+    for (var i = 0; i < nW; i++) {
+      if (wBy[i] && w0 === null) w0 = pgMean(wBy[i]);
+      W.push(wBy[i] && w0 ? pgMean(wBy[i]) / w0 - 1 : null);
+      Sx.push(sBy[i] ? pgMean(sBy[i]) : null);
+    }
+    var wl = W.filter(fin), sl = Sx.filter(fin);
+    if (wl.length < 2 || sl.length < 2 || !lifts.length) {
+      return pgCard('Keeping muscle', pgWait('Needs two weeks of weigh-ins and lifts done more than once.'));
+    }
+    var wNow = wl[wl.length - 1], sNow = sl[sl.length - 1];
+    var all = wl.concat(sl), lo = Math.min.apply(null, all.concat([0])) - 0.005, hi = Math.max.apply(null, all.concat([0])) + 0.005;
+    var x = function (j) { return 30 + j * 276 / Math.max(1, nW - 1); }, y = function (v) { return 14 + (hi - v) / (hi - lo) * 130; };
+    var path = function (a) { var s = '', on = false; a.forEach(function (v, j) { if (!fin(v)) return; s += (on ? 'L' : 'M') + x(j).toFixed(1) + ' ' + y(v).toFixed(1) + ' '; on = true; }); return s; };
+    var lastX = function (a) { for (var j = a.length - 1; j >= 0; j--) if (fin(a[j])) return x(j); return x(0); };
+    var grid = [hi - 0.005, 0, lo + 0.005].map(function (g) {
+      return '<line x1="30" x2="306" y1="' + y(g).toFixed(1) + '" y2="' + y(g).toFixed(1) + '" class="tr-pg-grid' + (Math.abs(g) < 1e-9 ? ' z' : '') + '"/>' +
+        '<text x="0" y="' + (y(g) + 4).toFixed(1) + '" class="tr-pg-t">' + (Math.abs(g) < 1e-9 ? '0%' : pgPct(g, 0)) + '</text>';
+    }).join('');
+    var svg = '<svg class="tr-pg-svg" viewBox="0 0 330 160" role="img" aria-label="Weight ' + pgPct(wNow) + ', strength ' + pgPct(sNow) + ' since ' + esc(pgDate(D.from)) + '">' + grid +
+      '<path d="' + path(W) + '" class="tr-pg-w"/><path d="' + path(Sx) + '" class="tr-pg-s"/>' +
+      '<text x="' + lastX(Sx).toFixed(1) + '" y="' + (y(sNow) - 8).toFixed(1) + '" class="tr-pg-lab s" text-anchor="end">Strength ' + pgPct(sNow) + '</text>' +
+      '<text x="' + lastX(W).toFixed(1) + '" y="' + (y(wNow) + 16).toFixed(1) + '" class="tr-pg-lab w" text-anchor="end">Weight ' + pgPct(wNow) + '</text></svg>';
+    var kid = wNow < -0.003 && sNow >= -0.005 ? 'Weight is going <b>down</b> and strength is ' + (sNow > 0.005 ? 'going <b>up</b>' : '<b>holding</b>') + '. That means you’re losing fat, not muscle.'
+      : wNow < -0.003 ? 'Weight and strength are both going <b>down</b>. Some of what’s coming off may be muscle: eat a little more, or slow the cut.'
+      : sNow > 0.005 ? 'Strength is going <b>up</b> while your weight ' + (wNow > 0.003 ? 'climbs' : 'holds') + '.'
+      : 'Strength and weight are both about where they started.';
+    var up = 0, flat = 0, dn = 0, rows = [];
+    lifts.forEach(function (e) {
+      var p = D.per[e], fit = pgFit(p.map(function (q) { return pgWeek(q.k, D.from); }), p.map(function (q) { return q.v / p[0].v - 1; }));
+      var ch = p[p.length - 1].v / p[0].v - 1;
+      if (ch > 0.01) up++; else if (ch < -0.01) dn++; else flat++;
+      rows.push([lib(e).n, pgPct(ch), fit ? pgPct(fit.b, 2) + '/wk ± ' + pgPct(1.96 * fit.se, 2).replace(/^[+−]/, '') + ', n = ' + p.length : 'n = ' + p.length]);
+    });
+    var math = [['Strength ÷ bodyweight', pgPct((1 + sNow) / (1 + wNow) - 1), 'since ' + pgDate(D.from)], ['Lifts up / flat / down', up + ' / ' + flat + ' / ' + dn, lifts.length + ' lifts, ' + nW + ' weeks']]
+      .concat(rows.sort(function (a, b) { return parseFloat(b[1].replace('−', '-')) - parseFloat(a[1].replace('−', '-')); }).slice(0, 8));
+    return pgCard('Keeping muscle', svg + pgSay(kid), math);
+  }
+
+  // ---- muscles: the body map, coloured by how each muscle's lifts moved
+  function pgMuscles(D) {
+    var by = {};
+    Object.keys(D.per).forEach(function (e) {
+      var p = D.per[e];
+      if (p.length < 2) return;
+      var m = musOf(e);
+      (by[m] = by[m] || []).push(p[p.length - 1].v / p[0].v - 1);
+    });
+    var keys = Object.keys(by);
+    if (!keys.length) return pgCard('Muscles', pgWait('Do a lift twice and its muscles take a colour here.'));
+    var nW = Math.max(1, (pgWeek(D.to, D.from) + 1));
+    var sets = {};
+    D.wos.forEach(function (wo) { wo.x.forEach(function (x) { var m = musOf(x.e); sets[m] = (sets[m] || 0) + x.s.filter(counts).length; }); });
+    var cls = {}, list = keys.map(function (m) {
+      var v = pgMean(by[m]);
+      cls[m] = v >= 0.02 ? 'pg-up' : v <= -0.01 ? 'pg-down' : 'pg-hold';
+      return { m: m, v: v, c: cls[m] };
+    }).sort(function (a, b) { return b.v - a.v; });
+    var figs = anatMapSVG(cls);
+    var chips = list.map(function (x) {
+      return '<span class="tr-pg-chip ' + x.c + '"><i aria-hidden="true"></i>' + esc((MUS[x.m] || { n: x.m }).n) + ' ' + pgPct(x.v) + '</span>';
+    }).join('');
+    var worst = list[list.length - 1], say;
+    if (worst.c === 'pg-down') {
+      var per = Math.round((sets[worst.m] || 0) / nW), mev = (MUS[worst.m] || {}).mev || 0;
+      say = esc((MUS[worst.m] || { n: worst.m }).n) + ' slipped' + (per <= mev + 1 && mev ? ': ' + per + ' sets a week is at the bare minimum. Try ' + (mev + 2) + '.' : '. Check its sets and how sore it gets.');
+    } else {
+      say = 'Nothing is slipping. ' + esc((MUS[list[0].m] || { n: list[0].m }).n) + ' is growing fastest.';
+    }
+    var math = list.map(function (x) { return [(MUS[x.m] || { n: x.m }).n, pgPct(x.v), Math.round((sets[x.m] || 0) / nW) + ' sets/wk'] });
+    return pgCard('Muscles',
+      '<div class="tr-hm-box" role="img" aria-label="Front and back: muscles coloured by how their lifts moved">' +
+        '<div class="tr-hm-col"><div class="tr-hm-lbl">Front</div>' + figs.front + '</div>' +
+        '<div class="tr-hm-col"><div class="tr-hm-lbl">Back</div>' + figs.back + '</div></div>' +
+      '<div class="tr-pg-chips">' + chips + '</div>' + pgSay(say), math);
+  }
+
+  // the day before a session, as Nourish saw it
+  function pgBefore(D, k) { var d = new Date(k + 'T12:00:00'); d.setDate(d.getDate() - 1); return D.byK[dayKey(d)] || null; }
+
+  // ---- food -> lifts: protein and carbohydrate the day before
+  function pgFood(D) {
+    var sess = D.sess;
+    var pro = pgSplit(sess, function (s) { var b = pgBefore(D, s.k); return b && b.tp > 0 ? b.p >= 0.9 * b.tp : null; },
+      'After you ate your protein', 'After a short protein day');
+    var carb = pgSplit(sess, function (s) { var b = pgBefore(D, s.k); return b && b.tc > 0 ? b.c >= 0.9 * b.tc : null; },
+      'After a day at your carbs', 'After a low-carb day');
+    if (!pro.ok && !carb.ok) return pgCard('Food → lifts', pgWait('Log your food and lift for a few more weeks: this needs at least ' + PG_MIN + ' workouts after each kind of day.'));
+    var pairs = sess.map(function (s) { var b = pgBefore(D, s.k); return b && b.tp > 0 ? [b.p / b.tp, s.ch] : null; }).filter(Boolean);
+    var cp = sess.map(function (s) { var b = pgBefore(D, s.k); return b && b.tc > 0 ? [b.c / b.tc, s.ch] : null; }).filter(Boolean);
+    var fitP = pgFit(pairs.map(function (q) { return q[0]; }), pairs.map(function (q) { return q[1]; }));
+    var fitC = pgFit(cp.map(function (q) { return q[0]; }), cp.map(function (q) { return q[1]; }));
+    var hit = D.days.filter(function (d) { return d.tp > 0; }), hitN = hit.filter(function (d) { return d.p >= 0.9 * d.tp; }).length;
+    var math = [];
+    if (fitP && pairs.length >= 10) math.push(['Protein vs next lift', 'r = ' + fitP.r.toFixed(2), 'n = ' + fitP.n + ', p = ' + pgP(fitP.r, fitP.n).toFixed(2)]);
+    if (fitC && cp.length >= 10) math.push(['Carbs vs next lift', 'r = ' + fitC.r.toFixed(2), 'n = ' + fitC.n + ', p = ' + pgP(fitC.r, fitC.n).toFixed(2)]);
+    if (hit.length) math.push(['Days you hit protein', hitN + ' of ' + hit.length, Math.round(hitN / hit.length * 100) + '%']);
+    return pgCard('Food → lifts', (pro.ok ? pro.html : '') + (carb.ok ? carb.html : '') +
+      (!pro.ok || !carb.ok ? pgWait((pro.ok ? 'Carbs' : 'Protein') + ' needs ' + PG_MIN + ' or more workouts after each kind of day first.') : ''), math);
+  }
+
+  // ---- sleep and steps -> lifts, from the morning check-in
+  function pgRest(D) {
+    var sess = D.sess;
+    var slp = pgSplit(sess, function (s) { var d = D.byK[s.k]; return d && fin(d.sl) ? d.sl >= 7 : null; },
+      'After 7 or more hours of sleep', 'After under 7 hours');
+    var st = D.days.filter(function (d) { return fin(d.sy); }), cr = D.days.filter(function (d) { return d.cr !== undefined; });
+    if (!slp.ok && !st.length && !cr.length) {
+      return pgCard('Sleep &amp; steps → lifts', pgWait('Fill in the morning check-in (Today › Weighed in) for about three weeks and this shows whether sleep and steps help your lifts.'));
+    }
+    var last7 = st.slice(-7), prev7 = st.slice(-14, -7), say = '';
+    if (last7.length) say += 'Steps: <b>' + fmtBig(pgMean(last7.map(function (d) { return d.sy; }))) + '</b> a day lately' +
+      (prev7.length >= 3 ? ', from ' + fmtBig(pgMean(prev7.map(function (d) { return d.sy; }))) + ' the week before' : '') + '. ';
+    if (cr.length) say += 'Creatine: ' + cr.filter(function (d) { return d.cr === 1; }).length + ' of ' + cr.length + ' mornings.';
+    var pairs = sess.map(function (s) { var d = D.byK[s.k]; return d && fin(d.sl) ? [d.sl, s.ch] : null; }).filter(Boolean);
+    var fit = pgFit(pairs.map(function (q) { return q[0]; }), pairs.map(function (q) { return q[1]; }));
+    var math = [];
+    if (fit && pairs.length >= 10) {
+      var p = pgP(fit.r, fit.n);
+      math.push(['Sleep vs next lift', 'r = ' + fit.r.toFixed(2), 'n = ' + fit.n + ', p = ' + p.toFixed(2) + (p > 0.05 ? ', not yet sure' : '')]);
+    }
+    var lk = {};
+    sess.forEach(function (s) { lk[s.k] = 1; });
+    var on = D.days.filter(function (d) { return fin(d.mg) && lk[d.k]; }), off = D.days.filter(function (d) { return fin(d.mg) && !lk[d.k]; });
+    if (on.length >= PG_MIN && off.length >= PG_MIN) math.push(['Caffeine on lift days', Math.round(pgMean(on.map(function (d) { return d.mg; }))) + ' mg avg', 'vs ' + Math.round(pgMean(off.map(function (d) { return d.mg; }))) + ' mg other days']);
+    return pgCard('Sleep &amp; steps → lifts', (slp.ok ? slp.html : pgWait('Sleep needs ' + PG_MIN + ' or more workouts after each kind of night first.')) +
+      (say ? pgSay(say) : ''), math);
+  }
+
+  function progressHTML(span) {
+    var D = pgData(span);
+    var head = D.span === 'block'
+      ? (D.ms ? esc(D.ms.n || 'This block') + ' · since ' + esc(pgDate(D.from)) : 'No block running · the last six weeks')
+      : 'Since ' + esc(pgDate(D.from));
+    return '<div class="seg tr-pg-seg" role="group" aria-label="How much to show">' +
+        '<button data-t="rvdeep" data-v="0" aria-pressed="' + !S.rvDeep + '">Simple</button>' +
+        '<button data-t="rvdeep" data-v="1" aria-pressed="' + !!S.rvDeep + '">The math</button></div>' +
+      '<p class="tr-pg-head">' + head + '</p>' +
+      pgPace(D) + pgMuscle(D) + pgMuscles(D) + pgFood(D) + pgRest(D);
+  }
+
   function reviewHTML() {
+    if (S.rvSpan === 'block' || S.rvSpan === 'all') return pgSpanSeg() + progressHTML(S.rvSpan);
+    return pgSpanSeg() + reviewWeekHTML();
+  }
+  function reviewWeekHTML() {
     var r = review();
     var done = S.flash2 ? '<div class="tr-note tr-flash2" role="status">' + esc(S.flash2) + '</div>' : '';
     S.flash2 = '';
@@ -10175,6 +10503,8 @@
      leave it, at its top. */
   function showReview() {
     var v = $('view-train'), tab = document.querySelector('.tab[data-view="train"]');
+    // opened as "This week" (Nourish's card, the check-in): the week, whatever span was left on
+    S.rvSpan = 'week';
     setSub('review');
     if (v && v.classList.contains('hide') && tab) tab.click();
     scrollTop();
@@ -11333,6 +11663,9 @@
     if (t === 'planopen') { S.planOpen = !S.planOpen; draw(); return; }
     if (t === 'peeknext') { S.peekNext = !S.peekNext; if (!S.peekNext) S.planOpen = false; draw(); return; }
     if (t === 'revwk') { S.revWk = num('data-w'); draw(); return; }
+    // Review's span (This week, This block, All time) and how much of the math it shows
+    if (t === 'rvspan') { S.rvSpan = v === 'block' || v === 'all' ? v : 'week'; try { localStorage.setItem('bsc.trainSpan', S.rvSpan); } catch (e) { /* this session only */ } draw(); return; }
+    if (t === 'rvdeep') { S.rvDeep = v === '1'; draw(); return; }
     if (t === 'chkguard') {
       var gk = num('data-kcal');
       if (gk > 0) {

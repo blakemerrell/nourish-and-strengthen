@@ -6905,6 +6905,50 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 /* the weigh-in sheet */
 .wg-sheet { padding-bottom: 22px; }
 .wg-sheet #macroWeigh { margin: 4px 0 10px; }
+/* The morning check-in under the weigh-in (src/checkin.js): one row a
+   question, its control at the right, each tap a save. Mocked up on
+   2026-10-26 and shown in the app before it was built: a row a drink, and
+   only the drinks you use, because four counters for drinks you never have
+   was a card twice the height of the weigh-in it sits under. */
+.am { padding: 0 14px 6px; border-top: 1px solid var(--line-soft); }
+.am-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; padding: 4px 0; border-top: 1px solid var(--line-soft); }
+.am-row:first-child { border-top: 0; }
+.am-l { display: flex; flex-direction: column; min-width: 0; font-size: 0.9375rem; font-weight: 600; color: var(--ink); }
+.am-l label { font: inherit; color: inherit; }
+.am-l small { font-size: 0.8125rem; font-weight: 400; color: var(--muted); }
+.am-short .am-l small { color: var(--warn); }
+.am-step { flex: none; display: flex; align-items: center; gap: 4px; }
+.am-step b { min-width: 66px; text-align: center; font-variant-numeric: tabular-nums; font-size: 1rem; }
+.am-b { flex: none; width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  font: inherit; font-size: 1.2rem; cursor: pointer; padding: 0; }
+.am-b:disabled { opacity: 0.35; cursor: default; }
+#macroWeigh .am-in { width: 96px; flex: none; font-weight: 600; font-size: 1rem; }
+.am-tog { flex: none; min-height: 44px; min-width: 100px; border-radius: 999px; border: 1px solid var(--line-firm); background: var(--card);
+  color: var(--ink); font: inherit; font-weight: 600; font-size: 0.875rem; padding: 0 14px; cursor: pointer; }
+.am-tog[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
+.am-caf { border-top: 1px solid var(--line-soft); }
+.am-caf .am-row { border-top: 0; min-height: 44px; }
+.am-drinks { display: flex; flex-direction: column; gap: 6px; padding: 0 0 6px; }
+.am-drink { display: flex; align-items: center; gap: 2px; border: 1px solid var(--line); border-radius: 10px; padding: 0 0 0 12px; background: var(--card); }
+.am-drink > span { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 8px; font-size: 0.875rem; color: var(--ink); }
+.am-drink > span small { font-size: 0.8125rem; color: var(--muted); }
+.am-drink .am-b { border: 0; background: none; }
+.am-n { width: 22px; text-align: center; font-variant-numeric: tabular-nums; }
+.am-add { min-height: 44px; }
+.am-panel { border: 1px solid var(--line-soft); border-radius: 10px; padding: 4px 12px 6px; margin: 2px 0 6px; background: var(--paper-soft); }
+.am-ph { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 8px 0 2px; }
+.am-prow { display: flex; align-items: center; gap: 8px; min-height: 48px; }
+.am-prow > span { flex: 1 1 auto; min-width: 0; font-size: 0.875rem; }
+.am-mg { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8125rem; color: var(--muted); }
+#macroWeigh .am-mg .am-in { width: 64px; }
+#macroWeigh .am-nn { flex: 1 1 auto; width: auto; min-width: 0; text-align: left; }
+.am-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.am-chip { min-height: 44px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  font: inherit; font-size: 0.875rem; padding: 0 12px; cursor: pointer; }
+.am-chip small { font-size: 0.8125rem; color: var(--muted); }
+.am-note { display: block; font-size: 0.8125rem; color: var(--warn); min-height: 0; }
+.am-note:empty { display: none; }
+.td-wt small.td-am { color: var(--ink); opacity: 0.82; }
 #weighWeek { display: flex; flex-direction: column; }
 .wg-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 2px; border: 0; border-top: 1px solid var(--line-soft);
   background: none; font: inherit; color: var(--ink); text-align: left; cursor: pointer; flex-wrap: wrap; }
@@ -7938,3 +7982,44 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 }
 .msh-yest svg { width: 14px; height: 14px; flex-shrink: 0; }
 .tr-rtseed { margin-top: 8px; }
+
+/* Review's longer view (train.js, progressHTML): This block and All time.
+   Blue is stronger, ochre is the scale, a warm orange is slipping — the
+   same three the mockup used, set as tokens so dark mode has its own. */
+:root { --pg-up: #2f6f9f; --pg-down: #b8561a; --pg-hold: #c9b99f; }
+[data-theme="dark"] { --pg-up: #7fb3dc; --pg-down: #f0a25a; --pg-hold: #6d6253; }
+.tr-pg-seg { margin: 0 0 10px; }
+.tr-pg-head { margin: 0 0 10px; font-size: 0.8125rem; color: var(--muted); }
+.tr-pg-say { margin: 8px 0 0; font-size: 0.9375rem; line-height: 1.4; color: var(--ink); }
+.tr-pg-wait { margin: 6px 0 0; font-size: 0.875rem; line-height: 1.4; color: var(--muted); }
+.tr-pg-svg { display: block; width: 100%; height: auto; margin-top: 4px; }
+.tr-pg-svg .tr-pg-t { font-size: 13px; fill: var(--muted); }
+.tr-pg-trail, .tr-pg-walked { fill: none; stroke-width: 10; stroke-linecap: round; }
+.tr-pg-trail { stroke: var(--line); }
+.tr-pg-walked { stroke: var(--ochre); }
+.tr-pg-grid { stroke: var(--line-soft); stroke-dasharray: 3 4; }
+.tr-pg-grid.z { stroke: var(--line-firm); stroke-dasharray: none; }
+.tr-pg-w, .tr-pg-s { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.tr-pg-w { stroke: var(--ochre); }
+.tr-pg-s { stroke: var(--pg-up); }
+.tr-pg-lab { font-size: 13px; font-weight: 700; }
+.tr-pg-lab.s { fill: var(--pg-up); }
+.tr-pg-lab.w { fill: var(--ochre-text); }
+.tr-pg-grp { margin: 10px 0 0; }
+.tr-pg-grp > div { font-size: 0.875rem; font-weight: 600; color: var(--ink); }
+.tr-pg-grp small { font-size: 0.8125rem; color: var(--muted); }
+.tr-pg-dots { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 2px; }
+.tr-pg-dots i { width: 15px; height: 15px; border-radius: 50%; background: var(--pg-hold); }
+.tr-pg-dots i.on { background: var(--pg-up); }
+.tr-pg-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+.tr-pg-chip { font-size: 0.8125rem; border-radius: 999px; padding: 6px 10px; border: 1px solid var(--line); color: var(--ink); background: var(--card); }
+.tr-pg-chip i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; background: var(--pg-hold); }
+.tr-pg-chip.pg-up { border-color: var(--pg-up); } .tr-pg-chip.pg-up i { background: var(--pg-up); }
+.tr-pg-chip.pg-down { border-color: var(--pg-down); } .tr-pg-chip.pg-down i { background: var(--pg-down); }
+.tr-pg-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0 0; }
+.tr-pg-stats div { border: 1px solid var(--line-soft); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+.tr-pg-stats small { display: block; font-size: 0.8125rem; color: var(--muted); overflow-wrap: anywhere; }
+.tr-pg-stats b { font-size: 1rem; font-variant-numeric: tabular-nums; }
+.tr-hm-svg .pg-up .belly { fill: var(--pg-up); }
+.tr-hm-svg .pg-hold .belly { fill: var(--pg-hold); }
+.tr-hm-svg .pg-down .belly { fill: var(--pg-down); }

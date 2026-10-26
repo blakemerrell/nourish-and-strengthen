@@ -16,7 +16,7 @@
 (window.HiveParts = window.HiveParts || {}).clock = function (app) {
   'use strict';
 
-  // what it reads of the app's, and (LIVE) what the app replaces as it goes: MBATCHG, MDAYS, MDAYT, MDONE, MHUSH, MINTAKE, MNEVER, MSEND, MSKIP, MTRAINED, MWEIGHTS, mClkSent, mDirty
+  // what it reads of the app's, and (LIVE) what the app replaces as it goes: MAM, MBATCHG, MDAYS, MDAYT, MDONE, MHUSH, MINTAKE, MNEVER, MSEND, MSKIP, MTRAINED, MWEIGHTS, mClkSent, mDirty
   var MSTAMPS = app.MSTAMPS;
   var mBuildFoods = app.mBuildFoods;
   var mPut = app.mPut;
@@ -100,9 +100,9 @@
      only place that writes all of them at once. */
   function mClaimAll() {
     var now = mNow();
-    ['t', 'pr', 'sl', 'mf', 'nv', 'bg'].forEach(function (k) { MSTAMPS[k] = now; });
+    ['t', 'pr', 'sl', 'mf', 'nv', 'bg', 'dk'].forEach(function (k) { MSTAMPS[k] = now; });
     [['d', LIVE.MDAYS], ['dn', LIVE.MDONE], ['sp', LIVE.MSKIP], ['sn', LIVE.MSEND], ['w', LIVE.MWEIGHTS],
-      ['tn', LIVE.MTRAINED]].forEach(function (pair) {
+      ['tn', LIVE.MTRAINED], ['am', LIVE.MAM]].forEach(function (pair) {
       var part = pair[0];
       var map = (MSTAMPS[part] && typeof MSTAMPS[part] === 'object') ? MSTAMPS[part] : {};
       MSTAMPS[part] = map;
@@ -152,7 +152,7 @@
       'bsc.macroProfile', 'bsc.macroSlots', 'bsc.myFoods', 'bsc.myOwner',
       'bsc.macroDone', 'bsc.macroSkip', 'bsc.macroSend', 'bsc.macroTrained',
       'bsc.macroHush', 'bsc.macroIntake', 'bsc.macroDayT', 'bsc.macroNever', 'bsc.macroBatchG',
-      'bsc.macroCoachSeen'].forEach(function (k) {
+      'bsc.macroCoachSeen', 'bsc.macroAm', 'bsc.macroDrinks'].forEach(function (k) {
       try { localStorage.removeItem(k); } catch (e) { /* private mode */ }
     });
     Object.keys(LIVE.MDAYS).forEach(function (k) { delete LIVE.MDAYS[k]; });
@@ -167,6 +167,8 @@
     Object.keys(LIVE.MHUSH).forEach(function (k) { delete LIVE.MHUSH[k]; });
     Object.keys(LIVE.MSEND).forEach(function (k) { delete LIVE.MSEND[k]; });
     Object.keys(LIVE.MTRAINED).forEach(function (k) { delete LIVE.MTRAINED[k]; });
+    // and the mornings' check-ins, which are as much yours as the weigh-ins
+    Object.keys(LIVE.MAM).forEach(function (k) { delete LIVE.MAM[k]; });
     /* And the training log, which is kept beside the day in the same record
        and has to leave with it for exactly the same reason. */
     if (window.Train) window.Train.forget();

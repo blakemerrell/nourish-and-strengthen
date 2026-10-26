@@ -94,9 +94,17 @@
     if (!w) return '';
     var sub = w.done ? [w.avg ? w.avg + ' ' + w.unit + ' seven-day average' : '', w.week ? w.week + ' this week' : ''].filter(Boolean).join(' \u00b7 ')
       : [w.last ? 'last ' + w.last + ' ' + w.unit : '', w.week ? w.week + ' this week' : ''].filter(Boolean).join(' \u00b7 ');
+    /* And the rest of the morning on a line of its own: what the check-in
+       under the box was told (sleep, steps, creatine, caffeine). Done still
+       means weighed — a morning off the scale must not wear a tick for
+       having said how it slept, and a morning on it is not nagged into
+       grey for the steps. Only sleep is asked after once you have weighed,
+       because it is the one Review leans on hardest. */
+    var am = w.am || (w.done && !w.slept ? 'How did you sleep?' : '');
     return '<button class="td-weigh' + (w.done ? ' done' : '') + '" data-td="weigh">' +
       '<span class="td-wbadge" aria-hidden="true">' + (w.done ? CHECK.replace('td-ic', 'td-fic') : icon('scale')) + '</span>' +
-      '<span class="td-wt"><b>' + (w.done ? 'Weighed in \u00b7 ' + w.now + ' ' + w.unit : 'Weigh in') + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span>' +
+      '<span class="td-wt"><b>' + (w.done ? 'Weighed in \u00b7 ' + w.now + ' ' + w.unit : 'Weigh in') + '</b>' + (sub ? '<small>' + sub + '</small>' : '') +
+        (am ? '<small class="td-am">' + esc(am) + '</small>' : '') + '</span>' +
       '<i aria-hidden="true">\u203a</i></button>';
   }
   function tonightCard(d, main) {

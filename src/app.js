@@ -42,6 +42,7 @@
     get MSEND() { return MSEND; },
     get MSKIP() { return MSKIP; },
     get MTRAINED() { return MTRAINED; },
+    get MAM() { return MAM; },
     get MWEIGHTS() { return MWEIGHTS; },
     get MFOODS() { return MFOODS; },
     get BY_ID() { return BY_ID; },
@@ -2774,7 +2775,7 @@
 
   /* src/mydayparts.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var MYDAYPARTS = window.HiveParts.mydayparts({ mDoneAt: mDoneAt, mTrainedAt: mTrainedAt, LIVE: LIVE });
+  var MYDAYPARTS = window.HiveParts.mydayparts({ mAmClean: mAmClean, mDoneAt: mDoneAt, mDrinksClean: mDrinksClean, mTrainedAt: mTrainedAt, LIVE: LIVE });
   function mSyncKey(k) { return MYDAYPARTS.mSyncKey(k); }
   function mPlainObj(v) { return MYDAYPARTS.mPlainObj(v); }
   function mNum(v) { return MYDAYPARTS.mNum(v); }
@@ -2797,7 +2798,7 @@
 
   /* src/dayup.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var DAYUP = window.HiveParts.dayup({ MCLOCK_SLACK: MCLOCK_SLACK, MSTAMPS: MSTAMPS, MSYNC_KEYED: MSYNC_KEYED, MSYNC_SHAPE: MSYNC_SHAPE, MSYNC_SIMPLE: MSYNC_SIMPLE, mBuildFoods: mBuildFoods, mLsJson: mLsJson, mNow: mNow, mNum: mNum, mPut: mPut, mSyncKey: mSyncKey, mSyncUnkey: mSyncUnkey, LIVE: LIVE });
+  var DAYUP = window.HiveParts.dayup({ MCLOCK_SLACK: MCLOCK_SLACK, MSTAMPS: MSTAMPS, MSYNC_KEYED: MSYNC_KEYED, MSYNC_SHAPE: MSYNC_SHAPE, MSYNC_SIMPLE: MSYNC_SIMPLE, mBuildFoods: mBuildFoods, mDrinksClean: mDrinksClean, mLsJson: mLsJson, mNow: mNow, mNum: mNum, mPut: mPut, mSyncKey: mSyncKey, mSyncUnkey: mSyncUnkey, LIVE: LIVE });
   function mSyncPayload(seen) { return DAYUP.mSyncPayload(seen); }
   function mSyncPartial() { return DAYUP.mSyncPartial(); }
   function mSyncTake(seen) { return DAYUP.mSyncTake(seen); }
@@ -3212,6 +3213,19 @@
   var MWEIGHTS = WEIGHIN.MWEIGHTS;
   var MKG_LB = WEIGHIN.MKG_LB;
 
+  /* src/checkin.js, handed what it reads of the app's and kept under its own
+     names here, as declarations, so they answer from anywhere in this file. */
+  var CHECKIN = window.HiveParts.checkin({ S: S, dayKey: dayKey, keyDate: keyDate, mFoldDue: mFoldDue, mPut: mPut, mStamp: mStamp });
+  function mAmOf(k) { return CHECKIN.mAmOf(k); }
+  function mAmClean(v) { return CHECKIN.mAmClean(v); }
+  function mAmSum(k) { return CHECKIN.mAmSum(k); }
+  function mAmDays() { return CHECKIN.mAmDays(); }
+  function mDrinksClean(v) { return CHECKIN.mDrinksClean(v); }
+  function mCheckinHTML(k) { return CHECKIN.mCheckinHTML(k); }
+  function mCheckinClick(b, k) { return CHECKIN.mCheckinClick(b, k); }
+  function mCheckinInput(el, k) { return CHECKIN.mCheckinInput(el, k); }
+  var MAM = CHECKIN.MAM;
+
   /* One drawn set for every verb on the tab — the bottom bar's tools and
      each meal's own — so they read as one family: a 20px box, a 1.5 stroke,
      in the colour of the word beside it. */
@@ -3262,7 +3276,7 @@
 
   /* src/weighcard.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var WEIGHCARD = window.HiveParts.weighcard({ MWEIGHTS: MWEIGHTS, S: S, kcalOf: kcalOf, mAhead: mAhead, mDayTargets: mDayTargets, mIsTrainingDay: mIsTrainingDay, mLbWord: mLbWord, mLineHTML: mLineHTML, mLsFull: mLsFull, mLsFullSay: mLsFullSay, mMorningHTML: mMorningHTML, mMovedHTML: mMovedHTML, mPlanDetail: mPlanDetail, mPlanFace: mPlanFace, mSparkSVG: mSparkSVG, mSynced: mSynced, mTrainDays: mTrainDays, mTrainRow: mTrainRow, mTrainWord: mTrainWord, mTrainedSaid: mTrainedSaid, mWShow: mWShow, mWUnit: mWUnit, mWeekOn: mWeekOn, mWeightStats: mWeightStats, todayKey: todayKey });
+  var WEIGHCARD = window.HiveParts.weighcard({ MWEIGHTS: MWEIGHTS, S: S, kcalOf: kcalOf, mAhead: mAhead, mDayTargets: mDayTargets, mIsTrainingDay: mIsTrainingDay, mLbWord: mLbWord, mLineHTML: mLineHTML, mLsFull: mLsFull, mLsFullSay: mLsFullSay, mCheckinHTML: mCheckinHTML, mMorningHTML: mMorningHTML, mMovedHTML: mMovedHTML, mPlanDetail: mPlanDetail, mPlanFace: mPlanFace, mSparkSVG: mSparkSVG, mSynced: mSynced, mTrainDays: mTrainDays, mTrainRow: mTrainRow, mTrainWord: mTrainWord, mTrainedSaid: mTrainedSaid, mWShow: mWShow, mWUnit: mWUnit, mWeekOn: mWeekOn, mWeightStats: mWeightStats, todayKey: todayKey });
   function macroWeighHTML(k) { return WEIGHCARD.macroWeighHTML(k); }
 
   /* src/budget.js, handed what it reads of the app's and kept under its own
@@ -3968,7 +3982,7 @@
    * it that control rather than another one: the tick for milk is
    * [data-check="milk"] before the render and after it.
    */
-  var FOCUS_ATTRS = ['data-check', 'data-add', 'data-day', 'data-fav', 'data-why', 'data-td',
+  var FOCUS_ATTRS = ['data-am', 'data-check', 'data-add', 'data-day', 'data-fav', 'data-why', 'data-td',
     'data-pwq', 'data-pwing', 'data-pwingx', 'data-wmid',
     'data-src', 'data-srcpick', 'data-weekbuy', 'data-near', 'data-low', 'data-kitmore', 'data-kitpill', 'data-copyorder', 'data-stepgo',
     'data-cal', 'data-calweek', 'data-calagain', 'data-calfrom', 'data-caltpl',
@@ -6530,6 +6544,13 @@
          while there is no plan to adjust, behind the press once there is. */
       if (e.target.closest('#macroTargBtn')) { if (WGAPI.hide) WGAPI.hide(); mOpenTargets(); return; }
       if (e.target.closest('#macroWeekBtn')) { if (mWeekOn()) { if (WGAPI.hide) WGAPI.hide(); window.Train.openCheckin(); } return; }
+      /* The check-in's rows (src/checkin.js): it changes the record, this
+         redraws. The day is the one on screen, which in the sheet is today. */
+      var am = e.target.closest('[data-am]');
+      if (am) {
+        if (mCheckinClick(am, mViewKey())) keepingFocus(renderMacros);
+        return;
+      }
       var tr = e.target.closest('[data-mtrained]');
       if (tr) {
         var tk = tr.dataset.mtrained;
@@ -6593,8 +6614,10 @@
       el.id = 'weighSheet';
       el.className = 'scrim no-print';
       el.setAttribute('data-wclose', '1');
-      el.innerHTML = '<div class="sheet wg-sheet" role="dialog" aria-modal="true" aria-label="Weigh in">' +
-        '<div class="sheet-top"><div class="sheet-eyebrow">Weigh in</div>' +
+      /* "Good morning", since the check-in joined the scale: the sheet asks
+         about the night and the day before as well as the weight. */
+      el.innerHTML = '<div class="sheet wg-sheet" role="dialog" aria-modal="true" aria-label="Good morning: weigh in and check in">' +
+        '<div class="sheet-top"><div class="sheet-eyebrow">Good morning</div>' +
           '<button class="sheet-x" data-wclose="1" aria-label="Close">&times;</button></div>' +
         '<div id="weighHost"></div><div id="weighWeek"></div></div>';
       el.addEventListener('click', wgClick);
@@ -6686,6 +6709,21 @@
       var box = $('mWeight');
       if (box) box.setAttribute('aria-invalid', bad ? 'true' : 'false');
     }
+    /* Steps and a drink's milligrams save as they are typed, and redraw only
+       when the box is left: a redraw mid-number would rebuild the box under
+       the thumb typing into it. */
+    var amTimer = null;
+    $('macroWeigh').addEventListener('input', function (e) {
+      if (e.target.id !== 'amSteps' && !e.target.hasAttribute('data-ammg')) return;
+      clearTimeout(amTimer);
+      var el = e.target, key = mViewKey();
+      amTimer = setTimeout(function () { mCheckinInput(el, key); }, 500);
+    });
+    $('macroWeigh').addEventListener('change', function (e) {
+      if (e.target.id !== 'amSteps' && !e.target.hasAttribute('data-ammg')) return;
+      clearTimeout(amTimer);
+      if (mCheckinInput(e.target, mViewKey())) renderMacros();
+    });
     $('macroWeigh').addEventListener('input', function (e) {
       if (e.target.id !== 'mWeight') return;
       clearTimeout(mwTimer);
@@ -8455,7 +8493,9 @@
     var st = mWeightStats(), had = MWEIGHTS[tk];
     return { done: !!had, now: had ? mWShow(had) : null, unit: mWUnit(),
       avg: st && st.n >= 2 ? mWShow(st.avg7) : null, week: st && st.n >= 2 && st.dWeek !== null ? mLbWord(st.dWeek) : '',
-      last: st && st.lastKey !== tk && st.latest ? mWShow(st.latest) : null, lastKey: st ? st.lastKey : '' };
+      last: st && st.lastKey !== tk && st.latest ? mWShow(st.latest) : null, lastKey: st ? st.lastKey : '',
+      // the rest of the morning, as the check-in under the box said it (src/checkin.js)
+      am: mAmSum(tk), slept: mAmOf(tk).sl !== undefined };
   }
   function todayData() {
     var now = new Date(), tk = todayKey(), dk = CAL_DAYS[now.getDay()][0];
@@ -8770,6 +8810,43 @@
         cutWeeks: pr.goalSet && (pr.goal === 'cut1' || pr.goal === 'cut2' || (pr.goalLb > 0 && pr.lb > pr.goalLb))
           ? Math.max(0, Math.floor((mDayN(todayKey()) - mDayN(pr.goalSet)) / 7)) : 0
       };
+    },
+    /* Every day from `from` to `to` as Nourish saw it, for Review's longer
+       spans (This block, All time): the morning's weight, what was eaten
+       against the day's own target, and what the morning check-in said
+       (src/checkin.js). Steps are said the morning AFTER the day they were
+       walked, so they are moved back onto that day here, once, rather than
+       in every chart that reads them. A day with nothing to say is left out:
+       a gap, not a zero. */
+    progress: function (from, to) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(from || '') || !/^\d{4}-\d{2}-\d{2}$/.test(to || '') || from > to) return null;
+      mLogIntake();
+      var am = mAmDays(), out = [], guard = 0;
+      for (var d = keyDate(from); dayKey(d) <= to && guard < 3700; d.setDate(d.getDate() + 1), guard++) {
+        var k = dayKey(d), nx = new Date(d); nx.setDate(nx.getDate() + 1);
+        var row = { k: k }, any = false, t = mDayTargets(k), day = MDAYS[k];
+        if (MWEIGHTS[k] > 0) { row.w = MWEIGHTS[k]; any = true; }
+        if (MINTAKE[k] > 0 && day) {
+          var tot = mTotals(day), got = mDoneAt(k) ? tot.all : tot.eaten;
+          row.kc = MINTAKE[k]; row.p = Math.round(got.p); row.c = Math.round(got.c);
+          row.tp = t.p || 0; row.tc = t.c || 0; row.tk = kcalOf(t) || 0;
+          any = true;
+        }
+        var a = am[k] || {}, an = am[dayKey(nx)] || {};
+        if (a.sl !== undefined) { row.sl = a.sl; any = true; }
+        if (a.cr !== undefined) { row.cr = a.cr; any = true; }
+        if (a.mg !== undefined) { row.mg = a.mg; any = true; }
+        if (an.sy !== undefined) { row.sy = an.sy; any = true; }
+        if (any) out.push(row);
+      }
+      var pr = mReadProfile(), nw = window.Hive.week();
+      return { days: out, goalLb: pr.goalLb > 0 ? pr.goalLb : null, lb: pr.lb > 0 ? pr.lb : null,
+        plan: nw && nw.plan !== null ? nw.plan : null };
+    },
+    // the earliest day Nourish has anything for: All time starts there
+    firstDay: function () {
+      var ks = Object.keys(MWEIGHTS).concat(Object.keys(MINTAKE).filter(function (k) { return MINTAKE[k] > 0; }), Object.keys(MAM)).sort();
+      return ks[0] || null;
     },
     daysMoved: function () {
       /* Strengthen's list as Strengthen now has it. This read mTrainDays(),

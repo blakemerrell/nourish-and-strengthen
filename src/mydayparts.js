@@ -13,8 +13,10 @@
 (window.HiveParts = window.HiveParts || {}).mydayparts = function (app) {
   'use strict';
 
-  // what it reads of the app's, and (LIVE) what the app replaces as it goes: MDAYS, MDONE, MSEND, MSKIP, MTRAINED, MWEIGHTS
+  // what it reads of the app's, and (LIVE) what the app replaces as it goes: MAM, MDAYS, MDONE, MSEND, MSKIP, MTRAINED, MWEIGHTS
+  var mAmClean = app.mAmClean;
   var mDoneAt = app.mDoneAt;
+  var mDrinksClean = app.mDrinksClean;
   var mTrainedAt = app.mTrainedAt;
   var LIVE = app.LIVE;
 
@@ -74,13 +76,15 @@
     bg: mPlainObj,
     t: function (v) { return mPlainObj(v) && mNum(v.p) && mNum(v.f) && mNum(v.c); },
     pr: mPlainObj,
-    sl: function (v) { return mPlainObj(v) && Array.isArray(v.list); }
+    sl: function (v) { return mPlainObj(v) && Array.isArray(v.list); },
+    // your drinks and their milligrams (src/checkin.js), in the one shape it reads
+    dk: function (v) { return !!mDrinksClean(v); }
   };
   function mSyncUnkey(e) { return String(e).replace(/_/g, '-'); }
 
   var MSYNC_SIMPLE = [
     ['mf', 'bsc.myFoods'], ['t', 'bsc.macroTargets'], ['nv', 'bsc.macroNever'], ['bg', 'bsc.macroBatchG'],
-    ['pr', 'bsc.macroProfile'], ['sl', 'bsc.macroSlots']
+    ['pr', 'bsc.macroProfile'], ['sl', 'bsc.macroSlots'], ['dk', 'bsc.macroDrinks']
   ];
 
   var MSYNC_KEYED = [
@@ -151,6 +155,19 @@
       /* And zero here means "I un-ticked it". */
       accept: function (r) { return mNum(r.v); },
       put: function (k, v) { LIVE.MTRAINED[k] = Number(v) || 0; } },
+
+    /* The morning check-in (src/checkin.js): sleep, steps, creatine, the
+       day's drinks. One record a morning, newest wins, and an empty record is
+       a real answer — the morning you cleared — so it keeps speaking for keys
+       it has only a stamp for. Taken field by field through mAmClean. */
+    { part: 'am', ls: 'bsc.macroAm', stamps: true,
+      store: function () { return LIVE.MAM; },
+      value: function (k, m) { return (m || LIVE.MAM)[k] || {}; },
+      accept: function (r) { return !!mAmClean(r.v); },
+      put: function (k, v) {
+        var c = mAmClean(v);
+        if (c && Object.keys(c).length) LIVE.MAM[k] = c; else delete LIVE.MAM[k];
+      } },
 
     { part: 'sp', ls: 'bsc.macroSkip', stamps: true,
       store: function () { return LIVE.MSKIP; },

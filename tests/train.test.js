@@ -4151,7 +4151,7 @@ module.exports = {
       return { matched, guessed, bw: w.bw, sets: w.x.map((x) => x.e + ':' + x.s[0].w + 'x' + x.s[0].r).join() };
     });
     t.ok('Strong’s own exercise variants map to the library and guess kettlebell/ab/glute muscles accurately',
-      r.matched === 'pullup,pushup,inv-row,calf-lp,hang-raise,cb-straight,lat-pd-n,db-row,db-fly,hammer,preacher,db-rdl,calf-stand' &&
+      r.matched === 'pullup,pushup,inv-row,calf-lp,hang-raise,cb-straight,lat-pd-n,db-row,db-fly,kb-curl,preacher,db-rdl,calf-stand' &&
       r.guessed === 'glutes,front,front,abs,quads,glutes', JSON.stringify(r));
     t.ok('Strong’s bodyweight column on pull-ups becomes workout bodyweight, 1 lb push-up placeholders zero out, and weighted dips stay weighted',
       r.bw === 86.2 && r.sets === 'pullup:0x10,pushup-flat:0x18,dip:15.88x12', JSON.stringify(r));
@@ -4976,14 +4976,14 @@ module.exports = {
       return { count: _.LIB_LIST.length, ids, rigCount: rigs.size, allValid, allMedia, ohpPriOk, fallbackOk, sgOk, customUsesGif };
     });
     const fs = require('fs'), path = require('path');
-    const gifsOnDisk = anims.count === 158 && anims.ids.every((id) => {
+    const gifsOnDisk = anims.count === 159 && anims.ids.every((id) => {
       const fp = path.join(__dirname, '..', 'art', 'lifts', id + '.gif');
       if (!fs.existsSync(fp)) return false;
       const b = fs.readFileSync(fp);
       return b.length > 1000 && b.slice(0, 3).toString('ascii') === 'GIF';
     });
-    t.ok('Every exercise in LIB_LIST (all 158 lifts) and custom exercises use a local 3D anatomical GIF in art/lifts/, with offline SVG error fallback',
-      anims.count === 158 && anims.rigCount === 24 && anims.allValid && anims.allMedia && anims.ohpPriOk && anims.fallbackOk && anims.sgOk && anims.customUsesGif && gifsOnDisk,
+    t.ok('Every exercise in LIB_LIST (all 159 lifts) and custom exercises use a local 3D anatomical GIF in art/lifts/, with offline SVG error fallback',
+      anims.count === 159 && anims.rigCount === 24 && anims.allValid && anims.allMedia && anims.ohpPriOk && anims.fallbackOk && anims.sgOk && anims.customUsesGif && gifsOnDisk,
       JSON.stringify(Object.assign({}, anims, { ids: anims.ids.length, gifsOnDisk })));
 
     // ---- Exercise card ✓ Done collapse & crisp KPI summary row ----

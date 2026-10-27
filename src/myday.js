@@ -413,9 +413,7 @@
       for (var j = 0; j < items.length; j++) if (String(items[j].id) === String(o.id)) return j;
       return -1;
     }
-    var last = -1;
-    Object.keys(mk.fresh).forEach(function (f) { if (+f > last) last = +f; });
-    return last;
+    return -1;
   }
 
   function foodRowHTML(M, r, it, i, mk, open) {
@@ -444,7 +442,6 @@
         esc(mDialText(r, it.x)) + ', ' + kc + ' kcal. ' + (open ? 'Close' : 'Open to change it') + '">' +
         (r.score === null || r.score === undefined ? '' : leaf(r.score, 'leaf-sm')) +
         '<span class="mrow-nm">' + esc(r.name) + '</span>' +
-        (fresh ? '<span class="mrow-mk new">New</span>' : '') +
         (it.l ? '<span class="mrow-mk kept">' + LOCK_SM + (it.l === 2 ? 'Locked' : 'Kept') + '</span>' : '') +
         (pinned ? '<span class="mrow-mk kept">Pinned</span>' : '') +
         '<span class="mrow-sg num">' + esc(mDialText(r, it.x)) + '</span>' +
@@ -452,21 +449,17 @@
       '</button>';
     var cls = 'mitem mfood mrow mrow-x ' + (open ? 'mrow-open' : 'mrow-shut') + (it.eaten ? ' eaten' : '') + (it.l ? ' held' : '') +
       (was !== undefined ? ' moved' : fresh ? ' fresh' : '') + (swapping ? ' swapping' : '');
-    /* A shut line keeps its drawer, unseen (display: none, so not read
-       aloud or tappable either): what a food costs and how it is measured
-       stay in the page for whatever reads them, and opening it is a class. */
+    var doorAttr = (r.food
+      ? 'class="mfood-mi mitem-name mitem-food mrow-door" data-mfood="' + esc(String(r.id)) + '" data-mx="' + it.x + '" data-mfslot="' + esc(sk) + '"'
+      : 'class="mfood-mi mitem-name mrow-door" data-open="' + esc(String(r.id)) + '" data-mx="' + it.x + '"') +
+      ' role="menuitem" aria-label="' + esc(r.name) + ', ' + (r.food ? 'the food' : 'the recipe') + '"';
     return '<div class="' + cls + '">' +
       (swapping ? '<div class="mrow-swap">Tap its replacement below<button class="ghost" data-mswapx="1">Cancel</button></div>' : '') +
       sum +
       '<div class="mrow-dr">' +
       '<span class="mrow-m mitem-r2">' + (measure ? '<span class="mitem-uom">' + esc(measure) + '</span> &middot; ' : '') +
         '<span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mSaltChip(r, it.x) + mWhyChip(it, tag) + '</span>' +
-      /* The name was the way to a food's page; a tap on it opens the line
-         now, so the page is a word of its own in the drawer. */
-      (r.food
-        ? '<button class="mitem-name mitem-food mrow-door" data-mfood="' + esc(String(r.id)) + '" data-mx="' + it.x + '" data-mfslot="' + esc(sk) + '"'
-        : '<button class="mitem-name mrow-door" data-open="' + esc(String(r.id)) + '" data-mx="' + it.x + '"') +
-        ' aria-label="' + esc(r.name) + ', ' + (r.food ? 'the food' : 'the recipe') + '">' + I_INFO + 'Details</button>' +
+      (menuOpen ? '' : '<button ' + doorAttr + ' hidden>' + I_INFO + 'Details</button>') +
       /* Typing opens an EMPTY box with the amount shown faint behind it, so
          what you type is the amount. Opened holding the number, it relied on
          the phone selecting it, and an iPhone often does not: Blake had to
@@ -488,6 +481,7 @@
       mWhyStrip(it, tag) + mBatchStrip(r, it, tag) +
       (menuOpen ? '<div class="mfood-menu mrow-menu no-print" role="menu">' +
         (moveOpen ? destHTML :
+          '<button ' + doorAttr + '>' + I_INFO + 'Details</button>' +
           '<button class="mfood-mi mlock" role="menuitem" data-mlock="' + tag + '" aria-pressed="' + (it.l ? 'true' : 'false') + '">' +
             (it.l ? I_OPEN + 'Let it move' : I_LOCK + 'Lock the amount') + '</button>' +
           '<button class="mfood-mi mswap" role="menuitem" data-mswap="' + tag + '">' + I_SWAP + 'Swap</button>' +

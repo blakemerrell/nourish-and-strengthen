@@ -590,6 +590,7 @@ module.exports = nourish({
        used to be a dead label, which left a five-part salad that had been
        kept together reading as one word with no way back to what was in it.
        Pressing it opens the food: what one of it is, and its parts. */
+    await openRowOf(p, '#modalRoot .mitem-food');
     await p.click('.mitem-food');
     await p.waitForTimeout(250);
     t.ok('pressing a food\'s name opens the food',
@@ -1372,6 +1373,7 @@ module.exports = nourish({
        395px and was given 241, so 39% of it went, while the two rows beneath
        it ended at 55% and 45% of the same width. An invariant over every
        plate on the day, so it has a subject whatever the fixture holds. */
+    await openRow(p, 'l:0');
     t.ok('and no plate cuts off the one thing it cannot reconstruct — its name',
       /* Read in the meal's sheet, where the plates are since 2026-10-04, off
          the name's own text (.mrow-nm), which is what could be clipped. */

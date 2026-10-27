@@ -316,7 +316,11 @@ async function openRow(pg, tag) {
 async function openRowOf(pg, inner) {
   const tag = await pg.evaluate((q) => { const e = document.querySelector(q), row = e && e.closest('.mrow');
     const b = row && row.querySelector('[data-mrowopen]'); return b ? b.dataset.mrowopen : null; }, inner);
-  if (tag) await openRow(pg, tag);
+  if (tag) {
+    await openRow(pg, tag);
+    const inMenu = await pg.evaluate((q) => { const e = document.querySelector(q); return !!e && e.hidden; }, inner);
+    if (inMenu) { await pg.click('#modalRoot [data-mfmenu="' + tag + '"]'); await pg.waitForTimeout(150); }
+  }
 }
 
 /* Sync & sharing, the way a thumb reaches it: the top line's pill, or on

@@ -651,15 +651,17 @@ module.exports = nourish({
       named.length > 0 && named.every((c) => /^[\d,]+( \/ [\d,]+| kcal)$/.test(c.k) && c.lines.length > 0 &&
         c.lines.every((l) => l.n && /\d/.test(l.amt))), JSON.stringify(named));
     await openMeal(fold, trayKeys[0]);
+    await openRow(fold);
+    await fold.click('#modalRoot .msheet .mrow.mrow-open [data-mfmenu]');
+    await fold.waitForTimeout(200);
     const door = await fold.evaluate(() => {
       const n = document.querySelector('#modalRoot .msheet .mrow .mitem-name');
       if (!n) return null;
       return { tag: n.tagName, id: n.dataset.open || n.dataset.mfood || '',
         food: n.dataset.mfood !== undefined, name: n.closest('.mrow').querySelector('.mrow-sum .mrow-nm').textContent.trim() };
     });
-    t.ok('a food’s name is a door, not a label',
+    t.ok('a food’s Details inside ⋯ is a door, not a label',
       !!door && door.tag === 'BUTTON' && door.id !== '', JSON.stringify(door));
-    await openRow(fold);
     await fold.click('#modalRoot .msheet .mrow .mitem-name');
     await fold.waitForTimeout(400);
     t.ok('and pressing it opens what it names',

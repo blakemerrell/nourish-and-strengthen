@@ -5984,6 +5984,7 @@
 
       var keep = e.target.closest('[data-mkeep]');
       if (keep) {
+        S.mMenu = '';
         S.keepMeal = keep.dataset.mkeep;
         rememberOpener();
         pushSheet({ m: 1 });
@@ -5998,6 +5999,7 @@
          seen again: the plate shows one line for the whole thing. */
       var mfr = e.target.closest('[data-mfrom]');
       if (mfr) {
+        S.mMenu = '';
         rememberOpener();
         S.mCopyFrom = { slot: mfr.dataset.mfrom, day: '' };
         pushSheet({ m: 1 });

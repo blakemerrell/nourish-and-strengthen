@@ -118,8 +118,8 @@ module.exports = {
     const one = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows .mrow')].map((r) =>
       (r.querySelector('[data-mrowopen]').getAttribute('aria-expanded') === 'true' ? 'O' : '-') +
       (r.querySelector('[data-mstep$=":down"]').offsetParent && r.querySelector('[data-mstep$=":up"]').offsetParent &&
-        r.querySelector('[data-mfmenu]').offsetParent && r.querySelector('.mrow-door').offsetParent && / g$/.test(r.querySelector('.mstep-x').textContent) ? 'd' : '')).join());
-    t.ok('a tap opens that one: − grams +, ⋯ and Details, the rest still a line', one === '-,-,Od,-,-,-,-', one);
+        r.querySelector('[data-mfmenu]').offsetParent && / g$/.test(r.querySelector('.mstep-x').textContent) ? 'd' : '')).join());
+    t.ok('a tap opens that one: − grams + and ⋯ on two tight rows, the rest still a line', one === '-,-,Od,-,-,-,-', one);
     await openRow(p, 'l:4');
     const shifted = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows [data-mrowopen]')].map((b) => b.getAttribute('aria-expanded') === 'true' ? 'O' : '-').join(''));
     await p.click('#modalRoot [data-mrowopen="l:4"]');
@@ -145,7 +145,7 @@ module.exports = {
     await p.click('#modalRoot [data-mfmenu="l:5"]');
     await p.waitForTimeout(250);
     const menu = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrow-menu .mfood-mi')].map((b) => b.textContent.trim()));
-    t.ok('⋯ on a food holds Lock, Swap, Move to…, Pin, Favourite and Remove', menu.join('|') === 'Lock the amount|Swap|Move to\u2026|Pin to Lunch|Favourite|Remove', JSON.stringify(menu));
+    t.ok('⋯ on a food holds Details, Lock, Swap, Move to…, Pin, Favourite and Remove', menu.join('|') === 'Details|Lock the amount|Swap|Move to\u2026|Pin to Lunch|Favourite|Remove', JSON.stringify(menu));
     await p.click('#modalRoot .mrow-menu [data-mlock="l:5"]');
     await p.waitForTimeout(250);
     t.ok('Lock holds the avocado, and the menu closes', (await mealOf(p, 'l'))[5].l === 2 &&
@@ -285,15 +285,19 @@ module.exports = {
     t.ok('a food added from the list goes up with the others, and the list holds still under the thumb',
       at0.s > 0 && at1.n === at0.n + 1 && Math.abs(at1.y - at0.y) <= 1, JSON.stringify({ at0, at1 }));
 
-    /* It comes in open, for its amount; and stays open while you set it.
-       The first build shut it on the first −, because "just added" was all
-       that held it open and a step clears that mark. */
-    const egg = await p.evaluate(() => { const r = [...document.querySelectorAll('#modalRoot .mrows .mrow')].find((x) => x.classList.contains('mrow-open'));
+    /* A newly added food stays collapsed until tapped (since auto-balance fits
+       its portion automatically), and once tapped open, − leaves it open. */
+    const eggShut = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows .mrow')].every((x) => x.classList.contains('mrow-shut')));
+    const eggTag = await p.evaluate(() => { const r = [...document.querySelectorAll('#modalRoot .mrows .mrow')].find((x) => x.classList.contains('fresh'));
       return r ? r.querySelector('[data-mrowopen]').dataset.mrowopen : null; });
-    if (egg) { await p.click('#modalRoot [data-mstep="' + egg + ':down"]'); await p.waitForTimeout(250); }
+    if (eggTag) {
+      await openRow(p, eggTag);
+      await p.click('#modalRoot [data-mstep="' + eggTag + ':down"]');
+      await p.waitForTimeout(250);
+    }
     const stillOpen = await p.evaluate((tg) => !!tg && (document.querySelector('#modalRoot [data-mrowopen="' + tg + '"]') || {}).getAttribute &&
-      document.querySelector('#modalRoot [data-mrowopen="' + tg + '"]').getAttribute('aria-expanded') === 'true', egg);
-    t.ok('a food just added comes in open, and a − on it leaves it open', !!egg && stillOpen, egg);
+      document.querySelector('#modalRoot [data-mrowopen="' + tg + '"]').getAttribute('aria-expanded') === 'true', eggTag);
+    t.ok('a food just added stays collapsed until tapped, and a − on it leaves it open', eggShut && !!eggTag && stillOpen, eggTag);
 
     /* a recipe's Details (its name, until its line became the way to open
        it) opens the recipe; back lands on the meal's sheet */

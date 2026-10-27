@@ -312,7 +312,8 @@
     ['kb-inc-press', 'Single-Arm Incline Press', 'chest', 'c', 'db', 'incline', 8, 12],
     ['dec-crunch', 'Decline Crunch', 'abs', 'i', 'bw', '', 10, 20],
     ['lm-lunge', 'Landmine Reverse Lunge', 'quads', 'c', 'bb', 'single', 8, 12],
-    ['v-up', 'V-Up', 'abs', 'i', 'bw', '', 10, 20]
+    ['v-up', 'V-Up', 'abs', 'i', 'bw', '', 10, 20],
+    ['kb-curl', 'Kettlebell Hammer Curl', 'biceps', 'i', 'db', '', 10, 15]
   ];
 
   /* ------------------------------------------------------------ the back
@@ -374,7 +375,7 @@
     'db-lat': 's', 'cb-lat': 's', 'cb-1arm-lat': 's', 'lm-lat': 's', 'mc-lat': 's', 'cb-upright': 'SW', 'bb-upright': 'SW', 'db-upright': 'SW',
     'bb-rear-row': 'sw', 'bd-rev-fly': 's', 'cb-rear-seat': 's', 'cb-rear-sup': 's',
     'bb-ohp': 'SWn', 'db-ohp': 'S', 'cb-ohp': 'S', 'arnold': 'S', 'kb-halo': 's', 'kb-tgu': 'Skh', 'mc-ohp': 'S', 'db-front': 's', 'bb-front-raise': 's', 'plate-front': 's', 'pike-pushup': 'SWn',
-    'bb-curl': 'eW', 'ez-curl': 'e', 'db-curl': 'e', 'inc-curl': 'se', 'hammer': 'e', 'cb-curl': 'e', 'preacher': 'E', 'bb-wrist-curl': 'W',
+    'bb-curl': 'eW', 'ez-curl': 'e', 'db-curl': 'e', 'inc-curl': 'se', 'hammer': 'e', 'kb-curl': 'e', 'cb-curl': 'e', 'preacher': 'E', 'bb-wrist-curl': 'W',
     'pushdown': 'e', 'cb-oh-ext': 'sE', 'skull': 'E', 'db-oh-ext': 'sE', 'mc-tri': 'e', 'cgbp': 'ew',
     'bench-dip': 'SW', 'diamond': 'eW',
     'calf-stand': 'a', 'bb-calf': 'a', 'calf-seat': 'a', 'calf-lp': 'a', 'calf-db': 'a', 'calf-bw': 'a',
@@ -598,7 +599,8 @@
     'kb-inc-press': ['Set the bench to 30–45° and hold a kettlebell or dumbbell at shoulder height in one hand, free hand braced.', 'Press straight up over your upper chest while keeping your ribs and shoulders level on the bench.', 'Lower under control into a stretch. All reps on one arm, then the other.'],
     'dec-crunch': ['Hook your feet under the pads of a decline bench and lie back with hands across your chest or beside your head.', 'Curl your ribs toward your pelvis to lift your upper back off the pad.', 'Lower slowly under control.'],
     'lm-lunge': ['Hold the loaded sleeve of the landmine at your chest or rest a barbell across your upper back, standing tall.', 'Step backward into a reverse lunge until your back knee nearly touches the floor.', 'Drive through your front heel to stand tall.'],
-    'v-up': ['Lie flat on your back with arms extended overhead and legs straight.', 'Fold at the hips to lift your torso and straight legs together, reaching your hands toward your toes in a V.', 'Lower back down under control without dropping your feet.']
+    'v-up': ['Lie flat on your back with arms extended overhead and legs straight.', 'Fold at the hips to lift your torso and straight legs together, reaching your hands toward your toes in a V.', 'Lower back down under control without dropping your feet.'],
+    'kb-curl': ['Stand tall holding a kettlebell by the horns in front of your thighs, elbows tucked.', 'Curl the bell up toward your chest with both hands, palms facing in.', 'Lower slowly under control to full extension.']
   };
 
   /* A picture or a clip of the lift, when there is one. Put a file at
@@ -2526,7 +2528,7 @@
     'bd-pullup': 1, 'bd-rev-fly': 1, 'bd-abduct': 1, 'bd-leg-ext': 1, 'bw-hip-thrust': 1,
     'cb-low-fly': 1, 'cb-high-fly': 1, 'cb-rear-seat': 1, 'cb-rear-sup': 1, 'cb-1arm-lat': 1, 'cb-pull-thru': 1, 'cb-woodchop': 1, 'arnold': 1, 'db-rev-lunge': 1,
     'tri-dip': 1, 'capt-raise': 1, 'kb-halo': 1, 'sl-leg-curl': 1, 'situp': 1, 'cb-ohp': 1, 'plate-front': 1, 'mc-dip': 1, 'bw-lunge': 1, 'db-upright': 1,
-    'kb-inc-press': 1, 'dec-crunch': 1, 'lm-lunge': 1, 'v-up': 1
+    'kb-inc-press': 1, 'dec-crunch': 1, 'lm-lunge': 1, 'v-up': 1, 'kb-curl': 1
   };
   function pickEx(m, k, p, eq, used, seed, pf, today, known) {
     var cand = allEx().filter(function (ex) { return ex.m === m && eq.indexOf(ex.q) >= 0 && !barred(ex, pf) && !NOPICK[ex.id]; });
@@ -10917,7 +10919,7 @@
     'front raise dumbbell': 'db-front', 'pike push up': 'pike-pushup',
     'bicep curl barbell': 'bb-curl', 'biceps curl barbell': 'bb-curl', 'ez bar curl': 'ez-curl', 'bicep curl ez bar': 'ez-curl',
     'bicep curl dumbbell': 'db-curl', 'biceps curl dumbbell': 'db-curl', 'incline curl dumbbell': 'inc-curl',
-    'hammer curl dumbbell': 'hammer', 'kettlebell hammer curl': 'hammer', 'hammer curl kettlebell': 'hammer',
+    'hammer curl dumbbell': 'hammer', 'kettlebell hammer curl': 'kb-curl', 'hammer curl kettlebell': 'kb-curl', 'kettlebell bicep curl': 'kb-curl', 'kettlebell curl': 'kb-curl',
     'bicep curl cable': 'cb-curl', 'biceps curl cable': 'cb-curl', 'preacher curl machine': 'preacher', 'bicep curl machine': 'preacher', 'biceps curl machine': 'preacher',
     'triceps pushdown': 'pushdown', 'triceps pushdown cable straight bar': 'pushdown', 'triceps pushdown cable': 'pushdown',
     'tricep pushdown cable': 'pushdown', 'triceps pushdown cable rope': 'pushdown', 'overhead triceps extension cable': 'cb-oh-ext',

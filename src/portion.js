@@ -26,10 +26,17 @@
      is what keeps it short enough to sit on the stepper: a day counted in
      "Meal Prep Containers" is counted in containers. A food carries its unit
      outright. */
+  function mCleanNoun(s) {
+    return String(s || '').replace(/\s*\([^)]*\)/g, '').replace(/,.*$/, '')
+      .replace(/^(?:(?:small|medium|large|thin|thick|very|regular|extra|jumbo|standard|average)(?:\s+or\s+|\s*\/\s*|\s+))+([a-z])/i, '$1')
+      .trim();
+  }
+
   function mUnitWord(r) {
     if (r.food) {
       var ls = mLabelServing(r);
       if (ls && ls.noun && MSTEP_COUNT[ls.noun.toLowerCase()]) return ls.noun.toLowerCase();
+      if (!ls && r.unit) return mCleanNoun(r.unit) || String(r.unit);
       return String(r.unit || 'serving');
     }
     /* The word is only the serving's word when the count in front of it IS
@@ -317,7 +324,8 @@
        "1 can (335 ml)". That one used to miss this pattern altogether, and
        the plate read "1 1 can (335 ml)" (Blake's Snacks, 2026-10-08): the
        count put in front of a unit that already had one. */
-    var m = /^\s*(\d+(?:\.\d+)?|\d+\/\d+)\s+([^()]+?)\s*(?:\(([^()]*)\))?\s*$/i.exec(String(r.unit || ''));
+    var rawU = String(r.unit || '').replace(/\s*\((?!\s*\d+(?:\.\d+)?\s*(?:g|grams?|ml|milliliters?)\s*\))[^)]*\)/gi, '');
+    var m = /^\s*(\d+(?:\.\d+)?|\d+\/\d+)\s+([^()]+?)\s*(?:\(([^()]*)\))?\s*$/i.exec(rawU);
     if (!m) return null;
     var q = m[1].indexOf('/') > 0 ? Number(m[1].split('/')[0]) / Number(m[1].split('/')[1]) : Number(m[1]);
     if (!(q > 0)) return null;
@@ -328,9 +336,7 @@
        "1 small or thin/very thin slice (25 g)" is a slice whose weight is
        already on the other half of the pill: strip trailing comma clauses
        and leading size adjectives so it steps and reads as a slice. */
-    var noun = m[2].replace(/,.*$/, '')
-      .replace(/^(?:(?:small|medium|large|thin|thick|very|regular|extra|jumbo|standard|average)(?:\s+or\s+|\s*\/\s*|\s+))+([a-z])/i, '$1')
-      .trim() || m[2].trim();
+    var noun = mCleanNoun(m[2]) || m[2].trim();
     /* A serving already said in grams weighs what it says. The USDA quotes a
        food with no household measure per "100 g", and so does Open Food
        Facts for a product with no serving size (src/foodsearch.js,

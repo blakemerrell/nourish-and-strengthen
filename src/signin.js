@@ -421,15 +421,6 @@
           if (!Object.keys(m).length) delete body[p];
         });
       }
-      var out = { myday: body };
-      /* And the server's own time, under this device's name, so mClockHear
-         can tell how far out this device's clock is. Absent from an SDK that
-         cannot give one, which only costs the correction. */
-      var fv = window.firebase && window.firebase.firestore && window.firebase.firestore.FieldValue;
-      if (fv && typeof fv.serverTimestamp === 'function') {
-        out.clk = { by: MCLOCK_ID, at: fv.serverTimestamp() };
-        LIVE.mClkSent = Date.now();
-      }
       var writes = Object.keys(years).map(function (y) {
         return d0.collection('days').doc(y).set({ myday: years[y] }, { merge: true }).then(function () {
           Object.keys(years[y]).forEach(function (p) {
@@ -442,8 +433,21 @@
       });
       /* The one record only when there is something for it: a push that was
          all days, each gone to its year, has nothing to say to it, and an
-         empty write would still be heard as a change by every phone. */
-      if (Object.keys(body).length || out.clk) writes.push(d0.set(out, { merge: true }));
+         empty write ({ myday: {}, clk }) in Firestore set(merge:true) would
+         treat the empty myday map as a leaf value and wipe myday on the one
+         record. */
+      if (Object.keys(body).length) {
+        var out = { myday: body };
+        /* And the server's own time, under this device's name, so mClockHear
+           can tell how far out this device's clock is. Absent from an SDK that
+           cannot give one, which only costs the correction. */
+        var fv = window.firebase && window.firebase.firestore && window.firebase.firestore.FieldValue;
+        if (fv && typeof fv.serverTimestamp === 'function') {
+          out.clk = { by: MCLOCK_ID, at: fv.serverTimestamp() };
+          LIVE.mClkSent = Date.now();
+        }
+        writes.push(d0.set(out, { merge: true }));
+      }
       /* Landed in their years: now, and only now, out of the one record. */
       Promise.all(writes).then(function () { return dyPurge(d0); }).then(function () {
         mSyncState('on');

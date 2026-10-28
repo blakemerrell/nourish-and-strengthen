@@ -12,8 +12,8 @@ android {
         applicationId = "com.blakemerrell.nourish"
         minSdk = 26
         targetSdk = 36
-        versionCode = (System.getenv("ANDROID_VERSION_CODE")?.toIntOrNull()) ?: 4
-        versionName = System.getenv("ANDROID_VERSION_NAME") ?: "1.0.3"
+        versionCode = (System.getenv("ANDROID_VERSION_CODE")?.toIntOrNull()) ?: 5
+        versionName = System.getenv("ANDROID_VERSION_NAME") ?: "1.0.4"
     }
 
     signingConfigs {

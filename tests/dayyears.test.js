@@ -18,7 +18,8 @@ const fakeAcct = () => {
   const put = (to, from) => { Object.keys(from).forEach((k) => {
     const v = from[k];
     if (v === DEL) delete to[k];
-    else if (v && typeof v === 'object' && !Array.isArray(v) && to[k] && typeof to[k] === 'object') put(to[k], v);
+    // Real Firestore set(merge:true) treats an empty map {} as a leaf value and overwrites to[k] with {}
+    else if (v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length > 0 && to[k] && typeof to[k] === 'object') put(to[k], v);
     else to[k] = JSON.parse(JSON.stringify(v, (kk, vv) => (vv === DEL ? undefined : vv)));
   }); };
   const cut = (o) => JSON.parse(JSON.stringify(o, (k, v) => (v === DEL ? '(deleted)' : v)));
@@ -41,7 +42,10 @@ const fakeAcct = () => {
         },
       }),
   };
-  A.fv = { delete: () => DEL };
+  A.fv = { delete: () => DEL, serverTimestamp: () => ({ __ts: 1 }) };
+  window.firebase = window.firebase || {};
+  window.firebase.firestore = window.firebase.firestore || {};
+  window.firebase.firestore.FieldValue = A.fv;
 };
 
 const plate = (k, x) => ({ id: 'f:' + k, x: x, eaten: 0 });

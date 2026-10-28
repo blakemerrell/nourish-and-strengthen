@@ -45,20 +45,35 @@ import androidx.webkit.WebViewAssetLoader
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
     private var pendingWebPermissionRequest: PermissionRequest? = null
+    private val otaSyncRunning = AtomicBoolean(false)
+    private val otaLock = Any()
+
+    companion object {
+        private const val OTA_BASE_URL = "https://blakemerrell.github.io/nourish-and-strengthen"
+    }
 
     private val healthPermissions = setOf(
         HealthPermission.getReadPermission(StepsRecord::class),
@@ -178,7 +193,39 @@ class MainActivity : AppCompatActivity() {
                 view: WebView,
                 request: WebResourceRequest
             ): WebResourceResponse? {
-                return assetLoader.shouldInterceptRequest(request.url)
+                val url = request.url
+                if (url.host == "appassets.androidplatform.net") {
+                    val path = url.path ?: ""
+                    if (path.startsWith("/assets/public/")) {
+                        val relPath = path.removePrefix("/assets/public/").ifEmpty { "index.html" }
+                        if (!relPath.contains("..")) {
+                            val otaBytes = synchronized(otaLock) {
+                                val f = File(otaLiveDir(), relPath)
+                                if (f.isFile && f.length() > 0L) f.readBytes() else null
+                            }
+                            if (otaBytes != null) {
+                                return WebResourceResponse(
+                                    mimeTypeFor(relPath),
+                                    encodingFor(relPath),
+                                    200,
+                                    "OK",
+                                    mapOf(
+                                        "Cache-Control" to "no-store",
+                                        "Access-Control-Allow-Origin" to "*"
+                                    ),
+                                    otaBytes.inputStream()
+                                )
+                            }
+                        }
+                    }
+                }
+                val assetRes = assetLoader.shouldInterceptRequest(url)
+                if (assetRes != null) {
+                    val headers = (assetRes.responseHeaders ?: emptyMap()).toMutableMap()
+                    headers["Cache-Control"] = "no-store"
+                    assetRes.responseHeaders = headers
+                }
+                return assetRes
             }
 
             override fun shouldOverrideUrlLoading(
@@ -203,6 +250,9 @@ class MainActivity : AppCompatActivity() {
                     if (currentHealthStatus() == "granted") {
                         syncHealthDataToWeb()
                     }
+                }
+                lifecycleScope.launch {
+                    syncOtaBundle()
                 }
             }
         }
@@ -246,9 +296,193 @@ class MainActivity : AppCompatActivity() {
                 syncHealthDataToWeb()
             }
         }
+        lifecycleScope.launch {
+            syncOtaBundle()
+        }
     }
 
     private fun prefs() = getSharedPreferences("nourish_health", Context.MODE_PRIVATE)
+
+    private fun otaLiveDir(): File = File(filesDir, "ota_live")
+
+    private fun mimeTypeFor(relPath: String): String {
+        val lower = relPath.lowercase()
+        return when {
+            lower.endsWith(".html") -> "text/html"
+            lower.endsWith(".js") -> "application/javascript"
+            lower.endsWith(".css") -> "text/css"
+            lower.endsWith(".webmanifest") -> "application/manifest+json"
+            lower.endsWith(".json") -> "application/json"
+            lower.endsWith(".svg") -> "image/svg+xml"
+            lower.endsWith(".png") -> "image/png"
+            lower.endsWith(".webp") -> "image/webp"
+            lower.endsWith(".gif") -> "image/gif"
+            lower.endsWith(".woff2") -> "font/woff2"
+            else -> "application/octet-stream"
+        }
+    }
+
+    private fun encodingFor(relPath: String): String? {
+        val lower = relPath.lowercase()
+        return if (
+            lower.endsWith(".html") ||
+            lower.endsWith(".js") ||
+            lower.endsWith(".css") ||
+            lower.endsWith(".webmanifest") ||
+            lower.endsWith(".json") ||
+            lower.endsWith(".svg")
+        ) {
+            "UTF-8"
+        } else {
+            null
+        }
+    }
+
+    private fun fetchUrlBytes(urlStr: String): ByteArray {
+        val conn = (URL(urlStr).openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = 6000
+            readTimeout = 10000
+            useCaches = false
+            setRequestProperty("Cache-Control", "no-cache")
+        }
+        return try {
+            val code = conn.responseCode
+            if (code !in 200..299) {
+                throw IllegalStateException("HTTP $code for $urlStr")
+            }
+            conn.inputStream.use { it.readBytes() }
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    private suspend fun syncOtaBundle() {
+        if (!otaSyncRunning.compareAndSet(false, true)) return
+        try {
+            val updatedVersion = withContext(Dispatchers.IO) {
+                try {
+                    val now = System.currentTimeMillis()
+                    val swBytes = fetchUrlBytes("$OTA_BASE_URL/sw.js?_t=$now")
+                    val swText = swBytes.toString(Charsets.UTF_8)
+                    val verMatch = Regex("""\bVERSION\s*=\s*'(\d+)'""").find(swText)
+                    val version = verMatch?.groupValues?.getOrNull(1).orEmpty()
+                    if (version.isEmpty() || version == "0") return@withContext null
+
+                    val currentVer = prefs().getString("ota_version", "").orEmpty()
+                    val liveDir = otaLiveDir()
+                    if (
+                        version == currentVer &&
+                        File(liveDir, "index.html").isFile &&
+                        File(liveDir, "sw.js").isFile
+                    ) {
+                        return@withContext version
+                    }
+
+                    val indexBytes = fetchUrlBytes("$OTA_BASE_URL/index.html?_t=$now")
+                    val indexHtml = indexBytes.toString(Charsets.UTF_8)
+                    if (!indexHtml.contains("v=$version")) {
+                        // Edge CDN has not finished propagating index.html for this version yet
+                        return@withContext null
+                    }
+
+                    val coreBlock = Regex("""\bCORE\s*=\s*\[([^\]]+)]""").find(swText)
+                        ?.groupValues?.getOrNull(1).orEmpty()
+                    val coreEntries = Regex("""'([^']+)'|"([^"]+)"""")
+                        .findAll(coreBlock)
+                        .map { (it.groupValues[1].ifEmpty { it.groupValues[2] }).trim() }
+                        .filter { it.isNotEmpty() }
+                        .toList()
+                    if (coreEntries.isEmpty()) return@withContext null
+
+                    val relFiles = coreEntries
+                        .map { it.removePrefix("./").substringBefore("?").substringBefore("#") }
+                        .filter { it.isNotEmpty() && !it.contains("..") && it != "index.html" }
+                        .distinct()
+
+                    val stageDir = File(filesDir, "ota_stage")
+                    stageDir.deleteRecursively()
+                    stageDir.mkdirs()
+
+                    File(stageDir, "sw.js").writeBytes(swBytes)
+                    File(stageDir, "index.html").writeBytes(indexBytes)
+
+                    val sem = Semaphore(10)
+                    coroutineScope {
+                        relFiles.map { rel ->
+                            async {
+                                sem.withPermit {
+                                    val query = if (rel.endsWith(".js") || rel.endsWith(".css")) {
+                                        "?v=$version"
+                                    } else {
+                                        "?_t=$now"
+                                    }
+                                    val bytes = fetchUrlBytes("$OTA_BASE_URL/$rel$query")
+                                    val dest = File(stageDir, rel)
+                                    dest.parentFile?.mkdirs()
+                                    dest.writeBytes(bytes)
+                                }
+                            }
+                        }.awaitAll()
+                    }
+
+                    synchronized(otaLock) {
+                        val oldDir = File(filesDir, "ota_old")
+                        oldDir.deleteRecursively()
+                        if (liveDir.exists()) {
+                            liveDir.renameTo(oldDir)
+                        }
+                        if (!stageDir.renameTo(liveDir)) {
+                            stageDir.copyRecursively(liveDir, overwrite = true)
+                            stageDir.deleteRecursively()
+                        }
+                        oldDir.deleteRecursively()
+                        prefs().edit()
+                            .putString("ota_version", version)
+                            .putLong("ota_updated_at", System.currentTimeMillis())
+                            .apply()
+                    }
+                    version
+                } catch (_: Exception) {
+                    null
+                }
+            }
+
+            if (!updatedVersion.isNullOrEmpty()) {
+                withContext(Dispatchers.Main) {
+                    val qVer = JSONObject.quote(updatedVersion)
+                    val js = """
+                        (function(targetVer) {
+                          if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+                            navigator.serviceWorker.getRegistration().then(function(r) {
+                              if (r) r.update();
+                            });
+                          }
+                          var s = document.querySelector('script[src*="src/app.js"]');
+                          var src = s ? (s.getAttribute('src') || '') : '';
+                          if (src && src.indexOf('v=' + targetVer) < 0) {
+                            var busy = function () {
+                              if (window.__editing) return true;
+                              var a = document.activeElement;
+                              if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return true;
+                              if (document.querySelector('#modalRoot .sheet, #trainRoot .sheet, #dialogRoot .dlg')) return true;
+                              try { if (window.Train && window.Train.busy && window.Train.busy()) return true; } catch (e) {}
+                              return false;
+                            };
+                            setTimeout(function go() {
+                              if (busy()) { setTimeout(go, 2000); return; }
+                              location.reload();
+                            }, 400);
+                          }
+                        })($qVer);
+                    """.trimIndent()
+                    webView.evaluateJavascript(js, null)
+                }
+            }
+        } finally {
+            otaSyncRunning.set(false)
+        }
+    }
 
     private suspend fun currentHealthStatus(): String = withContext(Dispatchers.IO) {
         val sdkStatus = HealthConnectClient.getSdkStatus(
@@ -392,7 +626,15 @@ class MainActivity : AppCompatActivity() {
             out.put("available", status != "unavailable")
             out.put("status", status)
             out.put("lastSync", prefs().getLong("last_sync", 0L))
+            out.put("otaVersion", prefs().getString("ota_version", ""))
             return out.toString()
+        }
+
+        @JavascriptInterface
+        fun checkOtaUpdate() {
+            lifecycleScope.launch {
+                syncOtaBundle()
+            }
         }
 
         @JavascriptInterface

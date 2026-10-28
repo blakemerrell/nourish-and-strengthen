@@ -484,6 +484,32 @@ module.exports = {
     t.ok('and Undo puts the moved plate back on Breakfast and restores the sibling to its pre-move portion',
       unmoved.b.length === 2 && unmoved.e.length === 0 && JSON.stringify(unmoved.b) === JSON.stringify(beforeMove),
       JSON.stringify({ beforeMove, unmoved }));
+
+    /* Expanded food card inside .msh-on when searching (#mpFind / .mpq) with a
+       keyboard-shortened viewport: macros stay on one full-width line under the
+       food name, and the pill stepper + ⋯ stay completely inside the card box. */
+    await sp.setViewportSize({ width: 412, height: 480 });
+    await sp.fill('#mpFind', 'Carrot');
+    await sp.waitForTimeout(200);
+    await openRow(sp, 'b:1');
+    await sp.click('#modalRoot [data-mtype="b:1"]');
+    await sp.waitForTimeout(150);
+    const cardGeom = await sp.evaluate(() => {
+      const mrows = document.querySelector('#modalRoot .msh-on .mrows').getBoundingClientRect();
+      const row = document.querySelector('#modalRoot .mrow-open').getBoundingClientRect();
+      const m = document.querySelector('#modalRoot .mrow-open .mrow-m').getBoundingClientRect();
+      const dial = document.querySelector('#modalRoot .mrow-open .mrow-dial').getBoundingClientRect();
+      const more = document.querySelector('#modalRoot .mrow-open .mrow-more').getBoundingClientRect();
+      return {
+        oneLineMac: Math.round(m.height) <= 24,
+        macAboveDial: m.bottom <= dial.top + 2,
+        dialInsideRow: dial.top >= row.top && dial.bottom <= row.bottom + 1 && more.bottom <= row.bottom + 1,
+        rowVisibleInList: row.bottom <= mrows.bottom + 2 && row.top >= mrows.top - 2,
+      };
+    });
+    t.ok('an expanded food card keeps its macro line unwrapped and its stepper inside the box even with the search and keyboard open',
+      cardGeom.oneLineMac && cardGeom.macAboveDial && cardGeom.dialInsideRow && cardGeom.rowVisibleInList,
+      JSON.stringify(cardGeom));
     await sp.context().close();
 
     t.ok('no page errors', errs.length === 0, errs.join(' | '));

@@ -5773,6 +5773,14 @@
       /* A food's line in a meal's sheet: tap it open for its amount, its
          macros and its ⋯; tap it again, or another, and it shuts (myday.js,
          mOpenRow). */
+      function mScrollRowIn(el) {
+        var row = el && el.closest && el.closest('.mrow');
+        var list = row && row.closest('.mrows');
+        if (!row || !list || list.scrollHeight <= list.clientHeight) return;
+        var rb = row.getBoundingClientRect(), lb = list.getBoundingClientRect();
+        if (rb.bottom > lb.bottom) list.scrollTop += rb.bottom - lb.bottom + 4;
+        else if (rb.top < lb.top) list.scrollTop -= lb.top - rb.top + 4;
+      }
       var ro = e.target.closest('[data-mrowopen]');
       if (ro) {
         var rp = ro.dataset.mrowopen.split(':'), ri = Number(rp.pop()), rsk = rp.join(':');
@@ -5783,7 +5791,7 @@
         renderMacros();
         if (S.macroPick) renderModal();
         var back = document.querySelector((S.macroPick ? '#modalRoot ' : '#macroSlots ') + '[data-mrowopen="' + ro.dataset.mrowopen + '"]');
-        if (back) back.focus();
+        if (back) { back.focus(); mScrollRowIn(back); }
         return;
       }
 
@@ -5793,7 +5801,7 @@
         renderMacros();
         if (S.macroPick) renderModal();
         var box = document.querySelector(S.macroPick ? '#modalRoot .mstep-in' : '#macroSlots .mstep-in');
-        if (box) { box.focus(); box.select(); }
+        if (box) { box.focus(); box.select(); mScrollRowIn(box); }
         return;
       }
 

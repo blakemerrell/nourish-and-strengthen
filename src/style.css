@@ -7469,7 +7469,7 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 /* A food a line in the meal's sheet, one tapped open at a time (myday.js,
    mOpenRow; Blake's "B", 2026-10-24): shut, its name, amount and calories;
    open, the whole name and a drawer of its macros, dial and ⋯. */
-.msheet .mrow.mrow-x { display: block; min-height: 0; padding: 0; }
+.msheet .mrow.mrow-x { display: block; flex: none; min-height: 0; padding: 0; }
 .msheet .mrow-sum {
   width: 100%; min-height: 44px; margin: 0; display: flex; align-items: center; gap: 8px;
   padding: 0 10px 0 8px; border: 0; border-radius: inherit; background: none; color: var(--ink);
@@ -7477,7 +7477,10 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 }
 .msheet .mrow-sum .mrow-nm { flex: 1 1 auto; min-width: 0; font-weight: 600; }
 .msheet .mrow-open .mrow-sum {
-  position: relative; z-index: 1; min-height: 44px; margin: 0; padding: 4px 8px; font-size: 0.875rem; line-height: 1.25;
+  position: relative; z-index: 1; min-height: 28px; margin: 0; padding: 6px 8px 1px; font-size: 0.90625rem; line-height: 1.25; align-items: baseline;
+}
+.msheet .mrow-open .mrow-sum::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 44px; margin-top: -22px;
 }
 .msheet .mrow-open .mrow-sum .mrow-nm {
   white-space: normal; overflow-wrap: break-word; overflow: clip;
@@ -7487,16 +7490,14 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .msheet .mrow-sum .mrow-mk, .msheet .mrow-sum .leaf { flex: none; }
 .msheet .mrow-sg { flex: none; max-width: 38%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .msheet .mrow-sk { flex: none; min-width: 4.4em; text-align: right; color: var(--note); font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
-/* Row 2: macros on the left, − amount + and ⋯ on the right on the same tight line. */
+/* Expanded card body: full-width macro line under the food name so P/F/C never
+   wrap, followed by a contained pill stepper bar and ⋯ on the bottom row. */
 .msheet .mrow-dr {
-  position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
-  gap: 2px 4px; padding: 0 2px 2px 8px;
+  position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 3px 6px; padding: 0 4px 5px 8px;
 }
 .msheet .mrow-dr .mrow-m {
-  flex: 1 1 92px; min-width: 0; margin-right: auto; pointer-events: none;
-}
-@media (max-width: 359px) {
-  .msheet .mrow-dr .mrow-m { flex: 1 1 100%; }
+  flex: 1 1 100%; width: 100%; min-width: 0; margin: 0; padding: 0 2px 1px 0; pointer-events: none;
 }
 .msheet .mrow-dr .mrow-m button { pointer-events: auto; }
 #modalRoot .msheet .mrow-dr > .mrow-door[hidden] { display: none; }
@@ -7514,9 +7515,14 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .mrow-m { display: block; font-size: 0.75rem; color: var(--note); line-height: 1.25; }
 .mrow-m .mitem-mac, .mrow-m .mitem-uom { font-size: inherit; }
 .mrow-m .mwhy { margin-left: 4px; vertical-align: middle; }
-.msheet .mrow .mrow-dial { position: relative; z-index: 2; flex: none; overflow: visible; margin: 0; display: flex; align-items: center; gap: 0; border: 0; background: none; border-radius: 0; padding: 0; min-width: 0; }
+.msheet .mrow .mrow-dial {
+  position: relative; z-index: 2; flex: 1 1 auto; overflow: visible; margin: 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 0;
+  border: 1px solid var(--line-firm); background: var(--paper-soft); border-radius: 999px;
+  padding: 0; min-width: 0;
+}
 .msheet .mrow .mrow-k {
-  position: relative; width: 44px; height: 44px; min-width: 0; min-height: 0; margin: 0; border: 0; border-radius: 0; padding: 0;
+  position: relative; flex: none; width: 44px; height: 44px; min-width: 0; min-height: 0; margin: 0; border: 0; border-radius: 0; padding: 0;
   background: none; color: var(--label); display: grid; place-items: center; cursor: pointer;
 }
 .msheet .mrow .mrow-k::before {
@@ -7525,23 +7531,24 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 }
 .msheet .mrow .mrow-k svg { position: relative; width: 11px; height: 11px; }
 .msheet .mrow .mrow-k:disabled { opacity: 0.3; cursor: default; }
-.mrow-g { min-width: 56px; max-width: 112px; width: auto; margin: 0; padding: 0 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; }
-.mrow-g:has(.mitem-typing) { width: 64px; padding: 0 5px; }
+.mrow-g { flex: 1 1 auto; min-width: 68px; max-width: none; width: auto; margin: 0; padding: 0 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; }
+.mrow-g:has(.mitem-typing) { min-width: 78px; padding: 0 6px; }
 .msheet .mrow .mstep-x {
   width: 100%; min-height: 44px; margin: 0; border: 0; background: none; padding: 0; display: inline-flex; align-items: center; justify-content: center; text-align: center;
-  font-family: var(--sans); font-size: 0.875rem; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums;
+  font-family: var(--sans); font-size: 0.90625rem; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums;
+  text-decoration: underline dotted var(--line-firm); text-underline-offset: 3px;
 }
 .msheet .mrow .mrow-dial.spent .mstep-x { font-weight: 500; color: var(--label); }
 /* The box keeps room for four digits whatever its unit says. It used to
    shrink to fit beside the unit, and "× 100 g" left it 7px: one digit,
    half seen. A unit too long to sit beside it goes under it instead. */
-.msheet .mrow .mitem-typing { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 2px; min-height: 28px; margin: 0; }
+.msheet .mrow .mitem-typing { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; min-height: 30px; margin: 0; text-decoration: none; }
 .msheet .mrow .mitem-typing i { max-width: 100%; text-align: center; overflow-wrap: anywhere; }
-.msheet .mrow .mstep-in { width: 4.2ch; flex: none; font-size: 0.875rem; text-align: center; padding: 2px 0; border: 1px solid var(--ochre); border-radius: 6px; background: var(--field); }
+.msheet .mrow .mstep-in { width: 4.6ch; height: 30px; min-height: 30px; flex: none; font-size: 0.90625rem; font-weight: 600; text-align: center; padding: 2px 3px; border: 1px solid var(--ochre); border-radius: 6px; background: var(--field); color: var(--ink); }
 .msheet .mrow .mitem-typing i { font-style: normal; font-size: 0.75rem; color: var(--note); }
-.mrow-g small { font-size: 0.6875rem; color: var(--ochre-text); line-height: 1.1; margin-top: -10px; }
+.mrow-g small { font-size: 0.6875rem; color: var(--ochre-text); line-height: 1.1; margin-top: -8px; padding-bottom: 2px; }
 .mrow-g small:empty { display: none; }
-.msheet .mrow-more { position: relative; z-index: 2; width: 36px; height: 44px; min-width: 0; min-height: 0; margin: 0; border: 0; background: none; border-radius: 7px; padding: 0; flex: none; display: grid; place-items: center; color: var(--note); cursor: pointer; }
+.msheet .mrow-more { position: relative; z-index: 2; width: 38px; height: 44px; min-width: 0; min-height: 0; margin: 0; border: 0; background: none; border-radius: 8px; padding: 0; flex: none; display: grid; place-items: center; color: var(--note); cursor: pointer; }
 .msheet .mrow-more svg { width: 17px; height: 17px; }
 .msheet .mrow-more[aria-expanded="true"], .msheet .mrow-more:hover { background: var(--hint); }
 .msheet .mrow .mwhy-strip { grid-column: 1 / -1; margin: 4px 0 2px; }
@@ -7616,7 +7623,7 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   gap: 4px;
 }
 .msheet.mpq .msh-on:not(:has(.mrow-menu)) .mrows {
-  max-height: 22dvh;
+  max-height: 260px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }

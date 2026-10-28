@@ -818,6 +818,7 @@ window.Store = (function () {
   var GIS_SRC = 'https://accounts.google.com/gsi/client';
   var gisP = null;
   var gisInit = false, gisDone = null, gisFail = null;   // see mountGoogleButton
+  var nativeGoogleDone = null, nativeGoogleFail = null;
   function gisReady() {
     if (gisP) return gisP;
     var cid = window.GOOGLE_CLIENT_ID;
@@ -862,6 +863,7 @@ window.Store = (function () {
      suppress. Desktop keeps the popup, where it stays on the same page and
      costs no reload. */
   function wantsRedirect() {
+    if (window.NourishAndroid && window.NourishAndroid.signInGoogle) return false;
     try {
       if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true;
       if (window.navigator && window.navigator.standalone) return true;
@@ -1357,6 +1359,9 @@ window.Store = (function () {
        button back and say why. */
     mountGoogleButton: function (el, onDone, onFail) {
       if (!el) return Promise.reject(new Error('nowhere to put it'));
+      if (window.NourishAndroid && window.NourishAndroid.signInGoogle) {
+        return Promise.reject(new Error('native'));
+      }
       gisDone = onDone; gisFail = onFail;
       return gisReady().then(function (g) {
         /* Once a page, not once a draw. The sign-in sheet is redrawn on every
@@ -1393,7 +1398,32 @@ window.Store = (function () {
       });
     },
 
+    useIdToken: useIdToken,
+
+    onNativeGoogleToken: function (token, errMsg) {
+      var done = nativeGoogleDone, fail = nativeGoogleFail;
+      nativeGoogleDone = null; nativeGoogleFail = null;
+      if (!token) {
+        if (fail) fail(new Error(errMsg || 'no token came back'));
+        return;
+      }
+      useIdToken(token).then(function () { if (done) done(); },
+        function (err) { if (fail) fail(err); });
+    },
+
     signInGoogle: function () {
+      if (window.NourishAndroid && window.NourishAndroid.signInGoogle) {
+        return new Promise(function (resolve, reject) {
+          nativeGoogleDone = resolve;
+          nativeGoogleFail = reject;
+          try {
+            window.NourishAndroid.signInGoogle(window.GOOGLE_CLIENT_ID || '');
+          } catch (e) {
+            nativeGoogleDone = null; nativeGoogleFail = null;
+            reject(e);
+          }
+        });
+      }
       return ready().then(function () {
         var auth = window.firebase.auth();
         var prov = new window.firebase.auth.GoogleAuthProvider();

@@ -5332,7 +5332,7 @@
        day's carbohydrate lands, and it used to be a thing you had to
        remember to press after the gym. The workout is the press. */
     var h = hive();
-    if (h && h.trained) { try { h.trained(wo.dk); } catch (e) { /* My Day is not up */ } }
+    if (h && h.trained) { try { h.trained(wo.dk, wo); } catch (e) { /* My Day is not up */ } }
     return wo;
   }
 

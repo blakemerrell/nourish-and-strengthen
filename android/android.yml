@@ -1,0 +1,86 @@
+name: android
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apk-and-aab:
+    name: Build Android APK & Play Store AAB
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install web build tools and build web bundle into Android assets
+        run: |
+          npm ci
+          node tools/build-site.js android/app/src/main/assets/public
+
+      - name: Prepare signing keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          KS_FILE="$RUNNER_TEMP/nourish-release.jks"
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$KS_FILE"
+            echo "ANDROID_KEYSTORE_PATH=$KS_FILE" >> "$GITHUB_ENV"
+            echo "ANDROID_KEYSTORE_PASSWORD=${KS_PASS:-nourish123}" >> "$GITHUB_ENV"
+            echo "ANDROID_KEY_ALIAS=${KEY_ALIAS:-nourish}" >> "$GITHUB_ENV"
+            echo "ANDROID_KEY_PASSWORD=${KEY_PASS:-nourish123}" >> "$GITHUB_ENV"
+          else
+            keytool -genkeypair -v \
+              -keystore "$KS_FILE" \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -alias nourish \
+              -storepass nourish123 -keypass nourish123 \
+              -dname "CN=Blake Merrell, O=Nourish and Strengthen, C=US"
+            echo "ANDROID_KEYSTORE_PATH=$KS_FILE" >> "$GITHUB_ENV"
+            echo "ANDROID_KEYSTORE_PASSWORD=nourish123" >> "$GITHUB_ENV"
+            echo "ANDROID_KEY_ALIAS=nourish" >> "$GITHUB_ENV"
+            echo "ANDROID_KEY_PASSWORD=nourish123" >> "$GITHUB_ENV"
+          fi
+          echo "=== Signing Certificate Public Fingerprints (for Firebase Console) ==="
+          keytool -list -v -keystore "$KS_FILE" -storepass "${KS_PASS:-nourish123}" -alias "${KEY_ALIAS:-nourish}" | grep -E "SHA1:|SHA256:" || true
+
+      - name: Build signed Release APK and Play Store AAB
+        working-directory: android
+        env:
+          ANDROID_VERSION_CODE: ${{ github.run_number }}
+          ANDROID_VERSION_NAME: "1.0.${{ github.run_number }}"
+        run: |
+          gradle assembleRelease bundleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/nourish-and-strengthen.apk"
+          cp app/build/outputs/bundle/release/app-release.aab "$RUNNER_TEMP/nourish-and-strengthen.aab"
+
+      - name: Upload sideloadable APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nourish-and-strengthen-apk
+          path: ${{ runner.temp }}/nourish-and-strengthen.apk
+          retention-days: 90
+
+      - name: Upload Google Play Store AAB bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: nourish-and-strengthen-playstore-aab
+          path: ${{ runner.temp }}/nourish-and-strengthen.aab
+          retention-days: 90

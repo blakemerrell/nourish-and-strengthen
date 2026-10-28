@@ -151,6 +151,7 @@ window.Install = (function () {
     tell();
   });
   function standalone() {
+    if (window.NourishAndroid) return true;
     try { if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true; } catch (e) { /* no media queries */ }
     return navigator.standalone === true;
   }

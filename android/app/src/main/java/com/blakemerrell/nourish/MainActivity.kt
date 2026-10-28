@@ -96,10 +96,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val isNight = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-        val bgColor = if (isNight) 0xFF1A1612.toInt() else 0xFFFBF7EE.toInt()
+        val chromeColor = 0xFF26211C.toInt()
+
+        val statusBarResId = resources.getIdentifier("status_bar_height", "dimen", "android")
+        val statusBarDimenPx = if (statusBarResId > 0) resources.getDimensionPixelSize(statusBarResId) else 0
+        val density = resources.displayMetrics.density
+        val minTopInsetPx = maxOf(statusBarDimenPx, (48f * density).roundToInt())
+        val minBottomInsetPx = (24f * density).roundToInt()
 
         val rootLayout = FrameLayout(this).apply {
-            setBackgroundColor(bgColor)
+            setBackgroundColor(chromeColor)
+            setPadding(0, minTopInsetPx, 0, minBottomInsetPx)
         }
         webView = WebView(this)
         rootLayout.addView(
@@ -111,20 +118,43 @@ class MainActivity : AppCompatActivity() {
         )
         setContentView(rootLayout)
 
-        WindowInsetsControllerCompat(window, rootLayout).apply {
-            isAppearanceLightStatusBars = !isNight
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            // Top bar (--chrome) is always dark in both light and dark themes
+            isAppearanceLightStatusBars = false
             isAppearanceLightNavigationBars = !isNight
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { v, windowInsets ->
-            val insets = windowInsets.getInsets(
-                WindowInsetsCompat.Type.systemBars() or
-                    WindowInsetsCompat.Type.displayCutout() or
-                    WindowInsetsCompat.Type.ime()
+        val applySafeInsets = { dispatched: WindowInsetsCompat? ->
+            val rootInsets = ViewCompat.getRootWindowInsets(window.decorView)
+            val barsMask = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            val imeMask = WindowInsetsCompat.Type.ime()
+            val rootBars = rootInsets?.getInsets(barsMask)
+            val dispBars = dispatched?.getInsets(barsMask)
+            val rootIme = rootInsets?.getInsets(imeMask)
+            val dispIme = dispatched?.getInsets(imeMask)
+
+            val topPx = maxOf(minTopInsetPx, rootBars?.top ?: 0, dispBars?.top ?: 0)
+            val bottomPx = maxOf(
+                minBottomInsetPx,
+                rootBars?.bottom ?: 0,
+                dispBars?.bottom ?: 0,
+                rootIme?.bottom ?: 0,
+                dispIme?.bottom ?: 0
             )
-            v.setPadding(insets.left, insets.top, insets.right, insets.bottom)
+            val leftPx = maxOf(rootBars?.left ?: 0, dispBars?.left ?: 0)
+            val rightPx = maxOf(rootBars?.right ?: 0, dispBars?.right ?: 0)
+            rootLayout.setPadding(leftPx, topPx, rightPx, bottomPx)
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { v, windowInsets ->
+            applySafeInsets(windowInsets)
+            ViewCompat.onApplyWindowInsets(v, windowInsets)
+        }
+        ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { _, windowInsets ->
+            applySafeInsets(windowInsets)
             WindowInsetsCompat.CONSUMED
         }
+        rootLayout.post { applySafeInsets(null) }
 
         val assetLoader = WebViewAssetLoader.Builder()
             .setDomain("appassets.androidplatform.net")

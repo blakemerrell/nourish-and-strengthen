@@ -3125,6 +3125,7 @@
     S.mMarks = null;
     var res = PLACING.mEditDay(k, fn, seed);
     if (!seed && mDoneAt(k) > 0 && !mAllSlotsDone(k)) mSetDone(k, false);
+    if (!seed) mHealthPushMeals(k);
     if (!seed && S.view === 'today' && window.Today) window.Today.render();
     return res;
   }
@@ -3194,7 +3195,11 @@
   function mTrainWord(k) { return DAYFLAGS.mTrainWord(k); }
   function mStrengthOn(k) { return DAYFLAGS.mStrengthOn(k); }
   function mSetTrained(k, on) { return DAYFLAGS.mSetTrained(k, on); }
-  function mSetDone(k, on) { return DAYFLAGS.mSetDone(k, on); }
+  function mSetDone(k, on) {
+    var res = DAYFLAGS.mSetDone(k, on);
+    mHealthPushMeals(k);
+    return res;
+  }
   function mSkipped(k, sk) { return DAYFLAGS.mSkipped(k, sk); }
   function mHushed(k, sig) { return DAYFLAGS.mHushed(k, sig); }
   function mSetHush(k, sig) { return DAYFLAGS.mSetHush(k, sig); }
@@ -3216,7 +3221,11 @@
   var WEIGHIN = window.HiveParts.weighin({ MSTAMPS: MSTAMPS, mFoldDue: mFoldDue, mPut: mPut, mStamp: mStamp });
   function mWUnit() { return WEIGHIN.mWUnit(); }
   function mWShow(lb) { return WEIGHIN.mWShow(lb); }
-  function mWriteWeight(k, lb) { return WEIGHIN.mWriteWeight(k, lb); }
+  function mWriteWeight(k, lb) {
+    var res = WEIGHIN.mWriteWeight(k, lb);
+    mHealthPushWeight(k, lb);
+    return res;
+  }
   var WGAPI = WEIGHIN.WGAPI;
   var MWEIGHTS = WEIGHIN.MWEIGHTS;
   var MKG_LB = WEIGHIN.MKG_LB;
@@ -3225,6 +3234,7 @@
      names here, as declarations, so they answer from anywhere in this file. */
   var CHECKIN = window.HiveParts.checkin({ S: S, dayKey: dayKey, keyDate: keyDate, mFoldDue: mFoldDue, mPut: mPut, mStamp: mStamp });
   function mAmOf(k) { return CHECKIN.mAmOf(k); }
+  function mAmWrite(k, field, v) { return CHECKIN.mAmWrite(k, field, v); }
   function mAmClean(v) { return CHECKIN.mAmClean(v); }
   function mAmSum(k) { return CHECKIN.mAmSum(k); }
   function mAmDays() { return CHECKIN.mAmDays(); }
@@ -3233,6 +3243,159 @@
   function mCheckinClick(b, k) { return CHECKIN.mCheckinClick(b, k); }
   function mCheckinInput(el, k) { return CHECKIN.mCheckinInput(el, k); }
   var MAM = CHECKIN.MAM;
+
+  /* ---- Android Health Connect bridge (window.Health) ----
+   *
+     Two-way sync when running inside the Android app (window.NourishAndroid):
+       Read:  Steps (into MAM[nextDay].sy for completed days), Sleep (into
+              MAM[day].sl), and Scale Weight (into MWEIGHTS[day]).
+       Write: Morning weigh-ins (WeightRecord), eaten meals (NutritionRecord),
+              and completed workouts (ExerciseSessionRecord).
+     Quiet fallback everywhere else: manual entry works as usual. */
+  var healthPulling = false;
+  var healthMealSig = {};
+  var healthMeta = { status: '', lastSync: 0, todaySteps: 0 };
+
+  function mHealthPushWeight(k, lb) {
+    if (healthPulling || !(window.NourishAndroid && window.NourishAndroid.writeWeight)) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(k || ''))) return;
+    try {
+      window.NourishAndroid.writeWeight(JSON.stringify({
+        id: 'nourish-weight-' + k,
+        dayKey: k,
+        lb: lb > 0 ? Math.round(Number(lb) * 10) / 10 : 0
+      }));
+    } catch (e) { /* native bridge unavailable */ }
+  }
+
+  function mHealthPushMeals(k) {
+    if (!(window.NourishAndroid && window.NourishAndroid.writeNutrition)) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(k || ''))) return;
+    var day = mDay(k), done = mDoneAt(k) > 0;
+    mReadSlots().list.forEach(function (sl) {
+      var items = (day[sl.k] || []).filter(function (it) { return BY_ID[it.id] && BY_ID[it.id].macro; });
+      var eaten = done ? items : items.filter(function (it) { return it.eaten; });
+      var one = {}; one[sl.k] = eaten;
+      var tot = eaten.length ? mTotals(one).all : { kcal: 0, p: 0, f: 0, c: 0 };
+      var kcal = eaten.length ? Math.round(tot.kcal) : 0;
+      var p = eaten.length ? Math.round(tot.p * 10) / 10 : 0;
+      var f = eaten.length ? Math.round(tot.f * 10) / 10 : 0;
+      var c = eaten.length ? Math.round(tot.c * 10) / 10 : 0;
+      var name = eaten.map(function (it) { return BY_ID[it.id].name; }).join(', ');
+      var sig = kcal + ':' + p + ':' + f + ':' + c + ':' + name;
+      var key = k + ':' + sl.k;
+      if (healthMealSig[key] === sig || (!healthMealSig[key] && kcal === 0)) return;
+      healthMealSig[key] = sig;
+      try {
+        window.NourishAndroid.writeNutrition(JSON.stringify({
+          id: 'nourish-meal-' + k + '-' + sl.k,
+          dayKey: k,
+          slot: sl.k,
+          mealType: sl.t || sl.k,
+          name: name || sl.n,
+          kcal: kcal,
+          p: p,
+          f: f,
+          c: c
+        }));
+      } catch (e) { /* native bridge unavailable */ }
+    });
+  }
+
+  function mHealthPushWorkout(k, wo) {
+    if (!(wo && window.NourishAndroid && window.NourishAndroid.writeWorkout)) return;
+    var dk = /^\d{4}-\d{2}-\d{2}$/.test(String(k || '')) ? k : todayKey();
+    try {
+      window.NourishAndroid.writeWorkout(JSON.stringify({
+        id: 'nourish-wo-' + (wo.id || dk),
+        dayKey: dk,
+        startMs: Number(wo.st) || (Date.now() - 3600000),
+        endMs: Number(wo.en) || Date.now(),
+        title: wo.n ? 'Strengthen \u00b7 ' + wo.n : 'Strengthen Workout',
+        notes: wo.nt || ''
+      }));
+    } catch (e) { /* native bridge unavailable */ }
+  }
+
+  function healthRefreshStatus() {
+    if (!(window.NourishAndroid && window.NourishAndroid.getHealthStatus)) return null;
+    try {
+      var raw = window.NourishAndroid.getHealthStatus();
+      var obj = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (obj && typeof obj === 'object') {
+        if (obj.status) healthMeta.status = String(obj.status);
+        if (obj.lastSync) healthMeta.lastSync = Number(obj.lastSync) || healthMeta.lastSync;
+      }
+    } catch (e) { /* ignore malformed status */ }
+    return healthMeta;
+  }
+
+  window.Health = {
+    available: function () { return !!(window.NourishAndroid && window.NourishAndroid.getHealthStatus); },
+    state: function () {
+      var m = healthRefreshStatus();
+      return m && m.status ? m.status : 'unavailable';
+    },
+    lastSync: function () { return healthMeta.lastSync; },
+    todaySteps: function () { return healthMeta.todaySteps; },
+    connect: function () {
+      if (window.NourishAndroid && window.NourishAndroid.requestHealthPermissions) {
+        try { window.NourishAndroid.requestHealthPermissions(); } catch (e) { /* ignore */ }
+      }
+    },
+    sync: function () {
+      if (window.NourishAndroid && window.NourishAndroid.syncHealthNow) {
+        try { window.NourishAndroid.syncHealthNow(); } catch (e) { /* ignore */ }
+      }
+    },
+    openStore: function () {
+      if (window.NourishAndroid && window.NourishAndroid.openHealthConnect) {
+        try { window.NourishAndroid.openHealthConnect(); } catch (e) { /* ignore */ }
+      }
+    },
+    onData: function (raw) {
+      var data = null;
+      try { data = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch (e) { data = null; }
+      if (!data || typeof data !== 'object') return false;
+      if (data.status) healthMeta.status = String(data.status);
+      if (data.syncedAt) healthMeta.lastSync = Number(data.syncedAt) || Date.now();
+      var changed = false;
+      if (data.days && typeof data.days === 'object') {
+        var tk = todayKey();
+        Object.keys(data.days).sort().forEach(function (d) {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
+          var rec = data.days[d] || {};
+          if (typeof rec.sleepHours === 'number' && isFinite(rec.sleepHours) && rec.sleepHours > 0 && rec.sleepHours <= 24) {
+            var sl = Math.round(rec.sleepHours * 4) / 4;
+            if (sl > 0 && mAmOf(d).sl !== sl) { mAmWrite(d, 'sl', sl); changed = true; }
+          }
+          if (typeof rec.steps === 'number' && isFinite(rec.steps) && rec.steps > 0 && rec.steps <= 200000) {
+            var stp = Math.round(rec.steps);
+            if (d === tk) healthMeta.todaySteps = stp;
+            if (d < tk) {
+              var nx = keyDate(d); nx.setDate(nx.getDate() + 1);
+              var nk = dayKey(nx);
+              if (mAmOf(nk).sy !== stp) { mAmWrite(nk, 'sy', stp); changed = true; }
+            }
+          }
+          if (typeof rec.weightLb === 'number' && isFinite(rec.weightLb) && rec.weightLb >= 60 && rec.weightLb <= 700) {
+            var wlb = Math.round(rec.weightLb * 10) / 10;
+            if (MWEIGHTS[d] !== wlb) {
+              healthPulling = true;
+              try { mWriteWeight(d, wlb); } finally { healthPulling = false; }
+              changed = true;
+            }
+          }
+        });
+      }
+      if (changed) dinerKeep();
+      if (S.view === 'today' && window.Today) window.Today.render();
+      if (S.view === 'macros') renderMacros();
+      if (S.view === 'train' && window.Train) window.Train.render();
+      if (S.syncOpen) renderModal();
+      return changed;
+    }
+  };
 
   /* One drawn set for every verb on the tab — the bottom bar's tools and
      each meal's own — so they read as one family: a 20px box, a 1.5 stroke,
@@ -4804,6 +4967,31 @@
           '<div class="sync-row"><button class="btn-primary" data-sync="install">Install the app</button></div>'
         : '<p class="kit-say" role="status">' + say[st] + '</p>');
   }
+  function healthSyncHTML() {
+    if (!window.Health || !window.Health.available()) return '';
+    var st = window.Health.state();
+    var ago = window.Health.lastSync() ? agoWords(window.Health.lastSync()) : '';
+    var tSteps = window.Health.todaySteps();
+    if (st === 'granted') {
+      return '<div class="mt-div">Health Connect</div>' +
+        '<div class="kit-row"><span><b>Google Health Connect</b><small>Steps, sleep, weight, meals &amp; workouts' +
+        (tSteps > 0 ? ' \u00b7 ' + Math.round(tSteps).toLocaleString('en-US') + ' steps today' : '') +
+        (ago ? ' \u00b7 ' + ago : '') + '</small></span>' +
+        '<button class="ghost" data-mysync="health-sync">Sync now</button></div>';
+    }
+    if (st === 'update_required') {
+      return '<div class="mt-div">Health Connect</div>' +
+        '<p class="kit-say">Update Health Connect in Google Play to sync your steps, sleep, weight, meals and workouts.</p>' +
+        '<div class="sync-row"><button class="ghost" data-mysync="health-install">Open Health Connect</button></div>';
+    }
+    if (st === 'unavailable') {
+      return '<div class="mt-div">Health Connect</div>' +
+        '<p class="kit-say">Health Connect is not available on this device. Manual entry works as usual.</p>';
+    }
+    return '<div class="mt-div">Health Connect</div>' +
+      '<p class="kit-say">Sync steps, sleep and scale weight from your phone or watch, and log your meals, weigh-ins and workouts to Health Connect.</p>' +
+      '<div class="sync-row"><button class="btn-primary" data-mysync="health-connect">Connect Health Connect</button></div>';
+  }
   function syncHTML() {
     var st = window.Store.status;
     var configured = window.Store.configured;
@@ -4892,6 +5080,7 @@
         '<p class="sync-p">Your plan, meals and weigh-ins. Private to you. Signed in, ' +
         'your pantry comes with you to every device too.</p>' +
         mAccountBlockHTML() +
+        healthSyncHTML() +
 
         (window.Door ? '<div class="mt-div">What you want help with</div>' +
           [['d', 'Dinners and the shopping', 'Tonight\u2019s dinner and the list'], ['e', 'Eating well', 'What is left to eat'], ['w', 'A workout that fits', 'The next workout']].map(function (o) {
@@ -7678,6 +7867,9 @@
           renderModal();
         };
         if (act2 === 'retry') { mSyncStart(); renderModal(); return; }
+        if (act2 === 'health-connect') { if (window.Health) window.Health.connect(); return; }
+        if (act2 === 'health-sync') { if (window.Health) window.Health.sync(); return; }
+        if (act2 === 'health-install') { if (window.Health) window.Health.openStore(); return; }
         if (act2 === 'google') {
           /* On the redirect path this page is about to be replaced, and the
              flag that decides whether the next load reaches for Firebase at
@@ -8746,8 +8938,9 @@
        from Strengthen's own log when Nourish asks (mIsTrainingDay), so a
        workout deleted or moved to another day takes its training day with
        it. What is written is the day's target, whichever tab is showing. */
-    trained: function (k) {
+    trained: function (k, wo) {
       mCreditDay(k);
+      mHealthPushWorkout(k, wo);
       if (S.view === 'macros') renderMacros();
     },
     /* Nourish's own days, for Strengthen to start its picker from. */
@@ -8986,4 +9179,12 @@
   wire();
   window.Store.init(function () { renderAll(); mHouseWatch(); mJoinBack(); mHouseNotices(); dinerWatch(); });
   renderAll();
+  if (window.Health && window.Health.available() && window.Health.state() === 'granted') {
+    window.Health.sync();
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && window.Health && window.Health.available() && window.Health.state() === 'granted') {
+      window.Health.sync();
+    }
+  });
 })();

@@ -11,3 +11,12 @@ art/contact-sheet.png
 # The built site: tools/build-site.js writes it and the deploy publishes it.
 # It is never committed — the version it carries is computed, not kept.
 _site/
+
+# Android build outputs and copied web bundle
+android/.gradle/
+android/build/
+android/app/build/
+android/app/src/main/assets/public/
+android/local.properties
+*.keystore
+*.jks

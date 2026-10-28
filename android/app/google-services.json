@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1048714331242",
+    "project_id": "storehouse-recipe-book",
+    "storage_bucket": "storehouse-recipe-book.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1048714331242:android:897827d49a5b1bc67b3613",
+        "android_client_info": {
+          "package_name": "com.blakemerrell.nourish"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1048714331242-gap3m1vo0g1gv0ulmhqognqebrsudr43.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.blakemerrell.nourish",
+            "certificate_hash": "a837e88c03f333a883d356d9ed9a0a684859bd14"
+          }
+        },
+        {
+          "client_id": "1048714331242-cqu4prntuih1hrjv2r7tdkn0p8281gif.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3kHmlaPz50r7gmUxEEmntk8n_bsZQ_Wk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1048714331242-cqu4prntuih1hrjv2r7tdkn0p8281gif.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

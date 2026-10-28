@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "1048714331242-jgvhvmhmniqsq5va5gtfpfvs65l2oqar.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.blakemerrell.nourish",
+            "certificate_hash": "37bf243518dd38a2c5c6a657bc5fe56652655f46"
+          }
+        },
+        {
           "client_id": "1048714331242-qagvkesvn3p8a2b42qb201gf3op5cd76.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

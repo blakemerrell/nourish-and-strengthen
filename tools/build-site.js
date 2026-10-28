@@ -59,6 +59,7 @@ const EXCLUDE = [
   [/^tests\//, 'the suite'],
   [/^tools\//, 'the build and print tools'],
   [/^android\//, 'the Android app project'],
+  [/^scratch\//, 'local scratch files'],
   [/^design\//, 'the original prototype and its transcript; nothing links to it'],
   [/^art\/src\//, '105 MB of source engravings; art/*.png are prepared from them'],
   [/^art\/svg\//, 'a proposal for drawn section art, not used by any page'],

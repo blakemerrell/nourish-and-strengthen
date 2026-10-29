@@ -169,15 +169,23 @@
     var big = '<p class="td-big"><b>' + fmt(Math.abs(left)) + '</b> ' + (left >= 0 ? 'left today' : 'over today') +
       (e.training ? '<span class="td-lift">Lifting day</span>' : '') + '</p>';
     var bars = bar('Calories', e.kcal.have, e.kcal.want, '', 'td-kcal') + bar('Protein', e.p.have, e.p.want, ' g', 'td-p');
+    var w = e.water;
+    var wStrip = w ? '<div class="td-water"><span class="td-water-l">💧 <b>' + fmt(w.have) + '</b> / ' + fmt(w.want) + ' oz' +
+      (w.caf > 0 ? ' <small>· ' + fmt(w.caf) + ' mg caf</small>' : '') + '</span>' +
+      '<span class="td-water-btns">' +
+        '<button type="button" class="td-wbtn" data-td="water" data-oz="8" data-tk="' + esc(e.key || '') + '" aria-label="Add 8 oz water">+8 oz</button>' +
+        '<button type="button" class="td-wbtn" data-td="water" data-oz="16" data-tk="' + esc(e.key || '') + '" aria-label="Add 16 oz water">+16 oz</button>' +
+        (w.have > 0 ? '<button type="button" class="td-wbtn td-wsub" data-td="water" data-oz="-8" data-tk="' + esc(e.key || '') + '" aria-label="Remove 8 oz water">−8</button>' : '') +
+      '</span></div>' : '';
     if (!meals.some(function (m) { return !m.empty; })) {
       return card('eating', 'Eating', big + title('Nothing planned for today') +
         note('Nourish can fill your day from the recipes, to your ' + fmt(e.kcal.want) + ' calories and ' + fmt(e.p.want) + ' g of protein. Or add what you eat as you go.') +
-        bars + acts(btn(main, 'fill', 'Fill my day') + btn(false, 'addfood', 'Add food') + quiet('eatout', 'Eating out')), '', 'macros');
+        bars + wStrip + acts(btn(main, 'fill', 'Fill my day') + btn(false, 'addfood', 'Add food') + quiet('eatout', 'Eating out')), '', 'macros');
     }
     var eaten = meals.filter(function (m) { return m.eaten; }), open = meals.filter(function (m) { return !m.eaten && !m.empty; });
     return card('eating', 'Eating', big + (eaten.length ? eatenLine(eaten) : '') +
       (open.length ? '<div class="td-meals">' + open.map(function (m, i) { return mealRow(m, i === 0, e.key); }).join('') + '</div>' : '') +
-      bars + (open.length ? acts(quiet('eatout', 'Eating out')) : ''), '', 'macros');
+      bars + wStrip + (open.length ? acts(quiet('eatout', 'Eating out')) : ''), '', 'macros');
   }
 
   // ---------------------------------------------------------------- workout
@@ -338,6 +346,7 @@
     var H = window.Hive, a = b.getAttribute('data-td'), id = b.getAttribute('data-id');
     if (a === 'go') { H.go(b.getAttribute('data-go')); return; }
     if (a === 'eat') { H.eat(b.getAttribute('data-k'), b.getAttribute('data-tk')); return; }
+    if (a === 'water') { if (H.addWater) H.addWater(Number(b.getAttribute('data-oz')), b.getAttribute('data-tk')); return; }
     if (a === 'open') H.open(id);
     else if (a === 'swap') H.swap(id, b.getAttribute('data-day'));
     else if (a === 'cooked') H.cooked(id, b.getAttribute('data-day'), b.getAttribute('data-tk'));

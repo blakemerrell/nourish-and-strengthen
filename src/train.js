@@ -8181,7 +8181,56 @@
       if (k >= from && k <= today && ch.length) sess.push({ k: k, ch: pgMean(ch), up: pgMean(ch) > 0.005 });
     });
     return { span: span, from: from, to: today, ms: span === 'block' ? ms : null, days: days, byK: byK, wos: wos, sess: sess, per: per,
-      goalLb: nd ? nd.goalLb : null, plan: nd ? nd.plan : null, lb: nd ? nd.lb : null };
+      goalLb: nd ? nd.goalLb : null, plan: nd ? nd.plan : null, lb: nd ? nd.lb : null, waterGoalOz: nd && nd.waterGoalOz ? nd.waterGoalOz : 100 };
+  }
+
+  function pgReadinessHTML(D) {
+    if (!D.days || !D.days.length) return '';
+    var slDays = D.days.filter(function (d) { return fin(d.sl); });
+    var stDays = D.days.filter(function (d) { return fin(d.sy); });
+    var pDays = D.days.filter(function (d) { return d.tp > 0; });
+    var wtDays = D.days.filter(function (d) { return fin(d.wt) && d.wt > 0; });
+    if (!slDays.length && !stDays.length && !pDays.length) return '';
+
+    var lastSl = slDays.length ? slDays[slDays.length - 1].sl : null;
+    var avgSl = slDays.length ? pgMean(slDays.slice(-7).map(function (d) { return d.sl; })) : null;
+    var avgSt = stDays.length ? Math.round(pgMean(stDays.slice(-7).map(function (d) { return d.sy; }))) : null;
+    var pRecent = pDays.slice(-7);
+    var pHitPct = pRecent.length ? Math.round(pRecent.filter(function (d) { return d.p >= 0.9 * d.tp; }).length / pRecent.length * 100) : null;
+    var avgWt = wtDays.length ? Math.round(pgMean(wtDays.slice(-7).map(function (d) { return d.wt; }))) : null;
+
+    var score = 75, pts = 0, nP = 0;
+    if (lastSl !== null) { pts += lastSl >= 7.5 ? 95 : lastSl >= 7 ? 85 : lastSl >= 6 ? 65 : 45; nP++; }
+    if (avgSt !== null) { pts += avgSt >= 8000 ? 92 : avgSt >= 6000 ? 78 : 60; nP++; }
+    if (pHitPct !== null) { pts += pHitPct >= 80 ? 94 : pHitPct >= 60 ? 76 : 55; nP++; }
+    if (nP > 0) score = Math.round(pts / nP);
+
+    var tone = score >= 82 ? 'good' : score >= 68 ? 'steady' : 'warn';
+    var badge = score >= 82 ? 'Ready to push · ' + score + '%' : score >= 68 ? 'Steady recovery · ' + score + '%' : 'Protect recovery · ' + score + '%';
+    var coach = score >= 82
+      ? 'Sleep and protein are locked in — green light to push for an extra rep or weight jump on your top sets.'
+      : (lastSl !== null && lastSl < 7)
+      ? 'Last sleep was under 7 hours (' + lastSl.toFixed(1) + 'h). Keep technique crisp today and hit your protein target to protect muscle.'
+      : (pHitPct !== null && pHitPct < 70)
+      ? 'Protein has been short on a few recent days. Lock in today’s protein target so your lifts keep climbing.'
+      : 'Recovery is steady. Stick to your programmed working weights and log your sets.';
+
+    var pilSl = '<div class="tr-rd-pill ' + (lastSl === null ? '' : lastSl >= 7 ? 'ok' : 'warn') + '">' +
+      '<small>Sleep</small><b>' + (lastSl !== null ? lastSl.toFixed(1) + ' hr' : '—') + '</b>' +
+      '<span>' + (avgSl !== null ? avgSl.toFixed(1) + 'h 7d avg' : 'Log in morning') + '</span></div>';
+    var pilSt = '<div class="tr-rd-pill ' + (avgSt === null ? '' : avgSt >= 7500 ? 'ok' : '') + '">' +
+      '<small>Steps (7d)</small><b>' + (avgSt !== null ? fmtBig(avgSt) : '—') + '</b>' +
+      '<span>' + (avgSt !== null ? (avgSt >= 8000 ? 'Active burn ✓' : 'Daily avg') : 'Sync or log') + '</span></div>';
+    var pilPr = '<div class="tr-rd-pill ' + (pHitPct === null ? '' : pHitPct >= 80 ? 'ok' : 'warn') + '">' +
+      '<small>Protein hit</small><b>' + (pHitPct !== null ? pHitPct + '%' : '—') + '</b>' +
+      '<span>' + (avgWt !== null ? avgWt + ' oz water avg' : 'Last 7 days') + '</span></div>';
+
+    return '<div class="tr-card tr-readiness">' +
+      '<div class="tr-rd-head"><span class="tr-eyebrow">Readiness &amp; coaching</span>' +
+        '<span class="tr-rd-badge ' + tone + '">' + esc(badge) + '</span></div>' +
+      '<div class="tr-rd-grid">' + pilSl + pilSt + pilPr + '</div>' +
+      '<p class="tr-rd-coach">' + esc(coach) + '</p>' +
+    '</div>';
   }
 
   function pgCard(eye, body, math) {
@@ -8197,18 +8246,21 @@
     for (var i = 0; i < n; i++) s += '<i class="' + (i < on ? 'on' : '') + '"></i>';
     return '<span class="tr-pg-dots" role="img" aria-label="' + esc(say) + '">' + s + '</span>';
   }
-  /* Sessions split by a kind of day, each half a row of dots: blue for a
-     stronger session, grey for not. */
+  /* Sessions split by a kind of day, each half a row of dots and a horizontal
+     percentage bar so you can see at a glance what moves your lifts. */
   function pgSplit(sess, test, yes, no) {
     var a = sess.filter(function (s) { return test(s) === true; }), b = sess.filter(function (s) { return test(s) === false; });
     var up = function (l) { return l.filter(function (s) { return s.up; }).length; };
-    var grp = function (label, l) {
-      var u = up(l), say = u + ' of ' + l.length + ' workouts were stronger';
-      return '<div class="tr-pg-grp"><div>' + esc(label) + '</div>' + pgDots(u, l.length, say) + '<small>' + esc(say) + '</small></div>';
+    var grp = function (label, l, tone) {
+      var u = up(l), pct = l.length ? Math.round(u / l.length * 100) : 0;
+      var say = u + ' of ' + l.length + ' workouts were stronger';
+      return '<div class="tr-pg-grp"><div class="tr-pg-glab"><span>' + esc(label) + '</span><b>' + pct + '%</b></div>' +
+        '<div class="tr-pg-cbar" aria-hidden="true"><i class="' + tone + '" style="width:' + pct + '%"></i></div>' +
+        '<div class="tr-pg-gfoot">' + pgDots(u, l.length, say) + '<small>' + esc(say) + '</small></div></div>';
     };
     var hasA = a.length >= PG_MIN, hasB = b.length >= PG_MIN;
     return { a: a, b: b, ok: hasA && hasB, any: hasA || hasB,
-      html: (hasA ? grp(yes, a) : '') + (hasB ? grp(no, b) : '') };
+      html: (hasA ? grp(yes, a, 'yes') : '') + (hasB ? grp(no, b, 'no') : '') };
   }
 
   // ---- on pace
@@ -8242,6 +8294,18 @@
     } else {
       kid = 'Your trend is <b>' + fmtN(Math.round(now * 10) / 10) + ' lb</b>, ' + (Math.abs(rate) < 0.1 ? 'holding steady' : (losing ? 'down ' : 'up ') + fmtN(Math.round(Math.abs(rate) * 10) / 10) + ' lb a week') + '.' +
         (goal ? '' : ' Set a goal weight in your plan and this shows how far along you are.');
+    }
+    if (ws.length >= 3) {
+      var tailW = ws.slice(-14), tailT = tr.slice(-14);
+      var wVals = tailW.map(function (d) { return d.w; }).concat(tailT);
+      var wLo = Math.min.apply(null, wVals) - 0.4, wHi = Math.max.apply(null, wVals) + 0.4;
+      var wx = function (j) { return 14 + j * 302 / Math.max(1, tailW.length - 1); };
+      var wy = function (v) { return 12 + (wHi - v) / Math.max(0.5, wHi - wLo) * 48; };
+      var tPath = tailT.map(function (v, j) { return (j ? 'L' : 'M') + wx(j).toFixed(1) + ' ' + wy(v).toFixed(1); }).join(' ');
+      var wDots = tailW.map(function (d, j) { return '<circle cx="' + wx(j).toFixed(1) + '" cy="' + wy(d.w).toFixed(1) + '" r="2.2" class="tr-pg-wdot"/>'; }).join('');
+      body += '<svg class="tr-pg-svg tr-pg-wchart" viewBox="0 0 330 74" aria-hidden="true">' +
+        wDots + '<path d="' + tPath + '" class="tr-pg-wtrend"/>' +
+        '<text x="14" y="70" class="tr-pg-t">Scale dots &amp; smooth trend (' + fmtN(Math.round(now * 10) / 10) + ' lb now)</text></svg>';
     }
     var planLb = D.plan !== null && D.lb ? -D.plan * D.lb : null;
     var math = [['Rate, last 3 weeks', pgSigned(rate, 2) + ' lb/wk', rf ? '± ' + (1.96 * rf.se).toFixed(2) + ' (95% CI), n = ' + rf.n : 'n = ' + ws.length]];
@@ -8289,13 +8353,18 @@
     var all = wl.concat(sl), lo = Math.min.apply(null, all.concat([0])) - 0.005, hi = Math.max.apply(null, all.concat([0])) + 0.005;
     var x = function (j) { return 30 + j * 276 / Math.max(1, nW - 1); }, y = function (v) { return 14 + (hi - v) / (hi - lo) * 130; };
     var path = function (a) { var s = '', on = false; a.forEach(function (v, j) { if (!fin(v)) return; s += (on ? 'L' : 'M') + x(j).toFixed(1) + ' ' + y(v).toFixed(1) + ' '; on = true; }); return s; };
+    var firstX = function (a) { for (var j = 0; j < a.length; j++) if (fin(a[j])) return x(j); return x(0); };
     var lastX = function (a) { for (var j = a.length - 1; j >= 0; j--) if (fin(a[j])) return x(j); return x(0); };
     var grid = [hi - 0.005, 0, lo + 0.005].map(function (g) {
       return '<line x1="30" x2="306" y1="' + y(g).toFixed(1) + '" y2="' + y(g).toFixed(1) + '" class="tr-pg-grid' + (Math.abs(g) < 1e-9 ? ' z' : '') + '"/>' +
         '<text x="0" y="' + (y(g) + 4).toFixed(1) + '" class="tr-pg-t">' + (Math.abs(g) < 1e-9 ? '0%' : pgPct(g, 0)) + '</text>';
     }).join('');
+    var sArea = path(Sx) + 'L' + lastX(Sx).toFixed(1) + ' ' + y(0).toFixed(1) + ' L' + firstX(Sx).toFixed(1) + ' ' + y(0).toFixed(1) + ' Z';
     var svg = '<svg class="tr-pg-svg" viewBox="0 0 330 160" role="img" aria-label="Weight ' + pgPct(wNow) + ', strength ' + pgPct(sNow) + ' since ' + esc(pgDate(D.from)) + '">' + grid +
+      '<path d="' + sArea + '" class="tr-pg-s-fill"/>' +
       '<path d="' + path(W) + '" class="tr-pg-w"/><path d="' + path(Sx) + '" class="tr-pg-s"/>' +
+      '<circle cx="' + lastX(Sx).toFixed(1) + '" cy="' + y(sNow).toFixed(1) + '" r="3.5" class="tr-pg-sdot"/>' +
+      '<circle cx="' + lastX(W).toFixed(1) + '" cy="' + y(wNow).toFixed(1) + '" r="3.5" class="tr-pg-wdot-end"/>' +
       '<text x="' + lastX(Sx).toFixed(1) + '" y="' + (y(sNow) - 8).toFixed(1) + '" class="tr-pg-lab s" text-anchor="end">Strength ' + pgPct(sNow) + '</text>' +
       '<text x="' + lastX(W).toFixed(1) + '" y="' + (y(wNow) + 16).toFixed(1) + '" class="tr-pg-lab w" text-anchor="end">Weight ' + pgPct(wNow) + '</text></svg>';
     var kid = wNow < -0.003 && sNow >= -0.005 ? 'Weight is going <b>down</b> and strength is ' + (sNow > 0.005 ? 'going <b>up</b>' : '<b>holding</b>') + '. That means you’re losing fat, not muscle.'
@@ -8355,6 +8424,30 @@
   // the day before a session, as Nourish saw it
   function pgBefore(D, k) { var d = new Date(k + 'T12:00:00'); d.setDate(d.getDate() - 1); return D.byK[dayKey(d)] || null; }
 
+  // 14-day Fuel & Protein bar chart for Food -> lifts
+  function pgFoodChartSVG(days) {
+    var fDays = days.filter(function (d) { return d.kc > 0 || d.tp > 0; }).slice(-14);
+    if (fDays.length < 2) return '';
+    var maxK = Math.max.apply(null, fDays.map(function (d) { return Math.max(d.kc || 0, d.tk || 2000); }).concat([2200])) * 1.1;
+    var avgTk = pgMean(fDays.map(function (d) { return d.tk || 2000; }));
+    var ty = 64 - Math.round((avgTk / maxK) * 52);
+    var bw = Math.min(18, Math.floor(280 / fDays.length) - 3);
+    var step = 296 / Math.max(1, fDays.length);
+    var bars = fDays.map(function (d, i) {
+      var kc = d.kc || (d.p ? d.p * 10 : 1600);
+      var h = Math.max(6, Math.round((kc / maxK) * 52));
+      var bx = Math.round(18 + i * step);
+      var by = 64 - h;
+      var pHit = d.tp > 0 && d.p >= 0.9 * d.tp;
+      return '<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + h + '" rx="3" class="tr-pg-fbar ' + (pHit ? 'hit' : 'miss') + '"/>';
+    }).join('');
+    return '<svg class="tr-pg-svg tr-pg-fchart" viewBox="0 0 330 82" aria-hidden="true">' +
+      '<line x1="14" x2="316" y1="' + ty + '" y2="' + ty + '" class="tr-pg-grid z"/>' +
+      bars +
+      '<text x="14" y="77" class="tr-pg-t">Last ' + fDays.length + ' logged days · Green = Protein hit ✓ · Dashed = Cal goal</text>' +
+    '</svg>';
+  }
+
   // ---- food -> lifts: protein and carbohydrate the day before
   function pgFood(D) {
     var sess = D.sess;
@@ -8374,8 +8467,31 @@
     if (hit.length) math.push(['Days you hit protein', hitN + ' of ' + hit.length, Math.round(hitN / hit.length * 100) + '%']);
     var summary = (!pro.any && !carb.any && hit.length)
       ? pgSay('Protein target hit on <b>' + hitN + ' of ' + hit.length + '</b> logged days (' + Math.round(hitN / hit.length * 100) + '%).') : '';
-    return pgCard('Food → lifts', (pro.any ? pro.html : '') + (carb.any ? carb.html : '') + summary +
+    return pgCard('Food → lifts', pgFoodChartSVG(D.days) + (pro.any ? pro.html : '') + (carb.any ? carb.html : '') + summary +
       (!pro.ok || !carb.ok ? pgWait((pro.ok ? 'Carbs' : 'Protein') + ' needs ' + PG_MIN + ' or more workouts after each kind of day first.') : ''), math);
+  }
+
+  // 14-day Sleep & Steps sparkline/bar chart for Sleep & steps -> lifts
+  function pgRestChartSVG(slDays, stDays) {
+    var recSl = slDays.slice(-14), recSt = stDays.slice(-14);
+    if (recSl.length < 2 && recSt.length < 2) return '';
+    var svg = '';
+    if (recSl.length >= 2) {
+      var bw = Math.min(18, Math.floor(280 / recSl.length) - 3);
+      var step = 296 / Math.max(1, recSl.length);
+      var y7 = 58 - Math.round((7 / 10) * 46);
+      var bars = recSl.map(function (d, i) {
+        var h = Math.max(6, Math.min(48, Math.round((d.sl / 10) * 46)));
+        var bx = Math.round(18 + i * step);
+        var by = 58 - h;
+        return '<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + h + '" rx="3" class="tr-pg-fbar ' + (d.sl >= 7 ? 'hit' : 'miss') + '"/>';
+      }).join('');
+      svg += '<svg class="tr-pg-svg tr-pg-schart" viewBox="0 0 330 76" aria-hidden="true">' +
+        '<line x1="14" x2="316" y1="' + y7 + '" y2="' + y7 + '" class="tr-pg-grid z"/>' +
+        bars +
+        '<text x="14" y="72" class="tr-pg-t">Sleep last ' + recSl.length + ' nights · Green = 7h+ recovery goal</text></svg>';
+    }
+    return svg;
   }
 
   // ---- sleep and steps -> lifts, from the morning check-in
@@ -8385,7 +8501,8 @@
       'After 7 or more hours of sleep', 'After under 7 hours');
     var st = D.days.filter(function (d) { return fin(d.sy); }), cr = D.days.filter(function (d) { return d.cr !== undefined; });
     var slDays = D.days.filter(function (d) { return fin(d.sl); });
-    if (!slp.any && !st.length && !cr.length && !slDays.length) {
+    var wtDays = D.days.filter(function (d) { return fin(d.wt) && d.wt > 0; });
+    if (!slp.any && !st.length && !cr.length && !slDays.length && !wtDays.length) {
       return pgCard('Sleep &amp; steps → lifts', pgWait('Fill in the morning check-in (Today › Weighed in) for about three weeks and this shows whether sleep and steps help your lifts.'));
     }
     var last7 = st.slice(-7), prev7 = st.slice(-14, -7), say = '';
@@ -8393,6 +8510,7 @@
     if (last7.length) say += 'Steps: <b>' + fmtBig(pgMean(last7.map(function (d) { return d.sy; }))) + '</b> a day lately' +
       (prev7.length >= 3 ? ', from ' + fmtBig(pgMean(prev7.map(function (d) { return d.sy; }))) + ' the week before' : '') + '. ';
     if (cr.length) say += 'Creatine: ' + cr.filter(function (d) { return d.cr === 1; }).length + ' of ' + cr.length + ' mornings.';
+    if (wtDays.length) say += (say ? ' ' : '') + 'Water: <b>' + Math.round(pgMean(wtDays.map(function (d) { return d.wt; }))) + ' oz</b>/day avg.';
     var pairs = sess.map(function (s) { var d = D.byK[s.k]; return d && fin(d.sl) ? [d.sl, s.ch] : null; }).filter(Boolean);
     var fit = pgFit(pairs.map(function (q) { return q[0]; }), pairs.map(function (q) { return q[1]; }));
     var math = [];
@@ -8404,8 +8522,9 @@
     sess.forEach(function (s) { lk[s.k] = 1; });
     var on = D.days.filter(function (d) { return fin(d.mg) && lk[d.k]; }), off = D.days.filter(function (d) { return fin(d.mg) && !lk[d.k]; });
     if (on.length >= PG_MIN && off.length >= PG_MIN) math.push(['Caffeine on lift days', Math.round(pgMean(on.map(function (d) { return d.mg; }))) + ' mg avg', 'vs ' + Math.round(pgMean(off.map(function (d) { return d.mg; }))) + ' mg other days']);
+    if (wtDays.length) math.push(['Water intake', Math.round(pgMean(wtDays.map(function (d) { return d.wt; }))) + ' oz/day', wtDays.length + ' days logged']);
     if (!math.length && slDays.length) math.push(['Average sleep', pgMean(slDays.map(function (d) { return d.sl; })).toFixed(1) + ' hr', slDays.length + ' mornings']);
-    return pgCard('Sleep &amp; steps → lifts', (slp.any ? slp.html : '') +
+    return pgCard('Sleep &amp; steps → lifts', pgRestChartSVG(slDays, st) + (slp.any ? slp.html : '') +
       (!slp.ok ? pgWait('Sleep needs ' + PG_MIN + ' or more workouts after each kind of night first.') : '') +
       (say ? pgSay(say) : ''), math);
   }
@@ -8419,6 +8538,7 @@
         '<button data-t="rvdeep" data-v="0" aria-pressed="' + !S.rvDeep + '">Simple</button>' +
         '<button data-t="rvdeep" data-v="1" aria-pressed="' + !!S.rvDeep + '">The math</button></div>' +
       '<p class="tr-pg-head">' + head + '</p>' +
+      pgReadinessHTML(D) +
       pgPace(D) + pgMuscle(D) + pgMuscles(D) + pgFood(D) + pgRest(D);
   }
 

@@ -3239,6 +3239,9 @@
   function mAmSum(k) { return CHECKIN.mAmSum(k); }
   function mAmDays() { return CHECKIN.mAmDays(); }
   function mDrinksClean(v) { return CHECKIN.mDrinksClean(v); }
+  function mWaterGoalOz(lb) { return CHECKIN.mWaterGoalOz(lb); }
+  function mCafMg(k) { return CHECKIN.mCafMg(k); }
+  function mHydrationCardHTML(k, goalOz) { return CHECKIN.mHydrationCardHTML(k, goalOz); }
   function mCheckinHTML(k) { return CHECKIN.mCheckinHTML(k); }
   function mCheckinClick(b, k) { return CHECKIN.mCheckinClick(b, k); }
   function mCheckinInput(el, k) { return CHECKIN.mCheckinInput(el, k); }
@@ -3495,7 +3498,7 @@
 
   /* src/weighcard.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var WEIGHCARD = window.HiveParts.weighcard({ MWEIGHTS: MWEIGHTS, S: S, kcalOf: kcalOf, mAhead: mAhead, mDayTargets: mDayTargets, mIsTrainingDay: mIsTrainingDay, mLbWord: mLbWord, mLineHTML: mLineHTML, mLsFull: mLsFull, mLsFullSay: mLsFullSay, mCheckinHTML: mCheckinHTML, mMorningHTML: mMorningHTML, mMovedHTML: mMovedHTML, mPlanDetail: mPlanDetail, mPlanFace: mPlanFace, mSparkSVG: mSparkSVG, mSynced: mSynced, mTrainDays: mTrainDays, mTrainRow: mTrainRow, mTrainWord: mTrainWord, mTrainedSaid: mTrainedSaid, mWShow: mWShow, mWUnit: mWUnit, mWeekOn: mWeekOn, mWeightStats: mWeightStats, todayKey: todayKey });
+  var WEIGHCARD = window.HiveParts.weighcard({ MWEIGHTS: MWEIGHTS, S: S, WGAPI: WGAPI, kcalOf: kcalOf, mAhead: mAhead, mDayTargets: mDayTargets, mIsTrainingDay: mIsTrainingDay, mLbWord: mLbWord, mLineHTML: mLineHTML, mLsFull: mLsFull, mLsFullSay: mLsFullSay, mCheckinHTML: mCheckinHTML, mMorningHTML: mMorningHTML, mMovedHTML: mMovedHTML, mPlanDetail: mPlanDetail, mPlanFace: mPlanFace, mSparkSVG: mSparkSVG, mSynced: mSynced, mTrainDays: mTrainDays, mTrainRow: mTrainRow, mTrainWord: mTrainWord, mTrainedSaid: mTrainedSaid, mWShow: mWShow, mWUnit: mWUnit, mWeekOn: mWeekOn, mWeightStats: mWeightStats, todayKey: todayKey });
   function macroWeighHTML(k) { return WEIGHCARD.macroWeighHTML(k); }
 
   /* src/budget.js, handed what it reads of the app's and kept under its own
@@ -3544,7 +3547,7 @@
 
   /* src/myday.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var MYDAY = window.HiveParts.myday({ MDAYS: MDAYS, MWEIGHTS: MWEIGHTS, M_MONS: M_MONS, S: S, WGAPI: WGAPI, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mpIcon: mpIcon, leaf: leaf, mAhead: mAhead, mBatchStrip: mBatchStrip, mCanFav: mCanFav, mCascadeLineHTML: mCascadeLineHTML, mCopyItems: mCopyItems, mDay: mDay, mDayTargets: mDayTargets, mDialUnit: mDialUnit, mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mEditDay: mEditDay, mFillRoom: mFillRoom, mFoldForget: mFoldForget, mIcon: mIcon, mIsFav: mIsFav, mLatestKey: mLatestKey, mLongDate: mLongDate, mMacLine: mMacLine, mMarkAccountUI: mMarkAccountUI, mMealAsk: mMealAsk, mMealPillsSay: mMealPillsSay, mReadSlots: mReadSlots, mSaltChip: mSaltChip, mServeG: mServeG, mSkipped: mSkipped, mSnapTargets: mSnapTargets, mViewKey: mViewKey, mWeekHTML: mWeekHTML, mWhyChip: mWhyChip, mWhyStrip: mWhyStrip, macroFootHTML: macroFootHTML, macroWeighHTML: macroWeighHTML, syncShrunk: syncShrunk, todayKey: todayKey, mDialFromX: mDialFromX, mDialG: mDialG, mDialMeasure: mDialMeasure, mDialText: mDialText, LIVE: LIVE });
+  var MYDAY = window.HiveParts.myday({ MDAYS: MDAYS, MWEIGHTS: MWEIGHTS, M_MONS: M_MONS, S: S, WGAPI: WGAPI, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mpIcon: mpIcon, leaf: leaf, mAhead: mAhead, mBatchStrip: mBatchStrip, mCanFav: mCanFav, mCascadeLineHTML: mCascadeLineHTML, mCopyItems: mCopyItems, mDay: mDay, mDayTargets: mDayTargets, mDialUnit: mDialUnit, mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mEditDay: mEditDay, mFillRoom: mFillRoom, mFoldForget: mFoldForget, mHydrationCardHTML: mHydrationCardHTML, mIcon: mIcon, mIsFav: mIsFav, mLatestKey: mLatestKey, mLongDate: mLongDate, mMacLine: mMacLine, mMarkAccountUI: mMarkAccountUI, mMealAsk: mMealAsk, mMealPillsSay: mMealPillsSay, mReadProfile: mReadProfile, mReadSlots: mReadSlots, mSaltChip: mSaltChip, mServeG: mServeG, mSkipped: mSkipped, mSnapTargets: mSnapTargets, mViewKey: mViewKey, mWaterGoalOz: mWaterGoalOz, mWeekHTML: mWeekHTML, mWhyChip: mWhyChip, mWhyStrip: mWhyStrip, macroFootHTML: macroFootHTML, macroWeighHTML: macroWeighHTML, syncShrunk: syncShrunk, todayKey: todayKey, mDialFromX: mDialFromX, mDialG: mDialG, mDialMeasure: mDialMeasure, mDialText: mDialText, LIVE: LIVE });
   function renderMacros() {
     var r = MYDAY.renderMacros();
     if (S.view === 'today' && window.Today) window.Today.render();
@@ -6799,6 +6802,23 @@
          while there is no plan to adjust, behind the press once there is. */
       if (e.target.closest('#macroTargBtn')) { if (WGAPI.hide) WGAPI.hide(); mOpenTargets(); return; }
       if (e.target.closest('#macroWeekBtn')) { if (mWeekOn()) { if (WGAPI.hide) WGAPI.hide(); window.Train.openCheckin(); } return; }
+      var mws = e.target.closest('[data-mwsave]');
+      if (mws) {
+        var wIn0 = $('mWeight');
+        if (wIn0) {
+          clearTimeout(mwTimer);
+          var k0 = mViewKey(), gotw = mWeightOf(wIn0.value, k0);
+          mWeightSay(gotw.big ? 'big' : !!gotw.bad, gotw.odd ? gotw : null);
+          if (!gotw.bad && !gotw.odd && !gotw.empty) {
+            mWriteWeight(k0, gotw.lb);
+            mws.classList.add('saved');
+            mws.textContent = 'Saved ✓';
+            if (WGAPI.week) WGAPI.week();
+          }
+          wIn0.blur();
+        }
+        return;
+      }
       /* The check-in's rows (src/checkin.js): it changes the record, this
          redraws. The day is the one on screen, which in the sheet is today. */
       var am = e.target.closest('[data-am]');
@@ -6817,6 +6837,26 @@
       if (!wf) return;
       S.mFold.weigh = !(wf.getAttribute('aria-expanded') === 'false');
       keepingFocus(renderMacros);
+    });
+
+    /* Water & Drinks card on Nourish (#macroSlots): delegates [data-hyd] and [data-hydmg]
+       to the same checkin handlers as the morning card. */
+    $('macroSlots').addEventListener('click', function (e) {
+      var hm = e.target.closest && e.target.closest('[data-hyd]');
+      if (!hm) return;
+      if (mCheckinClick(hm, mViewKey())) keepingFocus(renderMacros);
+    });
+    var hydAmTimer = null;
+    $('macroSlots').addEventListener('input', function (e) {
+      if (!e.target.hasAttribute || !e.target.hasAttribute('data-hydmg')) return;
+      clearTimeout(hydAmTimer);
+      var el = e.target, key = mViewKey();
+      hydAmTimer = setTimeout(function () { mCheckinInput(el, key); }, 500);
+    });
+    $('macroSlots').addEventListener('change', function (e) {
+      if (!e.target.hasAttribute || !e.target.hasAttribute('data-hydmg')) return;
+      clearTimeout(hydAmTimer);
+      if (mCheckinInput(e.target, mViewKey())) renderMacros();
     });
 
     /* What counts as a weight, in one place.
@@ -6861,7 +6901,7 @@
      * and closing puts it back where it lives. One card, one set of rules,
      * the comma refused and the odd number asked about wherever it is typed.
      * Under it, the week before today, any morning fixable in place. */
-    var WG = { open: false, home: null, next: null, fold: undefined, fix: '' };
+    var WG = { open: false, home: null, next: null, fold: undefined, fix: '', histOpen: false };
     /* The sheet exists only while it is open: built here, and gone when it
        shuts, so nothing hidden is left on the page to be found instead. */
     function wgFrame() {
@@ -6874,7 +6914,7 @@
       el.innerHTML = '<div class="sheet wg-sheet" role="dialog" aria-modal="true" aria-label="Good morning: weigh in and check in">' +
         '<div class="sheet-top"><div class="sheet-eyebrow">Good morning</div>' +
           '<button class="sheet-x" data-wclose="1" aria-label="Close">&times;</button></div>' +
-        '<div id="weighHost"></div><div id="weighWeek"></div></div>';
+        '<div id="weighHost"></div><div id="weighWeek"></div><div id="weighFoot"></div></div>';
       el.addEventListener('click', wgClick);
       el.addEventListener('keydown', function (e) {
         if (e.target.id === 'wFixIn' && e.key === 'Enter') { var b = el.querySelector('[data-wsave]'); if (b) b.click(); }
@@ -6903,7 +6943,26 @@
               '<span class="wg-note" id="wFixNote" role="status"></span></div>'
           : '<button class="wg-row" data-wfix="' + key + '"><span>' + day + '</span><b>' + (v ? mWShow(v) + ' ' + u : '<i>none</i>') + '</b><i aria-hidden="true">\u203a</i></button>';
       }
-      el.innerHTML = '<div class="dsh-rl">The last week \u00b7 tap one to fix it</div>' + rows;
+      var hOpen = !!(WG.histOpen || WG.fix);
+      var st = mWeightStats();
+      var avgBadge = st && st.n >= 2 ? ' \u00b7 ' + mWShow(st.avg7) + ' ' + u + ' 7-day avg' : '';
+      el.innerHTML = '<button type="button" class="dsh-rl wg-hist-tog" data-wtoggle="1" aria-expanded="' + hOpen + '">' +
+        '<span>The last week' + avgBadge + ' \u00b7 tap one to fix it</span><i aria-hidden="true">' + (hOpen ? '\u25b4' : '\u25be') + '</i></button>' +
+        '<div class="wg-hist-list' + (hOpen ? ' open' : '') + '">' + rows + '</div>';
+      var foot = $('weighFoot');
+      if (foot) {
+        var tk = todayKey(), amR = mAmOf(tk), doneN = 0;
+        if (MWEIGHTS[tk] > 0) doneN++;
+        if (typeof amR.sl === 'number') doneN++;
+        if (typeof amR.sy === 'number') doneN++;
+        if (amR.cr === 1) doneN++;
+        foot.innerHTML = '<div class="wg-foot-bar">' +
+          '<span class="wg-prog' + (doneN === 4 ? ' all' : '') + '">' +
+            (doneN === 4 ? 'All 4 checked in ✓' : doneN + ' of 4 checked in') +
+          '</span>' +
+          '<button type="button" class="btn-primary wg-done-btn" data-wdone="1">Save &amp; Done ✓</button>' +
+        '</div>';
+      }
     }
     function wgOpen() {
       if (WG.open || !$('macroWeigh')) return;
@@ -6911,6 +6970,7 @@
          nothing else, weighing opens it, its own handle folds it. */
       S.macroDate = null;                // the sheet is about this morning
       WG.fix = '';
+      WG.histOpen = false;
       wgFrame();
       wgPut(false);
       WG.open = true;
@@ -6937,8 +6997,19 @@
     WGAPI.isOpen = function () { return WG.open; };
     function wgClick(e) {
       if (e.target.closest('[data-wclose]') && (e.target === e.currentTarget || e.target.closest('.sheet-x'))) { close(); return; }
+      if (e.target.closest('[data-wtoggle]')) { WG.histOpen = !WG.histOpen; wgWeek(); return; }
+      if (e.target.closest('[data-wdone]')) {
+        var tk = todayKey(), wBox = $('mWeight'), stBox = $('amSteps');
+        if (wBox) {
+          var got0 = mWeightOf(wBox.value, tk);
+          if (!got0.bad && !got0.odd && !got0.empty) mWriteWeight(tk, got0.lb);
+        }
+        if (stBox) mCheckinInput(stBox, tk);
+        close();
+        return;
+      }
       var fx = e.target.closest('[data-wfix]');
-      if (fx) { WG.fix = fx.dataset.wfix; wgWeek(); var fi = $('wFixIn'); if (fi) { fi.focus(); fi.select(); } return; }
+      if (fx) { WG.fix = fx.dataset.wfix; WG.histOpen = true; wgWeek(); var fi = $('wFixIn'); if (fi) { fi.focus(); fi.select(); } return; }
       if (e.target.closest('[data-wcancel]')) { WG.fix = ''; wgWeek(); return; }
       var sv = e.target.closest('[data-wsave]');
       if (sv) {
@@ -6972,7 +7043,17 @@
       if (e.target.id !== 'amSteps' && !e.target.hasAttribute('data-ammg')) return;
       clearTimeout(amTimer);
       var el = e.target, key = mViewKey();
-      amTimer = setTimeout(function () { mCheckinInput(el, key); }, 500);
+      if (el.id === 'amSteps') {
+        var sb = document.querySelector('#macroWeigh [data-am="sysave"]');
+        if (sb) { sb.classList.remove('saved'); sb.textContent = 'Save'; }
+      }
+      amTimer = setTimeout(function () {
+        if (mCheckinInput(el, key) && el.id === 'amSteps') {
+          var sb2 = document.querySelector('#macroWeigh [data-am="sysave"]');
+          if (sb2) { sb2.classList.add('saved'); sb2.textContent = 'Saved ✓'; }
+          if (WGAPI.week) WGAPI.week();
+        }
+      }, 500);
     });
     $('macroWeigh').addEventListener('change', function (e) {
       if (e.target.id !== 'amSteps' && !e.target.hasAttribute('data-ammg')) return;
@@ -6984,8 +7065,15 @@
       clearTimeout(mwTimer);
       var key = mViewKey(), got = mWeightOf(e.target.value, key);
       mWeightSay(got.big ? 'big' : !!got.bad, got.odd ? got : null);
+      var wb = document.querySelector('#macroWeigh [data-mwsave]');
+      if (wb) { wb.classList.remove('saved'); wb.textContent = 'Save'; }
       if (got.bad || got.odd) return;            // nothing is written from nonsense, or unasked
-      mwTimer = setTimeout(function () { mWriteWeight(key, got.lb); }, 600);
+      mwTimer = setTimeout(function () {
+        mWriteWeight(key, got.lb);
+        var wb2 = document.querySelector('#macroWeigh [data-mwsave]');
+        if (wb2) { wb2.classList.add('saved'); wb2.textContent = 'Saved ✓'; }
+        if (WGAPI.week) WGAPI.week();
+      }, 600);
     });
     $('macroWeigh').addEventListener('change', function (e) {
       if (e.target.id !== 'mWeight') return;
@@ -8790,6 +8878,7 @@
       eating: set ? {
         set: true, key: tk, target: kcalOf(T), training: mIsTrainingDay(tk),
         kcal: { have: tot.eaten.kcal, want: kcalOf(want) }, p: { have: tot.eaten.p, want: want.p },
+        water: { have: mAmOf(tk).wt || 0, want: mWaterGoalOz(mReadProfile().lb), caf: mCafMg(tk) },
         room: tot.all.kcal < kcalOf(want) * 0.9, meals: todayMeals(tk)
       } : { set: false },
       shop: { items: items, buy: left.length, usd: listUsd(built), src: nSrc, srcName: srcW().the,
@@ -8966,6 +9055,14 @@
       mEditDay(/^\d{4}-\d{2}-\d{2}$/.test(tk || '') ? tk : todayKey(), function (day) { (day[sk] || []).forEach(function (it) { it.eaten = 1; }); });
       if (S.view === 'today' && window.Today) window.Today.render();
     },
+    addWater: function (oz, tk) {
+      var k = /^\d{4}-\d{2}-\d{2}$/.test(tk || '') ? tk : todayKey();
+      var cur = mAmOf(k).wt || 0;
+      var nx = Math.max(0, Math.min(500, cur + (Number(oz) || 0)));
+      mAmWrite(k, 'wt', nx > 0 ? Math.round(nx) : undefined);
+      if (S.view === 'today' && window.Today) window.Today.render();
+      if (S.view === 'macros') renderMacros();
+    },
     ask: ask,
     openSheet: function () { pushSheet({ tr: 1 }); },
     closeSheet: function () { close(); },
@@ -9101,13 +9198,14 @@
         var a = am[k] || {}, an = am[dayKey(nx)] || {};
         if (a.sl !== undefined) { row.sl = a.sl; any = true; }
         if (a.cr !== undefined) { row.cr = a.cr; any = true; }
+        if (a.wt !== undefined) { row.wt = a.wt; any = true; }
         if (a.mg !== undefined) { row.mg = a.mg; any = true; }
         if (an.sy !== undefined) { row.sy = an.sy; any = true; }
         if (any) out.push(row);
       }
       var pr = mReadProfile(), nw = window.Hive.week();
       return { days: out, goalLb: pr.goalLb > 0 ? pr.goalLb : null, lb: pr.lb > 0 ? pr.lb : null,
-        plan: nw && nw.plan !== null ? nw.plan : null };
+        waterGoalOz: mWaterGoalOz(pr.lb), plan: nw && nw.plan !== null ? nw.plan : null };
     },
     // the earliest day Nourish has anything for: All time starts there
     firstDay: function () {

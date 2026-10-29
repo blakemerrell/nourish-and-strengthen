@@ -66,7 +66,8 @@ module.exports = {
     await p.waitForTimeout(500);
     const saved = await p.evaluate(() => ({ stored: JSON.parse(localStorage.getItem('bsc.macroWeights'))['2026-10-06'], open: !!document.querySelector('#weighSheet .mw-body') }));
     t.ok('the weight is Nourish’s, saved for this morning, and the card opens as it does', saved.stored === 191.4 && saved.open, JSON.stringify(saved));
-    /* A morning in the week, fixed in place. */
+    /* A morning in the week, tucked shut until opened, then fixed in place. */
+    await p.click('#weighWeek [data-wtoggle]');
     await p.click('#weighWeek [data-wfix="2026-10-04"]');
     await p.fill('#wFixIn', '1925');
     await p.click('#weighWeek [data-wsave]');

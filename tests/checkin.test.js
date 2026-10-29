@@ -106,12 +106,33 @@ module.exports = {
     t.ok('the morning is stamped for sync, per morning', st && st.am && st.am['2026-10-26'] > 0, JSON.stringify(st && st.am));
     t.ok('and the drinks list as a part of its own', st && st.dk > 0);
 
-    // Today says it
-    await p.click('.wg-sheet .sheet-x');
+    // Today says it, and Save & Done ✓ closes the check-in cleanly
+    t.ok('the check-in footer shows progress and a Save & Done button',
+      /3 of 4 checked in/.test(await txt(p, '#weighFoot')) && !!(await p.$('#weighFoot [data-wdone]')),
+      await txt(p, '#weighFoot'));
+    await p.fill('#mWeight', '198.6');
+    await p.click('#weighSheet [data-mwsave]');
+    await p.waitForTimeout(200);
+    t.ok('explicit Save button next to weight confirms Saved ✓ and completes all 4',
+      /Saved ✓/.test(await txt(p, '#weighSheet [data-mwsave]')) && /All 4 checked in ✓/.test(await txt(p, '#weighFoot')));
+    await p.click('#weighFoot [data-wdone]');
     await p.waitForTimeout(500);
     const line = await txt(p, '.td-weigh .td-am');
     t.ok('Today’s weigh-in line carries the morning: sleep, steps, creatine, caffeine',
       /6h 45m sleep/.test(line) && /8\.4k steps/.test(line) && /creatine ✓/.test(line) && /430 mg caffeine/.test(line), line);
+
+    // Water & Drinks on Today and in Nourish
+    await p.click('[data-card="eating"] [data-td="water"][data-oz="16"]');
+    await p.waitForTimeout(200);
+    t.ok('Today’s Eating card logs +16 oz water in one tap', (await am(p)).wt === 16, JSON.stringify(await am(p)));
+    await p.click('.tab[data-view="macros"]');
+    await p.waitForTimeout(300);
+    t.ok('Nourish renders the dedicated Water & Drinks card with the 16 oz logged and caffeine drinks',
+      /Water & Drinks/.test(await txt(p, '#macroSlots .mhyd-card')) && /16 \/ 100 oz/.test(await txt(p, '#macroSlots .mhyd-card')),
+      await txt(p, '#macroSlots .mhyd-card'));
+    await p.click('#macroSlots .mhyd-card [data-hyd="wt:8"]');
+    await p.waitForTimeout(200);
+    t.ok('+8 oz on Nourish Water & Drinks card updates water to 24 oz', (await am(p)).wt === 24 && /24 \/ 100 oz/.test(await txt(p, '#macroSlots .mhyd-card')));
 
     await p.reload();
     await p.waitForTimeout(800);

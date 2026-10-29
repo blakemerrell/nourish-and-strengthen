@@ -8052,3 +8052,192 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .tr-hm-svg .pg-up .belly { fill: var(--pg-up); }
 .tr-hm-svg .pg-hold .belly { fill: var(--pg-hold); }
 .tr-hm-svg .pg-down .belly { fill: var(--pg-down); }
+
+/* ---- Daily Check-In flow, Nourish Water & Drinks, and Review Readiness ---- */
+.mw-save, .am-save {
+  flex: none; min-height: 44px; min-width: 68px; padding: 0 11px;
+  border-radius: 999px; border: 1px solid var(--line-firm);
+  background: var(--card); color: var(--ink);
+  font: 600 0.8125rem/1 var(--sans); cursor: pointer; white-space: nowrap;
+}
+.mw-save.saved, .am-save.saved {
+  background: color-mix(in oklab, var(--green) 14%, var(--card));
+  border-color: color-mix(in oklab, var(--green) 42%, var(--line-firm));
+  color: var(--green);
+}
+.am-step-in { display: inline-flex; align-items: center; gap: 6px; flex: none; }
+#weighWeek .wg-hist-tog {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; min-height: 44px; margin: 6px 0 0; padding: 8px 4px;
+  background: none; border: 0; border-top: 1px solid var(--line-soft);
+  font-family: var(--sans); font-size: 0.8125rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+  text-align: left; cursor: pointer;
+}
+#weighWeek .wg-hist-tog i { font-style: normal; font-size: 0.9375rem; color: var(--muted); }
+.wg-hist-list { display: none; flex-direction: column; }
+.wg-hist-list.open { display: flex; }
+.wg-foot-bar {
+  display: flex; flex-direction: column; gap: 8px;
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line-soft);
+}
+.wg-prog {
+  display: inline-flex; align-items: center; align-self: center;
+  font-size: 0.8125rem; font-weight: 600; color: var(--muted-2);
+  background: var(--paper-soft); border: 1px solid var(--line-soft);
+  border-radius: 999px; padding: 4px 12px;
+}
+.wg-prog.all {
+  color: var(--green);
+  background: color-mix(in oklab, var(--green) 12%, var(--card));
+  border-color: color-mix(in oklab, var(--green) 36%, var(--line));
+}
+.wg-done-btn { width: 100%; min-height: 48px; font-size: 0.96875rem; font-weight: 650; }
+
+/* Nourish Water & Drinks card (#macroSlots .mhyd-card) */
+#macroSlots .mhyd-card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px; display: flex; flex-direction: column; gap: 10px; margin-top: 4px;
+}
+.mhyd-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+}
+.mhyd-title {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--label);
+}
+.mhyd-ic { width: 18px; height: 18px; color: var(--pg-up); flex: none; }
+.mhyd-badges { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mhyd-pill {
+  font-size: 0.8125rem; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+  background: var(--paper-soft); border: 1px solid var(--line-soft); color: var(--ink);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.mhyd-pill.hit {
+  background: color-mix(in oklab, var(--green) 12%, var(--card));
+  border-color: color-mix(in oklab, var(--green) 36%, var(--line));
+  color: var(--green);
+}
+.mhyd-pill.caf.over {
+  background: color-mix(in oklab, var(--dial-over) 12%, var(--card));
+  border-color: var(--dial-over); color: var(--dial-over);
+}
+.mhyd-meter {
+  height: 8px; border-radius: 999px; background: var(--line-soft); overflow: hidden;
+}
+.mhyd-meter i {
+  display: block; height: 100%; border-radius: 999px; background: var(--pg-up);
+  transition: width 0.2s ease;
+}
+.mhyd-water-btns {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px;
+}
+.mhyd-wbtn {
+  min-height: 46px; min-width: 44px; padding: 4px 2px; border-radius: 10px;
+  border: 1px solid var(--line-firm); background: var(--paper-soft); color: var(--ink);
+  font-family: var(--sans); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px; line-height: 1.1;
+}
+.mhyd-wbtn b { font-size: 0.84375rem; font-weight: 700; white-space: nowrap; }
+.mhyd-wbtn small { font-size: 0.8125rem; font-weight: 500; color: var(--muted); white-space: nowrap; }
+.mhyd-wbtn.mhyd-wsub { background: var(--card); color: var(--muted-2); }
+.mhyd-wbtn:disabled { opacity: 0.35; cursor: default; }
+.mhyd-caf {
+  border-top: 1px solid var(--line-soft); padding-top: 8px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.mhyd-caf-h {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+}
+.mhyd-caf-t { font-size: 0.875rem; font-weight: 600; color: var(--ink); }
+.mhyd-caf-s { font-size: 0.8125rem; color: var(--muted); }
+.mhyd-card .am-ph { font-size: 0.8125rem; }
+.mhyd-card .am-in {
+  min-height: 44px; min-width: 44px; padding: 0 8px;
+  border: 1px solid var(--line-firm); border-radius: 8px;
+  background: var(--field); color: var(--ink);
+  font-size: 0.9375rem; font-weight: 600; box-sizing: border-box;
+}
+.mhyd-card .am-mg .am-in { width: 64px; text-align: center; }
+.mhyd-card .am-nn { flex: 1 1 auto; width: auto; min-width: 0; text-align: left; }
+.mhyd-card .am-prow .ghost { min-height: 44px; min-width: 48px; white-space: nowrap; }
+.mhyd-card .am-add { width: 100%; min-height: 44px; justify-content: center; white-space: nowrap; }
+
+/* Today Eating card water strip */
+.td-water {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; flex-wrap: wrap; padding-top: 6px; margin-top: 2px;
+  border-top: 1px solid var(--line-soft); font-size: 0.875rem; color: var(--ink);
+}
+.td-water-l { font-variant-numeric: tabular-nums; }
+.td-water-l small { font-size: 0.8125rem; color: var(--muted); }
+.td-water-btns { display: inline-flex; align-items: center; gap: 6px; }
+.td-wbtn {
+  min-height: 44px; min-width: 52px; padding: 0 10px;
+  border-radius: 999px; border: 1px solid var(--line-firm);
+  background: var(--paper-soft); color: var(--ink);
+  font: 600 0.8125rem/1 var(--sans); cursor: pointer; white-space: nowrap;
+}
+.td-wbtn.td-wsub { background: var(--card); color: var(--muted-2); min-width: 44px; }
+
+/* Strengthen Review: Readiness hero banner & visual charts */
+.tr-readiness {
+  margin: 0 0 10px;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--pg-up) 7%, var(--card)), var(--card));
+  border-color: color-mix(in oklab, var(--pg-up) 28%, var(--line));
+}
+.tr-rd-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.tr-rd-badge {
+  font-size: 0.8125rem; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+  background: color-mix(in oklab, var(--pg-up) 15%, var(--card)); color: var(--pg-up);
+  white-space: nowrap;
+}
+.tr-rd-badge.good {
+  background: color-mix(in oklab, var(--green) 15%, var(--card)); color: var(--green);
+}
+.tr-rd-badge.warn {
+  background: color-mix(in oklab, var(--pg-down) 15%, var(--card)); color: var(--pg-down);
+}
+.tr-rd-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;
+}
+.tr-rd-pill {
+  display: flex; flex-direction: column; gap: 1px; min-width: 0;
+  padding: 7px 8px; border-radius: 8px;
+  background: var(--paper-soft); border: 1px solid var(--line-soft);
+}
+.tr-rd-pill.ok { border-color: color-mix(in oklab, var(--green) 38%, var(--line)); }
+.tr-rd-pill.warn { border-color: color-mix(in oklab, var(--pg-down) 38%, var(--line)); }
+.tr-rd-pill small { font-size: 0.8125rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tr-rd-pill b { font-family: var(--serif); font-size: 1.0625rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.tr-rd-pill span { font-size: 0.8125rem; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tr-rd-coach {
+  margin: 9px 0 0; padding-top: 8px; border-top: 1px solid var(--line-soft);
+  font-size: 0.875rem; line-height: 1.4; color: var(--ink);
+}
+.tr-pg-glab {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  font-size: 0.875rem; font-weight: 600; color: var(--ink);
+}
+.tr-pg-glab b { font-variant-numeric: tabular-nums; color: var(--pg-up); }
+.tr-pg-cbar {
+  height: 8px; border-radius: 999px; background: var(--line-soft);
+  overflow: hidden; margin: 5px 0 6px;
+}
+.tr-pg-cbar i { display: block; height: 100%; border-radius: 999px; background: var(--pg-up); }
+.tr-pg-cbar i.no { background: var(--pg-hold); }
+.tr-pg-gfoot {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+}
+.tr-pg-wdot { fill: color-mix(in oklab, var(--ochre) 55%, var(--card)); stroke: var(--ochre); stroke-width: 1; }
+.tr-pg-wtrend { fill: none; stroke: var(--ochre-text); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.tr-pg-s-fill { fill: color-mix(in oklab, var(--pg-up) 14%, transparent); stroke: none; }
+.tr-pg-sdot { fill: var(--pg-up); }
+.tr-pg-wdot-end { fill: var(--ochre); }
+.tr-pg-fbar.hit { fill: var(--green); opacity: 0.85; }
+.tr-pg-fbar.miss { fill: var(--pg-hold); opacity: 0.75; }

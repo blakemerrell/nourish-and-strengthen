@@ -3254,7 +3254,21 @@
      Quiet fallback everywhere else: manual entry works as usual. */
   var healthPulling = false;
   var healthMealSig = {};
+  var healthDaySynced = {};
   var healthMeta = { status: '', lastSync: 0, todaySteps: 0 };
+  var MHEALTH_LABELS = { b: 'Breakfast', l: 'Lunch', d: 'Dinner', s: 'Snacks' };
+
+  function mHealthMealType(sl) {
+    if (!sl) return 's';
+    if (sl.t === 'b' || sl.t === 'l' || sl.t === 'd' || sl.t === 's') return sl.t;
+    if (sl.k === 'b' || sl.k === 'l' || sl.k === 'd' || sl.k === 's') return sl.k;
+    var nm = String(sl.n || '').toLowerCase();
+    if (/snack/.test(nm)) return 's';
+    if (/breakfast|morning|wake/.test(nm)) return 'b';
+    if (/lunch|midday|mid-day/.test(nm)) return 'l';
+    if (/dinner|supper/.test(nm)) return 'd';
+    return 's';
+  }
 
   function mHealthPushWeight(k, lb) {
     if (healthPulling || !(window.NourishAndroid && window.NourishAndroid.writeWeight)) return;
@@ -3268,37 +3282,70 @@
     } catch (e) { /* native bridge unavailable */ }
   }
 
-  function mHealthPushMeals(k) {
+  function mHealthPushMeals(k, forceClean) {
     if (!(window.NourishAndroid && window.NourishAndroid.writeNutrition)) return;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(k || ''))) return;
-    var day = mDay(k), done = mDoneAt(k) > 0;
-    mReadSlots().list.forEach(function (sl) {
+    var day = mDay(k), done = mDoneAt(k) > 0, slots = mReadSlots();
+    var buckets = { b: [], l: [], d: [], s: [] }, seenSk = {};
+    slots.list.forEach(function (sl) {
+      seenSk[sl.k] = 1;
+      var mt = mHealthMealType(sl);
       var items = (day[sl.k] || []).filter(function (it) { return BY_ID[it.id] && BY_ID[it.id].macro; });
       var eaten = done ? items : items.filter(function (it) { return it.eaten; });
-      var one = {}; one[sl.k] = eaten;
+      eaten.forEach(function (it) { buckets[mt].push(it); });
+    });
+    Object.keys(day || {}).forEach(function (sk) {
+      if (seenSk[sk] || !Array.isArray(day[sk])) return;
+      var mt = mHealthMealType({ k: sk, n: (slots.names && slots.names[sk]) || '', t: '' });
+      var items = day[sk].filter(function (it) { return BY_ID[it.id] && BY_ID[it.id].macro; });
+      var eaten = done ? items : items.filter(function (it) { return it.eaten; });
+      eaten.forEach(function (it) { buckets[mt].push(it); });
+    });
+    ['b', 'l', 'd', 's'].forEach(function (mt) {
+      var eaten = buckets[mt];
+      var one = {}; one[mt] = eaten;
       var tot = eaten.length ? mTotals(one).all : { kcal: 0, p: 0, f: 0, c: 0 };
       var kcal = eaten.length ? Math.round(tot.kcal) : 0;
       var p = eaten.length ? Math.round(tot.p * 10) / 10 : 0;
       var f = eaten.length ? Math.round(tot.f * 10) / 10 : 0;
       var c = eaten.length ? Math.round(tot.c * 10) / 10 : 0;
       var name = eaten.map(function (it) { return BY_ID[it.id].name; }).join(', ');
-      var sig = kcal + ':' + p + ':' + f + ':' + c + ':' + name;
-      var key = k + ':' + sl.k;
-      if (healthMealSig[key] === sig || (!healthMealSig[key] && kcal === 0)) return;
+      var sig = mt + ':' + kcal + ':' + p + ':' + f + ':' + c + ':' + name;
+      var key = k + ':' + mt;
+      var forceS = forceClean && mt === 's' && !healthMealSig[key];
+      if (!forceS && (healthMealSig[key] === sig || (!healthMealSig[key] && kcal === 0))) return;
       healthMealSig[key] = sig;
       try {
         window.NourishAndroid.writeNutrition(JSON.stringify({
-          id: 'nourish-meal-' + k + '-' + sl.k,
+          id: 'nourish-meal-' + k + '-' + mt,
           dayKey: k,
-          slot: sl.k,
-          mealType: sl.t || sl.k,
-          name: name || sl.n,
+          slot: mt,
+          mealType: mt,
+          name: name || MHEALTH_LABELS[mt],
           kcal: kcal,
           p: p,
           f: f,
           c: c
         }));
       } catch (e) { /* native bridge unavailable */ }
+    });
+  }
+
+  function mHealthSyncRecentMeals() {
+    if (!(window.NourishAndroid && window.NourishAndroid.writeNutrition)) return;
+    var keys = Object.keys(MDAYS || {}).filter(function (k) { return /^\d{4}-\d{2}-\d{2}$/.test(k); }).sort().slice(-7);
+    keys.forEach(function (k) {
+      if (healthDaySynced[k]) return;
+      var day = mDay(k), done = mDoneAt(k) > 0, hasEaten = done;
+      if (!hasEaten) {
+        Object.keys(day || {}).forEach(function (sk) {
+          if (Array.isArray(day[sk]) && day[sk].some(function (it) { return it && it.eaten; })) hasEaten = true;
+        });
+      }
+      if (hasEaten) {
+        healthDaySynced[k] = 1;
+        mHealthPushMeals(k, true);
+      }
     });
   }
 
@@ -3389,6 +3436,7 @@
         });
       }
       if (changed) dinerKeep();
+      if (healthMeta.status === 'granted') mHealthSyncRecentMeals();
       if (S.view === 'today' && window.Today) window.Today.render();
       if (S.view === 'macros') renderMacros();
       if (S.view === 'train' && window.Train) window.Train.render();

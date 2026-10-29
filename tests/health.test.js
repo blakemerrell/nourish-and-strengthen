@@ -16,9 +16,32 @@ module.exports = {
     await p.evaluate(() => {
       localStorage.setItem('bsc.macroProfile', JSON.stringify({ sex: 'm', age: 43, ft: 5, inch: 11, lb: 185, act: 1.55, goal: 'cut1' }));
       localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 190, f: 65, c: 210 }));
+      localStorage.setItem('bsc.macroSlots', JSON.stringify({
+        list: [
+          { k: 'kmtg40w4z0', n: 'Wake Up', t: 'x', w: 15, secs: ['1-1'] },
+          { k: 'b', n: 'Breakfast', t: 'x', w: 25, secs: ['1-1', '1-2'] },
+          { k: 'l', n: 'Lunch', t: 'x', w: 20, secs: ['1-3'] },
+          { k: 'd', n: 'Dinner', t: 'x', w: 30, secs: ['1-4'] },
+          { k: 's', n: 'Evening Snack', t: 'x', w: 10, secs: ['1-5'] }
+        ],
+        names: {
+          kmtg40w4z0: 'Wake Up',
+          b: 'Breakfast',
+          l: 'Lunch',
+          d: 'Dinner',
+          s: 'Evening Snack'
+        }
+      }));
       localStorage.setItem('bsc.macroDays', JSON.stringify({
         '2026-10-06': {
           b: [{ id: 'f:egg', x: 3, eaten: 0 }, { id: 'f:oats', x: 1, eaten: 0 }]
+        },
+        '2026-10-07': {
+          kmtg40w4z0: [{ id: 'f:whey', x: 1, eaten: 0 }],
+          b: [{ id: 'f:egg', x: 2, eaten: 0 }],
+          l: [{ id: 'f:roast_beef_deli', x: 2, eaten: 0 }],
+          d: [{ id: 244, x: 1, eaten: 0 }],
+          s: [{ id: 'f:apple', x: 1, eaten: 0 }]
         }
       }));
     });
@@ -115,7 +138,26 @@ module.exports = {
       outbound.workouts.length === 1 && outbound.workouts[0].id === 'nourish-wo-w_test1' && /Upper A/.test(outbound.workouts[0].title),
       JSON.stringify(outbound.workouts));
 
-    // 5. Native Google Sign-In bridge
+    // 5. Custom-section meal slots (t === 'x') still resolve to their actual Health Connect mealType (b, l, d, s)
+    const customSlotsMeals = await p.evaluate(() => {
+      window.__hcCalls.meals = [];
+      window.Hive.eat('kmtg40w4z0', '2026-10-07');
+      window.Hive.eat('b', '2026-10-07');
+      window.Hive.eat('l', '2026-10-07');
+      window.Hive.eat('d', '2026-10-07');
+      window.Hive.eat('s', '2026-10-07');
+      return window.__hcCalls.meals;
+    });
+    const byType = {};
+    customSlotsMeals.forEach((m) => { byType[m.mealType] = m; });
+    t.ok('custom-section slots (t: "x") map to b (Breakfast + Wake Up), l (Lunch), d (Dinner), and s (Snacks) instead of falling through to "x"',
+      byType.b && byType.b.slot === 'b' && byType.b.kcal > 200 &&
+      byType.l && byType.l.slot === 'l' && byType.l.kcal > 50 &&
+      byType.d && byType.d.slot === 'd' && byType.d.kcal > 100 &&
+      byType.s && byType.s.slot === 's' && byType.s.kcal > 50,
+      JSON.stringify(customSlotsMeals));
+
+    // 6. Native Google Sign-In bridge
     const gCid = await p.evaluate(() => {
       window.Store.signInGoogle().catch(() => {});
       const cid = window.__hcCalls.google[0];

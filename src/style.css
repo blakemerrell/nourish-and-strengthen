@@ -6937,11 +6937,11 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .am-add { min-height: 44px; }
 .am-panel { border: 1px solid var(--line-soft); border-radius: 10px; padding: 4px 12px 6px; margin: 2px 0 6px; background: var(--paper-soft); }
 .am-ph { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 8px 0 2px; }
-.am-prow { display: flex; align-items: center; gap: 8px; min-height: 48px; }
-.am-prow > span { flex: 1 1 auto; min-width: 0; font-size: 0.875rem; }
-.am-mg { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8125rem; color: var(--muted); }
-#macroWeigh .am-mg .am-in { width: 64px; }
-#macroWeigh .am-nn { flex: 1 1 auto; width: auto; min-width: 0; text-align: left; }
+.am-prow { display: flex; align-items: center; gap: 6px; min-height: 48px; flex-wrap: wrap; }
+.am-prow > span { flex: 1 1 80px; min-width: 0; font-size: 0.875rem; }
+.am-mg { display: inline-flex; align-items: center; gap: 3px; font-size: 0.8125rem; color: var(--muted); }
+#macroWeigh .am-mg .am-in { width: 54px; }
+#macroWeigh .am-nn { flex: 1 1 90px; width: auto; min-width: 0; text-align: left; }
 .am-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .am-chip { min-height: 44px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink);
   font: inherit; font-size: 0.875rem; padding: 0 12px; cursor: pointer; }
@@ -8097,16 +8097,26 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 /* Nourish Water & Drinks card (#macroSlots .mhyd-card) */
 #macroSlots .mhyd-card {
   background: var(--card); border: 1px solid var(--line); border-radius: 12px;
-  padding: 12px; display: flex; flex-direction: column; gap: 10px; margin-top: 4px;
+  padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; margin-top: 4px;
+}
+.mhyd-card.shut {
+  padding: 6px 12px;
 }
 .mhyd-head {
+  width: 100%; min-height: 44px; border: 0; background: none; padding: 0; margin: 0;
   display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+  font: inherit; color: var(--ink); text-align: left; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
+.mhyd-head:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; border-radius: 8px; }
 .mhyd-title {
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.1em;
   text-transform: uppercase; color: var(--label);
 }
+.mhyd-chev { font-size: 0.875rem; color: var(--muted); line-height: 1; margin-left: 2px; }
+.mhyd-body { display: flex; flex-direction: column; gap: 10px; }
+.mhyd-sub { font-size: 0.8125rem; color: var(--muted); margin-top: -4px; font-variant-numeric: tabular-nums; }
 .mhyd-ic { width: 18px; height: 18px; color: var(--pg-up); flex: none; }
 .mhyd-badges { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .mhyd-pill {
@@ -8155,13 +8165,13 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .mhyd-caf-s { font-size: 0.8125rem; color: var(--muted); }
 .mhyd-card .am-ph { font-size: 0.8125rem; }
 .mhyd-card .am-in {
-  min-height: 44px; min-width: 44px; padding: 0 8px;
+  min-height: 44px; min-width: 44px; padding: 0 6px;
   border: 1px solid var(--line-firm); border-radius: 8px;
   background: var(--field); color: var(--ink);
   font-size: 0.9375rem; font-weight: 600; box-sizing: border-box;
 }
-.mhyd-card .am-mg .am-in { width: 64px; text-align: center; }
-.mhyd-card .am-nn { flex: 1 1 auto; width: auto; min-width: 0; text-align: left; }
+.mhyd-card .am-mg .am-in { width: 54px; text-align: center; }
+.mhyd-card .am-nn { flex: 1 1 90px; width: auto; min-width: 0; text-align: left; }
 .mhyd-card .am-prow .ghost { min-height: 44px; min-width: 48px; white-space: nowrap; }
 .mhyd-card .am-add { width: 100%; min-height: 44px; justify-content: center; white-space: nowrap; }
 

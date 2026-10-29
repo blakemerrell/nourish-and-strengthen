@@ -121,18 +121,34 @@ module.exports = {
     t.ok('Today’s weigh-in line carries the morning: sleep, steps, creatine, caffeine',
       /6h 45m sleep/.test(line) && /8\.4k steps/.test(line) && /creatine ✓/.test(line) && /430 mg caffeine/.test(line), line);
 
-    // Water & Drinks on Today and in Nourish
+    // Water & Drinks on Today and in Nourish (16 oz plain water + 40 oz from 2x Crio Bru 8oz & 2x Celsius 12oz = 56 oz)
     await p.click('[data-card="eating"] [data-td="water"][data-oz="16"]');
     await p.waitForTimeout(200);
     t.ok('Today’s Eating card logs +16 oz water in one tap', (await am(p)).wt === 16, JSON.stringify(await am(p)));
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(300);
-    t.ok('Nourish renders the dedicated Water & Drinks card with the 16 oz logged and caffeine drinks',
-      /Water & Drinks/.test(await txt(p, '#macroSlots .mhyd-card')) && /16 \/ 100 oz/.test(await txt(p, '#macroSlots .mhyd-card')),
+    t.ok('Nourish renders Water & Drinks counting both plain water (16 oz) and drink fluid (40 oz) = 56 / 100 oz',
+      /Water & Drinks/.test(await txt(p, '#macroSlots .mhyd-card')) && /56 \/ 100 oz/.test(await txt(p, '#macroSlots .mhyd-card')) &&
+      /16 oz water \+ 40 oz from drinks/.test(await txt(p, '#macroSlots .mhyd-card')),
       await txt(p, '#macroSlots .mhyd-card'));
     await p.click('#macroSlots .mhyd-card [data-hyd="wt:8"]');
     await p.waitForTimeout(200);
-    t.ok('+8 oz on Nourish Water & Drinks card updates water to 24 oz', (await am(p)).wt === 24 && /24 \/ 100 oz/.test(await txt(p, '#macroSlots .mhyd-card')));
+    t.ok('+8 oz on Nourish Water & Drinks card updates plain water to 24 oz and total hydration to 64 / 100 oz',
+      (await am(p)).wt === 24 && /64 \/ 100 oz/.test(await txt(p, '#macroSlots .mhyd-card')));
+    await p.click('#macroSlots .mhyd-card [data-hyd="fold"]');
+    await p.waitForTimeout(150);
+    t.ok('tapping Water & Drinks header collapses the section like a meal card',
+      await p.evaluate(() => {
+        const c = document.querySelector('#macroSlots .mhyd-card');
+        return c && c.classList.contains('shut') && !c.querySelector('.mhyd-body');
+      }));
+    await p.click('#macroSlots .mhyd-card [data-hyd="fold"]');
+    await p.waitForTimeout(150);
+    t.ok('tapping Water & Drinks header again expands it back open',
+      await p.evaluate(() => {
+        const c = document.querySelector('#macroSlots .mhyd-card');
+        return c && !c.classList.contains('shut') && !!c.querySelector('.mhyd-body');
+      }));
 
     await p.reload();
     await p.waitForTimeout(800);

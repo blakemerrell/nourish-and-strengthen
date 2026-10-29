@@ -175,7 +175,7 @@
       '<span class="td-water-btns">' +
         '<button type="button" class="td-wbtn" data-td="water" data-oz="8" data-tk="' + esc(e.key || '') + '" aria-label="Add 8 oz water">+8 oz</button>' +
         '<button type="button" class="td-wbtn" data-td="water" data-oz="16" data-tk="' + esc(e.key || '') + '" aria-label="Add 16 oz water">+16 oz</button>' +
-        (w.have > 0 ? '<button type="button" class="td-wbtn td-wsub" data-td="water" data-oz="-8" data-tk="' + esc(e.key || '') + '" aria-label="Remove 8 oz water">−8</button>' : '') +
+        ((w.plain !== undefined ? w.plain : w.have) > 0 ? '<button type="button" class="td-wbtn td-wsub" data-td="water" data-oz="-8" data-tk="' + esc(e.key || '') + '" aria-label="Remove 8 oz water">−8</button>' : '') +
       '</span></div>' : '';
     if (!meals.some(function (m) { return !m.empty; })) {
       return card('eating', 'Eating', big + title('Nothing planned for today') +

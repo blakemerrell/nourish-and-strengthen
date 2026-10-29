@@ -3240,6 +3240,7 @@
   function mAmDays() { return CHECKIN.mAmDays(); }
   function mDrinksClean(v) { return CHECKIN.mDrinksClean(v); }
   function mWaterGoalOz(lb) { return CHECKIN.mWaterGoalOz(lb); }
+  function mWaterOz(k) { return CHECKIN.mWaterOz(k); }
   function mCafMg(k) { return CHECKIN.mCafMg(k); }
   function mHydrationCardHTML(k, goalOz) { return CHECKIN.mHydrationCardHTML(k, goalOz); }
   function mCheckinHTML(k) { return CHECKIN.mCheckinHTML(k); }
@@ -6492,6 +6493,8 @@
       Array.prototype.forEach.call(document.querySelectorAll('#macroSlots [data-mview]'), function (b) {
         held[b.getAttribute('data-mview')] = nv;
       });
+      S.mHydShut = S.mHydShut || {};
+      S.mHydShut[vk] = nv === 1;
       if (nv !== 3 && S.mAmt && S.mAmt.indexOf(vk + '|') === 0) { S.mAmt = ''; S.mType = null; }
       keepingFocus(renderMacros);
     });
@@ -6848,13 +6851,13 @@
     });
     var hydAmTimer = null;
     $('macroSlots').addEventListener('input', function (e) {
-      if (!e.target.hasAttribute || !e.target.hasAttribute('data-hydmg')) return;
+      if (!e.target.hasAttribute || (!e.target.hasAttribute('data-hydmg') && !e.target.hasAttribute('data-hydoz'))) return;
       clearTimeout(hydAmTimer);
       var el = e.target, key = mViewKey();
       hydAmTimer = setTimeout(function () { mCheckinInput(el, key); }, 500);
     });
     $('macroSlots').addEventListener('change', function (e) {
-      if (!e.target.hasAttribute || !e.target.hasAttribute('data-hydmg')) return;
+      if (!e.target.hasAttribute || (!e.target.hasAttribute('data-hydmg') && !e.target.hasAttribute('data-hydoz'))) return;
       clearTimeout(hydAmTimer);
       if (mCheckinInput(e.target, mViewKey())) renderMacros();
     });
@@ -7040,7 +7043,7 @@
        the thumb typing into it. */
     var amTimer = null;
     $('macroWeigh').addEventListener('input', function (e) {
-      if (e.target.id !== 'amSteps' && !e.target.hasAttribute('data-ammg')) return;
+      if (e.target.id !== 'amSteps' && !e.target.hasAttribute('data-ammg') && !e.target.hasAttribute('data-amoz')) return;
       clearTimeout(amTimer);
       var el = e.target, key = mViewKey();
       if (el.id === 'amSteps') {
@@ -7056,7 +7059,7 @@
       }, 500);
     });
     $('macroWeigh').addEventListener('change', function (e) {
-      if (e.target.id !== 'amSteps' && !e.target.hasAttribute('data-ammg')) return;
+      if (e.target.id !== 'amSteps' && !e.target.hasAttribute('data-ammg') && !e.target.hasAttribute('data-amoz')) return;
       clearTimeout(amTimer);
       if (mCheckinInput(e.target, mViewKey())) renderMacros();
     });
@@ -8878,7 +8881,7 @@
       eating: set ? {
         set: true, key: tk, target: kcalOf(T), training: mIsTrainingDay(tk),
         kcal: { have: tot.eaten.kcal, want: kcalOf(want) }, p: { have: tot.eaten.p, want: want.p },
-        water: { have: mAmOf(tk).wt || 0, want: mWaterGoalOz(mReadProfile().lb), caf: mCafMg(tk) },
+        water: { have: mWaterOz(tk), want: mWaterGoalOz(mReadProfile().lb), plain: mAmOf(tk).wt || 0, caf: mCafMg(tk) },
         room: tot.all.kcal < kcalOf(want) * 0.9, meals: todayMeals(tk)
       } : { set: false },
       shop: { items: items, buy: left.length, usd: listUsd(built), src: nSrc, srcName: srcW().the,

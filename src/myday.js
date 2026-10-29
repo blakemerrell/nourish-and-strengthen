@@ -43,6 +43,7 @@
   var mEditDay = app.mEditDay;
   var mFillRoom = app.mFillRoom;
   var mFoldForget = app.mFoldForget;
+  var mHydrationCardHTML = app.mHydrationCardHTML;
   var mIcon = app.mIcon;
   var mIsFav = app.mIsFav;
   var mLatestKey = app.mLatestKey;
@@ -51,12 +52,14 @@
   var mMarkAccountUI = app.mMarkAccountUI;
   var mMealAsk = app.mMealAsk;
   var mMealPillsSay = app.mMealPillsSay;
+  var mReadProfile = app.mReadProfile;
   var mReadSlots = app.mReadSlots;
   var mSaltChip = app.mSaltChip;
   var mServeG = app.mServeG;
   var mSkipped = app.mSkipped;
   var mSnapTargets = app.mSnapTargets;
   var mViewKey = app.mViewKey;
+  var mWaterGoalOz = app.mWaterGoalOz;
   var mWeekHTML = app.mWeekHTML;
   var mWhyChip = app.mWhyChip;
   var mWhyStrip = app.mWhyStrip;
@@ -1020,7 +1023,20 @@
     Object.keys(day).forEach(function (sk) {
       if (onPlanKeys.indexOf(sk) < 0) html += trayHTML(sk, slots.names[sk] || 'Meal', false);
     });
+    if (!ahead) {
+      var prHyd = mReadProfile();
+      html += mHydrationCardHTML(k, mWaterGoalOz(prHyd && prHyd.lb));
+    }
+    var hIn = document.activeElement, hSel = null;
+    if (hIn && hIn.tagName === 'INPUT' && $('macroSlots').contains(hIn)) {
+      hSel = hIn.id ? '#' + hIn.id : hIn.getAttribute('data-hydmg') ? '[data-hydmg="' + hIn.getAttribute('data-hydmg') + '"]' : null;
+    }
+    var hDraft = hSel ? hIn.value : null;
     $('macroSlots').innerHTML = html;
+    if (hDraft !== null) {
+      var hBack = $('macroSlots').querySelector(hSel);
+      if (hBack) { hBack.value = hDraft; hBack.focus(); }
+    }
     mViewsNow();
 
     var readout = macroFootHTML(day, targets, slots);

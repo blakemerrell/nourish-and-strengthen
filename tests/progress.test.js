@@ -48,6 +48,16 @@ module.exports = {
       /After you ate your protein/.test(cs[3].text) && /After a short protein day/.test(cs[3].text) && /After a day at your carbs/.test(cs[3].text), cs[3].text);
     t.ok('Sleep & steps → lifts splits them by the night before', /After 7 or more hours of sleep/.test(cs[4].text) && /After under 7 hours/.test(cs[4].text), cs[4].text);
     t.ok('and says the steps and the creatine', /Steps: [\d,]+ a day lately/.test(cs[4].text) && /Creatine: \d+ of \d+ mornings/.test(cs[4].text), cs[4].text);
+    const viz = await p.evaluate(() => ({
+      readiness: !!document.querySelector('#view-train .tr-readiness .tr-rd-badge'),
+      wchart: !!document.querySelector('#view-train .tr-pg-wchart .tr-pg-wtrend'),
+      sfill: !!document.querySelector('#view-train .tr-pg-s-fill'),
+      cbars: document.querySelectorAll('#view-train .tr-pg-cbar').length,
+      fchart: !!document.querySelector('#view-train .tr-pg-fchart'),
+      schart: !!document.querySelector('#view-train .tr-pg-schart'),
+    }));
+    t.ok('renders Readiness & coaching hero banner plus visual trend, fuel, sleep and comparison charts',
+      viz.readiness && viz.wchart && viz.sfill && viz.cbars >= 4 && viz.fchart && viz.schart, JSON.stringify(viz));
     t.ok('Simple shows no statistics', cs.every((c) => c.stats === 0));
 
     await p.click('[data-t="rvdeep"][data-v="1"]');

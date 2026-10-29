@@ -13,6 +13,7 @@
   // what it reads of the app's
   var MWEIGHTS = app.MWEIGHTS;
   var S = app.S;
+  var WGAPI = app.WGAPI;
   var kcalOf = app.kcalOf;
   var mAhead = app.mAhead;
   var mDayTargets = app.mDayTargets;
@@ -99,6 +100,7 @@
     var touchedW = S.mFold.weigh !== undefined;
     var openAll = touchedW && S.mFold.weigh === false;
     var asking = !touchedW && !answeredW && !mAhead(k);
+    var inSheet = !!(WGAPI && WGAPI.isOpen && WGAPI.isOpen());
     var shut = !openAll && !asking;
     var face = mPlanFace();
     var detail = mPlanDetail();
@@ -139,7 +141,7 @@
            that decides it. Blake: "it needs to fully collapse." A card that
            keeps three rows when shut is not shut, and the two inputs are no
            use to a morning already answered — but the answer is, all day. */
-        (shut
+        (shut && !inSheet
           ? (function () {
               if (!answeredW && !(st && st.n >= 2)) {
                 return '<span class="mw-ask">Weigh in</span>';
@@ -187,6 +189,8 @@
             'inputmode="decimal" autocomplete="off" ' +
             'aria-label="This morning\u2019s weight in ' + (mWUnit() === 'kg' ? 'kilograms' : 'pounds') + '" ' +
             'value="' + (v ? mWShow(v) : '') + '"> ' + mWUnit() +
+            (inSheet ? '<button type="button" class="mw-save' + (v ? ' saved' : '') + '" data-mwsave="1" aria-label="Save weight">' +
+              (v ? 'Saved ✓' : 'Save') + '</button>' : '') +
             '<span class="mw-note" id="mWeightNote" role="status"></span></label>') +
       '</div>' +
       /* Next to the weigh-in, because it is the other thing a morning knows
@@ -201,7 +205,7 @@
          With no lifting days picked it says something only about a day that
          was trained anyway — a workout in Strengthen, or a tick already
          given — because that is the one day the carbohydrate moves. */
-      (shut || ahead || mTrainDays().length >= 7 ||
+      ((shut && !inSheet) || ahead || mTrainDays().length >= 7 ||
         (!mTrainDays().length && !mIsTrainingDay(k) && (mSynced() || !mTrainedSaid(k))) ? ''
         : mTrainRow(k)) +
       /* The day's numbers are NOT repeated here. They were, for one build:
@@ -221,6 +225,18 @@
          calories. From what I understand it should not." Both are true, and
          only saying so out loud settles it. */
       '' +
+      /* Top-to-bottom checklist flow: Sleep, Steps, Creatine, and Caffeine sit
+         directly under Weight so entering a weight never pushes the morning
+         questions down below the trend chart. */
+      /* The rest of the morning, after everything the scale decides, so the
+         weight and what it means stay together at the top: last night's
+         sleep, yesterday's steps, the creatine and the day's drinks
+         (src/checkin.js). On every state of the card, shut
+         included, because the card is only ever seen in the sheet Today
+         opens — and a check-in that shut itself the moment the scale was
+         read would ask the other four questions of nobody. Not on a morning
+         still ahead: nobody has slept it yet. */
+      (ahead ? '' : mCheckinHTML(k)) +
       /* The plan, one line, on the face — and the same handle the meals wear,
          on the seam rather than in the header: this line is the last thing
          above what folds away, so the mark on the end of it is sitting at the
@@ -283,16 +299,7 @@
             (face.has ? '<button class="ghost mplan-go" id="macroTargBtn">Adjust my plan</button>' : '') +
             (mWeekOn() ? '<button class="ghost mplan-go" id="macroWeekBtn">This week</button>' : '') + '</div>'
           : '') +
-      '</div>') +
-      /* The rest of the morning, after everything the scale decides, so the
-         weight and what it means stay together at the top: last night's
-         sleep, yesterday's steps, the creatine and the day's drinks
-         (src/checkin.js). On every state of the card, shut
-         included, because the card is only ever seen in the sheet Today
-         opens — and a check-in that shut itself the moment the scale was
-         read would ask the other four questions of nobody. Not on a morning
-         still ahead: nobody has slept it yet. */
-      (ahead ? '' : mCheckinHTML(k));
+      '</div>');
   }
 
   return { macroWeighHTML: macroWeighHTML };

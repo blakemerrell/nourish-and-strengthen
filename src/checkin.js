@@ -102,13 +102,17 @@
      the rest. Four counters for drinks you never have was a card twice the
      height of the weigh-in it sits under. */
   var DRINKS0 = [
-    { id: 'crio', n: 'Crio Bru', mg: 10 },
-    { id: 'coffee', n: 'Coffee', mg: 95 },
-    { id: 'pre', n: 'Pre-workout', mg: 200 },
-    { id: 'energy', n: 'Energy drink', mg: 160 },
-    { id: 'soda', n: 'Diet soda', mg: 45 },
-    { id: 'tea', n: 'Black tea', mg: 47 }
+    { id: 'crio', n: 'Crio Bru', mg: 10, oz: 8 },
+    { id: 'coffee', n: 'Coffee', mg: 95, oz: 8 },
+    { id: 'pre', n: 'Pre-workout', mg: 200, oz: 12 },
+    { id: 'energy', n: 'Energy drink', mg: 160, oz: 16 },
+    { id: 'soda', n: 'Diet soda', mg: 45, oz: 12 },
+    { id: 'tea', n: 'Black tea', mg: 47, oz: 8 }
   ];
+  function defDrinkOz(id) {
+    for (var i = 0; i < DRINKS0.length; i++) if (DRINKS0[i].id === id) return DRINKS0[i].oz;
+    return 12;
+  }
   function mDrinksClean(v) {
     if (!plain(v) || !Array.isArray(v.list)) return null;
     var seen = {};
@@ -117,7 +121,10 @@
         d.n.trim() && fin(d.mg) && d.mg >= 0 && d.mg <= 1000;
       if (ok) seen[d.id] = 1;
       return ok;
-    }).map(function (d) { return { id: d.id, n: d.n.trim().slice(0, 30), mg: Math.round(d.mg) }; });
+    }).map(function (d) {
+      var oz = fin(d.oz) && d.oz >= 0 && d.oz <= 64 ? Math.round(d.oz) : defDrinkOz(d.id);
+      return { id: d.id, n: d.n.trim().slice(0, 30), mg: Math.round(d.mg), oz: oz };
+    });
     var on = Array.isArray(v.on) ? v.on.filter(function (id) { return seen[id]; }) : [];
     return { list: list, on: on };
   }
@@ -140,6 +147,18 @@
     var dk = mDrinks(), cf = mAmOf(k).cf || {}, mg = 0;
     dk.list.forEach(function (d) { mg += (cf[d.id] || 0) * d.mg; });
     return mg;
+  }
+  function mDrinksOz(k) {
+    var dk = mDrinks(), cf = mAmOf(k).cf || {}, oz = 0;
+    dk.list.forEach(function (d) {
+      var dOz = fin(d.oz) ? d.oz : defDrinkOz(d.id);
+      oz += (cf[d.id] || 0) * dOz;
+    });
+    return oz;
+  }
+  function mWaterOz(k) {
+    var r = mAmOf(k);
+    return (fin(r.wt) ? r.wt : 0) + mDrinksOz(k);
   }
 
   /* ---- what it says ---- */
@@ -176,7 +195,8 @@
     if (fin(r.sl)) out.push(mSleepTxt(r.sl) + ' sleep');
     if (fin(r.sy)) out.push(mStepsShort(r.sy) + ' steps');
     if (r.cr === 1) out.push('creatine ✓');
-    if (fin(r.wt) && r.wt > 0) out.push(r.wt + ' oz water');
+    var wOz = mWaterOz(k);
+    if (wOz > 0) out.push(wOz + ' oz water');
     var mg = mCafMg(k);
     if (mg > 0) out.push(mg + ' mg caffeine');
     return out.join(' · ');
@@ -194,7 +214,9 @@
     var attr = inHyd ? 'data-hyd' : 'data-am';
     return shown.map(function (d) {
       var c = cf[d.id] || 0, low = d.n.toLowerCase();
-      return '<div class="am-drink"><span><b>' + esc(d.n) + '</b><small>' + d.mg + ' mg</small></span>' +
+      var dOz = fin(d.oz) ? d.oz : defDrinkOz(d.id);
+      var sub = (dOz > 0 ? dOz + ' oz · ' : '') + d.mg + ' mg';
+      return '<div class="am-drink"><span><b>' + esc(d.n) + '</b><small>' + sub + '</small></span>' +
         '<button class="am-b" ' + attr + '="cf:' + d.id + ':-1" aria-label="One less ' + esc(low) + '"' + (c ? '' : ' disabled') + '>−</button>' +
         '<b class="am-n">' + c + '</b>' +
         '<button class="am-b" ' + attr + '="cf:' + d.id + ':1" aria-label="One more ' + esc(low) + '">+</button></div>';
@@ -234,67 +256,85 @@
     return '<div class="am no-print" data-amkey="' + k + '">' + sleep + steps + cre + caf + '</div>';
   }
   /* Dedicated Water & Drinks card for Nourish day view (src/myday.js):
-     ounces of water with +8 / +16 / +24 / −8 oz 1-tap controls and live
-     caffeine drink counters in one place alongside meals. */
+     ounces of water (plain water + fluid from drinks) with +8 / +16 / +24 / −8 oz
+     1-tap controls, live caffeine drink counters, and collapsible header like
+     the meal sections above it. */
   function mHydrationCardHTML(k, goalOz) {
     var r = mAmOf(k);
-    var wt = fin(r.wt) ? r.wt : 0;
+    var plainWt = fin(r.wt) ? r.wt : 0;
+    var drinkWt = mDrinksOz(k);
+    var wt = plainWt + drinkWt;
     var goal = mWaterGoalOz(goalOz ? goalOz * 2 : 200);
     if (fin(goalOz) && goalOz >= 40 && goalOz <= 200) goal = Math.round(goalOz);
     var pct = goal > 0 ? Math.max(0, Math.min(100, Math.round(wt / goal * 100))) : 0;
     var shown = mDrinksShown(k), cf = r.cf || {}, mg = mCafMg(k);
     var drinks = mDrinksRowsHTML(shown, cf, true);
-    return '<section class="mhyd-card no-print" data-amkey="' + esc(k) + '" aria-label="Water and drinks">' +
-      '<div class="mhyd-head">' +
+    var shut = !!(S.mHydShut && S.mHydShut[k]) && !S.mViewAll;
+    var subLine = drinkWt > 0
+      ? '<div class="mhyd-sub">' + plainWt + ' oz water + ' + drinkWt + ' oz from drinks</div>'
+      : '';
+    return '<section class="mhyd-card' + (shut ? ' shut' : '') + ' no-print" data-amkey="' + esc(k) + '" aria-label="Water and drinks">' +
+      '<button type="button" class="mhyd-head" data-hyd="fold" aria-expanded="' + (!shut) + '" aria-label="Water and Drinks, ' + wt + ' of ' + goal + ' oz' + (mg > 0 ? ', ' + mg + ' mg caffeine' : '') + '. ' + (shut ? 'Expand' : 'Collapse') + '">' +
         '<span class="mhyd-title"><svg class="mhyd-ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5C10 2.5 4.5 8.6 4.5 12.6a5.5 5.5 0 0 0 11 0C15.5 8.6 10 2.5 10 2.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>' +
-          '<b>Water &amp; Drinks</b></span>' +
+          '<b>Water &amp; Drinks</b><span class="mhyd-chev" aria-hidden="true">' + (shut ? '▸' : '▾') + '</span></span>' +
         '<span class="mhyd-badges">' +
           '<span class="mhyd-pill' + (wt >= goal ? ' hit' : '') + '"><b>' + wt + '</b> / ' + goal + ' oz' + (wt >= goal ? ' ✓' : '') + '</span>' +
           (mg > 0 ? '<span class="mhyd-pill caf' + (mg > 400 ? ' over' : '') + '"><b>' + mg + '</b> mg caf</span>' : '') +
         '</span>' +
-      '</div>' +
-      '<div class="mhyd-meter" role="meter" aria-label="Water intake" aria-valuemin="0" aria-valuemax="' + goal + '" aria-valuenow="' + wt + '">' +
-        '<i style="width:' + pct + '%"></i>' +
-      '</div>' +
-      '<div class="mhyd-water-btns">' +
-        '<button type="button" class="mhyd-wbtn" data-hyd="wt:8" aria-label="Add 8 oz water"><b>+8 oz</b><small>cup</small></button>' +
-        '<button type="button" class="mhyd-wbtn" data-hyd="wt:16" aria-label="Add 16 oz water"><b>+16 oz</b><small>bottle</small></button>' +
-        '<button type="button" class="mhyd-wbtn" data-hyd="wt:24" aria-label="Add 24 oz water"><b>+24 oz</b><small>shaker</small></button>' +
-        '<button type="button" class="mhyd-wbtn mhyd-wsub" data-hyd="wt:-8" aria-label="Remove 8 oz water"' + (wt > 0 ? '' : ' disabled') + '><b>−8 oz</b></button>' +
-      '</div>' +
-      '<div class="mhyd-caf">' +
-        '<div class="mhyd-caf-h"><span class="mhyd-caf-t">Caffeine today</span>' +
-          '<span class="mhyd-caf-s">' + (mg ? mg + ' mg' + (mg > 400 ? ' · over the usual 400 mg ceiling' : '') : shown.length ? '0 mg' : 'Tap Add a drink for Crio Bru, Coffee, Pre-workout…') + '</span></div>' +
-        (drinks ? '<div class="am-drinks">' + drinks + '</div>' : '') +
-        (S.hydAdd ? mDrinkPanelHTML(true) : '<button type="button" class="nut-ask am-add" data-hyd="hadd">' + (shown.length ? 'Edit or add drinks' : '+ Add a drink') + '</button>') +
-      '</div>' +
+      '</button>' +
+      (shut ? '' :
+        '<div class="mhyd-body">' +
+          '<div class="mhyd-meter" role="meter" aria-label="Water intake" aria-valuemin="0" aria-valuemax="' + goal + '" aria-valuenow="' + wt + '">' +
+            '<i style="width:' + pct + '%"></i>' +
+          '</div>' +
+          subLine +
+          '<div class="mhyd-water-btns">' +
+            '<button type="button" class="mhyd-wbtn" data-hyd="wt:8" aria-label="Add 8 oz water"><b>+8 oz</b><small>cup</small></button>' +
+            '<button type="button" class="mhyd-wbtn" data-hyd="wt:16" aria-label="Add 16 oz water"><b>+16 oz</b><small>bottle</small></button>' +
+            '<button type="button" class="mhyd-wbtn" data-hyd="wt:24" aria-label="Add 24 oz water"><b>+24 oz</b><small>shaker</small></button>' +
+            '<button type="button" class="mhyd-wbtn mhyd-wsub" data-hyd="wt:-8" aria-label="Remove 8 oz water"' + (plainWt > 0 ? '' : ' disabled') + '><b>−8 oz</b></button>' +
+          '</div>' +
+          '<div class="mhyd-caf">' +
+            '<div class="mhyd-caf-h"><span class="mhyd-caf-t">Drinks &amp; caffeine</span>' +
+              '<span class="mhyd-caf-s">' + (mg ? mg + ' mg' + (mg > 400 ? ' · over the usual 400 mg ceiling' : '') : shown.length ? 'Each drink counts toward your oz + mg' : 'Tap Add a drink for Crio Bru, Diet soda, Coffee…') + '</span></div>' +
+            (drinks ? '<div class="am-drinks">' + drinks + '</div>' : '') +
+            (S.hydAdd ? mDrinkPanelHTML(true) : '<button type="button" class="nut-ask am-add" data-hyd="hadd">' + (shown.length ? 'Edit or add drinks' : '+ Add a drink') + '</button>') +
+          '</div>' +
+        '</div>') +
     '</section>';
   }
-  /* Your drinks, their milligrams, and a new one. The milligrams are edited
-     here rather than in a settings screen of their own, because this is the
-     only place a drink is ever used. */
+  /* Your drinks, their ounces & milligrams, and a new one. Edited here rather
+     than in a settings screen of their own, because this is the only place a
+     drink is ever used. */
   function mDrinkPanelHTML(inHyd) {
     var dk = mDrinks();
     var mine = dk.list.filter(function (d) { return dk.on.indexOf(d.id) >= 0; });
     var rest = dk.list.filter(function (d) { return dk.on.indexOf(d.id) < 0; });
     var attr = inHyd ? 'data-hyd' : 'data-am';
     var mgAttr = inHyd ? 'data-hydmg' : 'data-ammg';
+    var ozAttr = inHyd ? 'data-hydoz' : 'data-amoz';
     var nId = inHyd ? 'hydNewN' : 'amNewN';
     var mId = inHyd ? 'hydNewMg' : 'amNewMg';
+    var oId = inHyd ? 'hydNewOz' : 'amNewOz';
     var noteId = inHyd ? 'hydNote' : 'amNote';
     var doneAct = inHyd ? 'hdone' : 'done';
     return '<div class="am-panel">' +
       (mine.length ? '<div class="am-ph">Your drinks</div>' + mine.map(function (d) {
+        var dOz = fin(d.oz) ? d.oz : defDrinkOz(d.id);
         return '<div class="am-prow"><span>' + esc(d.n) + '</span>' +
+          '<label class="am-mg"><input type="text" class="am-in" inputmode="numeric" maxlength="2" ' + ozAttr + '="' + d.id + '" value="' + dOz + '" ' +
+            'aria-label="Ounces in a ' + esc(d.n.toLowerCase()) + ', oz"> oz</label>' +
           '<label class="am-mg"><input type="text" class="am-in" inputmode="numeric" maxlength="4" ' + mgAttr + '="' + d.id + '" value="' + d.mg + '" ' +
             'aria-label="Caffeine in a ' + esc(d.n.toLowerCase()) + ', mg"> mg</label>' +
           '<button class="nut-ask" ' + attr + '="off:' + d.id + '">Hide</button></div>';
       }).join('') : '') +
       (rest.length ? '<div class="am-ph">Add</div><div class="am-chips">' + rest.map(function (d) {
-        return '<button class="am-chip" ' + attr + '="on:' + d.id + '">' + esc(d.n) + ' <small>' + d.mg + ' mg</small></button>';
+        var dOz = fin(d.oz) ? d.oz : defDrinkOz(d.id);
+        return '<button class="am-chip" ' + attr + '="on:' + d.id + '">' + esc(d.n) + ' <small>' + d.mg + ' mg · ' + dOz + ' oz</small></button>';
       }).join('') + '</div>' : '') +
       '<div class="am-ph">A drink of your own</div>' +
       '<div class="am-prow am-new"><input type="text" class="am-in am-nn" id="' + nId + '" maxlength="30" placeholder="Name" aria-label="Drink name">' +
+        '<label class="am-mg"><input type="text" class="am-in am-new-oz" id="' + oId + '" inputmode="numeric" maxlength="2" placeholder="12" aria-label="Ounces, oz"> oz</label>' +
         '<label class="am-mg"><input type="text" class="am-in am-new-mg" id="' + mId + '" inputmode="numeric" maxlength="4" placeholder="mg" aria-label="Caffeine, mg"> mg</label>' +
         '<button class="ghost" ' + attr + '="new">Add</button></div>' +
       '<span class="am-note" id="' + noteId + '" role="status"></span>' +
@@ -306,7 +346,10 @@
   function mCheckinClick(b, k) {
     var raw = b.getAttribute('data-am') || b.getAttribute('data-hyd') || '';
     var a = raw.split(':'), r = mAmOf(k);
-    if (a[0] === 'sl') {
+    if (a[0] === 'fold') {
+      S.mHydShut = S.mHydShut || {};
+      S.mHydShut[k] = !S.mHydShut[k];
+    } else if (a[0] === 'sl') {
       var h = fin(r.sl) ? r.sl + 0.25 * Number(a[1]) : 7;
       mAmWrite(k, 'sl', Math.max(0, Math.min(14, Math.round(h * 4) / 4)));
     } else if (a[0] === 'sysave') {
@@ -345,14 +388,16 @@
       var box = (b && b.closest && b.closest('.am-panel, .am, .mhyd-card')) || document;
       var nn = box.querySelector('.am-nn') || document.getElementById('amNewN');
       var nm = box.querySelector('.am-new-mg') || document.getElementById('amNewMg');
+      var no = box.querySelector('.am-new-oz') || document.getElementById('amNewOz');
       var note = box.querySelector('.am-note') || document.getElementById('amNote');
-      var name = nn ? nn.value.trim() : '', mgS = nm ? nm.value.trim() : '';
+      var name = nn ? nn.value.trim() : '', mgS = nm ? nm.value.trim() : '', ozS = no ? no.value.trim() : '';
       if (!name || !/^\d{1,4}$/.test(mgS) || Number(mgS) > 1000) {
         if (note) note.textContent = !name ? 'Give it a name.' : 'Milligrams take digits, up to 1,000.';
         return false;
       }
+      var newOz = ozS && /^\d{1,2}$/.test(ozS) && Number(ozS) <= 64 ? Number(ozS) : 12;
       var d3 = mDrinks(), id = 'my_' + Date.now().toString(36);
-      d3.list.push({ id: id, n: name.slice(0, 30), mg: Number(mgS) });
+      d3.list.push({ id: id, n: name.slice(0, 30), mg: Number(mgS), oz: newOz });
       d3.on.push(id);
       mDrinksWrite(d3);
     } else {
@@ -360,11 +405,12 @@
     }
     return true;
   }
-  /* Typing: steps and a drink's milligrams. Saved without a redraw, so the box
-     you are typing in is not rebuilt under your thumb; refused while it holds
-     something that is not a number, and then false, so the caller does not
-     redraw either: a redraw put the last good number back and took the
-     warning with it, and the box looked as if it had taken the word. */
+  /* Typing: steps, a drink's milligrams, and a drink's ounces. Saved without a
+     redraw, so the box you are typing in is not rebuilt under your thumb;
+     refused while it holds something that is not a number, and then false, so
+     the caller does not redraw either: a redraw put the last good number back
+     and took the warning with it, and the box looked as if it had taken the
+     word. */
   function mCheckinInput(el, k) {
     var t = String(el.value || '').replace(/[,\s]/g, '');
     if (el.id === 'amSteps') {
@@ -383,21 +429,30 @@
       mDrinksWrite(dk);
       return true;
     }
+    var ozId = el.getAttribute('data-amoz') || el.getAttribute('data-hydoz');
+    if (ozId) {
+      if (!/^\d{1,2}$/.test(t) || Number(t) > 64) { el.setAttribute('aria-invalid', 'true'); return false; }
+      el.setAttribute('aria-invalid', 'false');
+      var dkOz = mDrinks();
+      dkOz.list.forEach(function (d) { if (d.id === ozId) d.oz = Number(t); });
+      mDrinksWrite(dkOz);
+      return true;
+    }
     return false;
   }
 
   /* Every morning with anything said, for Review: { key: record }, the drinks'
-     milligrams already added up as `mg`. */
+     milligrams already added up as `mg` and total hydration (water + drinks) as `wt`. */
   function mAmDays() {
     var out = {};
     Object.keys(MAM).forEach(function (k) {
-      var r = mAmOf(k);
-      out[k] = { sl: r.sl, sy: r.sy, cr: r.cr, wt: r.wt, mg: r.cf ? mCafMg(k) : undefined };
+      var r = mAmOf(k), wOz = mWaterOz(k);
+      out[k] = { sl: r.sl, sy: r.sy, cr: r.cr, wt: wOz > 0 ? wOz : r.wt, mg: r.cf ? mCafMg(k) : undefined };
     });
     return out;
   }
 
   return { MAM: MAM, mAmOf: mAmOf, mAmWrite: mAmWrite, mAmClean: mAmClean, mAmSum: mAmSum, mAmDays: mAmDays, mDrinksClean: mDrinksClean,
-    mWaterGoalOz: mWaterGoalOz, mCafMg: mCafMg, mHydrationCardHTML: mHydrationCardHTML,
+    mWaterGoalOz: mWaterGoalOz, mWaterOz: mWaterOz, mDrinksOz: mDrinksOz, mCafMg: mCafMg, mHydrationCardHTML: mHydrationCardHTML,
     mCheckinHTML: mCheckinHTML, mCheckinClick: mCheckinClick, mCheckinInput: mCheckinInput };
 };

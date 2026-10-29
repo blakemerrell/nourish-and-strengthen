@@ -1029,7 +1029,8 @@
     }
     var hIn = document.activeElement, hSel = null;
     if (hIn && hIn.tagName === 'INPUT' && $('macroSlots').contains(hIn)) {
-      hSel = hIn.id ? '#' + hIn.id : hIn.getAttribute('data-hydmg') ? '[data-hydmg="' + hIn.getAttribute('data-hydmg') + '"]' : null;
+      hSel = hIn.id ? '#' + hIn.id : hIn.getAttribute('data-hydmg') ? '[data-hydmg="' + hIn.getAttribute('data-hydmg') + '"]'
+        : hIn.getAttribute('data-hydoz') ? '[data-hydoz="' + hIn.getAttribute('data-hydoz') + '"]' : null;
     }
     var hDraft = hSel ? hIn.value : null;
     $('macroSlots').innerHTML = html;
@@ -1056,7 +1057,8 @@
        is in it, found again by its id or its drink. */
     var wIn = document.activeElement, wSel = null;
     if (wIn && wIn.tagName === 'INPUT' && $('macroWeigh').contains(wIn)) {
-      wSel = wIn.id ? '#' + wIn.id : wIn.getAttribute('data-ammg') ? '[data-ammg="' + wIn.getAttribute('data-ammg') + '"]' : null;
+      wSel = wIn.id ? '#' + wIn.id : wIn.getAttribute('data-ammg') ? '[data-ammg="' + wIn.getAttribute('data-ammg') + '"]'
+        : wIn.getAttribute('data-amoz') ? '[data-amoz="' + wIn.getAttribute('data-amoz') + '"]' : null;
     }
     var wDraft = wSel ? wIn.value : null;
     $('macroWeigh').innerHTML = macroWeighHTML(k);

@@ -204,8 +204,8 @@ module.exports = nourish({
         col: b.closest('.mwk-c').getBoundingClientRect().width,
         r: parseFloat(cs.borderRadius) };
     });
-    t.ok('a day on the week strip is a box, not a capsule',
-      boxShape.r <= 6 && boxShape.w >= 24, JSON.stringify(boxShape));
+    t.ok('a day on the week strip is a stadium pill',
+      boxShape.r >= 10 && boxShape.w >= 20, JSON.stringify(boxShape));
     t.ok('and at 320px it still fits inside its own column',
       boxShape.w <= boxShape.col + 0.5, JSON.stringify(boxShape));
     await boxPg.context().close();

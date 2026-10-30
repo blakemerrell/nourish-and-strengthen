@@ -74,7 +74,7 @@ module.exports = nourish({
         const gear = document.getElementById('macroMore');
         if (!head.contains(gear) || document.getElementById('macroOpenAll')) return false;
         const h = head.getBoundingClientRect(), g = gear.getBoundingClientRect();
-        return g.left > document.getElementById('macroNext').getBoundingClientRect().right &&
+        return g.left > document.getElementById('macroSum').getBoundingClientRect().right &&
           h.right - g.right < 24;
       }), await bar.evaluate(() =>
         'gear in head ' + document.querySelector('.mday-head').contains(document.getElementById('macroMore')) +

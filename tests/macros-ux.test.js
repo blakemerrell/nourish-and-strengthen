@@ -1060,9 +1060,15 @@ module.exports = nourish({
         plates: [...document.querySelectorAll('#macroSlots .mtray-fn')].map((x) => x.textContent) }));
       t.ok('a date six weeks back, picked on the calendar, goes there',
         onFar.sel === FAR && onFar.text === 'Fri, Aug 21' && onFar.plates.some((x) => /Chicken/i.test(x)), JSON.stringify(onFar));
-      await homeDay(pg); await pg.click('#macroPrev');
+      await homeDay(pg);
+      await pg.evaluate(() => {
+        const w = document.getElementById('macroWeek'), r = w.getBoundingClientRect(), y = r.top + r.height / 2, x = r.left + r.width / 2;
+        const touch = (cx) => new Touch({ identifier: 1, target: w, clientX: cx, clientY: y });
+        w.dispatchEvent(new TouchEvent('touchstart', { touches: [touch(x)], changedTouches: [touch(x)], bubbles: true }));
+        w.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: [touch(x + 120)], bubbles: true }));
+      });
       await pg.waitForTimeout(300);
-      t.ok('and the arrow walks on back from there, a week', await pg.evaluate(() => document.getElementById('macroDayPick').value) === '2026-08-14');
+      t.ok('and swiping the week strip walks on back from there, a week', await pg.evaluate(() => document.getElementById('macroDayPick').value) === '2026-08-14');
       await homeDay(pg); await goDay(pg, WED);
       await pg.waitForTimeout(300);
 

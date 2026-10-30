@@ -6615,8 +6615,8 @@
        "a way for me to scroll to future or past weeks within reason": the
        arrows a week, he chose, and a swipe on the bars). The same day of the
        week, so the strip moves and the day lit in it stays put. */
-    $('macroPrev').addEventListener('click', function () { mNavDay(-7); });
-    $('macroNext').addEventListener('click', function () { mNavDay(7); });
+    if ($('macroPrev')) $('macroPrev').addEventListener('click', function () { mNavDay(-7); });
+    if ($('macroNext')) $('macroNext').addEventListener('click', function () { mNavDay(7); });
     /* A swipe across the week, not a scroll down past it: more across than
        down, and far enough to mean it. A tap on a day is a click, and
        still opens that day. */

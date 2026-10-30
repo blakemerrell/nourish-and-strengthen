@@ -307,8 +307,7 @@
     if (!b) return;
     var a = mViewsAll();
     b.hidden = !a.n;
-    /* In the menu now, so it says what it is beside the pips it used to be. */
-    b.innerHTML = '<span class="mday-views-l">Every meal</span>' + mPipsHTML(a.same);
+    b.innerHTML = mPipsHTML(a.same);
     b.setAttribute('aria-label', 'Every meal: show ' + VIEWS_SAY[a.next]);
     b.title = 'Every meal: show ' + VIEWS_SAY[a.next];
   }
@@ -643,21 +642,26 @@
     var ot1 = new Date(); ot1.setDate(ot1.getDate() + 1);
     if (k === dayKey(od1)) word = 'Yesterday';
     if (k === dayKey(ot1)) word = 'Tomorrow';
-    /* Two short lines, the weekday over the month and day, so the date takes
-       a narrow column at the left of the day's box and the calories get the
-       rest (2026-10-30). The phone's calendar is still the whole column, and
-       its label still says the date in full. */
+    /* Calendar icon with the date in it (Blake, 2026-10-30: "turn the
+       fri/Oct 30 in to a simple calendar icon with the date in it"). The
+       weekday and month stay in .vis-hidden so screen readers and textContent
+       still read "Fri, Oct 30". */
     var ld = mLongDate(k), ldc = ld.indexOf(', ');
-    $('macroDateTx').innerHTML = ldc > 0
-      ? '<span class="mday-dw">' + ld.slice(0, ldc) + '</span><span class="vis-hidden">, </span><span class="mday-dd">' + ld.slice(ldc + 2) + '</span>'
+    var md = ldc > 0 ? ld.slice(ldc + 2) : ld, mds = md.indexOf(' ');
+    $('macroDateTx').innerHTML = ldc > 0 && mds > 0
+      ? '<span class="vis-hidden">' + ld.slice(0, ldc) + ', ' + md.slice(0, mds) + ' </span>' +
+        '<span class="mday-cal-ic">' +
+          '<svg class="mday-cal-svg" viewBox="0 0 36 36" fill="none" aria-hidden="true"><rect x="3" y="6" width="30" height="27" rx="6" fill="var(--paper-soft)" stroke="currentColor" stroke-width="1.8"/><path d="M3 13.5h30" stroke="currentColor" stroke-width="1.6"/><path d="M11 3v5.5M25 3v5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
+          '<span class="mday-cal-d num">' + md.slice(mds + 1) + '</span>' +
+        '</span>'
       : ld;
     var dp = $('macroDayPick');
     if (dp) {
       dp.min = mEarliestKey(); dp.max = mLatestKey(); dp.value = k;
       dp.setAttribute('aria-label', (word ? word + ', ' : '') + mLongDate(k) + '. Choose a day');
     }
-    $('macroPrev').disabled = k <= mEarliestKey();
-    $('macroNext').disabled = k >= mLatestKey();
+    if ($('macroPrev')) $('macroPrev').disabled = k <= mEarliestKey();
+    if ($('macroNext')) $('macroNext').disabled = k >= mEarliestKey();
     $('macroWeek').innerHTML = mWeekHTML(k, todayK);
     /* A day you are planning rather than living looks identical otherwise,
        and quietly ticking Thursday's breakfast off on Tuesday is exactly the

@@ -8991,3 +8991,17 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 @media (hover: none) {
   #view-macros .mday-kc .mpillwk-hbtn:hover { background: transparent; }
 }
+
+/* ---- the weekly measurements, under the morning check-in ----
+   Four boxes in two columns, each its name over the tape's number, the last
+   week's figure faint inside an empty one so the change is plain as it is
+   typed (Blake, 2026-10-30: recomp, where the scale holds and the tape
+   moves). */
+.am-body { margin-top: 2px; }
+.am-bm-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin: 4px 0 8px; }
+.am-bm { display: flex; flex-direction: column; gap: 4px; font-size: 0.875rem; color: var(--ink-2); }
+.am-bm-l small { color: var(--muted-2); font-size: 0.8125rem; }
+.am-bm-in { width: 100%; min-height: 44px; box-sizing: border-box; font-variant-numeric: tabular-nums; }
+.am-bm-act { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.am-bm-err { flex: 1; color: var(--dial-over); font-size: 0.8125rem; }
+.am-due { font-size: 0.8125rem; font-weight: 600; color: var(--ochre-text); margin-left: 4px; }

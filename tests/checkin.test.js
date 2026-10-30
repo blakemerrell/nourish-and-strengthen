@@ -32,8 +32,29 @@ module.exports = {
     await p.waitForTimeout(500);
     t.ok('the sheet Today opens is Good morning', /Good morning/.test(await txt(p, '.wg-sheet .sheet-eyebrow')));
     const rows = await p.evaluate(() => [...document.querySelectorAll('#weighSheet .am .am-l > span')].map((s) => s.textContent));
-    t.ok('under the scale: sleep, steps, creatine and caffeine, in that order',
-      rows.join('|') === 'Sleep last night|Steps yesterday|Creatine|Caffeine today', rows.join('|'));
+    t.ok('under the scale: sleep, steps, creatine, caffeine, and the week\u2019s measurements, in that order',
+      rows.join('|') === 'Sleep last night|Steps yesterday|Creatine|Caffeine today|Measurements this week', rows.join('|'));
+
+    /* ---- the weekly tape (2026-10-30, recomp) ----
+     * Never measured, so it is open and asks. A number outside a body's
+     * range is refused by name; four good ones are kept to the quarter inch,
+     * and the block then folds to its line. */
+    await p.fill('#amBm_wa', '9');
+    await p.click('#weighSheet [data-am="bmsave"]');
+    await p.waitForTimeout(150);
+    t.ok('a waist of 9 inches is refused, by name, and nothing is kept',
+      /Waist: enter inches/.test(await txt(p, '#amBmErr')) && !(await am(p)).bm, await txt(p, '#amBmErr'));
+    await p.fill('#amBm_wa', '34.6');
+    await p.fill('#amBm_ch', '42');
+    await p.fill('#amBm_ar', '15,25');
+    await p.fill('#amBm_th', '');
+    await p.click('#weighSheet [data-am="bmsave"]');
+    await p.waitForTimeout(250);
+    const bm = (await am(p)).bm || {};
+    t.ok('waist, chest and arm are kept to the quarter inch, and an empty thigh is left out',
+      bm.wa === 34.5 && bm.ch === 42 && bm.ar === 15.25 && bm.th === undefined, JSON.stringify(bm));
+    t.ok('and the block says it is done for the week',
+      /Measured this morning/.test(await txt(p, '#weighSheet .am-body')), await txt(p, '#weighSheet .am-body'));
     t.ok('the weight box is still first on the card', await p.evaluate(() => {
       const c = document.querySelector('#weighSheet #macroWeigh');
       return !!c.querySelector('#mWeight') && c.querySelector('#mWeight').compareDocumentPosition(c.querySelector('.am')) & Node.DOCUMENT_POSITION_FOLLOWING;

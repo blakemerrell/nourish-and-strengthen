@@ -934,8 +934,14 @@
           : destSlots.length === 2 ? destSlots[0].n.replace(/ Snack$/i, '') + ', ' + destSlots[1].n.replace(/ Snack$/i, '')
           : destSlots.length > 2 ? destSlots[0].n.replace(/ Snack$/i, '') + ', ' + destSlots[1].n.replace(/ Snack$/i, '') + '\u2026'
           : '';
+        /* Short on the pill, whole in its label. "283 kcal → Dinner, Evening"
+           ran past the pill's edge on a phone (Blake, 2026-10-30: "Uncrowd
+           the text"), so it shows the number and the first meal it goes to,
+           and "+1" for the rest; the button's label still names them all. */
+        var destShort = destSlots.length ? destSlots[0].n.replace(/ Snack$/i, '') +
+          (destSlots.length > 1 ? ' +' + (destSlots.length - 1) : '') : '';
         var swHTML = skKcal > 0
-          ? '<span class="mtray-spread-pill num">' + skKcal + ' kcal' + (destTxt ? ' &rarr; ' + esc(destTxt) : ' skipped') + '</span>' +
+          ? '<span class="mtray-spread-pill num">' + skKcal + (destShort ? ' &rarr; ' + esc(destShort) : ' kcal skipped') + '</span>' +
             '<span class="sr-only"> (' + (skSend ? 'skipped' : 'skipped &middot; its share went to the rest') + ')</span>'
           : (skSend ? 'skipped' : 'skipped &middot; its share went to the rest');
         /* Once Done is pressed the chooser folds, and folded it used to stay

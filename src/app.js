@@ -3545,7 +3545,7 @@
 
   /* src/weekstrip.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var WEEKSTRIP = window.HiveParts.weekstrip({ MDAYS: MDAYS, M_MONS: M_MONS, M_WDAYS: M_WDAYS, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mDay: mDay, mDayDone: mDayDone, mDayJudged: mDayJudged, mDayTargets: mDayTargets, mEarliestKey: mEarliestKey, mIsTrainingDay: mIsTrainingDay, mLatestKey: mLatestKey, mTotals: mTotals, mTrainedAt: mTrainedAt, mVerdict: mVerdict });
+  var WEEKSTRIP = window.HiveParts.weekstrip({ MDAYS: MDAYS, M_MONS: M_MONS, M_WDAYS: M_WDAYS, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mDay: mDay, mDayDone: mDayDone, mDayJudged: mDayJudged, mDayTargets: mDayTargets, mEarliestKey: mEarliestKey, mIsTrainingDay: mIsTrainingDay, mStrengthOn: mStrengthOn, mLatestKey: mLatestKey, mTotals: mTotals, mTrainedAt: mTrainedAt, mVerdict: mVerdict });
   function mWeekHTML(k, todayK) { return WEEKSTRIP.mWeekHTML(k, todayK); }
   function mPillDotsSVG(w, h, n, d, targets, tot) { return WEEKSTRIP.mPillDotsSVG(w, h, n, d, targets, tot); }
   function mFibreIconStyle(fib, fibFloor) { return WEEKSTRIP.mFibreIconStyle(fib, fibFloor); }

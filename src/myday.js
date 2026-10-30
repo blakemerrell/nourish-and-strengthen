@@ -581,6 +581,10 @@
   function sheetOnHTML(M, rows) {
     var n = 0;
     M.items.forEach(function (it) { if (LIVE.BY_ID[it.id]) n++; });
+    var wChip = '<span class="msh-wchips">' +
+      '<button type="button" class="ghost msh-wbtn" data-hyd="wt:8" aria-label="Add 8 oz water">+8 oz \ud83d\udca7</button>' +
+      '<button type="button" class="ghost msh-wbtn" data-hyd="wt:16" aria-label="Add 16 oz water">+16 oz \ud83d\udca7</button>' +
+    '</span>';
     if (!n) {
       /* One-tap repeat from yesterday when opening an empty meal sheet.
          Reuses mCopyItems and keyDate so its count and filter never diverge
@@ -592,13 +596,14 @@
       var yestItems = yestK ? mCopyItems(yestK, M.sk) : [];
       return '<section class="msh-on msh-on-empty no-print" aria-label="On ' + esc(M.name) + '">' +
         '<div class="msh-trh"><span class="msh-trt"><b>On ' + esc(M.name) + '</b><small class="num">0 foods &middot; Tap a food below to add it</small></span>' +
+        '<span class="msh-trh-r">' +
         (yestItems.length ? '<button class="ghost msh-yest" data-mcopy="' + esc(yestK) + '" aria-label="Same as yesterday, copy yesterday\u2019s ' + esc(M.name) + ' (' + yestItems.length + (yestItems.length === 1 ? ' food' : ' foods') + ')">' +
-          mIcon('fromday') + 'Same as yesterday</button>' : '') +
-        '</div></section>';
+          mIcon('fromday') + 'Same as yesterday</button>' : wChip) +
+        '</span></div></section>';
     }
     return '<section class="msh-on no-print" aria-label="On ' + esc(M.name) + '">' +
       '<div class="msh-trh"><span class="msh-trt"><b>On ' + esc(M.name) + '</b><small class="num">' +
-        n + (n === 1 ? ' food' : ' foods') + ' &middot; ' + fmtK(M.sub.kcal) + ' kcal</small></span></div>' +
+        n + (n === 1 ? ' food' : ' foods') + ' &middot; ' + fmtK(M.sub.kcal) + ' kcal</small></span>' + wChip + '</div>' +
       rows + '</section>';
   }
 
@@ -819,11 +824,7 @@
        It keeps its door, empty, as Status does. Mockup round 3b:
        https://claude.ai/artifact/Vn1dzLvzzUgVBxKNPdUc8c */
     var mIsMovableSlot = function (s) {
-      if (!s) return false;
-      if (s.t === 'b' || s.t === 'l' || s.t === 'd') {
-        return /\b(?:snack|wake|even|pre|post)\b/i.test(String(s.n || ''));
-      }
-      return true;
+      return !!s;
     };
     var mSlotHoldBarHTML = function (sk, name, anyEaten) {
       if (S.mCardHold !== k + '|' + sk) return '';
@@ -832,6 +833,8 @@
       var slotRec = idx >= 0 ? slots.list[idx] : null;
       var canMove = mIsMovableSlot(slotRec) && slots.list.length > 1;
       return '<div class="mtray-holdbar no-print" role="group" aria-label="Options for ' + esc(name) + '">' +
+        '<button type="button" class="mhold-btn mhold-wtr" data-hyd="wt:8" aria-label="Add 8 oz water">+8 oz water</button>' +
+        '<button type="button" class="mhold-btn mhold-wtr" data-hyd="wt:16" aria-label="Add 16 oz water">+16 oz water</button>' +
         (!anyEaten ? '<button type="button" class="mhold-btn" data-mskipgo="' + esc(sk) + '">Skip today</button>' : '') +
         (!anyEaten && slots.list.length > 1 ? '<button type="button" class="mhold-btn mhold-del" data-mslotdel="' + esc(sk) + '">Remove permanently</button>' : '') +
         (canMove
@@ -923,8 +926,10 @@
           : (skSend ? 'skipped' : 'skipped &middot; its share went to the rest');
         return '<div class="mtray-skip">' +
             '<button class="mtray-skb" data-mopen="' + esc(sk) + '" aria-label="' + esc(name) + ', skipped' + (skKcal > 0 && destTxt ? ', ' + skKcal + ' kcal to ' + esc(destTxt) : '') + '. Open it">' +
-              '<span class="mtray-n">' + esc(name) + '</span>' +
-              '<span class="mtray-sw">' + swHTML + '</span>' +
+              '<span class="mtray-skpill">' +
+                '<span class="mtray-n">' + esc(name) + '</span>' +
+                '<span class="mtray-sw">' + swHTML + '</span>' +
+              '</span>' +
             '</button>' +
             '<button class="mtray-unskip" data-mskip="' + esc(sk) + '" aria-label="Put ' + esc(name) + ' back">Put back</button>' +
           '</div>' + skSend;
@@ -1151,7 +1156,10 @@
     mViewsNow();
 
     var readout = macroFootHTML(day, targets, slots);
+    if ($('macroPillHead')) $('macroPillHead').innerHTML = readout.head || '';
     $('macroFoot').innerHTML = readout.foot;
+    var stickEl = document.querySelector('#view-macros .mday-stick');
+    if (stickEl) stickEl.classList.toggle('tray-open', !!S.mPillTrayOpen);
     /* Contents only — the region itself must outlive the redraw or it
        announces nothing. */
     $('macroLimits').innerHTML = readout.limits;

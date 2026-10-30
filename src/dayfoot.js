@@ -13,15 +13,36 @@
 
   // what it reads of the app's
   var MPILL_TONE = app.MPILL_TONE;
+  var MWEIGHTS = app.MWEIGHTS;
   var S = app.S;
+  var dayKey = app.dayKey;
   var kcalOf = app.kcalOf;
+  var keyDate = app.keyDate;
+  var mAmOf = app.mAmOf;
   var mAssumed = app.mAssumed;
+  var mBurn = app.mBurn;
+  var mDayDone = app.mDayDone;
+  var mDayJudged = app.mDayJudged;
+  var mFibreIconStyle = app.mFibreIconStyle;
   var mFillPill = app.mFillPill;
+  var mGymIconStyle = app.mGymIconStyle;
+  var mIsTrainingDay = app.mIsTrainingDay;
+  var mPillDotsSVG = app.mPillDotsSVG;
+  var mReadProfile = app.mReadProfile;
+  var mSaltIconStyle = app.mSaltIconStyle;
+  var mSkipped = app.mSkipped;
   var mTotals = app.mTotals;
+  var mTrainedAt = app.mTrainedAt;
   var mVerdict = app.mVerdict;
+  var mViewKey = app.mViewKey;
+  var mWShow = app.mWShow;
+  var mWUnit = app.mWUnit;
+  var mWaterGoalOz = app.mWaterGoalOz;
+  var mWaterOz = app.mWaterOz;
   var pushSheet = app.pushSheet;
   var rememberOpener = app.rememberOpener;
   var renderModal = app.renderModal;
+  var todayKey = app.todayKey;
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -41,6 +62,216 @@
     renderModal();
     var tf = $('mtGoalLb') || $('mtP');
     if (tf) tf.focus();
+  }
+
+  function mPillTrayHTML(k, day, targets, slots, tot, tK, fib, fibFloor, na, naCap, waterOz, goalOz) {
+    var train = mIsTrainingDay ? mIsTrainingDay(k) : false;
+    var trained = mTrainedAt ? mTrainedAt(k) > 0 : false;
+    var bigDots = mPillDotsSVG ? mPillDotsSVG(80, 170, 44, 5, targets, tot.all) : '';
+    var fibStyle = mFibreIconStyle ? mFibreIconStyle(fib, fibFloor) : '';
+    var saltStyle = mSaltIconStyle ? mSaltIconStyle(na, naCap) : '';
+    var gymStyle = mGymIconStyle ? mGymIconStyle(train, trained) : '';
+    var vK = tot.all.kcal > 0 && tK > 0 ? mVerdict('kcal', tot.all.kcal, tK) : '';
+    var fillPct = tK > 0 ? Math.min(100, Math.round(tot.all.kcal / tK * 100)) : 0;
+    var fillBg = vK === 'over'
+      ? 'background:linear-gradient(var(--pill-fire) 0 14%, var(--pill-fill) 14% 100%);'
+      : 'background:var(--pill-fill);';
+
+    var pr = mReadProfile ? mReadProfile() : {};
+    var burnObj = mBurn ? mBurn(pr) : null;
+    var estBurn = burnObj && burnObj.tdee ? Math.round(burnObj.tdee) : Math.round(tK || 2000);
+    var done = mDayDone ? mDayDone(day) : false;
+    var judged = mDayJudged ? mDayJudged(k) : done;
+    var eatenKcal = Math.round(done ? tot.all.kcal : tot.eaten.kcal);
+    var netKcal = eatenKcal - estBurn;
+    var netStr = (netKcal > 0 ? '+' : netKcal < 0 ? '\u2212' : '') + Math.abs(netKcal).toLocaleString();
+
+    var actPK = Math.max(0, (tot.all.p || 0) * 4);
+    var actFK = Math.max(0, (tot.all.f || 0) * 9);
+    var actCK = Math.max(0, (tot.all.c || 0) * 4);
+    var actSumK = actPK + actFK + actCK;
+    var pPct = actSumK > 0 ? Math.round(actPK / actSumK * 100) : 0;
+    var fPct = actSumK > 0 ? Math.round(actFK / actSumK * 100) : 0;
+    var cPct = actSumK > 0 ? Math.max(0, 100 - pPct - fPct) : 0;
+
+    var tgtPK = Math.max(1, (targets.p || 0) * 4);
+    var tgtFK = Math.max(1, (targets.f || 0) * 9);
+    var tgtCK = Math.max(1, (targets.c || 0) * 4);
+    var vP = mVerdict('p', tot.all.p, Math.max(1, targets.p));
+    var vF = mVerdict('f', tot.all.f, Math.max(1, targets.f));
+    var vC = mVerdict('c', tot.all.c, Math.max(1, targets.c));
+
+    var floorTile = function (name, v, goal, unit) {
+      var g = Math.max(1, goal);
+      var p = v / g;
+      var met = p >= 1;
+      var tag = met ? 'met' : Math.round(g - v).toLocaleString() + ' short';
+      var col = met ? 'var(--pill-p)' : 'var(--muted)';
+      var w = Math.min(100, Math.round(p * 100));
+      var op = (0.35 + 0.65 * Math.min(1, p)).toFixed(2);
+      return '<div class="mpt-tile">' +
+        '<div class="mpt-th"><span class="mpt-tn">' + esc(name) + '</span><span class="mpt-tt" style="color:' + col + '">' + esc(tag) + '</span></div>' +
+        '<div class="mpt-tv num"><b>' + Math.round(v).toLocaleString() + '</b> / ' + Math.round(g).toLocaleString() + ' ' + esc(unit) + '</div>' +
+        '<div class="mpt-tb"><i style="width:' + w + '%;background:var(--pill-p);opacity:' + op + '"></i></div>' +
+      '</div>';
+    };
+    var ceilTile = function (name, v, cap, unit) {
+      var c = Math.max(1, cap);
+      var p = v / c;
+      var col = p > 1 ? 'var(--pill-fire)' : p >= 0.8 ? 'var(--pill-amber)' : 'var(--muted)';
+      var tag = p > 1 ? 'over' : p >= 0.8 ? 'near limit' : 'ok';
+      var w = Math.min(100, Math.round(p * 100));
+      return '<div class="mpt-tile">' +
+        '<div class="mpt-th"><span class="mpt-tn">' + esc(name) + '</span><span class="mpt-tt" style="color:' + col + '">' + esc(tag) + '</span></div>' +
+        '<div class="mpt-tv num"><b>' + Math.round(v).toLocaleString() + '</b> / ' + Math.round(c).toLocaleString() + ' ' + esc(unit) + '</div>' +
+        '<div class="mpt-tb"><i style="width:' + w + '%;background:' + col + '"></i></div>' +
+      '</div>';
+    };
+
+    var fuelHTML =
+      floorTile('Protein', tot.all.p || 0, targets.p || 1, 'g') +
+      floorTile('Fibre', fib, fibFloor || 20, 'g') +
+      ceilTile('Sodium', na, naCap, 'mg') +
+      floorTile('Water', waterOz, goalOz || 80, 'oz');
+
+    // Meals breakdown: where the calories came from
+    var mealRowsData = [];
+    var maxMealK = 1;
+    (slots && slots.list ? slots.list : []).forEach(function (s) {
+      var sk = s.k;
+      var items = day[sk] || [];
+      var skipped = !items.length && mSkipped && mSkipped(k, sk);
+      var subOne = {}; subOne[sk] = items;
+      var subTot = items.length ? mTotals(subOne).all : { kcal: 0, p: 0, f: 0, c: 0 };
+      var mK = Math.round(subTot.kcal);
+      if (mK > maxMealK) maxMealK = mK;
+      mealRowsData.push({
+        name: s.n || 'Meal',
+        kcal: mK,
+        skipped: skipped,
+        pK: Math.max(0, subTot.p * 4),
+        fK: Math.max(0, subTot.f * 9),
+        cK: Math.max(0, subTot.c * 4)
+      });
+    });
+
+    var mealsSection = '<div class="mpt-sec">' +
+      '<div class="mpt-sh">MEALS &middot; WHERE THE CALORIES CAME FROM</div>' +
+      '<div class="mpt-meals">' +
+        mealRowsData.map(function (m) {
+          var wPct = m.kcal > 0 ? Math.max(6, Math.round(m.kcal / maxMealK * 100)) : 0;
+          var sumM = m.pK + m.fK + m.cK || 1;
+          return '<div class="mpt-mrow' + (m.skipped ? ' is-skip' : '') + '">' +
+            '<span class="mpt-mn">' + esc(m.name) + '</span>' +
+            '<span class="mpt-mbar-w">' +
+              (m.kcal > 0
+                ? '<span class="mpt-mbar" style="width:' + wPct + '%">' +
+                    '<i style="flex:' + (m.pK / sumM).toFixed(3) + ';background:var(--pill-p)"></i>' +
+                    '<i style="flex:' + (m.fK / sumM).toFixed(3) + ';background:var(--pill-f)"></i>' +
+                    '<i style="flex:' + (m.cK / sumM).toFixed(3) + ';background:var(--pill-c)"></i>' +
+                  '</span>'
+                : '<span class="mpt-mbar-empty">' + (m.skipped ? 'skipped' : 'empty') + '</span>') +
+            '</span>' +
+            '<span class="mpt-mk num">' + (m.skipped ? '&mdash;' : m.kcal) + '</span>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+
+    // Move & Recover from real Health Connect / Check-in data only
+    var tk = todayKey ? todayKey() : k;
+    var daySteps = 0;
+    if (k === tk && window.Health && window.Health.todaySteps) {
+      daySteps = Number(window.Health.todaySteps()) || 0;
+    }
+    if (!daySteps && mAmOf && keyDate && dayKey) {
+      var nx = keyDate(k);
+      nx.setDate(nx.getDate() + 1);
+      var nk = dayKey(nx);
+      var nextAm = mAmOf(nk);
+      if (nextAm && nextAm.sy > 0) daySteps = Number(nextAm.sy) || 0;
+    }
+    var stepGoal = Number(pr && pr.steps) > 0 ? Number(pr.steps) : 10000;
+    var am = mAmOf ? mAmOf(k) : {};
+    var sleepHrs = am && am.sl > 0 ? Number(am.sl) : 0;
+    var dayW = MWEIGHTS && MWEIGHTS[k] > 0 ? MWEIGHTS[k] : 0;
+    var moveTiles = [];
+    if (daySteps > 0) {
+      moveTiles.push('<div class="mpt-tile">' +
+        '<div class="mpt-th"><span class="mpt-tn">Steps</span><span class="mpt-tt">' + Math.round(daySteps / stepGoal * 100) + '%</span></div>' +
+        '<div class="mpt-tv num"><b>' + daySteps.toLocaleString() + '</b> / ' + stepGoal.toLocaleString() + '</div>' +
+      '</div>');
+    }
+    if (train || trained) {
+      moveTiles.push('<div class="mpt-tile">' +
+        '<div class="mpt-th"><span class="mpt-tn">Workout</span><span class="mpt-tt" style="color:' + (trained ? 'var(--pill-p)' : 'var(--muted)') + '">' + (trained ? 'logged' : 'planned') + '</span></div>' +
+        '<div class="mpt-tv"><b>' + (trained ? 'Strength &check;' : 'Lifting day') + '</b></div>' +
+      '</div>');
+    }
+    if (sleepHrs > 0) {
+      var sH = Math.floor(sleepHrs);
+      var sM = Math.round((sleepHrs - sH) * 60);
+      moveTiles.push('<div class="mpt-tile">' +
+        '<div class="mpt-th"><span class="mpt-tn">Sleep</span></div>' +
+        '<div class="mpt-tv num"><b>' + sH + 'h' + (sM ? ' ' + sM + 'm' : '') + '</b></div>' +
+      '</div>');
+    }
+    if (dayW > 0 && mWShow && mWUnit) {
+      moveTiles.push('<div class="mpt-tile">' +
+        '<div class="mpt-th"><span class="mpt-tn">Weight</span></div>' +
+        '<div class="mpt-tv num"><b>' + esc(mWShow(dayW)) + ' ' + esc(mWUnit()) + '</b></div>' +
+      '</div>');
+    }
+    var moveSection = moveTiles.length
+      ? '<div class="mpt-sec">' +
+          '<div class="mpt-sh">MOVE &amp; RECOVER</div>' +
+          '<div class="mpt-grid">' + moveTiles.join('') + '</div>' +
+        '</div>'
+      : '';
+
+    return '<div class="mpill-tray" id="macroPillTray" role="region" aria-label="Selected day detail">' +
+      '<div class="mpt-hero">' +
+        '<div class="mpt-bigpill" aria-hidden="true">' +
+          bigDots +
+          '<div class="mpt-bigwell"><div class="mpt-bigfill" style="height:' + fillPct + '%;' + fillBg + '"></div></div>' +
+          '<div class="mpt-bigicos">' +
+            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="' + fibStyle + '"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19l8-8"/></svg>' +
+            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="' + saltStyle + '"><path d="M8 10h8l-1 10H9z"/><path d="M8 10c0-3 2-6 4-6s4 3 4 6"/><path d="M11 7h.01M13 7h.01"/></svg>' +
+            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="' + gymStyle + '"><path d="M3 12h18M6 8v8M18 8v8M3 10v4M21 10v4"/></svg>' +
+          '</div>' +
+        '</div>' +
+        '<div class="mpt-bal">' +
+          '<div class="mpt-sh">ENERGY BALANCE</div>' +
+          '<div class="mpt-bal3">' +
+            '<div><div class="mpt-bv num">' + eatenKcal.toLocaleString() + '</div><div class="mpt-bl">eaten</div></div>' +
+            '<div><div class="mpt-bv num">' + estBurn.toLocaleString() + '</div><div class="mpt-bl">burned &middot; est.</div></div>' +
+            '<div><div class="mpt-bv num" style="color:' + (netKcal <= 0 ? 'var(--pill-p)' : 'var(--pill-fire)') + '">&approx; ' + netStr + '</div><div class="mpt-bl">' + (judged ? 'net' : 'net so far') + '</div></div>' +
+          '</div>' +
+          '<div class="mpt-bl">Macro split &middot; actual vs target</div>' +
+          '<div class="mpt-split-act">' +
+            '<i style="flex:' + Math.max(1, actPK) + ';background:' + (vP === 'over' ? 'var(--pill-fire)' : 'var(--pill-p)') + '"></i>' +
+            '<i style="flex:' + Math.max(1, actFK) + ';background:' + (vF === 'over' ? 'var(--pill-fire)' : 'var(--pill-f)') + '"></i>' +
+            '<i style="flex:' + Math.max(1, actCK) + ';background:' + (vC === 'over' ? 'var(--pill-fire)' : 'var(--pill-c)') + '"></i>' +
+          '</div>' +
+          '<div class="mpt-split-tgt">' +
+            '<i style="flex:' + tgtPK + ';background:var(--pill-p)"></i>' +
+            '<i style="flex:' + tgtFK + ';background:var(--pill-f)"></i>' +
+            '<i style="flex:' + tgtCK + ';background:var(--pill-c)"></i>' +
+          '</div>' +
+          '<div class="mpt-split-leg num">' +
+            '<span style="color:var(--pill-p)">P ' + pPct + '%' + (vP === 'over' ? ' &middot; over' : '') + '</span>' +
+            '<span style="color:' + (vF === 'over' ? 'var(--pill-fire)' : 'var(--pill-f)') + '">F ' + fPct + '%' + (vF === 'over' ? ' &middot; over' : '') + '</span>' +
+            '<span style="color:' + (vC === 'over' ? 'var(--pill-fire)' : 'var(--pill-c)') + '">C ' + cPct + '%' + (vC === 'over' ? ' &middot; over' : '') + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="mpt-sec">' +
+        '<div class="mpt-sh">FUEL DETAIL</div>' +
+        '<div class="mpt-grid">' + fuelHTML + '</div>' +
+      '</div>' +
+      mealsSection +
+      moveSection +
+    '</div>';
   }
 
   /* Two pieces of the same readout, because they live in two boxes: the bars
@@ -64,7 +295,7 @@
       /* `limits` spelled out rather than left off: the caller assigns it to
          innerHTML, and a missing key there writes the word "undefined"
          across the card. */
-      return { foot: '<div class="macro-none">' +
+      return { head: '', foot: '<div class="macro-none">' +
         '<b>This is your day.</b> Set a goal — lose, hold or gain — and Nourish ' +
         'works out what to eat, drafts a day from the recipes you like, and ' +
         'keeps count as you tick things off.</div>', limits: '', pills: '' };
@@ -365,9 +596,30 @@
 
     /* The bars are the door to their own history. Tapping the summary to see
        the detail costs no navigation and puts the two in the same place. */
+    var vk = mViewKey ? mViewKey() : (todayKey ? todayKey() : '');
+    var prHyd = mReadProfile ? mReadProfile() : {};
+    var goalOz = mWaterGoalOz ? mWaterGoalOz(prHyd && prHyd.lb) : 80;
+    var waterOz = mWaterOz ? mWaterOz(vk) : 0;
+    var trayOpen = !!S.mPillTrayOpen;
+    var trayHTML = trayOpen ? mPillTrayHTML(vk, day, targets, slots, tot, tK, fib, fibFloor, na, naCap, waterOz, goalOz) : '';
+    var fullKcal = Math.round(tot.all.kcal);
+    var headBar = '<div class="mpillwk-top">' +
+      '<button type="button" class="mpillwk-hbtn" id="macroTrayHead" data-mpilltray="toggle" aria-expanded="' + (trayOpen ? 'true' : 'false') + '" aria-label="' + fullKcal.toLocaleString() + ' of ' + tK.toLocaleString() + ' calories, ' + waterOz + ' of ' + goalOz + ' oz water. ' + (trayOpen ? 'Collapse day detail' : 'Open day detail') + '">' +
+        '<span class="mpillwk-k"><b class="serif num">' + fullKcal.toLocaleString() + '</b><span class="mpillwk-kt"> / ' + tK.toLocaleString() + ' kcal</span></span>' +
+        '<span class="mpillwk-w num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c-3 4-6 7-6 11a6 6 0 0012 0c0-4-3-7-6-11z"/></svg>' + waterOz + ' / ' + goalOz + ' oz</span>' +
+      '</button>' +
+      '<button type="button" class="mbars mpillwk-chart" data-mchartopen="1" aria-label="See these over time">' +
+        '<span class="mpillwk-clab">Trends &rsaquo;</span>' +
+      '</button>' +
+    '</div>';
+    var footHint = '<button type="button" class="mpillwk-hint" id="macroTrayToggle" data-mpilltray="toggle" aria-expanded="' + (trayOpen ? 'true' : 'false') + '">' +
+      (trayOpen ? 'Tap to collapse' : 'Tap for day\u2019s detail') +
+    '</button>' +
+    '<div class="mpillwk-a11y">' + bars + '</div>' +
+    trayHTML;
     return {
-      foot: '<button class="mbars" data-mchartopen="1" aria-label="See these over time">' +
-          bars + '<span class="mbars-more" aria-hidden="true">&rsaquo;</span></button>',
+      head: headBar,
+      foot: footHint,
       /* Handed back separately, because the element it goes into is static
          markup in the page. A live region has to be on the page and watched
          BEFORE it gains content; building it here would mean a new region

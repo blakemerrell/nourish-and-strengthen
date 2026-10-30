@@ -166,6 +166,34 @@
     { id: 'v24', oz: 24, n: 'Shaker', short: '24oz shaker' },
     { id: 'v42', oz: 42, n: 'Stanley mug', short: '42oz Stanley' }
   ];
+  function mVesselSVG(id) {
+    if (id === 'v8') {
+      return '<svg class="mhyd-vsvg" viewBox="0 0 28 28" aria-hidden="true">' +
+        '<path d="M5 9.5h13.5l-1.3 11a2.5 2.5 0 0 1-2.5 2.2H8.8a2.5 2.5 0 0 1-2.5-2.2L5 9.5Z" fill="currentColor" fill-opacity="0.16" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>' +
+        '<path d="M18.5 11.5h2.3a2.7 2.7 0 0 1 0 5.4h-2.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>' +
+      '</svg>';
+    }
+    if (id === 'v16') {
+      return '<svg class="mhyd-vsvg" viewBox="0 0 28 28" aria-hidden="true">' +
+        '<path d="M7.2 5.5h13.6l-1.6 17a2 2 0 0 1-2 1.8h-6.4a2 2 0 0 1-2-1.8l-1.6-17Z" fill="currentColor" fill-opacity="0.14" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>' +
+        '<path d="M8.1 12.5h11.8l-.9 10a1.5 1.5 0 0 1-1.5 1.3h-7a1.5 1.5 0 0 1-1.5-1.3l-.9-10Z" fill="currentColor" fill-opacity="0.24"/>' +
+      '</svg>';
+    }
+    if (id === 'v24') {
+      return '<svg class="mhyd-vsvg" viewBox="0 0 28 28" aria-hidden="true">' +
+        '<path d="M9.5 3.5h9l1 3h-11l1-3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>' +
+        '<path d="M7.5 6.5h13l-1.3 16a2 2 0 0 1-2 1.8h-6.4a2 2 0 0 1-2-1.8l-1.3-16Z" fill="currentColor" fill-opacity="0.16" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>' +
+        '<line x1="17" y1="11" x2="19" y2="11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
+        '<line x1="16.7" y1="15" x2="18.7" y2="15" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
+        '<line x1="16.4" y1="19" x2="18.4" y2="19" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
+      '</svg>';
+    }
+    return '<svg class="mhyd-vsvg" viewBox="0 0 28 28" aria-hidden="true">' +
+      '<line x1="13.5" y1="1.8" x2="13.5" y2="6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' +
+      '<path d="M6.8 6h13.4v8.2l-1.6 3v5.3a1.8 1.8 0 0 1-1.8 1.8h-6.6a1.8 1.8 0 0 1-1.8-1.8v-5.3l-1.6-3V6Z" fill="currentColor" fill-opacity="0.18" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>' +
+      '<path d="M20.2 8.2h2.6a1.8 1.8 0 0 1 1.8 1.8v4.2a1.8 1.8 0 0 1-1.8 1.8h-3.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '</svg>';
+  }
   function mVesselsOf(k) {
     var r = mAmOf(k), raw = plain(r.vs) ? r.vs : {};
     var out = { v8: raw.v8 || 0, v16: raw.v16 || 0, v24: raw.v24 || 0, v42: raw.v42 || 0 };
@@ -197,17 +225,28 @@
     if (!r) return 0;
     var mult = fin(x) && x > 0 ? x : 1;
     var id = String(r.id || ''), nm = String(r.name || ''), u = String(r.unit || '');
-    if (id === 'f:crio_bru' || /\bcrio\s*br[uü]\b/i.test(nm)) return Math.max(1, Math.round(8 * mult));
+    if (id === 'f:crio_bru' || /\b(?:crio\s*br[uü]|coffee|espresso|latte|cold\s*brew|tea|chai|matcha)\b/i.test(nm)) {
+      if (u === 'oz' && mult < 3) return 8;
+      if (u === 'oz') return Math.max(1, Math.round(mult));
+      if (u === 'cup' || u === 'cups') return Math.max(1, Math.round(8 * mult));
+      return Math.max(1, Math.round(8 * (mult < 1 ? 1 : mult)));
+    }
     var mOz = /(\d+(?:\.\d+)?)\s*(?:fl\.?\s*)?oz\b/i.exec(u) || /(\d+(?:\.\d+)?)\s*(?:fl\.?\s*)?oz\b/i.exec(nm);
     if (mOz) return Math.max(1, Math.round(Number(mOz[1]) * mult));
+    if (/^(?:fl\.?\s*)?oz$/i.test(u.trim())) return Math.max(1, Math.round(mult < 3 ? 8 : mult));
+    if (/^cups?$/i.test(u.trim())) return Math.max(1, Math.round(8 * mult));
     var mCup = /(\d+(?:\.\d+)?)\s*cups?\b/i.exec(u);
     if (mCup) return Math.max(1, Math.round(Number(mCup[1]) * 8 * mult));
     var mMl = /(\d+(?:\.\d+)?)\s*m[lL]\b/.exec(u);
     if (mMl) return Math.max(1, Math.round((Number(mMl[1]) / 29.5735) * mult));
-    if (r.food && fin(r.g) && r.g >= 30) return Math.max(1, Math.round((r.g / 29.5735) * mult));
+    var grams = fin(r.grams) ? r.grams : fin(r.g) ? r.g : 0;
+    if (r.food && grams >= 60) return Math.max(1, Math.round((grams / 29.5735) * mult));
     if (!r.food && mServeG) {
       var sg = mServeG(r);
       if (sg && sg.g >= 60) return Math.max(1, Math.round((sg.g / 29.5735) * mult));
+    }
+    if (/\b(?:energy\s*drink|celsius|monster|alani|red\s*bull|ghost|reign|soda|diet\s*soda|cola|pop|sparkling\s*water|seltzer|protein\s*shake|fairlife|shake|smoothie)\b/i.test(nm)) {
+      return Math.max(1, Math.round(12 * mult));
     }
     return Math.max(1, Math.round(8 * mult));
   }
@@ -388,6 +427,7 @@
       return '<div class="mhyd-vcard' + (c > 0 ? ' on' : '') + '">' +
         (c > 0 ? '<span class="mhyd-vcnt num" aria-label="' + c + ' ' + esc(v.n) + '">&times;' + c + '</span>' : '') +
         '<button type="button" class="mhyd-wbtn" data-hyd="wt:' + v.oz + '" aria-label="Add ' + v.oz + ' oz water (' + esc(v.n) + ')">' +
+          mVesselSVG(v.id) +
           '<b>+' + v.oz + ' oz</b><small>' + esc(v.n) + '</small></button>' +
         '<div class="mhyd-vstep">' +
           '<button type="button" class="mhyd-vminus" data-hyd="wt:-' + v.oz + '" aria-label="Remove ' + v.oz + ' oz water"' + (canSub ? '' : ' disabled') + '>&minus;</button>' +
@@ -402,6 +442,7 @@
           }).join('') +
         '</div>'
       : '';
+    var cafOpen = !!(S.hydCafOpen || S.hydAdd);
     return '<section class="mhyd-card' + (shut ? ' shut' : '') + ' no-print" data-amkey="' + esc(k) + '" aria-label="Water and drinks">' +
       '<button type="button" class="mhyd-head" data-hyd="fold" aria-expanded="' + (!shut) + '" aria-label="Water and Drinks, ' + wt + ' of ' + goal + ' oz' + (mg > 0 ? ', ' + mg + ' mg caffeine' : '') + '. ' + (shut ? 'Expand' : 'Collapse') + '">' +
         '<span class="mhyd-title"><svg class="mhyd-ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5C10 2.5 4.5 8.6 4.5 12.6a5.5 5.5 0 0 0 11 0C15.5 8.6 10 2.5 10 2.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>' +
@@ -419,11 +460,15 @@
           subLine +
           '<div class="mhyd-water-btns">' + vesselsHTML + '</div>' +
           mealLiqHTML +
-          '<div class="mhyd-caf">' +
-            '<div class="mhyd-caf-h"><span class="mhyd-caf-t">Drinks &amp; caffeine</span>' +
-              '<span class="mhyd-caf-s">' + (mg ? mg + ' mg' + (mg > 400 ? ' · over the usual 400 mg ceiling' : '') : 'Each drink counts toward your oz + mg') + '</span></div>' +
-            (drinks ? '<div class="am-drinks">' + drinks + '</div>' : '') +
-            (S.hydAdd ? mDrinkPanelHTML(true) : '<button type="button" class="nut-ask am-add" data-hyd="hadd">' + (shown.length ? 'Edit or add drinks' : '+ Add a drink') + '</button>') +
+          '<div class="mhyd-caf' + (cafOpen ? ' open' : '') + '">' +
+            '<button type="button" class="mhyd-caf-tog" data-hyd="caftog" aria-expanded="' + cafOpen + '">' +
+              '<span class="mhyd-caf-t">Ad-hoc caffeine &amp; drinks</span>' +
+              '<span class="mhyd-caf-s">' + (mg ? mg + ' mg' : 'Scan or log drinks in meals, or tap here') + ' <i aria-hidden="true">' + (cafOpen ? '▾' : '▸') + '</i></span>' +
+            '</button>' +
+            (cafOpen
+              ? (drinks ? '<div class="am-drinks">' + drinks + '</div>' : '') +
+                (S.hydAdd ? mDrinkPanelHTML(true) : '<button type="button" class="nut-ask am-add" data-hyd="hadd">' + (shown.length ? 'Edit or add drinks' : '+ Add a drink') + '</button>')
+              : '') +
           '</div>' +
         '</div>') +
     '</section>';
@@ -474,6 +519,8 @@
     if (a[0] === 'fold') {
       S.mHydShut = S.mHydShut || {};
       S.mHydShut[k] = !S.mHydShut[k];
+    } else if (a[0] === 'caftog') {
+      S.hydCafOpen = !S.hydCafOpen;
     } else if (a[0] === 'sl') {
       var h = fin(r.sl) ? r.sl + 0.25 * Number(a[1]) : 7;
       mAmWrite(k, 'sl', Math.max(0, Math.min(14, Math.round(h * 4) / 4)));

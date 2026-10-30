@@ -27,13 +27,8 @@ const button = (p) => p.evaluate(() => {
     say: b.getAttribute('aria-label'), w: r.width, h: r.height, hidden: b.hidden };
 });
 
-/* Every meal's view is an item in the menu since 2026-10-30: open the menu,
-   press it (the menu closes behind it, as a menu does). */
+/* Every meal's view is back on the head row beside the menu (2026-10-30). */
 const pressViews = async (p) => {
-  if (!(await p.evaluate(() => !document.getElementById('macroMenu').classList.contains('hide')))) {
-    await p.click('#macroMore');
-    await p.waitForTimeout(80);
-  }
   await p.click('#macroViews');
   await p.waitForTimeout(80);
 };
@@ -69,20 +64,22 @@ module.exports = {
         title: document.querySelector('.mday-title').getBoundingClientRect().width,
         listen: document.getElementById('macroDayPick').getAttribute('aria-label') };
     });
-    /* One row since 2026-10-30 (Blake: "merge the date row and the kcal row
-       all into one row", layout A): the arrows, one box holding the date and
-       the day's calories and water, and the menu. Trends and every meal's
-       view moved into the menu. */
+    /* One row (2026-10-30): the day's box (holding the calendar date badge
+       and the day's calories + filling water droplet), every meal's view
+       button (•••), and the menu (☰). */
     const sum = await p.evaluate(() => {
       const b = document.getElementById('macroSum'), cs = getComputedStyle(b);
       const kc = document.getElementById('macroTrayHead');
+      const calIc = b.querySelector('.mday-cal-ic');
+      const drop = kc ? kc.querySelector('.mpillwk-drop') : null;
       return { ring: cs.boxShadow, h: b.getBoundingClientRect().height,
-        holds: !!b.querySelector('#macroDate') && !!kc, kcal: kc ? kc.textContent : '',
+        holds: !!b.querySelector('#macroDate') && !!kc && !!calIc && !!drop,
+        kcal: kc ? kc.textContent : '',
         kh: kc ? kc.getBoundingClientRect().height : 0 };
     });
-    t.ok('the row is the week arrows, the day\u2019s box and the menu, on one line',
-      head.ids.slice(1).join() === 'macroPrev,macroSum,macroNext,macroMore' && head.oneRow, JSON.stringify(head));
-    t.ok('the day\u2019s box holds the date and the calories and water, a thumb tall, with one line round it',
+    t.ok('the row is the day\u2019s box, the meal views button and the menu, on one line',
+      head.ids.slice(1).join() === 'macroSum,macroViews,macroMore' && head.oneRow, JSON.stringify(head));
+    t.ok('the day\u2019s box holds the calendar date badge and the calories + filling water droplet, a thumb tall, with one line round it',
       sum.holds && /kcal/.test(sum.kcal) && /oz/.test(sum.kcal) && sum.kh >= 44 && sum.h >= 44 &&
         /inset/.test(sum.ring) && /1\.5px/.test(sum.ring), JSON.stringify(sum));
     t.ok('the day is said as its date, a thumb tall, today told as Today to a listener',
@@ -123,9 +120,7 @@ module.exports = {
     t.ok('and the title is for a screen reader at every width, not only on a phone', wideTitle <= 1, wideTitle);
     await wide.context().close();
 
-    // every meal's view is in the menu now; open it for the presses below
-    await p.click('#macroMore');
-    await p.waitForTimeout(100);
+    // every meal's view is on the head row beside the menu
     let b = await button(p);
     t.ok('meals all on their foods: the button’s middle pip lit, and it says what a press shows next',
       (await views(p)) === '222' && b.lit === 2 && b.say === 'Every meal: show their details' && b.w >= 44 && b.h >= 44, JSON.stringify(b));
@@ -150,29 +145,29 @@ module.exports = {
       [...document.querySelectorAll('#macroWeek [data-mweek]')].map((b) => b.dataset.mweek.slice(8)).join(' ')]);
     const cal = await p.evaluate(() => { const b = document.getElementById('macroDayPick'); return [b.type, b.min, b.max]; });
     t.ok('the date is a calendar, from the first day ever logged to a week ahead', cal.join() === 'date,2026-06-01,2026-10-15', cal.join());
-    await p.evaluate(() => { const b = document.getElementById('macroDayPick'); b.value = '2026-07-04'; b.dispatchEvent(new Event('change', { bubbles: true })); });
-    await p.waitForTimeout(200);
-    let d = await day();
-    t.ok('a date picked on it, months back, goes there, and the week strip shows that week', d[0] === '2026-07-04' && d[1] === 'Sat, Jul 4' && d[2] === '29 30 01 02 03 04 05', JSON.stringify(d));
-    await p.click('#macroNext');
-    await p.waitForTimeout(150);
-    d = await day();
-    t.ok('\u203a steps a week on, the same day of the week', d[0] === '2026-07-11' && d[2] === '06 07 08 09 10 11 12', JSON.stringify(d));
-    await p.click('#macroPrev');
-    await p.click('#macroPrev');
-    await p.waitForTimeout(150);
-    t.ok('and \u2039 a week back', (await day())[0] === '2026-06-27');
-    // Jun 20, Jun 13, Jun 6, and then a week back would be May 30, before the first day logged (Jun 1)
-    for (let i = 0; i < 4; i++) await p.click('#macroPrev');
-    await p.waitForTimeout(150);
-    d = await day();
-    t.ok('a week back past the first day logged stops on it, rather than doing nothing', d[0] === '2026-06-01', JSON.stringify(d));
     const swipe = (dx) => p.evaluate((dx2) => {
       const w = document.getElementById('macroWeek'), r = w.getBoundingClientRect(), y = r.top + r.height / 2, x = r.left + r.width / 2;
       const touch = (cx) => new Touch({ identifier: 1, target: w, clientX: cx, clientY: y });
       w.dispatchEvent(new TouchEvent('touchstart', { touches: [touch(x)], changedTouches: [touch(x)], bubbles: true }));
       w.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: [touch(x + dx2)], bubbles: true }));
     }, dx);
+    await p.evaluate(() => { const b = document.getElementById('macroDayPick'); b.value = '2026-07-04'; b.dispatchEvent(new Event('change', { bubbles: true })); });
+    await p.waitForTimeout(200);
+    let d = await day();
+    t.ok('a date picked on it, months back, goes there, and the week strip shows that week', d[0] === '2026-07-04' && d[1] === 'Sat, Jul 4' && d[2] === '29 30 01 02 03 04 05', JSON.stringify(d));
+    await swipe(-120);
+    await p.waitForTimeout(150);
+    d = await day();
+    t.ok('swiping left steps a week on, the same day of the week', d[0] === '2026-07-11' && d[2] === '06 07 08 09 10 11 12', JSON.stringify(d));
+    await swipe(120);
+    await swipe(120);
+    await p.waitForTimeout(150);
+    t.ok('and swiping right a week back', (await day())[0] === '2026-06-27');
+    // Jun 20, Jun 13, Jun 6, and then a week back would be May 30, before the first day logged (Jun 1)
+    for (let i = 0; i < 4; i++) await swipe(120);
+    await p.waitForTimeout(150);
+    d = await day();
+    t.ok('a week back past the first day logged stops on it, rather than doing nothing', d[0] === '2026-06-01', JSON.stringify(d));
     await p.evaluate(() => { const b = document.getElementById('macroDayPick'); b.value = '2026-10-08'; b.dispatchEvent(new Event('change', { bubbles: true })); });
     await swipe(-120);
     await p.waitForTimeout(150);
@@ -188,8 +183,6 @@ module.exports = {
 
     /* 320 px, dark: one row, nothing wider than the screen */
     const n = await open({ width: 320, height: 640 }, { colorScheme: 'dark' });
-    await n.click('#macroMore');
-    await n.waitForTimeout(100);
     const narrow = await n.evaluate(() => {
       const kids = [...document.querySelectorAll('.mday-head > :not(.mday-menu)')].filter((e) => !e.hidden && e.getBoundingClientRect().height);
       const tops = kids.map((e) => Math.round(e.getBoundingClientRect().top + e.getBoundingClientRect().height / 2));

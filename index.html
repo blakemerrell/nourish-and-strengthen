@@ -244,26 +244,20 @@
     <div class="mday-stick no-print">
       <div class="mday-head">
         <h1 class="view-title serif mday-title">Nourish</h1>
-        <button class="ghost" id="macroPrev" aria-label="The week before">&lsaquo;</button>
-        <!-- One box for the day and what is on it (Blake, 2026-10-30: "merge
-             the date row and the kcal row all into one row", layout A). Two
-             doors in it: the date on the left is the phone's calendar, and
-             the calories and water on the right open the day's detail, as the
-             row under the date used to. -->
+        <!-- One box for the day and what is on it (Blake, 2026-10-30): two
+             doors in it — the calendar badge on the left opens the phone's
+             date picker, and the calories + filling water droplet on the
+             right open the day's detail tray. -->
         <div class="mday-sum" id="macroSum">
-          <!-- The day, said as a date, and a tap on it is the phone's calendar:
-               any day the log keeps (src/myday.js, mRenderDay). Blake,
-               2026-10-18: "show the date right there and let it be clickable
-               so I can get a calendar". The box is the whole button, unseen
-               over it, so the phone opens its own picker wherever it is
-               touched. -->
           <label class="mday-date" id="macroDate"><span id="macroDateTx"></span><svg class="mday-cal"
             viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"
             stroke-linecap="round"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/></svg><input
             type="date" id="macroDayPick"></label>
           <div class="mday-kc" id="macroPillHead"></div>
         </div>
-        <button class="ghost" id="macroNext" aria-label="The week after">&rsaquo;</button>
+        <!-- Every meal's view at once, round the same three a meal's name
+             steps through (src/myday.js, mViewsNow): Blake, 2026-10-18 & 2026-10-30. -->
+        <button class="ghost mday-icon mday-views" id="macroViews" hidden></button>
         <!-- Drawn as a menu (☰) since 2026-10-24; the top-left skep logo now
              carries the sync colour across every tab. -->
         <button class="ghost mday-icon mday-more" id="macroMore" aria-haspopup="true"
@@ -278,12 +272,7 @@
                me to the exact same place. So do I need three buttons that
                take me to the exact same place?" The meals and the help are
                accordions in the sheet, where they can be seen. -->
-          <!-- Trends and every meal's view moved in here from the row when the
-               date and the calories became one box (2026-10-30): four buttons
-               a thumb wide each and the day's box do not fit a phone's row
-               with two more beside them. -->
           <button role="menuitem" tabindex="-1" data-mchartopen="1">Trends</button>
-          <button role="menuitem" tabindex="-1" class="mday-views" id="macroViews" hidden></button>
           <button role="menuitem" tabindex="-1" data-mmore="plan">My plan</button>
           <button role="menuitem" tabindex="-1" data-mmore="foods">Food I eat</button>
           <button role="menuitem" tabindex="-1" data-mmore="eatout">Eating out</button>

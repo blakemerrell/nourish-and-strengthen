@@ -600,16 +600,30 @@
     var prHyd = mReadProfile ? mReadProfile() : {};
     var goalOz = mWaterGoalOz ? mWaterGoalOz(prHyd && prHyd.lb) : 80;
     var waterOz = mWaterOz ? mWaterOz(vk) : 0;
+    var waterPct = goalOz > 0 ? Math.max(0, Math.min(100, Math.round(waterOz / goalOz * 100))) : 0;
+    var dropFillH = +(20.4 * waterPct / 100).toFixed(2);
+    var dropFillY = +(22.5 - dropFillH).toFixed(2);
     var trayOpen = !!S.mPillTrayOpen;
     var trayHTML = trayOpen ? mPillTrayHTML(vk, day, targets, slots, tot, tK, fib, fibFloor, na, naCap, waterOz, goalOz) : '';
     var fullKcal = Math.round(tot.all.kcal);
-    /* The calories and the water, the right-hand door of the day's box in
-       the head row (index.html, #macroSum). It was a row of its own with
-       Trends beside it; Trends is in the menu now. Two short lines, so it
-       fits beside the date on a 320-wide phone. */
-    var headBar = '<button type="button" class="mpillwk-hbtn" id="macroTrayHead" data-mpilltray="toggle" aria-expanded="' + (trayOpen ? 'true' : 'false') + '" aria-label="' + fullKcal.toLocaleString() + ' of ' + tK.toLocaleString() + ' calories, ' + waterOz + ' of ' + goalOz + ' oz water. ' + (trayOpen ? 'Collapse day detail' : 'Open day detail') + '">' +
+    /* The calories and the filling water droplet on the right side of the
+       day's box in the head row (index.html, #macroSum). Blake, 2026-10-30:
+       "move the new water icon and the 22/100 oz text into a single water
+       droplet pill that just shows me the percentage by fill on the right
+       side of the 774/1,413 kcal text... pure fill. no text." */
+    var dropSVG = '<svg class="mpillwk-drop" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">' +
+        '<defs>' +
+          '<clipPath id="mHeadDropClip"><path d="M12 2.1C8 7.2 4.6 10.9 4.6 15.1a7.4 7.4 0 0 0 14.8 0C19.4 10.9 16 7.2 12 2.1z"/></clipPath>' +
+          '<linearGradient id="mHeadDropGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#2563eb"/><stop offset="100%" stop-color="#60a5fa"/></linearGradient>' +
+        '</defs>' +
+        '<path class="mpillwk-drop-well" d="M12 2.1C8 7.2 4.6 10.9 4.6 15.1a7.4 7.4 0 0 0 14.8 0C19.4 10.9 16 7.2 12 2.1z"/>' +
+        '<rect class="mpillwk-drop-fill" clip-path="url(#mHeadDropClip)" x="3" y="' + dropFillY + '" width="18" height="' + (dropFillH + 2).toFixed(2) + '" fill="url(#mHeadDropGrad)"/>' +
+        (waterPct > 3 && waterPct < 98 ? '<line clip-path="url(#mHeadDropClip)" x1="4" y1="' + dropFillY + '" x2="20" y2="' + dropFillY + '" stroke="#93c5fd" stroke-width="1" stroke-opacity="0.85"/>' : '') +
+        '<path class="mpillwk-drop-rim" d="M12 2.1C8 7.2 4.6 10.9 4.6 15.1a7.4 7.4 0 0 0 14.8 0C19.4 10.9 16 7.2 12 2.1z" fill="none"/>' +
+      '</svg>';
+    var headBar = '<button type="button" class="mpillwk-hbtn" id="macroTrayHead" data-mpilltray="toggle" aria-expanded="' + (trayOpen ? 'true' : 'false') + '" aria-label="' + fullKcal.toLocaleString() + ' of ' + tK.toLocaleString() + ' calories, ' + waterOz + ' of ' + goalOz + ' oz water (' + waterPct + '%). ' + (trayOpen ? 'Collapse day detail' : 'Open day detail') + '">' +
         '<span class="mpillwk-k"><b class="serif num">' + fullKcal.toLocaleString() + '</b><span class="mpillwk-kt"> / ' + tK.toLocaleString() + '<span class="mpillwk-ku"> kcal</span></span></span>' +
-        '<span class="mpillwk-w num"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c-3 4-6 7-6 11a6 6 0 0012 0c0-4-3-7-6-11z"/></svg>' + waterOz + '<span class="mpillwk-wg"> / ' + goalOz + '</span> oz</span>' +
+        '<span class="mpillwk-w' + (waterPct >= 100 ? ' is-full' : '') + '" data-water-pct="' + waterPct + '" title="' + waterOz + ' / ' + goalOz + ' oz (' + waterPct + '%)">' + dropSVG + '<span class="vis-hidden">' + waterOz + ' / ' + goalOz + ' oz</span></span>' +
       '</button>';
     /* There was a "Tap for day's detail" button here, a 44-pixel row of its
        own. Blake (2026-10-30): "I want to be able to tap and see the day's

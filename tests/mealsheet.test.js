@@ -76,8 +76,8 @@ module.exports = {
        +, the scale and ⊘. Lunch is the next meal, so it is on Details. */
     t.ok('and nothing else to press on it: the tick, its name, + ⚖ ⊘, the tray itself, and each food’s name, line and tick',
       day.controls === 6 + 2 * day.lines.length && day.ticks === day.lines.length, JSON.stringify(day));
-    t.ok('the bar is Rebalance, Sweep, Copy day and the one primary: no Add food, no Open all', !day.add && !day.openAll &&
-      day.bar.join() === 'macroRebal,macroSweep,macroCopy,macroFill', JSON.stringify(day.bar));
+    t.ok('the bar is Rebalance, Sweep, Add meal and the one primary: no Add food, no Open all', !day.add && !day.openAll &&
+      day.bar.join() === 'macroRebal,macroSweep,macroAddMeal,macroFill', JSON.stringify(day.bar));
 
     /* ---- the sheet ---- */
     await p.click('[data-mopen="l"]');

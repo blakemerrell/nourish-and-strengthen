@@ -184,7 +184,7 @@ module.exports = {
     const m2 = await p.evaluate(() => document.activeElement && document.activeElement.dataset.mmore);
     await p.keyboard.press('ArrowUp'); await p.keyboard.press('ArrowUp');
     const m3 = await p.evaluate(() => document.activeElement && document.activeElement.dataset.mmore);
-    t.ok('Down and Up walk its items, round from the top to the bottom', m2 === 'foods' && m3 === 'went', m2 + ' ' + m3);
+    t.ok('Down and Up walk its items, round from the top to the bottom', m2 === 'foods' && m3 === 'copy', m2 + ' ' + m3);
     await p.keyboard.press('Escape');
     const m4 = await p.evaluate(() => ({ open: !document.getElementById('macroMenu').classList.contains('hide'),
       back: document.activeElement && document.activeElement.id, expanded: document.getElementById('macroMore').getAttribute('aria-expanded') }));

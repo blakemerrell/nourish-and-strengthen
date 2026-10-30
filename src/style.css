@@ -7345,20 +7345,85 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 }
 .mtray-none { color: var(--note); }
 .mtray-skip {
-  display: flex; align-items: center; gap: 4px; width: 100%; min-height: 44px; margin: 0; box-sizing: border-box;
-  border: 1px dashed var(--line-firm); border-radius: 12px; padding: 0 4px 0 0; color: var(--note);
+  display: flex; align-items: center; gap: 6px; width: 100%; min-height: 44px; margin: 0; box-sizing: border-box;
+  border: 0; background: none; padding: 0; color: var(--note);
+}
+.mtray-skip::before,
+.mtray-skip::after {
+  content: ""; flex: 1 1 8px; border-top: 1px dashed var(--line-firm);
 }
 .mtray-skb {
-  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 44px;
-  border: 0; background: none; padding: 0 0 0 14px; font: inherit; text-align: left; cursor: pointer; color: inherit;
+  flex: 0 1 auto; min-width: 44px; display: flex; align-items: center; gap: 8px; min-height: 44px;
+  border: 1px solid var(--line-firm); border-radius: 999px; background: var(--paper-soft);
+  padding: 0 12px; font: inherit; text-align: left; cursor: pointer; color: inherit;
+}
+.mtray-spread-pill {
+  font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums;
 }
 .mtray-unskip {
-  flex: none; min-height: 44px; padding: 0 10px; border: 0; background: none; cursor: pointer;
-  color: var(--ochre-text); font: 600 0.875rem/1 var(--sans); text-decoration: underline; text-underline-offset: 3px;
+  flex: none; min-height: 44px; min-width: 44px; padding: 0 8px; border: 0; background: none; cursor: pointer;
+  color: var(--ochre-text); font: 600 0.8125rem/1 var(--sans); text-decoration: underline; text-underline-offset: 3px;
 }
-.mtray-skip .mtray-n { color: var(--note); flex: none; }
+.mtray-skip .mtray-n { color: var(--note); flex: none; font-size: 0.8125rem; }
 .mtray-sw { font-size: 0.78125rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #macroSlots > .mcasc { margin: 0; }
+.mtray-holdbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line);
+}
+.mhold-btn {
+  min-height: 44px; min-width: 44px; padding: 0 12px; border-radius: 9px;
+  border: 1px solid var(--line-firm); background: var(--paper-soft); color: var(--ink);
+  font: 600 0.8125rem/1 var(--sans); cursor: pointer;
+}
+.mhold-btn.mhold-del { color: var(--dial-over); }
+.mhold-btn.mhold-close { margin-left: auto; background: var(--card); color: var(--muted); }
+.mhold-btn:disabled { opacity: 0.35; cursor: default; }
+
+/* Quick Add Meal & Preset drawer above bottom bar */
+.madd-pop {
+  background: var(--card); border: 1px solid var(--line-firm); border-radius: 14px;
+  padding: 12px; margin: 8px 0; display: flex; flex-direction: column; gap: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+.madd-hd { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.madd-hd b { font-size: 0.875rem; color: var(--ink); }
+.madd-x {
+  min-height: 44px; min-width: 44px; border: 0; background: none; color: var(--muted);
+  font-size: 1.25rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+}
+.madd-presets { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+.madd-lbl { font-size: 0.8125rem; font-weight: 600; color: var(--muted); }
+.madd-pbtn {
+  min-height: 44px; min-width: 44px; border-radius: 9px; border: 1px solid var(--line-firm);
+  background: var(--paper-soft); color: var(--ink); font: 700 0.875rem/1 var(--sans); cursor: pointer;
+}
+.madd-pbtn.on { background: var(--ochre); border-color: var(--ochre); color: #fff; }
+.madd-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.madd-chip {
+  min-height: 44px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--line-firm);
+  background: var(--paper-soft); color: var(--ink); font: 600 0.8125rem/1 var(--sans); cursor: pointer;
+}
+.madd-custom { display: flex; align-items: center; gap: 6px; }
+.madd-in {
+  flex: 1 1 auto; min-height: 44px; padding: 0 10px; border-radius: 9px;
+  border: 1px solid var(--line-firm); background: var(--field); color: var(--ink);
+  font: 500 0.875rem/1 var(--sans);
+}
+.madd-go { min-height: 44px; min-width: 68px; padding: 0 12px; }
+.madd-list { display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--line-soft); padding-top: 8px; }
+.madd-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; }
+.madd-rn { font-size: 0.84375rem; font-weight: 600; color: var(--ink); }
+.madd-rn small { font-weight: 500; color: var(--muted); margin-left: 4px; }
+.madd-racts { display: inline-flex; align-items: center; gap: 4px; }
+.madd-ib {
+  min-height: 44px; min-width: 44px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--paper-soft); color: var(--ink); font: 700 0.875rem/1 var(--sans); cursor: pointer;
+}
+.madd-ib.madd-del { color: var(--dial-over); }
+.madd-ib:disabled { opacity: 0.35; cursor: default; }
+#macroMenu #macroCopy { display: flex; align-items: center; gap: 8px; }
+#macroMenu #macroCopy .mday-ic { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.6; }
 
 /* the day bar: three tools and the one primary, one row */
 .mday-acts { grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.55fr); }
@@ -8143,17 +8208,48 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .mhyd-water-btns {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px;
 }
+.mhyd-vcard {
+  position: relative; display: flex; flex-direction: column;
+  border: 1px solid var(--line-firm); border-radius: 10px; background: var(--paper-soft);
+}
+.mhyd-vcard.on {
+  border-color: var(--pg-up);
+  background: color-mix(in oklab, var(--pg-up) 8%, var(--paper-soft));
+}
+.mhyd-vcnt {
+  position: absolute; top: -6px; right: -4px; z-index: 1;
+  padding: 2px 6px; border-radius: 999px; background: var(--pg-up); color: #fff;
+  font-size: 0.8125rem; font-weight: 700; line-height: 1.1;
+}
 .mhyd-wbtn {
-  min-height: 46px; min-width: 44px; padding: 4px 2px; border-radius: 10px;
-  border: 1px solid var(--line-firm); background: var(--paper-soft); color: var(--ink);
+  min-height: 44px; min-width: 44px; padding: 5px 2px 3px; border-radius: 9px 9px 0 0;
+  border: 0; background: transparent; color: var(--ink);
   font-family: var(--sans); cursor: pointer;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 1px; line-height: 1.1;
+  gap: 1px; line-height: 1.1; width: 100%;
 }
 .mhyd-wbtn b { font-size: 0.84375rem; font-weight: 700; white-space: nowrap; }
-.mhyd-wbtn small { font-size: 0.8125rem; font-weight: 500; color: var(--muted); white-space: nowrap; }
-.mhyd-wbtn.mhyd-wsub { background: var(--card); color: var(--muted-2); }
-.mhyd-wbtn:disabled { opacity: 0.35; cursor: default; }
+.mhyd-wbtn small { font-size: 0.8125rem; font-weight: 500; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.mhyd-vstep {
+  display: flex; align-items: center; justify-content: space-between;
+  border-top: 1px solid var(--line-soft); padding: 0 4px 0 0; min-height: 44px;
+}
+.mhyd-vminus {
+  min-height: 44px; min-width: 44px; border: 0; background: none; color: var(--muted);
+  font: 700 0.875rem/1 var(--sans); cursor: pointer; padding: 0;
+}
+.mhyd-vminus:disabled { opacity: 0.3; cursor: default; }
+.mhyd-voz { font-size: 0.8125rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.mhyd-meals {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
+  padding: 6px 8px; border-radius: 9px; background: var(--paper-soft); border: 1px solid var(--line-soft);
+}
+.mhyd-meals-lbl { font-size: 0.8125rem; font-weight: 600; color: var(--muted); margin-right: 2px; }
+.mhyd-mchip {
+  font-size: 0.8125rem; padding: 2px 8px; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line); color: var(--ink);
+}
+.mhyd-mchip small { color: var(--muted); }
 .mhyd-caf {
   border-top: 1px solid var(--line-soft); padding-top: 8px;
   display: flex; flex-direction: column; gap: 6px;

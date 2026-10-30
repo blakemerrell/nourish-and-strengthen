@@ -69,9 +69,13 @@ module.exports = {
       (await skips(p)).join() === 's' && !(await p.$('.mtray-ask')) && toast1.shown && /^Snacks skipped\.Undo$/.test(toast1.text) && toast1.undo, JSON.stringify(toast1));
     const row = await p.evaluate(() => {
       const el = document.querySelector('#macroSlots .mtray-skip');
-      return el && { door: (el.querySelector('[data-mopen]') || { dataset: {} }).dataset.mopen, back: (el.querySelector('[data-mskip]') || {}).textContent };
+      const pill = el && el.querySelector('.mtray-spread-pill');
+      return el && { door: (el.querySelector('[data-mopen]') || { dataset: {} }).dataset.mopen,
+        back: (el.querySelector('[data-mskip]') || {}).textContent,
+        pill: pill ? pill.textContent : '' };
     });
-    t.ok('and its row says skipped, opens its sheet, and has Put back on it', !!row && row.door === 's' && row.back === 'Put back', JSON.stringify(row));
+    t.ok('and its row says skipped with a kcal spread pill (kcal → Lunch, Dinner), opens its sheet, and has Put back on it',
+      !!row && row.door === 's' && row.back === 'Put back' && /\d+ kcal → Lunch, Dinner/.test(row.pill), JSON.stringify(row));
     const lunchWant1 = await wantOf(p, 'l');
     t.ok('its share goes to the meals still open: Lunch is asked for more', lunchWant1 > lunchWant0, JSON.stringify({ lunchWant0, lunchWant1 }));
     await p.click('#mToast [data-mskipundo]');
@@ -238,5 +242,30 @@ module.exports = {
     await p.waitForTimeout(300);
     t.ok('and tapping Same as yesterday copies the meal once (even on a double-tap) and closes the sheet',
       yestCopy.length === 1 && yestCopy[0].id === 'f:apple' && !(await p.$('#modalRoot .msheet')), JSON.stringify(yestCopy));
+
+    /* Add meal button in bottom bar opens quick-add & 3–7 meal presets, and allows moving/removing snack slots */
+    await p.click('#macroAddMeal');
+    await p.waitForTimeout(200);
+    t.ok('Add meal button in bottom bar opens the inline meal manager with 3–7 presets and quick-add chips',
+      await p.evaluate(() => {
+        const pop = document.getElementById('macroAddPop');
+        return pop && !pop.classList.contains('hide') && pop.querySelectorAll('[data-mslotpreset]').length === 5;
+      }));
+    await p.click('#macroAddPop [data-maddslot^="Mid-Morning Snack"]');
+    await p.waitForTimeout(200);
+    const afterAdd = await p.evaluate(() => JSON.parse(localStorage.getItem('bsc.macroSlots')).list.map((s) => s.n));
+    t.ok('+ Mid-Morning Snack inserts the snack right after Breakfast',
+      afterAdd.length === 5 && afterAdd[1] === 'Mid-Morning Snack', JSON.stringify(afterAdd));
+    const midKey = await p.evaluate(() => JSON.parse(localStorage.getItem('bsc.macroSlots')).list[1].k);
+    await p.click('#macroAddPop [data-mslotmove="' + midKey + ':1"]');
+    await p.waitForTimeout(200);
+    const afterMove = await p.evaluate(() => JSON.parse(localStorage.getItem('bsc.macroSlots')).list.map((s) => s.n));
+    t.ok('moving a snack slot reorders it in the day around anchored meals',
+      afterMove[2] === 'Mid-Morning Snack', JSON.stringify(afterMove));
+    await p.click('#macroAddPop [data-mslotdel="' + midKey + '"]');
+    await p.waitForTimeout(200);
+    const afterDel = await p.evaluate(() => JSON.parse(localStorage.getItem('bsc.macroSlots')).list.map((s) => s.n));
+    t.ok('removing a meal slot takes it out of the daily plan cleanly',
+      afterDel.length === 4 && afterDel.indexOf('Mid-Morning Snack') < 0, JSON.stringify(afterDel));
   },
 };

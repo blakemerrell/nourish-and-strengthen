@@ -135,6 +135,25 @@ module.exports = {
     await p.waitForTimeout(200);
     t.ok('+8 oz on Nourish Water & Drinks card updates plain water to 24 oz and total hydration to 64 / 100 oz',
       (await am(p)).wt === 24 && /64 \/ 100 oz/.test(await txt(p, '#macroSlots .mhyd-card')));
+    await p.click('#macroSlots .mhyd-card [data-hyd="wt:42"]');
+    await p.waitForTimeout(200);
+    t.ok('tapping the 42 oz Stanley mug card tracks vessel count (1× 42oz Stanley, 1× 16oz bottle, 1× 8oz cup) and updates total to 106 / 100 oz',
+      (await am(p)).wt === 66 && (await am(p)).vs.v42 === 1 && /106 \/ 100 oz/.test(await txt(p, '#macroSlots .mhyd-card')) &&
+      /1× 42oz Stanley/.test(await txt(p, '#macroSlots .mhyd-card')));
+    await p.click('#macroSlots .mhyd-card [data-hyd="wt:-42"]');
+    await p.waitForTimeout(200);
+    await p.evaluate(() => {
+      const days = JSON.parse(localStorage.getItem('bsc.macroDays') || '{}');
+      days['2026-10-26'] = { b: [{ id: 'f:crio_bru', x: 1, eaten: 1 }, { id: 'f:milk', x: 1, eaten: 1 }] };
+      localStorage.setItem('bsc.macroDays', JSON.stringify(days));
+    });
+    await p.reload();
+    await p.waitForTimeout(600);
+    await p.click('.tab[data-view="macros"]');
+    await p.waitForTimeout(250);
+    t.ok('logging liquid foods/drinks in a meal (Crio Bru + Milk) auto-counts their fluid oz in Water & Drinks',
+      /Auto-counted from meals/.test(await txt(p, '#macroSlots .mhyd-card')) &&
+      /oz from meals/.test(await txt(p, '#macroSlots .mhyd-card')));
     await p.click('#macroSlots .mhyd-card [data-hyd="fold"]');
     await p.waitForTimeout(150);
     t.ok('tapping Water & Drinks header collapses the section like a meal card',

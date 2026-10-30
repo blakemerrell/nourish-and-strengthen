@@ -642,8 +642,8 @@ module.exports = nourish({
           biggest: others.every((o) => o.width * o.height < fill.width * fill.height),
           corner: fill.right >= Math.max(...others.map((o) => o.right)) && fill.bottom >= Math.max(...others.map((o) => o.bottom)) - 1 };
       });
-      t.ok('the bar’s tools each carry their word under a drawn icon: Rebalance, Sweep, Copy day',
-        bar.tools.map((x) => x.w).join() === 'Rebalance,Sweep,Copy day' && bar.tools.every((x) => x.svg && x.stroke !== 'none'),
+      t.ok('the bar’s tools each carry their word under a drawn icon: Rebalance, Sweep, Add meal',
+        bar.tools.map((x) => x.w).join() === 'Rebalance,Sweep,Add meal' && bar.tools.every((x) => x.svg && x.stroke !== 'none'),
         JSON.stringify(bar.tools));
       t.ok('and the one primary is the big one, labelled, in the far corner: no Add food, no Open all',
         !!bar.fillText && bar.fillH >= 44 && bar.biggest && bar.corner && !bar.add && !bar.openAll, JSON.stringify(bar));

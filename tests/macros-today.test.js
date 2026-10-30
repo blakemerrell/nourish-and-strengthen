@@ -973,5 +973,33 @@ module.exports = nourish({
       await noRoom.evaluate(() =>
         document.querySelectorAll('.mitem, #macroSlots .mtray-f:not(.mtray-none)').length + ' plates drafted'));
     await noRoom.context().close();
+
+    /* ---- a workout logged in Strengthen lights the dumbbell ------------
+     * The pill's dumbbell read Nourish's "Trained today" box alone, so a
+     * week lifted and logged in Strengthen drew dim dumbbells (Blake,
+     * 2026-10-30: "Make the workout icon glow when I have done it"). One
+     * workout logged on the Monday of this week, none on the other days. */
+    const gym = await t.fresh({ viewport: { width: 390, height: 844 } });
+    const gymDays = await gym.evaluate(() => {
+      const p2 = (n) => (n < 10 ? '0' : '') + n;
+      const K = (d) => d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+      const now = new Date(), mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+      const st = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate(), 6).getTime();
+      localStorage.setItem('bsc.train', JSON.stringify({ act: 'b1', pr: { ld: [], qz: 1 },
+        wo: { w1: { id: 'w1', n: 'Full Body A', st, en: st + 2400000, dk: K(mon), x: [{ e: 'db-bench', s: [{ w: 60, r: 8, t: st + 60000 }] }] } },
+        ms: { b1: { n: 'Full body', acc: 4, days: [{ n: 'Full Body A', s: [{ e: 'db-bench', n: 3 }] }] } } }));
+      return K(mon);
+    });
+    await gym.reload();
+    await gym.waitForTimeout(500);
+    await gym.click('.tab[data-view="macros"]');
+    await gym.waitForTimeout(400);
+    const lift = await gym.evaluate((mk) => {
+      const d = document.querySelector('.mwk-d[data-mweek="' + mk + '"] .mwk-lift');
+      return d ? getComputedStyle(d).filter : 'no dumbbell';
+    }, gymDays);
+    t.ok('a day with a workout logged in Strengthen has a glowing dumbbell on its pill',
+      /drop-shadow/.test(lift), lift);
+    await gym.context().close();
   },
 });

@@ -28,6 +28,7 @@
   var mLatestKey = app.mLatestKey;
   var mTotals = app.mTotals;
   var mTrainedAt = app.mTrainedAt;
+  var mStrengthOn = app.mStrengthOn;
   var mVerdict = app.mVerdict;
 
   /* The strip carries no words (Blake, 2026-09-27: "It's visual for a
@@ -156,7 +157,9 @@
   }
 
   function mGymIconStyle(train, trained) {
-    if (trained) return 'stroke:var(--pill-ico);filter:drop-shadow(0 0 3px var(--pill-ico))';
+    /* Done is the brightest thing in the pill: full strength and a wider
+       glow than fibre met, because a workout is a yes or a no. */
+    if (trained) return 'stroke:var(--pill-ico);opacity:1;filter:drop-shadow(0 0 4px var(--pill-ico)) drop-shadow(0 0 1px var(--pill-ico))';
     if (train) return 'stroke:var(--pill-ico);opacity:0.32';
     return 'stroke:var(--pill-ico);opacity:0';
   }
@@ -173,7 +176,13 @@
       var targets = mDayTargets(dk);
       var tK = kcalOf(targets);
       var train = mIsTrainingDay(dk);
-      var trained = mTrainedAt ? mTrainedAt(dk) > 0 : false;
+      /* Trained is either tick: the "Trained today" box on Nourish, or a
+         workout logged in Strengthen that day. It read the box alone, so a
+         week of lifting logged in Strengthen — Blake, Monday to Friday —
+         drew seven dim dumbbells: "Make the workout icon glow when I have
+         done it." */
+      var trained = (mTrainedAt ? mTrainedAt(dk) > 0 : false) ||
+        (mStrengthOn ? mStrengthOn(dk).length > 0 : false);
       var dayObj = MDAYS[dk] ? mDay(dk) : null;
       var totAll = dayObj ? mTotals(dayObj).all : null;
       var gotRaw = totAll ? totAll.kcal : 0;
@@ -189,7 +198,12 @@
       var naCap = 2300;
       var fibVal = totAll ? totAll.fib : 0;
       var naVal = totAll ? totAll.na : 0;
-      var dotsSVG = mPillDotsSVG(40, 112, 32, 3.5, targets, totAll);
+      /* 40 × 92, the pill's own box (--mwk-h), so the dots trace its edge
+         rather than a taller shape shrunk to fit. Shortened from 104
+         (Blake, 2026-10-30: "shorten the pills just a little"), which gives
+         the meals below another twelve pixels; still room for the three
+         icons inside. */
+      var dotsSVG = mPillDotsSVG(40, 92, 28, 3.5, targets, totAll);
       var fibStyle = mFibreIconStyle(fibVal, fibFloor);
       var saltStyle = mSaltIconStyle(naVal, naCap);
       var gymStyle = mGymIconStyle(train, trained);

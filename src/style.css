@@ -8528,7 +8528,7 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   min-width: 0;
 }
 #view-macros .mwk-c {
-  --mwk-h: 104px;
+  --mwk-h: 92px;
   position: relative;
   width: min(40px, 100%);
   height: var(--mwk-h);

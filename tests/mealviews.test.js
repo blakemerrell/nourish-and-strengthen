@@ -27,6 +27,17 @@ const button = (p) => p.evaluate(() => {
     say: b.getAttribute('aria-label'), w: r.width, h: r.height, hidden: b.hidden };
 });
 
+/* Every meal's view is an item in the menu since 2026-10-30: open the menu,
+   press it (the menu closes behind it, as a menu does). */
+const pressViews = async (p) => {
+  if (!(await p.evaluate(() => !document.getElementById('macroMenu').classList.contains('hide')))) {
+    await p.click('#macroMore');
+    await p.waitForTimeout(80);
+  }
+  await p.click('#macroViews');
+  await p.waitForTimeout(80);
+};
+
 module.exports = {
   name: 'Every meal’s view at once, and the day box',
   async run(t) {
@@ -58,13 +69,28 @@ module.exports = {
         title: document.querySelector('.mday-title').getBoundingClientRect().width,
         listen: document.getElementById('macroDayPick').getAttribute('aria-label') };
     });
-    t.ok('the button sits by the gear, after the day, a thumb tall',
-      head.ids.slice(1).join() === 'macroPrev,macroDate,macroNext,macroViews,macroMore' && head.oneRow, JSON.stringify(head));
+    /* One row since 2026-10-30 (Blake: "merge the date row and the kcal row
+       all into one row", layout A): the arrows, one box holding the date and
+       the day's calories and water, and the menu. Trends and every meal's
+       view moved into the menu. */
+    const sum = await p.evaluate(() => {
+      const b = document.getElementById('macroSum'), cs = getComputedStyle(b);
+      const kc = document.getElementById('macroTrayHead');
+      return { ring: cs.boxShadow, h: b.getBoundingClientRect().height,
+        holds: !!b.querySelector('#macroDate') && !!kc, kcal: kc ? kc.textContent : '',
+        kh: kc ? kc.getBoundingClientRect().height : 0 };
+    });
+    t.ok('the row is the week arrows, the day\u2019s box and the menu, on one line',
+      head.ids.slice(1).join() === 'macroPrev,macroSum,macroNext,macroMore' && head.oneRow, JSON.stringify(head));
+    t.ok('the day\u2019s box holds the date and the calories and water, a thumb tall, with one line round it',
+      sum.holds && /kcal/.test(sum.kcal) && /oz/.test(sum.kcal) && sum.kh >= 44 && sum.h >= 44 &&
+        /inset/.test(sum.ring) && /1\.5px/.test(sum.ring), JSON.stringify(sum));
     t.ok('the day is said as its date, a thumb tall, today told as Today to a listener',
       head.said === 'Thu, Oct 8' && head.h >= 44 && head.listen === 'Today, Thu, Oct 8. Choose a day', JSON.stringify(head));
-    t.ok('drawn as the arrows and the gear are, no fill and their line round it, with the calendar\u2019s box over all of it',
-      /rgba\(0, 0, 0, 0\)|transparent/.test(head.bg) && /inset/.test(head.ring) && /1\.5px/.test(head.ring) && head.over, JSON.stringify(head));
-    t.ok('on a 390 px phone the title gives the date its room (the tab above says Nourish)', head.title <= 1 && head.w > 140, JSON.stringify(head));
+    t.ok('with the calendar\u2019s box over the whole of the date',
+      /rgba\(0, 0, 0, 0\)|transparent/.test(head.bg) && head.over, JSON.stringify(head));
+    t.ok('on a 390 px phone the title gives the row its room (the tab above says Nourish)', head.title <= 1 && head.w >= 44, JSON.stringify(head));
+
 
     /* Blake, 2026-10-24: the gear a hamburger, no "Nourish" word on the row,
        and the top-left skep logo button carries the sync colour across every tab. */
@@ -97,21 +123,24 @@ module.exports = {
     t.ok('and the title is for a screen reader at every width, not only on a phone', wideTitle <= 1, wideTitle);
     await wide.context().close();
 
+    // every meal's view is in the menu now; open it for the presses below
+    await p.click('#macroMore');
+    await p.waitForTimeout(100);
     let b = await button(p);
     t.ok('meals all on their foods: the button’s middle pip lit, and it says what a press shows next',
       (await views(p)) === '222' && b.lit === 2 && b.say === 'Every meal: show their details' && b.w >= 44 && b.h >= 44, JSON.stringify(b));
-    await p.click('#macroViews');
+    await pressViews(p);
     t.ok('pressed, every meal opens to its details', (await views(p)) === '333' && (await button(p)).lit === 3);
-    await p.click('#macroViews');
+    await pressViews(p);
     t.ok('again, every meal closes to its status', (await views(p)) === '111' && (await button(p)).say === 'Every meal: show their foods');
-    await p.click('#macroViews');
+    await pressViews(p);
     t.ok('and again, round to their foods', (await views(p)) === '222');
 
     await p.click('#macroSlots [data-mview="l"]');
     b = await button(p);
     t.ok('a meal’s own name still steps that meal alone, and the button then lights no pip',
       (await views(p)) === '232' && b.lit === 0 && b.say === 'Every meal: show just their status', JSON.stringify(b));
-    await p.click('#macroViews');
+    await pressViews(p);
     t.ok('meals in different views all go to the start of the round', (await views(p)) === '111');
     await p.click('#macroSlots [data-mview="d"]');
     t.ok('and a name still steps its meal on from there', (await views(p)) === '112', await views(p));
@@ -159,18 +188,22 @@ module.exports = {
 
     /* 320 px, dark: one row, nothing wider than the screen */
     const n = await open({ width: 320, height: 640 }, { colorScheme: 'dark' });
+    await n.click('#macroMore');
+    await n.waitForTimeout(100);
     const narrow = await n.evaluate(() => {
       const kids = [...document.querySelectorAll('.mday-head > :not(.mday-menu)')].filter((e) => !e.hidden && e.getBoundingClientRect().height);
       const tops = kids.map((e) => Math.round(e.getBoundingClientRect().top + e.getBoundingClientRect().height / 2));
       const head = document.querySelector('.mday-head').getBoundingClientRect();
+      const sum = document.getElementById('macroSum').getBoundingClientRect(), kc = document.getElementById('macroTrayHead');
       return { oneRow: Math.max(...tops) - Math.min(...tops) <= 2, inside: kids.every((e) => e.getBoundingClientRect().right <= head.right + 0.5),
+        kcalIn: [...kc.querySelectorAll('span, b')].every((e) => !e.getBoundingClientRect().width || e.getBoundingClientRect().right <= sum.right + 0.5),
         page: document.documentElement.scrollWidth <= innerWidth, day: document.getElementById('macroDate').getBoundingClientRect().width,
         whole: (() => { const tx = document.getElementById('macroDateTx'); return tx.scrollWidth <= tx.clientWidth; })(),
         // the meal cards drop their own pips this narrow; the button is nothing but them
         pips: [...document.querySelectorAll('#macroViews .mtray-pips i')].filter((i) => i.getBoundingClientRect().width >= 5).length };
     });
-    t.ok('at 320 px in the dark the head stays one row, inside the screen, the date whole and the button\u2019s pips shown',
-      narrow.oneRow && narrow.inside && narrow.page && narrow.day >= 90 && narrow.whole && narrow.pips === 3, JSON.stringify(narrow));
+    t.ok('at 320 px in the dark the head stays one row, inside the screen, the calories inside their box, the date whole and the menu\u2019s pips shown',
+      narrow.oneRow && narrow.inside && narrow.kcalIn && narrow.page && narrow.day >= 44 && narrow.whole && narrow.pips === 3, JSON.stringify(narrow));
     await n.context().close();
 
     t.ok('with no error on the page', errs.length === 0, errs.join(' | '));

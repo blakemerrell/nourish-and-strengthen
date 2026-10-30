@@ -6784,6 +6784,18 @@
       }
     });
 
+    /* The day's box in the head row: its calories open the day's detail.
+       The date beside them is a label over the phone's calendar and needs
+       nothing here. */
+    $('macroSum').addEventListener('click', function (e) {
+      if (!e.target.closest('[data-mpilltray="toggle"]')) return;
+      S.mPillTrayOpen = !S.mPillTrayOpen;
+      if (S.mPillTrayOpen && (window.scrollY || window.pageYOffset || 0) > 0) {
+        window.scrollTo(0, 0);
+      }
+      keepingFocus(renderMacros);
+    });
+
     $('macroMore').addEventListener('click', function (e) {
       e.stopPropagation();
       mMenu($('macroMenu').classList.contains('hide'));
@@ -6859,6 +6871,17 @@
 
 
     $('macroMenu').addEventListener('click', function (e) {
+      /* Trends, moved here from the head row (2026-10-30). Every meal's view
+         (#macroViews) has its own handler and leaves the menu open, so the
+         pips can be seen to step. */
+      if (e.target.closest('[data-mchartopen]')) {
+        mMenu(false);
+        rememberOpener();
+        S.chartOpen = true;
+        pushSheet({ m: 1 });
+        renderModal();
+        return;
+      }
       var b = e.target.closest('[data-mmore]');
       if (!b) return;
       if (b.dataset.mmore === 'copy') {

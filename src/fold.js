@@ -224,9 +224,10 @@
     foldRaf = 0;
     var st = document.querySelector('.mday-stick');
     if (!st) return;
-    /* Leaving My Day unfolds its readout, so coming back starts at the top
-       with the bars open rather than with a fold left over from last time. */
-    if (S.view !== 'macros') { mSetFold(st, 0); return; }
+    /* Leaving My Day or opening the week-of-pills detail tray unfolds its
+       readout, so the open tray scrolls naturally with the page and coming
+       back starts at the top with the card open. */
+    if (S.view !== 'macros' || S.mPillTrayOpen) { mSetFold(st, 0); return; }
     var g = mFoldGeo();
     if (!g) return;
     var y = window.scrollY || window.pageYOffset || 0;

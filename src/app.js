@@ -3543,8 +3543,12 @@
 
   /* src/weekstrip.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var WEEKSTRIP = window.HiveParts.weekstrip({ MDAYS: MDAYS, M_MONS: M_MONS, M_WDAYS: M_WDAYS, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mDay: mDay, mDayDone: mDayDone, mDayJudged: mDayJudged, mDayTargets: mDayTargets, mEarliestKey: mEarliestKey, mIsTrainingDay: mIsTrainingDay, mLatestKey: mLatestKey, mTotals: mTotals, mVerdict: mVerdict });
+  var WEEKSTRIP = window.HiveParts.weekstrip({ MDAYS: MDAYS, M_MONS: M_MONS, M_WDAYS: M_WDAYS, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mDay: mDay, mDayDone: mDayDone, mDayJudged: mDayJudged, mDayTargets: mDayTargets, mEarliestKey: mEarliestKey, mIsTrainingDay: mIsTrainingDay, mLatestKey: mLatestKey, mTotals: mTotals, mTrainedAt: mTrainedAt, mVerdict: mVerdict });
   function mWeekHTML(k, todayK) { return WEEKSTRIP.mWeekHTML(k, todayK); }
+  function mPillDotsSVG(w, h, n, d, targets, tot) { return WEEKSTRIP.mPillDotsSVG(w, h, n, d, targets, tot); }
+  function mFibreIconStyle(fib, fibFloor) { return WEEKSTRIP.mFibreIconStyle(fib, fibFloor); }
+  function mSaltIconStyle(na, naCap) { return WEEKSTRIP.mSaltIconStyle(na, naCap); }
+  function mGymIconStyle(train, trained) { return WEEKSTRIP.mGymIconStyle(train, trained); }
 
   /* src/myday.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
@@ -3615,7 +3619,7 @@
 
   /* src/dayfoot.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var DAYFOOT = window.HiveParts.dayfoot({ MPILL_TONE: MPILL_TONE, S: S, kcalOf: kcalOf, mAssumed: mAssumed, mFillPill: mFillPill, mTotals: mTotals, mVerdict: mVerdict, pushSheet: pushSheet, rememberOpener: rememberOpener, renderModal: renderModal });
+  var DAYFOOT = window.HiveParts.dayfoot({ MPILL_TONE: MPILL_TONE, MWEIGHTS: MWEIGHTS, S: S, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mAmOf: mAmOf, mAssumed: mAssumed, mBurn: mBurn, mDayDone: mDayDone, mDayJudged: mDayJudged, mFibreIconStyle: mFibreIconStyle, mFillPill: mFillPill, mGymIconStyle: mGymIconStyle, mIsTrainingDay: mIsTrainingDay, mPillDotsSVG: mPillDotsSVG, mReadProfile: mReadProfile, mSaltIconStyle: mSaltIconStyle, mSkipped: mSkipped, mTotals: mTotals, mTrainedAt: mTrainedAt, mVerdict: mVerdict, mViewKey: mViewKey, mWShow: mWShow, mWUnit: mWUnit, mWaterGoalOz: mWaterGoalOz, mWaterOz: mWaterOz, pushSheet: pushSheet, rememberOpener: rememberOpener, renderModal: renderModal, todayKey: todayKey });
   function mOpenTargets() { return DAYFOOT.mOpenTargets(); }
   function macroFootHTML(day, targets, slots) { return DAYFOOT.macroFootHTML(day, targets, slots); }
 
@@ -5909,9 +5913,7 @@
         setTimeout(function () { mHeldNow = false; }, 400);
       }
     });
-    ['pointercancel', 'pointerleave'].forEach(function (ev) {
-      $('macroSlots').addEventListener(ev, function () { clearTimeout(mHoldT); });
-    });
+    $('macroSlots').addEventListener('pointercancel', function () { clearTimeout(mHoldT); });
     $('macroSlots').addEventListener('contextmenu', function (e) {
       if (e.target.closest && (e.target.closest('[data-mhold]') || e.target.closest('.mslot[data-mslot]'))) e.preventDefault();
     });
@@ -6015,10 +6017,30 @@
       renderMacros();
     }
 
+    document.addEventListener('pointerdown', function (e) {
+      if (!S.mCardHold) return;
+      if (e.target && e.target.closest && e.target.closest('.mtray-holdbar')) return;
+      S.mCardHold = '';
+      renderMacros();
+    });
+
     function mDayClick(e) {
-      if (mHeldNow && (e.target.closest('[data-mhold]') || e.target.closest('.mslot[data-mslot]'))) { mHeldNow = false; e.preventDefault(); return; }
+      if (mHeldNow && (e.target.closest('[data-mhold]') || e.target.closest('.mslot[data-mslot]'))) {
+        if (!e.target.closest('.mtray-holdbar')) { mHeldNow = false; e.preventDefault(); return; }
+        mHeldNow = false;
+      }
       var hc = e.target.closest('[data-mholdclose]');
       if (hc) { S.mCardHold = ''; renderMacros(); return; }
+      var hydBtn = e.target.closest('[data-hyd]');
+      if (hydBtn && S.macroPick) {
+        if (mCheckinClick(hydBtn, mViewKey())) {
+          var hParts = (hydBtn.getAttribute('data-hyd') || '').split(':');
+          if (hParts[0] === 'wt' && Number(hParts[1]) > 0) mToast('+' + Number(hParts[1]) + ' oz water logged.');
+          renderMacros();
+          renderModal();
+        }
+        return;
+      }
       var sdel = e.target.closest('[data-mslotdel]');
       if (sdel) { mSlotDelete(sdel.dataset.mslotdel); return; }
       var smv = e.target.closest('[data-mslotmove]');
@@ -6575,7 +6597,16 @@
     $('macroWeek').addEventListener('click', function (e) {
       var d = e.target.closest('[data-mweek]');
       if (!d || d.disabled) return;
-      S.macroDate = d.dataset.mweek === todayKey() ? null : d.dataset.mweek;
+      var dk = d.dataset.mweek;
+      if (dk === mViewKey()) {
+        S.mPillTrayOpen = !S.mPillTrayOpen;
+        if (S.mPillTrayOpen && (window.scrollY || window.pageYOffset || 0) > 0) {
+          window.scrollTo(0, 0);
+        }
+        keepingFocus(renderMacros);
+        return;
+      }
+      S.macroDate = dk === todayKey() ? null : dk;
       keepingFocus(renderMacros);
     });
     /* A week each, and the week strip swiped the same way (Blake, 2026-10-18,
@@ -6734,12 +6765,21 @@
       catch (e) { window.scrollTo(0, 0); }
     });
 
-    $('macroFoot').addEventListener('click', function (e) {
-      if (!e.target.closest('[data-mchartopen]')) return;
-      rememberOpener();
-      S.chartOpen = true;
-      pushSheet({ m: 1 });
-      renderModal();
+    $('macroFold').addEventListener('click', function (e) {
+      if (e.target.closest('[data-mchartopen]')) {
+        rememberOpener();
+        S.chartOpen = true;
+        pushSheet({ m: 1 });
+        renderModal();
+        return;
+      }
+      if (e.target.closest('[data-mpilltray="toggle"]')) {
+        S.mPillTrayOpen = !S.mPillTrayOpen;
+        if (S.mPillTrayOpen && (window.scrollY || window.pageYOffset || 0) > 0) {
+          window.scrollTo(0, 0);
+        }
+        keepingFocus(renderMacros);
+      }
     });
 
     $('macroMore').addEventListener('click', function (e) {

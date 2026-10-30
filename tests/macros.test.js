@@ -162,7 +162,7 @@ module.exports = nourish({
        The assumption still lands in the delta the top pills print. */
     t.ok('calories are the headline and the macros are three columns under it',
       await p.evaluate(() => {
-        const head = document.querySelector('.mbars .mhead');
+        const head = document.querySelector('.mhead');
         const cols = [...document.querySelectorAll('.mbars3 .mbrow')];
         const bands = (r) => r.querySelector('.mb-ate') && r.querySelector('.mb-plan') &&
           !r.querySelector('.mb-asm');
@@ -171,7 +171,7 @@ module.exports = nourish({
           cols.every(bands) &&
           // no stray fourth bar left in the old stack
           !document.querySelector('.mbars > .mbrow') && !document.querySelector('.mslot-left');
-      }), await p.evaluate(() => document.querySelector('.mbars').innerHTML.slice(0, 300)));
+      }), await p.evaluate(() => (document.querySelector('.mpillwk-a11y') || document.querySelector('.mbars')).innerHTML.slice(0, 300)));
     /* Three fills only compare by eye if the tracks they sit in are the same
        length. The old stack gave each macro a full card width and its own
        label column, which made three bars that could only be read one at a

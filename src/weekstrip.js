@@ -155,7 +155,15 @@
     return 'stroke:var(--pill-ico);opacity:' + (0.18 + 0.67 * Math.min(1, p)).toFixed(2);
   }
 
+  /* Sodium as its periodic-table tile, Na (Blake, 2026-10-30: the shaker read
+     as a cup, then "use an icon with the periodic table for sodium"). The
+     tile's letters are drawn in fill, so whatever colour the stroke takes,
+     the text takes too. */
   function mSaltIconStyle(na, naCap) {
+    var st = mSaltIconStroke(na, naCap), m = /stroke:([^;]+)/.exec(st);
+    return m ? st + ';color:' + m[1] : st;
+  }
+  function mSaltIconStroke(na, naCap) {
     if (!na || !naCap) return 'stroke:var(--pill-ico);opacity:0.15';
     var p = na / naCap;
     if (p > 1) return 'stroke:var(--pill-fire);filter:drop-shadow(0 0 4px var(--pill-fire))';
@@ -228,7 +236,7 @@
           '<span class="mwk-b">' + spark +
             '<span class="mwk-icos">' +
               '<svg class="mwk-ico mwk-ico-fib" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="' + fibStyle + '"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19l8-8"/></svg>' +
-              '<svg class="mwk-ico mwk-ico-salt" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="' + saltStyle + '"><path d="M7.5 11h9l-1.2 9.5h-6.6z"/><path d="M8 11V9.5a4 4 0 0 1 8 0V11"/><path d="M10 7.6h.01M12 6.8h.01M14 7.6h.01"/></svg>' +
+              '<svg class="mwk-ico mwk-ico-salt" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="' + saltStyle + '"><rect x="3" y="3" width="18" height="18" rx="2.5"/><text x="12" y="15.6" text-anchor="middle" font-size="9.5" font-weight="800" stroke="none" fill="currentColor">Na</text><text x="6" y="8.4" font-size="4.6" font-weight="700" stroke="none" fill="currentColor">11</text></svg>' +
               (train || trained ? '<svg class="mwk-ico mwk-lift" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="' + gymStyle + '"><title>Lifting day</title><path d="M3 12h18M6 8v8M18 8v8M3 10v4M21 10v4"/></svg>' : '<span class="mwk-ico-sp"></span>') +
             '</span>' +
           '</span>' +

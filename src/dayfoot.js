@@ -236,7 +236,7 @@
           '<div class="mpt-bigwell"><div class="mpt-bigfill" style="height:' + fillPct + '%;' + fillBg + '"></div></div>' +
           '<div class="mpt-bigicos">' +
             '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="' + fibStyle + '"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19l8-8"/></svg>' +
-            '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="' + saltStyle + '"><path d="M7.5 11h9l-1.2 9.5h-6.6z"/><path d="M8 11V9.5a4 4 0 0 1 8 0V11"/><path d="M10 7.6h.01M12 6.8h.01M14 7.6h.01"/></svg>' +
+            '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="' + saltStyle + '"><rect x="3" y="3" width="18" height="18" rx="2.5"/><text x="12" y="15.6" text-anchor="middle" font-size="9.5" font-weight="800" stroke="none" fill="currentColor">Na</text><text x="6" y="8.4" font-size="4.6" font-weight="700" stroke="none" fill="currentColor">11</text></svg>' +
             '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="' + gymStyle + '"><path d="M3 12h18M6 8v8M18 8v8M3 10v4M21 10v4"/></svg>' +
           '</div>' +
         '</div>' +

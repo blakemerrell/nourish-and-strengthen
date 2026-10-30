@@ -8981,3 +8981,6 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 #view-macros .mday-sum .mday-date { border-right: 0; }
 #view-macros .mday-sum .mday-date:hover,
 #view-macros .mday-sum .mday-date:focus-within { box-shadow: inset 0 0 0 2px var(--ochre); }
+
+/* the sodium tile's letters, in the pill and in the day's detail */
+.mwk-ico-salt text, .mpt-bigicos text { font-family: var(--sans); }

@@ -79,9 +79,10 @@ module.exports = {
     });
     t.ok('the row is the day\u2019s box, the meal views button and the menu, on one line',
       head.ids.slice(1).join() === 'macroSum,macroViews,macroMore' && head.oneRow, JSON.stringify(head));
-    t.ok('the day\u2019s box holds the calendar date badge and the calories + filling water droplet, a thumb tall, with one line round it',
+    t.ok('the day\u2019s box holds the calendar date badge and the calories + filling water droplet, a thumb tall, and no box round it',
       sum.holds && /kcal/.test(sum.kcal) && /oz/.test(sum.kcal) && sum.kh >= 44 && sum.h >= 44 &&
-        /inset/.test(sum.ring) && /1\.5px/.test(sum.ring), JSON.stringify(sum));
+        /* no box round it since 2026-10-30 (Blake: "I don't need a box around that") */
+        !/1\.5px/.test(sum.ring), JSON.stringify(sum));
     t.ok('the day is said as its date, a thumb tall, today told as Today to a listener',
       head.said === 'Thu, Oct 8' && head.h >= 44 && head.listen === 'Today, Thu, Oct 8. Choose a day', JSON.stringify(head));
     t.ok('with the calendar\u2019s box over the whole of the date',

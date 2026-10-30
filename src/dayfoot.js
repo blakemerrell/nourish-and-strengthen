@@ -67,7 +67,7 @@
   function mPillTrayHTML(k, day, targets, slots, tot, tK, fib, fibFloor, na, naCap, waterOz, goalOz) {
     var train = mIsTrainingDay ? mIsTrainingDay(k) : false;
     var trained = mTrainedAt ? mTrainedAt(k) > 0 : false;
-    var bigDots = mPillDotsSVG ? mPillDotsSVG(80, 170, 44, 5, targets, tot.all) : '';
+    var bigDots = mPillDotsSVG ? mPillDotsSVG(80, 170, 26, 10, targets, tot.all) : '';
     var fibStyle = mFibreIconStyle ? mFibreIconStyle(fib, fibFloor) : '';
     var saltStyle = mSaltIconStyle ? mSaltIconStyle(na, naCap) : '';
     var gymStyle = mGymIconStyle ? mGymIconStyle(train, trained) : '';
@@ -235,9 +235,9 @@
           bigDots +
           '<div class="mpt-bigwell"><div class="mpt-bigfill" style="height:' + fillPct + '%;' + fillBg + '"></div></div>' +
           '<div class="mpt-bigicos">' +
-            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="' + fibStyle + '"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19l8-8"/></svg>' +
-            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="' + saltStyle + '"><path d="M8 10h8l-1 10H9z"/><path d="M8 10c0-3 2-6 4-6s4 3 4 6"/><path d="M11 7h.01M13 7h.01"/></svg>' +
-            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="' + gymStyle + '"><path d="M3 12h18M6 8v8M18 8v8M3 10v4M21 10v4"/></svg>' +
+            '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="' + fibStyle + '"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19l8-8"/></svg>' +
+            '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="' + saltStyle + '"><rect x="3" y="3" width="18" height="18" rx="2.5"/><text x="12" y="15.6" text-anchor="middle" font-size="9.5" font-weight="800" stroke="none" fill="currentColor">Na</text><text x="6" y="8.4" font-size="4.6" font-weight="700" stroke="none" fill="currentColor">11</text></svg>' +
+            '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="' + gymStyle + '"><path d="M3 12h18M6 8v8M18 8v8M3 10v4M21 10v4"/></svg>' +
           '</div>' +
         '</div>' +
         '<div class="mpt-bal">' +

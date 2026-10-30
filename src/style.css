@@ -8646,14 +8646,14 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   pointer-events: none;
 }
 .mwk-ico {
-  width: 14px;
-  height: 14px;
+  width: 20px;
+  height: 20px;
   flex: none;
   display: block;
 }
 .mwk-ico-sp {
-  width: 14px;
-  height: 14px;
+  width: 20px;
+  height: 20px;
   flex: none;
   display: block;
 }
@@ -8964,4 +8964,30 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   #view-macros .mday-sum { margin: 0 2px 0 0; }
   #view-macros .mday-sum .mday-date { min-width: 46px; padding: 0 5px; }
   #view-macros .mday-kc .mpillwk-k b { font-size: 1.0625rem; }
+}
+
+/* ---- Bigger icons, letters round the rim, no box round the day ----
+   Blake, 2026-10-30: the icons a size up inside pills that stay the same
+   size; the rim's dots as P, F and C so the arcs name themselves; and no box
+   round the date, the calories and the droplet. */
+#view-macros .mwk-icos { gap: 4px; }
+#view-macros .mwk-b .mwk-lift { width: 20px; height: 20px; }
+.mwk-icos .mwk-ico { stroke-width: 2.2; }
+.mwk-dots-svg text, .mpt-bigpill text {
+  font-family: var(--sans); font-weight: 800; letter-spacing: 0;
+}
+.mpt-bigicos { gap: 18px; }
+#view-macros .mday-sum { box-shadow: none; }
+#view-macros .mday-sum .mday-date { border-right: 0; }
+#view-macros .mday-sum .mday-date:hover,
+#view-macros .mday-sum .mday-date:focus-within { box-shadow: inset 0 0 0 2px var(--ochre); }
+
+/* the sodium tile's letters, in the pill and in the day's detail */
+.mwk-ico-salt text, .mpt-bigicos text { font-family: var(--sans); }
+/* A phone keeps :hover on whatever was last tapped, so the calories wore a
+   pale box after every tap that opened the day's detail — the box Blake had
+   just asked to be rid of. Hover tints only where there is a pointer that
+   really hovers. */
+@media (hover: none) {
+  #view-macros .mday-kc .mpillwk-hbtn:hover { background: transparent; }
 }

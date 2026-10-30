@@ -197,5 +197,45 @@ module.exports = {
     await q.reload();
     await q.waitForTimeout(800);
     t.ok('weighed but not checked in: Today asks how you slept', /How did you sleep\?/.test(await txt(q, '.td-weigh')), await txt(q, '.td-weigh'));
+    await q.context().close();
+
+    /* ---- a recipe's fluid, from its ingredients --------------------------
+     * Blake's own Protein Crio Brew (two cups of brewed Crio Bru, a cup of
+     * 2% milk, whey, creatine, sweetener) counted no water at all: the name
+     * says "Brew", not "Bru", and the old rule only went by the name. The
+     * liquid lines are 480 + 244 g of a 770 g serving, so about 24 oz. And
+     * overnight oats, which soak in half a cup of water, are still food. */
+    const r = await t.fresh({ viewport: { width: 390, height: 844 } });
+    await r.clock.setFixedTime(new Date(2026, 9, 26, 7, 30, 0));
+    await r.evaluate(() => window.Store.saveRecipe({ id: 'ucriobrew', book: 3, secNum: 1, secName: 'Ours', own: true,
+      name: 'Protein Crio Brew', ing: ['2 cups Crio Bru', '3 tablespoons Splenda', '1 scoop whey protein', '1 scoop creatine', '1 cup of 2% milk'],
+      steps: ['Brew, mix, pour.'], servings: '1 Serving', servN: 1, time: '15', diff: 'Easy',
+      macro: { kcal: 260, p: 35, c: 14, f: 6, na: 200, fib: 1 },
+      ingp: [{ k: 'crio_bru', g: 480 }, { k: 'free', g: 12 }, { k: 'whey', g: 30 }, { k: 'free', g: 5 }, { k: 'milk', g: 244 }] }));
+    await r.evaluate(() => {
+      localStorage.setItem('bsc.macroDays', JSON.stringify({ '2026-10-26': {
+        s: [{ id: 'ucriobrew', x: 1, eaten: 1 }], b: [{ id: 27, x: 1, eaten: 1 }] } }));
+    });
+    await r.reload();
+    await r.waitForTimeout(700);
+    await r.click('.tab[data-view="macros"]');
+    await r.waitForTimeout(300);
+    /* Overnight oats run breakfast over its share, and the sheet that offers
+       to take it from later meals sits over the card; a click on the header
+       itself, not at its coordinates, is what a reader of this test means. */
+    t.ok('the day\u2019s water is the 24 oz in that one drink',
+      /24 \/ 100 oz/.test(await txt(r, '#macroSlots .mhyd-card')), await txt(r, '#macroSlots .mhyd-card'));
+    // open it if it is folded (it arrives folded once the card stops opening by default)
+    await r.evaluate(() => {
+      const c = document.querySelector('#macroSlots .mhyd-card');
+      if (c.classList.contains('shut')) c.querySelector('[data-hyd="fold"]').click();
+    });
+    await r.waitForTimeout(150);
+    const liq = await txt(r, '#macroSlots .mhyd-card .mhyd-meals');
+    t.ok('your own Crio Bru drink counts its brewed Crio Bru and milk as water (about 24 oz)',
+      /\+24 oz\s*Protein Crio Brew/.test(liq), liq);
+    t.ok('and a recipe that only soaks in water, like overnight oats, does not',
+      !/Overnight Oats/.test(liq), liq);
+    await r.context().close();
   }
 };

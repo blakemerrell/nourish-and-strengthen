@@ -219,13 +219,13 @@
         id === 'f:cream_soup_chx' || id === 'f:cream_soup_mush' || id === 'f:soup_rts') return true;
     var nm = String(r.name || '');
     if (/\b(?:oil|butter|syrup|honey|vinegar|sauce|dressing|ranch|mayo|mustard|ketchup|salsa|gravy|egg\s*whites?|egg\s*substitute|liquid\s*eggs?|cream\s*cheese|oats|oatmeal|yogurt|cottage\s*cheese|ice\s*cream)\b/i.test(nm)) return false;
-    return /\b(?:crio\s*br[uü]|milk|fairlife|kefir|protein\s*shake|shake|smoothie|energy\s*drink|celsius|monster|alani|red\s*bull|ghost|reign|coffee|espresso|latte|cold\s*brew|tea|chai|matcha|soda|diet\s*soda|cola|pop|sparkling\s*water|seltzer|water|electrolyte|liquid\s*i\.?v\.?|lmnt|gatorade|powerade|juice|lemonade|limeade|bone\s*broth|broth|stock)\b/i.test(nm);
+    return /\b(?:crio\s*br(?:[uü]|ew)|milk|fairlife|kefir|protein\s*shake|shake|smoothie|energy\s*drink|celsius|monster|alani|red\s*bull|ghost|reign|coffee|espresso|latte|cold\s*brew|tea|chai|matcha|soda|diet\s*soda|cola|pop|sparkling\s*water|seltzer|water|electrolyte|liquid\s*i\.?v\.?|lmnt|gatorade|powerade|juice|lemonade|limeade|bone\s*broth|broth|stock)\b/i.test(nm);
   }
   function mItemFluidOz(r, x) {
     if (!r) return 0;
     var mult = fin(x) && x > 0 ? x : 1;
     var id = String(r.id || ''), nm = String(r.name || ''), u = String(r.unit || '');
-    if (id === 'f:crio_bru' || /\b(?:crio\s*br[uü]|coffee|espresso|latte|cold\s*brew|tea|chai|matcha)\b/i.test(nm)) {
+    if (id === 'f:crio_bru' || /\b(?:crio\s*br(?:[uü]|ew)|coffee|espresso|latte|cold\s*brew|tea|chai|matcha)\b/i.test(nm)) {
       if (u === 'oz' && mult < 3) return 8;
       if (u === 'oz') return Math.max(1, Math.round(mult));
       if (u === 'cup' || u === 'cups') return Math.max(1, Math.round(8 * mult));
@@ -250,6 +250,44 @@
     }
     return Math.max(1, Math.round(8 * mult));
   }
+  /* The fluid a recipe carries, read from its own ingredients.
+   *
+     Before this a recipe only counted if its NAME sounded like a drink, and
+     then it counted a flat cup. Blake's own "Protein Crio Brew" — two cups of
+     brewed Crio Bru and a cup of milk, about 24 oz — counted nothing at all:
+     "Brew" is not "Bru", and nothing else in the name says drink. The six
+     Crio Bru recipes in the book counted 8 oz each though most pour 12.
+   *
+     Every recipe, the book's and your own, already carries its ingredients
+     parsed to grams (ingp), so the honest number is right there: add up the
+     lines that are a drinkable liquid, per serving, times what you ate.
+   *
+     Only when the liquid is most of the recipe (FLUID_SHARE of its weight).
+     Overnight oats soak in half a cup of water and a stew simmers in broth;
+     neither is a drink, and counting the broth in a pot roast as water would
+     be the guess this replaces, wrong the other way. A shake, a latte or a
+     soup is nearly all liquid and clears the bar easily.
+   *
+     Water itself only counts in a drink. Run across the book, the share rule
+     alone counted ten ounces from soft pretzels and cheddar bagels — the pot
+     of water they are boiled in is an ingredient line — and four from rice
+     that drinks its water up. Water in a recipe is almost always cooking
+     water; water in a drink is the drink. */
+  var FLUIDS = { crio_bru: 1, milk: 1, water: 1, broth: 1 };
+  var FLUID_SHARE = 0.6;
+  function mRecipeFluidOz(r, x) {
+    if (!r || r.food || !Array.isArray(r.ingp) || !r.ingp.length) return 0;
+    var drink = r.secName === 'Power Drinks' || mIsMealDrink(r);
+    var wet = 0, all = 0;
+    r.ingp.forEach(function (it) {
+      var g = (Number(it && it.g) || 0) * (it && it.pe > 0 ? it.pe : 1);
+      all += g;
+      if (it && FLUIDS[it.k] && (it.k !== 'water' || drink)) wet += g;
+    });
+    if (!(wet > 0) || wet < all * FLUID_SHARE) return 0;
+    var mult = fin(x) && x > 0 ? x : 1;
+    return Math.max(1, Math.round(wet / (r.servN || 1) / 29.5735 * mult));
+  }
   function mMealLiquids(k) {
     if (!MDAYS || !LIVE || !LIVE.BY_ID) return { oz: 0, items: [] };
     var day = MDAYS[k];
@@ -264,8 +302,10 @@
         if (!it || !it.id) return;
         var r = LIVE.BY_ID[it.id];
         if (!r) return;
-        var oz = 0;
-        if (mIsMealDrink(r)) {
+        var oz = mRecipeFluidOz(r, it.x);
+        if (oz > 0) {
+          /* measured from the recipe's own lines: nothing to guess */
+        } else if (mIsMealDrink(r)) {
           oz = mItemFluidOz(r, it.x);
         } else if (Array.isArray(r.parts)) {
           r.parts.forEach(function (pt) {

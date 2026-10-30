@@ -84,8 +84,14 @@
       '<span class="mwk-g" style="bottom:' + tPct.toFixed(1) + '%"></span>';
   }
 
+  /* The rim, in letters. Each macro's arc is drawn in its own initial —
+     P, F, C — rather than in dots, so the racetrack says which arc is which
+     without a legend (Blake, 2026-10-30: "turn those little dots into little
+     letters that fill up and glow with the color scheme"). d is the letter's
+     size in the pill's own units; the heat-map rules are the dots' rules:
+     unlit faint, lit brightening with progress, on target glowing in its own
+     colour, over target in fire. */
   function mPillDotsSVG(w, h, n, d, targets, tot) {
-    var rDot = (d / 2).toFixed(2);
     var a = d / 2, R = w / 2 - a, L = h - w, cx = w / 2, cyT = a + R, cyB = a + R + L;
     var q = Math.PI * R / 2, Pm = 2 * L + 2 * Math.PI * R;
     function at(s) {
@@ -133,7 +139,9 @@
             st = 'fill:' + col + ';opacity:' + (0.28 + 0.57 * Math.min(1, prog)).toFixed(2);
           }
         }
-        out.push('<circle class="' + cls + '" cx="' + pt[0].toFixed(1) + '" cy="' + pt[1].toFixed(1) + '" r="' + rDot + '" style="' + st + '"/>');
+        out.push('<text class="' + cls + '" x="' + pt[0].toFixed(1) + '" y="' + pt[1].toFixed(1) +
+          '" font-size="' + d + '" text-anchor="middle" dominant-baseline="central" style="' + st + '">' +
+          m.toUpperCase() + '</text>');
       }
       i++;
     });
@@ -203,7 +211,7 @@
          (Blake, 2026-10-30: "shorten the pills just a little"), which gives
          the meals below another twelve pixels; still room for the three
          icons inside. */
-      var dotsSVG = mPillDotsSVG(40, 92, 28, 3.5, targets, totAll);
+      var dotsSVG = mPillDotsSVG(40, 92, 16, 7, targets, totAll);
       var fibStyle = mFibreIconStyle(fibVal, fibFloor);
       var saltStyle = mSaltIconStyle(naVal, naCap);
       var gymStyle = mGymIconStyle(train, trained);
@@ -220,7 +228,7 @@
           '<span class="mwk-b">' + spark +
             '<span class="mwk-icos">' +
               '<svg class="mwk-ico mwk-ico-fib" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="' + fibStyle + '"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19l8-8"/></svg>' +
-              '<svg class="mwk-ico mwk-ico-salt" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="' + saltStyle + '"><path d="M8 10h8l-1 10H9z"/><path d="M8 10c0-3 2-6 4-6s4 3 4 6"/><path d="M11 7h.01M13 7h.01"/></svg>' +
+              '<svg class="mwk-ico mwk-ico-salt" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="' + saltStyle + '"><path d="M7.5 11h9l-1.2 9.5h-6.6z"/><path d="M8 11V9.5a4 4 0 0 1 8 0V11"/><path d="M10 7.6h.01M12 6.8h.01M14 7.6h.01"/></svg>' +
               (train || trained ? '<svg class="mwk-ico mwk-lift" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="' + gymStyle + '"><title>Lifting day</title><path d="M3 12h18M6 8v8M18 8v8M3 10v4M21 10v4"/></svg>' : '<span class="mwk-ico-sp"></span>') +
             '</span>' +
           '</span>' +

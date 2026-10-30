@@ -74,8 +74,10 @@ module.exports = {
         back: (el.querySelector('[data-mskip]') || {}).textContent,
         pill: pill ? pill.textContent : '' };
     });
-    t.ok('and its row says skipped with a kcal spread pill (kcal → Lunch, Dinner), opens its sheet, and has Put back on it',
-      !!row && row.door === 's' && row.back === 'Put back' && /\d+ kcal → Lunch, Dinner/.test(row.pill), JSON.stringify(row));
+    /* Short on the pill since 2026-10-30 ("Uncrowd the text"): the number,
+       the first meal it goes to, and +1 for the rest. */
+    t.ok('and its row says skipped with a short spread pill (kcal → Lunch +1), opens its sheet, and has Put back on it',
+      !!row && row.door === 's' && row.back === 'Put back' && /\d+ → Lunch \+1/.test(row.pill), JSON.stringify(row));
     const lunchWant1 = await wantOf(p, 'l');
     t.ok('its share goes to the meals still open: Lunch is asked for more', lunchWant1 > lunchWant0, JSON.stringify({ lunchWant0, lunchWant1 }));
     await p.click('#mToast [data-mskipundo]');

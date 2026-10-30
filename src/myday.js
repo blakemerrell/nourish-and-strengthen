@@ -934,19 +934,35 @@
           : destSlots.length === 2 ? destSlots[0].n.replace(/ Snack$/i, '') + ', ' + destSlots[1].n.replace(/ Snack$/i, '')
           : destSlots.length > 2 ? destSlots[0].n.replace(/ Snack$/i, '') + ', ' + destSlots[1].n.replace(/ Snack$/i, '') + '\u2026'
           : '';
+        /* Short on the pill, whole in its label. "283 kcal → Dinner, Evening"
+           ran past the pill's edge on a phone (Blake, 2026-10-30: "Uncrowd
+           the text"), so it shows the number and the first meal it goes to,
+           and "+1" for the rest; the button's label still names them all. */
+        var destShort = destSlots.length ? destSlots[0].n.replace(/ Snack$/i, '') +
+          (destSlots.length > 1 ? ' +' + (destSlots.length - 1) : '') : '';
         var swHTML = skKcal > 0
-          ? '<span class="mtray-spread-pill num">' + skKcal + ' kcal' + (destTxt ? ' &rarr; ' + esc(destTxt) : ' skipped') + '</span>' +
+          ? '<span class="mtray-spread-pill num">' + skKcal + (destShort ? ' &rarr; ' + esc(destShort) : ' kcal skipped') + '</span>' +
             '<span class="sr-only"> (' + (skSend ? 'skipped' : 'skipped &middot; its share went to the rest') + ')</span>'
           : (skSend ? 'skipped' : 'skipped &middot; its share went to the rest');
+        /* Once Done is pressed the chooser folds, and folded it used to stay
+           on as a line of its own under the pill — "Skipping Lunch frees
+           283" — saying again what the pill beside it already says, 283 kcal
+           to Dinner and Evening. Blake circled it: "Make that go away." So a
+           folded chooser draws nothing, and the pill itself is how it opens
+           again: a tap on a skipped meal asks where its share goes, which is
+           the one thing left to decide about it (Put back is beside it). */
+        var sendFolded = !!(skSend && sent && sent.ack);
         return '<div class="mtray-skip">' +
-            '<button class="mtray-skb" data-mopen="' + esc(sk) + '" aria-label="' + esc(name) + ', skipped' + (skKcal > 0 && destTxt ? ', ' + skKcal + ' kcal to ' + esc(destTxt) : '') + '. Open it">' +
+            (sendFolded
+              ? '<button class="mtray-skb" data-msend="open" aria-expanded="false" aria-label="' + esc(name) + ', skipped' + (skKcal > 0 && destTxt ? ', ' + skKcal + ' kcal to ' + esc(destTxt) : '') + '. Choose where its share goes">'
+              : '<button class="mtray-skb" data-mopen="' + esc(sk) + '" aria-label="' + esc(name) + ', skipped' + (skKcal > 0 && destTxt ? ', ' + skKcal + ' kcal to ' + esc(destTxt) : '') + '. Open it">') +
               '<span class="mtray-skpill">' +
                 '<span class="mtray-n">' + esc(name) + '</span>' +
                 '<span class="mtray-sw">' + swHTML + '</span>' +
               '</span>' +
             '</button>' +
             '<button class="mtray-unskip" data-mskip="' + esc(sk) + '" aria-label="Put ' + esc(name) + ' back">Put back</button>' +
-          '</div>' + skSend;
+          '</div>' + (sendFolded ? '' : skSend);
       }
 
       /* Each food is a line of its own again (Blake, 2026-10-08), the way the

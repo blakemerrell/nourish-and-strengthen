@@ -742,8 +742,8 @@ module.exports = nourish({
     await orderPg.waitForTimeout(300);
     const barOrder = await orderPg.evaluate(() =>
       [...document.querySelectorAll('.mday-acts button')].map((b) => b.id).join(' '));
-    t.ok('the day bar reads rebalance, sweep, copy, then Fill',
-      barOrder === 'macroRebal macroSweep macroCopy macroFill',
+    t.ok('the day bar reads rebalance, sweep, add meal, then Fill',
+      barOrder === 'macroRebal macroSweep macroAddMeal macroFill',
       barOrder);
     await orderPg.context().close();
   },

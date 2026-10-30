@@ -55,6 +55,7 @@
   var mReadProfile = app.mReadProfile;
   var mReadSlots = app.mReadSlots;
   var mSaltChip = app.mSaltChip;
+  var mSendOf = app.mSendOf;
   var mServeG = app.mServeG;
   var mSkipped = app.mSkipped;
   var mSnapTargets = app.mSnapTargets;
@@ -817,6 +818,29 @@
        its Saved meals lens). Open is held for the day, like a card's view.
        It keeps its door, empty, as Status does. Mockup round 3b:
        https://claude.ai/artifact/Vn1dzLvzzUgVBxKNPdUc8c */
+    var mIsMovableSlot = function (s) {
+      if (!s) return false;
+      if (s.t === 'b' || s.t === 'l' || s.t === 'd') {
+        return /\b(?:snack|wake|even|pre|post)\b/i.test(String(s.n || ''));
+      }
+      return true;
+    };
+    var mSlotHoldBarHTML = function (sk, name, anyEaten) {
+      if (S.mCardHold !== k + '|' + sk) return '';
+      var idx = -1;
+      slots.list.forEach(function (s, i) { if (s.k === sk) idx = i; });
+      var slotRec = idx >= 0 ? slots.list[idx] : null;
+      var canMove = mIsMovableSlot(slotRec) && slots.list.length > 1;
+      return '<div class="mtray-holdbar no-print" role="group" aria-label="Options for ' + esc(name) + '">' +
+        (!anyEaten ? '<button type="button" class="mhold-btn" data-mskipgo="' + esc(sk) + '">Skip today</button>' : '') +
+        (!anyEaten && slots.list.length > 1 ? '<button type="button" class="mhold-btn mhold-del" data-mslotdel="' + esc(sk) + '">Remove permanently</button>' : '') +
+        (canMove
+          ? '<button type="button" class="mhold-btn" data-mslotmove="' + esc(sk) + ':-1"' + (idx <= 0 ? ' disabled' : '') + ' aria-label="Move ' + esc(name) + ' earlier">&uarr; Earlier</button>' +
+            '<button type="button" class="mhold-btn" data-mslotmove="' + esc(sk) + ':1"' + (idx >= slots.list.length - 1 ? ' disabled' : '') + ' aria-label="Move ' + esc(name) + ' later">&darr; Later</button>'
+          : '') +
+        '<button type="button" class="mhold-btn mhold-close" data-mholdclose="' + esc(sk) + '">Done</button>' +
+      '</div>';
+    };
     var emptyHTML = function (M, sk, name) {
       var open = !!(S.mEmptyOpen[k] && S.mEmptyOpen[k][sk]);
       /* The faint target is the calorie pill's figure, worked the same way
@@ -850,6 +874,7 @@
               '<button data-mfrom="' + esc(sk) + '" aria-label="Repeat ' + esc(name) + ' from another day">Repeat<span class="mtray-lg"> a day</span></button>' +
               '<button data-msaved="' + esc(sk) + '" aria-label="Saved meals, for ' + esc(name) + '">Saved<span class="mtray-lg"> meals</span></button>' +
             '</div>') +
+            mSlotHoldBarHTML(sk, name, false) +
           '</div>' +
         '</div>';
     };
@@ -873,10 +898,33 @@
         /* With the card under it asking where the share goes, the line does
            not claim it simply went to the rest. */
         var skSend = mCascadeLineHTML(sk, targets, slots);
+        var skKcal = M.ask && M.ask.plan ? Math.round(M.ask.plan.kcal) : 0;
+        var openSlots = slots.list.filter(function (s2) {
+          if (s2.k === sk) return false;
+          var its2 = day[s2.k] || [];
+          if (!its2.length && mSkipped(k, s2.k)) return false;
+          if (its2.length && its2.every(function (it) { return it.eaten; })) return false;
+          return true;
+        });
+        var sent = mSendOf ? mSendOf(k) : null;
+        if (sent && sent.f !== sk) sent = null;
+        var destSlots = openSlots;
+        if (sent && sent.off) destSlots = [];
+        else if (sent && sent.to && sent.to.length) {
+          destSlots = openSlots.filter(function (s2) { return sent.to.indexOf(s2.k) >= 0; });
+        }
+        var destTxt = destSlots.length === 1 ? destSlots[0].n
+          : destSlots.length === 2 ? destSlots[0].n.replace(/ Snack$/i, '') + ', ' + destSlots[1].n.replace(/ Snack$/i, '')
+          : destSlots.length > 2 ? destSlots[0].n.replace(/ Snack$/i, '') + ', ' + destSlots[1].n.replace(/ Snack$/i, '') + '\u2026'
+          : '';
+        var swHTML = skKcal > 0
+          ? '<span class="mtray-spread-pill num">' + skKcal + ' kcal' + (destTxt ? ' &rarr; ' + esc(destTxt) : ' skipped') + '</span>' +
+            '<span class="sr-only"> (' + (skSend ? 'skipped' : 'skipped &middot; its share went to the rest') + ')</span>'
+          : (skSend ? 'skipped' : 'skipped &middot; its share went to the rest');
         return '<div class="mtray-skip">' +
-            '<button class="mtray-skb" data-mopen="' + esc(sk) + '" aria-label="' + esc(name) + ', skipped. Open it">' +
+            '<button class="mtray-skb" data-mopen="' + esc(sk) + '" aria-label="' + esc(name) + ', skipped' + (skKcal > 0 && destTxt ? ', ' + skKcal + ' kcal to ' + esc(destTxt) : '') + '. Open it">' +
               '<span class="mtray-n">' + esc(name) + '</span>' +
-              '<span class="mtray-sw">' + (skSend ? 'skipped' : 'skipped &middot; its share went to the rest') + '</span>' +
+              '<span class="mtray-sw">' + swHTML + '</span>' +
             '</button>' +
             '<button class="mtray-unskip" data-mskip="' + esc(sk) + '" aria-label="Put ' + esc(name) + ' back">Put back</button>' +
           '</div>' + skSend;
@@ -1015,6 +1063,7 @@
               '</button>' +
               '<div class="mtray-fs">' + (lines || '<span class="mtray-f mtray-none">Nothing yet</span>') + '</div>') +
             ask +
+            mSlotHoldBarHTML(sk, name, anyEaten) +
           '</div>' +
         '</div>' + (onPlan ? mCascadeLineHTML(sk, targets, slots) : '');
     };
@@ -1026,6 +1075,67 @@
     if (!ahead) {
       var prHyd = mReadProfile();
       html += mHydrationCardHTML(k, mWaterGoalOz(prHyd && prHyd.lb));
+    }
+    var addPop = $('macroAddPop');
+    var addBtn = $('macroAddMeal');
+    if (addPop) {
+      addPop.classList.toggle('hide', !S.mAddMealOpen);
+      if (addBtn) addBtn.setAttribute('aria-expanded', S.mAddMealOpen ? 'true' : 'false');
+      if (S.mAddMealOpen) {
+        var curNames = slots.list.map(function (s) { return (s.n || '').toLowerCase(); });
+        var quickChips = [
+          { n: 'Wake Up', t: 's', after: '' },
+          { n: 'Mid-Morning Snack', t: 's', after: 'b' },
+          { n: 'Afternoon Snack', t: 's', after: 'l' },
+          { n: 'Pre-Workout', t: 's', after: 'l' },
+          { n: 'Post-Workout', t: 's', after: 'd' },
+          { n: 'Evening Snack', t: 's', after: 'd' },
+          { n: 'Breakfast', t: 'b', after: 'w' },
+          { n: 'Lunch', t: 'l', after: 'b' },
+          { n: 'Dinner', t: 'd', after: 'l' }
+        ].filter(function (q) { return curNames.indexOf(q.n.toLowerCase()) < 0; });
+        addPop.innerHTML =
+          '<div class="madd-hd">' +
+            '<b>Meals in your day (' + slots.list.length + ')</b>' +
+            '<button type="button" class="madd-x" data-maddpop="close" aria-label="Close">&times;</button>' +
+          '</div>' +
+          '<div class="madd-presets" role="group" aria-label="Meals per day">' +
+            '<span class="madd-lbl">Meals / day:</span>' +
+            [3, 4, 5, 6, 7].map(function (cnt) {
+              var on = slots.list.length === cnt;
+              return '<button type="button" class="madd-pbtn num' + (on ? ' on' : '') + '" data-mslotpreset="' + cnt + '" aria-pressed="' + on + '">' + cnt + '</button>';
+            }).join('') +
+          '</div>' +
+          '<div class="madd-chips">' +
+            quickChips.slice(0, 6).map(function (q) {
+              return '<button type="button" class="madd-chip" data-maddslot="' + esc(q.n + '|' + q.t + '|' + q.after) + '">+ ' + esc(q.n) + '</button>';
+            }).join('') +
+          '</div>' +
+          '<div class="madd-custom">' +
+            '<input type="text" id="mAddMealIn" class="madd-in" maxlength="28" placeholder="Custom snack or meal name\u2026" aria-label="Custom meal name">' +
+            '<button type="button" class="btn-primary madd-go" data-maddslot="custom">+ Add</button>' +
+          '</div>' +
+          '<div class="madd-list">' +
+            slots.list.map(function (s, idx) {
+              var hasEaten = (day[s.k] || []).some(function (it) { return it && it.eaten; });
+              var canMv = mIsMovableSlot(s) && slots.list.length > 1;
+              return '<div class="madd-row">' +
+                '<span class="madd-rn">' + esc(s.n) + (canMv ? ' <small>snack</small>' : '') + '</span>' +
+                '<span class="madd-racts">' +
+                  (canMv
+                    ? '<button type="button" class="madd-ib" data-mslotmove="' + esc(s.k) + ':-1"' + (idx <= 0 ? ' disabled' : '') + ' aria-label="Move ' + esc(s.n) + ' up">&uarr;</button>' +
+                      '<button type="button" class="madd-ib" data-mslotmove="' + esc(s.k) + ':1"' + (idx >= slots.list.length - 1 ? ' disabled' : '') + ' aria-label="Move ' + esc(s.n) + ' down">&darr;</button>'
+                    : '') +
+                  (!hasEaten && slots.list.length > 1
+                    ? '<button type="button" class="madd-ib madd-del" data-mslotdel="' + esc(s.k) + '" aria-label="Remove ' + esc(s.n) + '">&times;</button>'
+                    : '') +
+                '</span>' +
+              '</div>';
+            }).join('') +
+          '</div>';
+      } else {
+        addPop.innerHTML = '';
+      }
     }
     var hIn = document.activeElement, hSel = null;
     if (hIn && hIn.tagName === 'INPUT' && $('macroSlots').contains(hIn)) {

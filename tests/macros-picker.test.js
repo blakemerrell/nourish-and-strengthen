@@ -61,7 +61,7 @@ module.exports = nourish({
           .filter((x) => !x.classList.contains('hide')).map((x) => x.id);
         const rows = new Set([...document.querySelectorAll('.mday-acts button')]
           .map((x) => Math.round(x.getBoundingClientRect().top)));
-        return b2.join() === 'macroRebal,macroSweep,macroCopy,macroFill' && rows.size === 1 &&
+        return b2.join() === 'macroRebal,macroSweep,macroAddMeal,macroFill' && rows.size === 1 &&
           document.querySelector('.mday-acts').getBoundingClientRect().height < 80;
       }), await bar.evaluate(() => Math.round(document.querySelector('.mday-acts').getBoundingClientRect().height) + 'px ' +
         [...document.querySelectorAll('.mday-acts button')].map((x) => x.id).join(',')));

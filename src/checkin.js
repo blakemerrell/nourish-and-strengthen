@@ -13,12 +13,16 @@
   'use strict';
 
   // what it reads of the app's
+  var MDAYS = app.MDAYS;
   var S = app.S;
+  var dayKey = app.dayKey;
+  var keyDate = app.keyDate;
   var mFoldDue = app.mFoldDue;
   var mPut = app.mPut;
+  var mReadSlots = app.mReadSlots;
+  var mServeG = app.mServeG;
   var mStamp = app.mStamp;
-  var keyDate = app.keyDate;
-  var dayKey = app.dayKey;
+  var LIVE = app.LIVE;
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -73,6 +77,14 @@
     if (fin(v.sy) && v.sy >= 0 && v.sy <= 200000) out.sy = Math.round(v.sy);
     if (v.cr === 0 || v.cr === 1) out.cr = v.cr;
     if (fin(v.wt) && v.wt >= 0 && v.wt <= 500) out.wt = Math.round(v.wt);
+    if (plain(v.vs)) {
+      var vs = {};
+      ['v8', 'v16', 'v24', 'v42'].forEach(function (vk) {
+        var n = v.vs[vk];
+        if (fin(n) && n > 0 && n <= 40) vs[vk] = Math.round(n);
+      });
+      if (Object.keys(vs).length) out.vs = vs;
+    }
     if (plain(v.cf)) {
       var cf = {};
       Object.keys(v.cf).forEach(function (id) {
@@ -148,6 +160,89 @@
     dk.list.forEach(function (d) { mg += (cf[d.id] || 0) * d.mg; });
     return mg;
   }
+  var VESSELS0 = [
+    { id: 'v8', oz: 8, n: 'Little cup', short: '8oz cup' },
+    { id: 'v16', oz: 16, n: 'Bottle / glass', short: '16oz bottle' },
+    { id: 'v24', oz: 24, n: 'Shaker', short: '24oz shaker' },
+    { id: 'v42', oz: 42, n: 'Stanley mug', short: '42oz Stanley' }
+  ];
+  function mVesselsOf(k) {
+    var r = mAmOf(k), raw = plain(r.vs) ? r.vs : {};
+    var out = { v8: raw.v8 || 0, v16: raw.v16 || 0, v24: raw.v24 || 0, v42: raw.v42 || 0 };
+    var plainWt = fin(r.wt) ? r.wt : 0;
+    var sumOz = out.v8 * 8 + out.v16 * 16 + out.v24 * 24 + out.v42 * 42;
+    if (plainWt > sumOz) {
+      var rem = plainWt - sumOz;
+      [42, 24, 16, 8].forEach(function (sz) {
+        if (rem >= sz && (rem % sz === 0 || sz === 8)) {
+          var add = Math.floor(rem / sz);
+          out['v' + sz] += add;
+          rem -= add * sz;
+        }
+      });
+    }
+    return out;
+  }
+
+  function mIsMealDrink(r) {
+    if (!r) return false;
+    var id = String(r.id || '');
+    if (id === 'f:milk' || id === 'f:evaporated_milk' || id === 'f:crio_bru' || id === 'f:tomato_soup' ||
+        id === 'f:cream_soup_chx' || id === 'f:cream_soup_mush' || id === 'f:soup_rts') return true;
+    var nm = String(r.name || '');
+    if (/\b(?:oil|butter|syrup|honey|vinegar|sauce|dressing|ranch|mayo|mustard|ketchup|salsa|gravy|egg\s*whites?|egg\s*substitute|liquid\s*eggs?|cream\s*cheese|oats|oatmeal|yogurt|cottage\s*cheese|ice\s*cream)\b/i.test(nm)) return false;
+    return /\b(?:crio\s*br[uü]|milk|fairlife|kefir|protein\s*shake|shake|smoothie|energy\s*drink|celsius|monster|alani|red\s*bull|ghost|reign|coffee|espresso|latte|cold\s*brew|tea|chai|matcha|soda|diet\s*soda|cola|pop|sparkling\s*water|seltzer|water|electrolyte|liquid\s*i\.?v\.?|lmnt|gatorade|powerade|juice|lemonade|limeade|bone\s*broth|broth|stock)\b/i.test(nm);
+  }
+  function mItemFluidOz(r, x) {
+    if (!r) return 0;
+    var mult = fin(x) && x > 0 ? x : 1;
+    var id = String(r.id || ''), nm = String(r.name || ''), u = String(r.unit || '');
+    if (id === 'f:crio_bru' || /\bcrio\s*br[uü]\b/i.test(nm)) return Math.max(1, Math.round(8 * mult));
+    var mOz = /(\d+(?:\.\d+)?)\s*(?:fl\.?\s*)?oz\b/i.exec(u) || /(\d+(?:\.\d+)?)\s*(?:fl\.?\s*)?oz\b/i.exec(nm);
+    if (mOz) return Math.max(1, Math.round(Number(mOz[1]) * mult));
+    var mCup = /(\d+(?:\.\d+)?)\s*cups?\b/i.exec(u);
+    if (mCup) return Math.max(1, Math.round(Number(mCup[1]) * 8 * mult));
+    var mMl = /(\d+(?:\.\d+)?)\s*m[lL]\b/.exec(u);
+    if (mMl) return Math.max(1, Math.round((Number(mMl[1]) / 29.5735) * mult));
+    if (r.food && fin(r.g) && r.g >= 30) return Math.max(1, Math.round((r.g / 29.5735) * mult));
+    if (!r.food && mServeG) {
+      var sg = mServeG(r);
+      if (sg && sg.g >= 60) return Math.max(1, Math.round((sg.g / 29.5735) * mult));
+    }
+    return Math.max(1, Math.round(8 * mult));
+  }
+  function mMealLiquids(k) {
+    if (!MDAYS || !LIVE || !LIVE.BY_ID) return { oz: 0, items: [] };
+    var day = MDAYS[k];
+    if (!plain(day)) return { oz: 0, items: [] };
+    var slots = mReadSlots ? mReadSlots() : { names: {} };
+    var list = [], totalOz = 0;
+    Object.keys(day).forEach(function (sk) {
+      var arr = day[sk];
+      if (!Array.isArray(arr)) return;
+      var mName = (slots.names && slots.names[sk]) || sk;
+      arr.forEach(function (it) {
+        if (!it || !it.id) return;
+        var r = LIVE.BY_ID[it.id];
+        if (!r) return;
+        var oz = 0;
+        if (mIsMealDrink(r)) {
+          oz = mItemFluidOz(r, it.x);
+        } else if (Array.isArray(r.parts)) {
+          r.parts.forEach(function (pt) {
+            var pr = LIVE.BY_ID[pt.id];
+            if (pr && mIsMealDrink(pr)) oz += mItemFluidOz(pr, (pt.x || 1) * (it.x || 1));
+          });
+        }
+        if (oz > 0) {
+          totalOz += oz;
+          list.push({ name: r.name, meal: mName, oz: oz, eaten: !!it.eaten });
+        }
+      });
+    });
+    return { oz: totalOz, items: list };
+  }
+
   function mDrinksOz(k) {
     var dk = mDrinks(), cf = mAmOf(k).cf || {}, oz = 0;
     dk.list.forEach(function (d) {
@@ -158,7 +253,7 @@
   }
   function mWaterOz(k) {
     var r = mAmOf(k);
-    return (fin(r.wt) ? r.wt : 0) + mDrinksOz(k);
+    return (fin(r.wt) ? r.wt : 0) + mDrinksOz(k) + mMealLiquids(k).oz;
   }
 
   /* ---- what it says ---- */
@@ -263,15 +358,49 @@
     var r = mAmOf(k);
     var plainWt = fin(r.wt) ? r.wt : 0;
     var drinkWt = mDrinksOz(k);
-    var wt = plainWt + drinkWt;
+    var mealLiq = mMealLiquids(k);
+    var mealWt = mealLiq.oz;
+    var wt = plainWt + drinkWt + mealWt;
     var goal = mWaterGoalOz(goalOz ? goalOz * 2 : 200);
     if (fin(goalOz) && goalOz >= 40 && goalOz <= 200) goal = Math.round(goalOz);
     var pct = goal > 0 ? Math.max(0, Math.min(100, Math.round(wt / goal * 100))) : 0;
     var shown = mDrinksShown(k), cf = r.cf || {}, mg = mCafMg(k);
     var drinks = mDrinksRowsHTML(shown, cf, true);
     var shut = !!(S.mHydShut && S.mHydShut[k]) && !S.mViewAll;
-    var subLine = drinkWt > 0
-      ? '<div class="mhyd-sub">' + plainWt + ' oz water + ' + drinkWt + ' oz from drinks</div>'
+    var vs = mVesselsOf(k);
+    var vParts = [];
+    VESSELS0.forEach(function (v) {
+      if (vs[v.id] > 0) vParts.push(vs[v.id] + '\u00d7 ' + v.short);
+    });
+    var subPieces = [];
+    if (drinkWt > 0 || mealWt > 0) {
+      subPieces.push(plainWt + ' oz water' +
+        (drinkWt > 0 ? ' + ' + drinkWt + ' oz from drinks' : '') +
+        (mealWt > 0 ? ' + ' + mealWt + ' oz from meals' : ''));
+    }
+    if (vParts.length) subPieces.push(vParts.join(', '));
+    var subLine = subPieces.length
+      ? '<div class="mhyd-sub">' + subPieces.join(' · ') + '</div>'
+      : '';
+    var vesselsHTML = VESSELS0.map(function (v) {
+      var c = vs[v.id] || 0;
+      var canSub = c > 0 || plainWt >= v.oz;
+      return '<div class="mhyd-vcard' + (c > 0 ? ' on' : '') + '">' +
+        (c > 0 ? '<span class="mhyd-vcnt num" aria-label="' + c + ' ' + esc(v.n) + '">&times;' + c + '</span>' : '') +
+        '<button type="button" class="mhyd-wbtn" data-hyd="wt:' + v.oz + '" aria-label="Add ' + v.oz + ' oz water (' + esc(v.n) + ')">' +
+          '<b>+' + v.oz + ' oz</b><small>' + esc(v.n) + '</small></button>' +
+        '<div class="mhyd-vstep">' +
+          '<button type="button" class="mhyd-vminus" data-hyd="wt:-' + v.oz + '" aria-label="Remove ' + v.oz + ' oz water"' + (canSub ? '' : ' disabled') + '>&minus;</button>' +
+          '<span class="mhyd-voz num">' + (c * v.oz) + ' oz</span>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    var mealLiqHTML = mealLiq.items.length
+      ? '<div class="mhyd-meals"><span class="mhyd-meals-lbl">Auto-counted from meals:</span>' +
+          mealLiq.items.map(function (it) {
+            return '<span class="mhyd-mchip num"><b>+' + it.oz + ' oz</b> ' + esc(it.name) + ' <small>(' + esc(it.meal) + ')</small></span>';
+          }).join('') +
+        '</div>'
       : '';
     return '<section class="mhyd-card' + (shut ? ' shut' : '') + ' no-print" data-amkey="' + esc(k) + '" aria-label="Water and drinks">' +
       '<button type="button" class="mhyd-head" data-hyd="fold" aria-expanded="' + (!shut) + '" aria-label="Water and Drinks, ' + wt + ' of ' + goal + ' oz' + (mg > 0 ? ', ' + mg + ' mg caffeine' : '') + '. ' + (shut ? 'Expand' : 'Collapse') + '">' +
@@ -288,15 +417,11 @@
             '<i style="width:' + pct + '%"></i>' +
           '</div>' +
           subLine +
-          '<div class="mhyd-water-btns">' +
-            '<button type="button" class="mhyd-wbtn" data-hyd="wt:8" aria-label="Add 8 oz water"><b>+8 oz</b><small>cup</small></button>' +
-            '<button type="button" class="mhyd-wbtn" data-hyd="wt:16" aria-label="Add 16 oz water"><b>+16 oz</b><small>bottle</small></button>' +
-            '<button type="button" class="mhyd-wbtn" data-hyd="wt:24" aria-label="Add 24 oz water"><b>+24 oz</b><small>shaker</small></button>' +
-            '<button type="button" class="mhyd-wbtn mhyd-wsub" data-hyd="wt:-8" aria-label="Remove 8 oz water"' + (plainWt > 0 ? '' : ' disabled') + '><b>−8 oz</b></button>' +
-          '</div>' +
+          '<div class="mhyd-water-btns">' + vesselsHTML + '</div>' +
+          mealLiqHTML +
           '<div class="mhyd-caf">' +
             '<div class="mhyd-caf-h"><span class="mhyd-caf-t">Drinks &amp; caffeine</span>' +
-              '<span class="mhyd-caf-s">' + (mg ? mg + ' mg' + (mg > 400 ? ' · over the usual 400 mg ceiling' : '') : shown.length ? 'Each drink counts toward your oz + mg' : 'Tap Add a drink for Crio Bru, Diet soda, Coffee…') + '</span></div>' +
+              '<span class="mhyd-caf-s">' + (mg ? mg + ' mg' + (mg > 400 ? ' · over the usual 400 mg ceiling' : '') : 'Each drink counts toward your oz + mg') + '</span></div>' +
             (drinks ? '<div class="am-drinks">' + drinks + '</div>' : '') +
             (S.hydAdd ? mDrinkPanelHTML(true) : '<button type="button" class="nut-ask am-add" data-hyd="hadd">' + (shown.length ? 'Edit or add drinks' : '+ Add a drink') + '</button>') +
           '</div>' +
@@ -361,7 +486,14 @@
     } else if (a[0] === 'cr') {
       mAmWrite(k, 'cr', r.cr === 1 ? 0 : 1);
     } else if (a[0] === 'wt') {
-      var wNext = Math.max(0, Math.min(500, (fin(r.wt) ? r.wt : 0) + Number(a[1])));
+      var dOz = Number(a[1]);
+      var vs = mVesselsOf(k);
+      var vk = 'v' + Math.abs(dOz);
+      if (vs[vk] !== undefined) vs[vk] = Math.max(0, (vs[vk] || 0) + (dOz > 0 ? 1 : -1));
+      var vsClean = {};
+      ['v8', 'v16', 'v24', 'v42'].forEach(function (key) { if (vs[key] > 0) vsClean[key] = vs[key]; });
+      var wNext = Math.max(0, Math.min(500, (fin(r.wt) ? r.wt : 0) + dOz));
+      mAmWrite(k, 'vs', Object.keys(vsClean).length ? vsClean : undefined);
       mAmWrite(k, 'wt', wNext > 0 ? Math.round(wNext) : undefined);
     } else if (a[0] === 'cf') {
       var cf = Object.assign({}, r.cf || {});

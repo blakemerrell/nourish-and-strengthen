@@ -3232,7 +3232,7 @@
 
   /* src/checkin.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var CHECKIN = window.HiveParts.checkin({ S: S, dayKey: dayKey, keyDate: keyDate, mFoldDue: mFoldDue, mPut: mPut, mStamp: mStamp });
+  var CHECKIN = window.HiveParts.checkin({ MDAYS: MDAYS, S: S, dayKey: dayKey, keyDate: keyDate, mFoldDue: mFoldDue, mPut: mPut, mReadSlots: mReadSlots, mServeG: mServeG, mStamp: mStamp, LIVE: LIVE });
   function mAmOf(k) { return CHECKIN.mAmOf(k); }
   function mAmWrite(k, field, v) { return CHECKIN.mAmWrite(k, field, v); }
   function mAmClean(v) { return CHECKIN.mAmClean(v); }
@@ -3548,7 +3548,7 @@
 
   /* src/myday.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var MYDAY = window.HiveParts.myday({ MDAYS: MDAYS, MWEIGHTS: MWEIGHTS, M_MONS: M_MONS, S: S, WGAPI: WGAPI, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mpIcon: mpIcon, leaf: leaf, mAhead: mAhead, mBatchStrip: mBatchStrip, mCanFav: mCanFav, mCascadeLineHTML: mCascadeLineHTML, mCopyItems: mCopyItems, mDay: mDay, mDayTargets: mDayTargets, mDialUnit: mDialUnit, mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mEditDay: mEditDay, mFillRoom: mFillRoom, mFoldForget: mFoldForget, mHydrationCardHTML: mHydrationCardHTML, mIcon: mIcon, mIsFav: mIsFav, mLatestKey: mLatestKey, mLongDate: mLongDate, mMacLine: mMacLine, mMarkAccountUI: mMarkAccountUI, mMealAsk: mMealAsk, mMealPillsSay: mMealPillsSay, mReadProfile: mReadProfile, mReadSlots: mReadSlots, mSaltChip: mSaltChip, mServeG: mServeG, mSkipped: mSkipped, mSnapTargets: mSnapTargets, mViewKey: mViewKey, mWaterGoalOz: mWaterGoalOz, mWeekHTML: mWeekHTML, mWhyChip: mWhyChip, mWhyStrip: mWhyStrip, macroFootHTML: macroFootHTML, macroWeighHTML: macroWeighHTML, syncShrunk: syncShrunk, todayKey: todayKey, mDialFromX: mDialFromX, mDialG: mDialG, mDialMeasure: mDialMeasure, mDialText: mDialText, LIVE: LIVE });
+  var MYDAY = window.HiveParts.myday({ MDAYS: MDAYS, MWEIGHTS: MWEIGHTS, M_MONS: M_MONS, S: S, WGAPI: WGAPI, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mpIcon: mpIcon, leaf: leaf, mAhead: mAhead, mBatchStrip: mBatchStrip, mCanFav: mCanFav, mCascadeLineHTML: mCascadeLineHTML, mCopyItems: mCopyItems, mDay: mDay, mDayTargets: mDayTargets, mDialUnit: mDialUnit, mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mEditDay: mEditDay, mFillRoom: mFillRoom, mFoldForget: mFoldForget, mHydrationCardHTML: mHydrationCardHTML, mIcon: mIcon, mIsFav: mIsFav, mLatestKey: mLatestKey, mLongDate: mLongDate, mMacLine: mMacLine, mMarkAccountUI: mMarkAccountUI, mMealAsk: mMealAsk, mMealPillsSay: mMealPillsSay, mReadProfile: mReadProfile, mReadSlots: mReadSlots, mSaltChip: mSaltChip, mSendOf: mSendOf, mServeG: mServeG, mSkipped: mSkipped, mSnapTargets: mSnapTargets, mViewKey: mViewKey, mWaterGoalOz: mWaterGoalOz, mWeekHTML: mWeekHTML, mWhyChip: mWhyChip, mWhyStrip: mWhyStrip, macroFootHTML: macroFootHTML, macroWeighHTML: macroWeighHTML, syncShrunk: syncShrunk, todayKey: todayKey, mDialFromX: mDialFromX, mDialG: mDialG, mDialMeasure: mDialMeasure, mDialText: mDialText, LIVE: LIVE });
   function renderMacros() {
     var r = MYDAY.renderMacros();
     if (S.view === 'today' && window.Today) window.Today.render();
@@ -4211,7 +4211,7 @@
     'data-cal', 'data-calweek', 'data-calagain', 'data-calfrom', 'data-caltpl',
     'data-addday', 'data-pswap', 'data-prate', 'data-adf', 'data-adadd', 'data-adsw', 'data-adopen', 'data-pwpick', 'data-pwsee', 'data-pwback', 'data-pwpre', 'data-pwmore', 'data-pwwant', 'data-pwopen', 'data-dayopen', 'data-dsact', 'data-listmark', 'data-fold',
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
-    'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
+    'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mslotdel', 'data-mslotmove', 'data-mholdclose', 'data-maddslot', 'data-mslotpreset', 'data-maddpop', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
     'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave'];
 
@@ -5883,12 +5883,20 @@
     var mHoldT = null, mHoldFired = false, mHeldNow = false;
     $('macroSlots').addEventListener('pointerdown', function (e) {
       var hb = e.target.closest && e.target.closest('[data-mhold]');
-      if (!hb) return;
+      var cardEl = !hb && e.target.closest && e.target.closest('.mslot[data-mslot]');
+      if (cardEl && e.target.closest('input, select, textarea, .mfl-amt, .mtray-holdbar')) cardEl = null;
+      if (!hb && !cardEl) return;
       clearTimeout(mHoldT);
       mHoldFired = false;
       mHoldT = setTimeout(function () {
-        var hk = mViewKey(), hsk = hb.dataset.mhold;
-        (S.mEmptyOpen[hk] = S.mEmptyOpen[hk] || {})[hsk] = true;
+        var hk = mViewKey();
+        if (hb) {
+          var hsk = hb.dataset.mhold;
+          (S.mEmptyOpen[hk] = S.mEmptyOpen[hk] || {})[hsk] = true;
+        } else if (cardEl) {
+          var csk = cardEl.dataset.mslot;
+          S.mCardHold = S.mCardHold === hk + '|' + csk ? '' : hk + '|' + csk;
+        }
         mHoldFired = true;
         renderMacros();
         if (navigator.vibrate) { try { navigator.vibrate(10); } catch (err) { /* not on this phone */ } }
@@ -5905,11 +5913,120 @@
       $('macroSlots').addEventListener(ev, function () { clearTimeout(mHoldT); });
     });
     $('macroSlots').addEventListener('contextmenu', function (e) {
-      if (e.target.closest && e.target.closest('[data-mhold]')) e.preventDefault();
+      if (e.target.closest && (e.target.closest('[data-mhold]') || e.target.closest('.mslot[data-mslot]'))) e.preventDefault();
     });
 
+    function mRebalanceSlotWeights(list) {
+      var hasW = list.some(function (s) { return typeof s.w === 'number' && s.w > 0; });
+      if (!hasW || !list.length) return;
+      var defW = function (s) { return s.t === 'b' ? 25 : s.t === 'l' ? 25 : s.t === 'd' ? 30 : 12; };
+      var sum = 0;
+      list.forEach(function (s) {
+        if (!(typeof s.w === 'number' && s.w > 0)) s.w = defW(s);
+        sum += s.w;
+      });
+      if (sum > 0 && sum !== 100) {
+        var acc = 0;
+        list.forEach(function (s, i) {
+          if (i === list.length - 1) s.w = Math.max(1, 100 - acc);
+          else { s.w = Math.max(1, Math.round(s.w * 100 / sum)); acc += s.w; }
+        });
+      }
+    }
+    function mSlotDelete(sk) {
+      var slots = mReadSlots();
+      if (slots.list.length <= 1) return;
+      var k = mViewKey(), day = mDay(k);
+      if ((day[sk] || []).some(function (it) { return it && it.eaten; })) return;
+      var removed = null;
+      slots.list = slots.list.filter(function (s) {
+        if (s.k === sk) { removed = s; return false; }
+        return true;
+      });
+      if (!removed) return;
+      if ((day[sk] || []).length) mEditDay(k, function (d0) { delete d0[sk]; });
+      mRebalanceSlotWeights(slots.list);
+      mWriteSlots(slots);
+      S.mCardHold = '';
+      S.mSkipAsk = '';
+      renderMacros();
+      mToast(esc(removed.n) + ' removed from your plan.');
+    }
+    function mSlotMove(sk, dir) {
+      var slots = mReadSlots();
+      var idx = -1;
+      slots.list.forEach(function (s, i) { if (s.k === sk) idx = i; });
+      var nextIdx = idx + dir;
+      if (idx < 0 || nextIdx < 0 || nextIdx >= slots.list.length) return;
+      var tmp = slots.list[idx];
+      slots.list[idx] = slots.list[nextIdx];
+      slots.list[nextIdx] = tmp;
+      mWriteSlots(slots);
+      renderMacros();
+    }
+    function mSlotAdd(name, kind, afterKey) {
+      var nm = String(name || '').trim().slice(0, 28);
+      if (!nm) return;
+      var slots = mReadSlots();
+      var kId = 'k' + Date.now().toString(36) + (mtMealSeq++);
+      var stdMap = { 'wake up': ['w', 's'], 'breakfast': ['b', 'b'], 'lunch': ['l', 'l'], 'afternoon snack': ['s', 's'], 'dinner': ['d', 'd'], 'evening snack': ['e', 's'], 'evening': ['e', 's'] };
+      var std = stdMap[nm.toLowerCase()];
+      if (std && !slots.list.some(function (s) { return s.k === std[0]; })) {
+        kId = std[0];
+        kind = std[1];
+      }
+      var rec = { k: kId, n: nm, t: kind || 's' };
+      slots.names[kId] = nm;
+      var insAt = slots.list.length;
+      if (afterKey === '') insAt = 0;
+      else if (afterKey) {
+        slots.list.forEach(function (s, i) { if (s.k === afterKey) insAt = i + 1; });
+      }
+      slots.list.splice(insAt, 0, rec);
+      mRebalanceSlotWeights(slots.list);
+      mWriteSlots(slots);
+      renderMacros();
+      mToast(esc(nm) + ' added to your day.');
+    }
+    function mSlotApplyPreset(cnt) {
+      var presets = {
+        3: [{ k: 'b', n: 'Breakfast', t: 'b' }, { k: 'l', n: 'Lunch', t: 'l' }, { k: 'd', n: 'Dinner', t: 'd' }],
+        4: [{ k: 'b', n: 'Breakfast', t: 'b' }, { k: 'l', n: 'Lunch', t: 'l' }, { k: 's', n: 'Afternoon Snack', t: 's' }, { k: 'd', n: 'Dinner', t: 'd' }],
+        5: [{ k: 'w', n: 'Wake Up', t: 's' }, { k: 'b', n: 'Breakfast', t: 'b' }, { k: 'l', n: 'Lunch', t: 'l' }, { k: 's', n: 'Afternoon Snack', t: 's' }, { k: 'd', n: 'Dinner', t: 'd' }],
+        6: [{ k: 'w', n: 'Wake Up', t: 's' }, { k: 'b', n: 'Breakfast', t: 'b' }, { k: 'l', n: 'Lunch', t: 'l' }, { k: 's', n: 'Afternoon Snack', t: 's' }, { k: 'd', n: 'Dinner', t: 'd' }, { k: 'e', n: 'Evening', t: 's' }],
+        7: [{ k: 'w', n: 'Wake Up', t: 's' }, { k: 'b', n: 'Breakfast', t: 'b' }, { k: 'm', n: 'Mid-Morning Snack', t: 's' }, { k: 'l', n: 'Lunch', t: 'l' }, { k: 's', n: 'Afternoon Snack', t: 's' }, { k: 'd', n: 'Dinner', t: 'd' }, { k: 'e', n: 'Evening', t: 's' }]
+      };
+      var base = presets[cnt];
+      if (!base) return;
+      var slots = mReadSlots(), k = mViewKey(), day = mDay(k);
+      var nextList = base.map(function (b) {
+        var old = slots.list.filter(function (s) { return s.k === b.k; })[0];
+        return old ? Object.assign({}, old, { n: old.n || b.n, t: b.t }) : Object.assign({}, b);
+      });
+      /* Preserve any slot that already has eaten food today so nothing logged is orphaned. */
+      slots.list.forEach(function (s) {
+        var hasEaten = (day[s.k] || []).some(function (it) { return it && it.eaten; });
+        if (hasEaten && !nextList.some(function (nx) { return nx.k === s.k; })) nextList.push(s);
+      });
+      nextList.forEach(function (s) { slots.names[s.k] = s.n; });
+      slots.list = nextList;
+      mRebalanceSlotWeights(slots.list);
+      mWriteSlots(slots);
+      renderMacros();
+    }
+
     function mDayClick(e) {
-      if (mHeldNow && e.target.closest('[data-mhold]')) { mHeldNow = false; e.preventDefault(); return; }
+      if (mHeldNow && (e.target.closest('[data-mhold]') || e.target.closest('.mslot[data-mslot]'))) { mHeldNow = false; e.preventDefault(); return; }
+      var hc = e.target.closest('[data-mholdclose]');
+      if (hc) { S.mCardHold = ''; renderMacros(); return; }
+      var sdel = e.target.closest('[data-mslotdel]');
+      if (sdel) { mSlotDelete(sdel.dataset.mslotdel); return; }
+      var smv = e.target.closest('[data-mslotmove]');
+      if (smv) {
+        var mp = smv.dataset.mslotmove.split(':');
+        mSlotMove(mp[0], Number(mp[1]) || 0);
+        return;
+      }
       /* An empty meal's name opens and shuts its line of ways to fill it. */
       var meo = e.target.closest('[data-meopen]');
       if (meo) {
@@ -6651,12 +6768,62 @@
        renaming itself, and a control whose only feedback is its own label
        cannot live somewhere that closes on the way out. */
     $('macroCopy').addEventListener('click', function () { mCopyDay(this); });
+    if ($('macroAddMeal')) {
+      $('macroAddMeal').addEventListener('click', function () {
+        S.mAddMealOpen = !S.mAddMealOpen;
+        renderMacros();
+      });
+    }
+    if ($('macroAddPop')) {
+      $('macroAddPop').addEventListener('click', function (e) {
+        var cl = e.target.closest('[data-maddpop="close"]');
+        if (cl) { S.mAddMealOpen = false; renderMacros(); return; }
+        var pr = e.target.closest('[data-mslotpreset]');
+        if (pr) { mSlotApplyPreset(Number(pr.dataset.mslotpreset)); return; }
+        var ad = e.target.closest('[data-maddslot]');
+        if (ad) {
+          var v = ad.dataset.maddslot;
+          if (v === 'custom') {
+            var inp = $('mAddMealIn');
+            if (inp && inp.value.trim()) {
+              mSlotAdd(inp.value.trim(), 's', 'l');
+              inp.value = '';
+            } else if (inp) inp.focus();
+          } else {
+            var pts = v.split('|');
+            mSlotAdd(pts[0], pts[1] || 's', pts[2]);
+          }
+          return;
+        }
+        var sdel = e.target.closest('[data-mslotdel]');
+        if (sdel) { mSlotDelete(sdel.dataset.mslotdel); return; }
+        var smv = e.target.closest('[data-mslotmove]');
+        if (smv) {
+          var mp = smv.dataset.mslotmove.split(':');
+          mSlotMove(mp[0], Number(mp[1]) || 0);
+        }
+      });
+      $('macroAddPop').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && e.target && e.target.id === 'mAddMealIn') {
+          e.preventDefault();
+          if (e.target.value.trim()) {
+            mSlotAdd(e.target.value.trim(), 's', 'l');
+            e.target.value = '';
+          }
+        }
+      });
+    }
 
 
 
     $('macroMenu').addEventListener('click', function (e) {
       var b = e.target.closest('[data-mmore]');
       if (!b) return;
+      if (b.dataset.mmore === 'copy') {
+        mMenu(false);
+        mToast('Day copied to clipboard.');
+        return;
+      }
       mMenu(false);
       rememberOpener();
       S.macroTargOpen = true;

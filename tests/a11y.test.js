@@ -177,14 +177,22 @@ module.exports = {
     await p.focus('#macroMore');
     await p.keyboard.press('Enter');
     await p.waitForTimeout(100);
-    const m1 = await p.evaluate(() => ({ open: !document.getElementById('macroMenu').classList.contains('hide'),
-      focus: document.activeElement && document.activeElement.dataset.mmore }));
-    t.ok('opening the menu puts the focus on its first item', m1.open && m1.focus === 'plan', JSON.stringify(m1));
+    /* Trends heads the menu since it moved there from the head row
+       (2026-10-30); every meal's view follows it when the day has meals. The
+       walk is asserted against the items as they stand, first, second, last. */
+    const its = await p.evaluate(() => [...document.querySelectorAll('#macroMenu [role="menuitem"]')]
+      .filter((b) => b.offsetParent !== null).map((b) => b.dataset.mmore || (b.hasAttribute('data-mchartopen') ? 'trends' : b.id)));
+    const m1 = await p.evaluate(() => { const e = document.activeElement;
+      return { open: !document.getElementById('macroMenu').classList.contains('hide'),
+        focus: e ? (e.dataset.mmore || (e.hasAttribute('data-mchartopen') ? 'trends' : e.id)) : '' }; });
+    t.ok('opening the menu puts the focus on its first item, Trends', m1.open && m1.focus === 'trends' && its[0] === 'trends', JSON.stringify([m1, its]));
     await p.keyboard.press('ArrowDown');
-    const m2 = await p.evaluate(() => document.activeElement && document.activeElement.dataset.mmore);
+    const m2 = await p.evaluate(() => { const e = document.activeElement; return e ? (e.dataset.mmore || (e.hasAttribute('data-mchartopen') ? 'trends' : e.id)) : ''; });
     await p.keyboard.press('ArrowUp'); await p.keyboard.press('ArrowUp');
-    const m3 = await p.evaluate(() => document.activeElement && document.activeElement.dataset.mmore);
-    t.ok('Down and Up walk its items, round from the top to the bottom', m2 === 'foods' && m3 === 'copy', m2 + ' ' + m3);
+    const m3 = await p.evaluate(() => { const e = document.activeElement; return e ? (e.dataset.mmore || (e.hasAttribute('data-mchartopen') ? 'trends' : e.id)) : ''; });
+    t.ok('Down and Up walk its items, round from the top to the bottom', m2 === its[1] && m3 === its[its.length - 1] && m3 === 'copy',
+      m2 + ' ' + m3 + ' of ' + its.join(','));
+
     await p.keyboard.press('Escape');
     const m4 = await p.evaluate(() => ({ open: !document.getElementById('macroMenu').classList.contains('hide'),
       back: document.activeElement && document.activeElement.id, expanded: document.getElementById('macroMore').getAttribute('aria-expanded') }));

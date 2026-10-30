@@ -8925,8 +8925,12 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 }
 #view-macros .mday-kc .mpillwk-k b { font-size: 1.25rem; }
 #view-macros .mday-kc .mpillwk-w { font-size: 0.8125rem; gap: 3px; }
-/* the head row's own gap, now that the box sits between the arrows */
-#view-macros .mday-head #macroMore { margin-left: 0; }
+/* the menu keeps the row's far end, a step clear of the › beside it; on a
+   wide screen the box stops at a phone's width rather than run the whole
+   row, and the menu stays at the end where it always was */
+#view-macros .mday-sum { max-width: 440px; }
+#view-macros .mday-head #macroMore { margin-left: auto; }
+#view-macros .mday-head #macroNext { margin-right: 4px; }
 @media (max-width: 359px) {
   #view-macros .mpillwk-ku, #view-macros .mpillwk-wg { display: none; }
   #view-macros .mday-kc .mpillwk-hbtn { padding: 0 6px; }

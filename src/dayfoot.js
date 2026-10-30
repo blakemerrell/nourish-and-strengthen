@@ -603,15 +603,14 @@
     var trayOpen = !!S.mPillTrayOpen;
     var trayHTML = trayOpen ? mPillTrayHTML(vk, day, targets, slots, tot, tK, fib, fibFloor, na, naCap, waterOz, goalOz) : '';
     var fullKcal = Math.round(tot.all.kcal);
-    var headBar = '<div class="mpillwk-top">' +
-      '<button type="button" class="mpillwk-hbtn" id="macroTrayHead" data-mpilltray="toggle" aria-expanded="' + (trayOpen ? 'true' : 'false') + '" aria-label="' + fullKcal.toLocaleString() + ' of ' + tK.toLocaleString() + ' calories, ' + waterOz + ' of ' + goalOz + ' oz water. ' + (trayOpen ? 'Collapse day detail' : 'Open day detail') + '">' +
-        '<span class="mpillwk-k"><b class="serif num">' + fullKcal.toLocaleString() + '</b><span class="mpillwk-kt"> / ' + tK.toLocaleString() + ' kcal</span></span>' +
-        '<span class="mpillwk-w num"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c-3 4-6 7-6 11a6 6 0 0012 0c0-4-3-7-6-11z"/></svg>' + waterOz + ' / ' + goalOz + ' oz</span>' +
-      '</button>' +
-      '<button type="button" class="mbars mpillwk-chart" data-mchartopen="1" aria-label="See these over time">' +
-        '<span class="mpillwk-clab">Trends &rsaquo;</span>' +
-      '</button>' +
-    '</div>';
+    /* The calories and the water, the right-hand door of the day's box in
+       the head row (index.html, #macroSum). It was a row of its own with
+       Trends beside it; Trends is in the menu now. Two short lines, so it
+       fits beside the date on a 320-wide phone. */
+    var headBar = '<button type="button" class="mpillwk-hbtn" id="macroTrayHead" data-mpilltray="toggle" aria-expanded="' + (trayOpen ? 'true' : 'false') + '" aria-label="' + fullKcal.toLocaleString() + ' of ' + tK.toLocaleString() + ' calories, ' + waterOz + ' of ' + goalOz + ' oz water. ' + (trayOpen ? 'Collapse day detail' : 'Open day detail') + '">' +
+        '<span class="mpillwk-k"><b class="serif num">' + fullKcal.toLocaleString() + '</b><span class="mpillwk-kt"> / ' + tK.toLocaleString() + '<span class="mpillwk-ku"> kcal</span></span></span>' +
+        '<span class="mpillwk-w num"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c-3 4-6 7-6 11a6 6 0 0012 0c0-4-3-7-6-11z"/></svg>' + waterOz + '<span class="mpillwk-wg"> / ' + goalOz + '</span> oz</span>' +
+      '</button>';
     /* There was a "Tap for day's detail" button here, a 44-pixel row of its
        own. Blake (2026-10-30): "I want to be able to tap and see the day's
        detail but I don't know if I need that word right there cuz it's

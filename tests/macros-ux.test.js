@@ -838,7 +838,7 @@ module.exports = nourish({
       await pg.clock.setSystemTime(new Date(2026, 8, 30, 13, 30, 0));
 
       /* The chart's how-to-read-it is behind an i too. */
-      await pg.click('[data-mchartopen]');
+      await pg.click('#macroMore'); await pg.click('#macroMenu [data-mchartopen]');  // Trends lives in the menu since 2026-10-30
       await pg.waitForTimeout(300);
       const note = await pg.evaluate(() => {
         const t2 = document.getElementById('mi-mc-weight');
@@ -901,7 +901,7 @@ module.exports = nourish({
       const stored = (k) => pg.evaluate((k) => (JSON.parse(localStorage.getItem('bsc.macroDays') || '{}')[k]) || null, k);
 
       /* ---- the weight chart ------------------------------------------- */
-      await pg.click('[data-mchartopen]');
+      await pg.click('#macroMore'); await pg.click('#macroMenu [data-mchartopen]');  // Trends lives in the menu since 2026-10-30
       await pg.waitForTimeout(300);
       const chart = () => pg.evaluate(() => {
         const svg = document.querySelector('.mc-svg');

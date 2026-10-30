@@ -709,7 +709,7 @@ module.exports = nourish({
         const pills = document.querySelector('.mpills');
         return !st.classList.contains('shrunk') &&
           getComputedStyle(pills).opacity === '0' &&
-          getComputedStyle(document.querySelector('.mbars')).opacity === '1';
+          getComputedStyle(document.querySelector('.mweek')).opacity === '1';
       }), await ph.evaluate(() => 'pills opacity ' +
         getComputedStyle(document.querySelector('.mpills')).opacity));
     t.ok('the pills carry the same six numbers as the rows and the bars under them',
@@ -821,7 +821,7 @@ module.exports = nourish({
         const st = document.querySelector('.mday-stick');
         return st.classList.contains('shrunk') &&
           getComputedStyle(document.querySelector('.mpills')).opacity === '1' &&
-          getComputedStyle(document.querySelector('.mbars')).opacity === '0' &&
+          getComputedStyle(document.querySelector('.mweek')).opacity === '0' &&
           getComputedStyle(document.querySelector('.mweek')).visibility === 'hidden';
       }), await ph.evaluate(() => document.querySelector('.mday-stick').className + ' y=' + window.scrollY));
     const shrunkH = await ph.evaluate(() => document.querySelector('.mday-stick').getBoundingClientRect().height);
@@ -879,7 +879,7 @@ module.exports = nourish({
         ok({
           p: parseFloat(st.style.getPropertyValue('--fold') || 0),
           card: st.getBoundingClientRect().height,
-          bars: parseFloat(getComputedStyle(document.querySelector('.mbars')).opacity),
+          bars: parseFloat(getComputedStyle(document.querySelector('.mweek')).opacity),
           pills: parseFloat(getComputedStyle(document.querySelector('.mpills')).opacity),
           shrunk: st.classList.contains('shrunk')
         });

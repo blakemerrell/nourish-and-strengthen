@@ -307,7 +307,8 @@
     if (!b) return;
     var a = mViewsAll();
     b.hidden = !a.n;
-    b.innerHTML = mPipsHTML(a.same);
+    /* In the menu now, so it says what it is beside the pips it used to be. */
+    b.innerHTML = '<span class="mday-views-l">Every meal</span>' + mPipsHTML(a.same);
     b.setAttribute('aria-label', 'Every meal: show ' + VIEWS_SAY[a.next]);
     b.title = 'Every meal: show ' + VIEWS_SAY[a.next];
   }
@@ -642,7 +643,14 @@
     var ot1 = new Date(); ot1.setDate(ot1.getDate() + 1);
     if (k === dayKey(od1)) word = 'Yesterday';
     if (k === dayKey(ot1)) word = 'Tomorrow';
-    $('macroDateTx').textContent = mLongDate(k);
+    /* Two short lines, the weekday over the month and day, so the date takes
+       a narrow column at the left of the day's box and the calories get the
+       rest (2026-10-30). The phone's calendar is still the whole column, and
+       its label still says the date in full. */
+    var ld = mLongDate(k), ldc = ld.indexOf(', ');
+    $('macroDateTx').innerHTML = ldc > 0
+      ? '<span class="mday-dw">' + ld.slice(0, ldc) + '</span><span class="vis-hidden">, </span><span class="mday-dd">' + ld.slice(ldc + 2) + '</span>'
+      : ld;
     var dp = $('macroDayPick');
     if (dp) {
       dp.min = mEarliestKey(); dp.max = mLatestKey(); dp.value = k;

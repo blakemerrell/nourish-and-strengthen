@@ -38,7 +38,7 @@ module.exports = nourish({
     await chartPage.waitForTimeout(400);
     await chartPage.click('.tab[data-view="macros"]');
     await chartPage.waitForTimeout(250);
-    await chartPage.click('[data-mchartopen]');
+    await chartPage.click('#macroMore'); await chartPage.click('#macroMenu [data-mchartopen]');  // Trends lives in the menu since 2026-10-30
     await chartPage.waitForTimeout(300);
     t.ok('the bars open onto their own history',
       await chartPage.evaluate(() => !!document.querySelector('.mc-sheet') &&
@@ -113,7 +113,7 @@ module.exports = nourish({
     await gapPage.waitForTimeout(400);
     await gapPage.click('.tab[data-view="macros"]');
     await gapPage.waitForTimeout(250);
-    await gapPage.click('[data-mchartopen]');
+    await gapPage.click('#macroMore'); await gapPage.click('#macroMenu [data-mchartopen]');  // Trends lives in the menu since 2026-10-30
     await gapPage.waitForTimeout(300);
     await gapPage.click('[data-mchart="jump"]');
     await gapPage.waitForTimeout(200);

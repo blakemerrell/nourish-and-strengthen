@@ -8893,3 +8893,52 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   color: var(--muted-2);
 }
 
+
+/* ---- One head row: the week arrows, the day's box, the menu ----
+   Blake, 2026-10-30: "merge the date row and the kcal row all into one row"
+   (layout A of three). The day's box holds two doors side by side: the date
+   (the phone's calendar, as before) and the calories and water (the day's
+   detail, as the row under it was). One outline round both, a hairline
+   between, so it reads as one thing that answers "which day, and how is it
+   going". Trends and every meal's view went into the menu to make room;
+   four thumb-wide buttons and this box are what a 320-wide phone can hold. */
+#view-macros .mday-sum {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: stretch;
+  height: 52px; margin: 0 4px; border-radius: 12px;
+  box-shadow: inset 0 0 0 1.5px var(--line-control);
+}
+#view-macros .mday-sum .mday-date {
+  flex: none; height: 100%; margin: 0; padding: 0 10px 0 12px; border: 0;
+  border-radius: 12px 0 0 12px; box-shadow: none;
+  border-right: 1px solid var(--line-soft);
+}
+#view-macros .mday-sum .mday-date:hover,
+#view-macros .mday-sum .mday-date:focus-within { box-shadow: inset 0 0 0 2px var(--ochre); }
+#view-macros .mday-sum .mday-date .mday-cal { display: none; }
+#view-macros #macroDateTx { display: flex; flex-direction: column; line-height: 1.15; overflow: visible; }
+#view-macros .mday-dw { font-size: 0.8125rem; font-weight: 500; color: var(--muted-2); }
+#view-macros .mday-dd { font-size: 0.875rem; font-weight: 700; color: var(--ink); }
+#view-macros .mday-kc { flex: 1 1 auto; min-width: 0; display: flex; }
+#view-macros .mday-kc .mpillwk-hbtn {
+  height: 100%; min-height: 44px; flex-direction: column; align-items: flex-start; justify-content: center;
+  gap: 2px; padding: 0 10px; border-radius: 0 12px 12px 0;
+}
+#view-macros .mday-kc .mpillwk-k b { font-size: 1.25rem; }
+#view-macros .mday-kc .mpillwk-w { font-size: 0.8125rem; gap: 3px; }
+/* the menu keeps the row's far end, a step clear of the › beside it; on a
+   wide screen the box stops at a phone's width rather than run the whole
+   row, and the menu stays at the end where it always was */
+#view-macros .mday-sum { max-width: 440px; }
+#view-macros .mday-head #macroMore { margin-left: auto; }
+#view-macros .mday-head #macroNext { margin-right: 4px; }
+@media (max-width: 359px) {
+  #view-macros .mpillwk-ku, #view-macros .mpillwk-wg { display: none; }
+  #view-macros .mday-kc .mpillwk-hbtn { padding: 0 6px; }
+  #view-macros .mday-sum { margin: 0 2px; }
+  #view-macros .mday-sum .mday-date { padding: 0 6px 0 8px; }
+  #view-macros .mday-kc .mpillwk-k b { font-size: 1rem; }
+}
+/* Every meal's view, as a menu item: its name, then the three pips. */
+.mday-menu .mday-views { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.mday-menu .mday-views[hidden] { display: none; }
+.mday-views-l { font: inherit; }

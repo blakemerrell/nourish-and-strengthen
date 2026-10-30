@@ -1126,10 +1126,21 @@ module.exports = nourish({
     const skH = skLine.h;
     await skp.click('.mcasc [data-msend="ack"]');
     await skp.waitForTimeout(450);
+    /* Folded, it draws nothing at all (Blake, 2026-10-30, circling the
+       "Skipping Lunch frees 283" line: "Make that go away") — the pill
+       already says where the share went — and a tap on the pill opens it
+       again. */
     const skShut = await skCard(skp);
-    t.ok('Done folds it back into the skipped row',
-      !!skShut && skShut.inSkip && skShut.shut && skShut.h < skH / 2,
-      JSON.stringify({ open: skH, shut: skShut && skShut.h }));
+    t.ok('Done folds it away, leaving only the skipped row\u2019s pill',
+      skShut === null && await skp.evaluate(() => !!document.querySelector('.mtray-skip .mtray-skb[data-msend="open"]')),
+      JSON.stringify({ open: skH, shut: skShut }));
+    await skp.click('.mtray-skip .mtray-skb');
+    await skp.waitForTimeout(400);
+    const skBack = await skCard(skp);
+    t.ok('and a tap on the pill opens the chooser again',
+      !!skBack && skBack.inSkip && !skBack.shut, JSON.stringify(skBack));
+    await skp.click('.mcasc [data-msend="ack"]');
+    await skp.waitForTimeout(400);
     t.ok('and the row stops claiming the share simply went to the rest',
       await skp.evaluate(() => {
         const w = document.querySelector('.mtray-skip .mtray-sw');

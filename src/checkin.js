@@ -212,11 +212,30 @@
     return out;
   }
 
+  var ING_LIQ_KEYS = {
+    crio_bru: 1, milk: 1, evaporated_milk: 1, water: 1, cola: 1,
+    tomato_soup: 1, soup_rts: 1, cream_soup_chx: 1, cream_soup_mush: 1
+  };
+  function mIngFluidG(r) {
+    if (!r || !Array.isArray(r.ingp) || !r.ingp.length) return 0;
+    var sec = String(r.secName || ''), nm = String(r.name || '');
+    var isDrinkOrSoup = sec === 'Power Drinks' ||
+      /\b(?:crio\s*br[uü]|shake|smoothie|latte|steamer|cocoa|frosty|julius|milk|drink|coffee|espresso|cold\s*brew|tea|chai|matcha|soup|broth|stew|chowder)\b/i.test(nm);
+    if (!isDrinkOrSoup) return 0;
+    var liqG = 0;
+    r.ingp.forEach(function (p) {
+      if (p && ING_LIQ_KEYS[p.k] && fin(p.g) && p.g > 0) liqG += p.g;
+    });
+    if (!(liqG > 0)) return 0;
+    var servN = fin(r.servN) && r.servN > 0 ? r.servN : 1;
+    return liqG / servN;
+  }
   function mIsMealDrink(r) {
     if (!r) return false;
     var id = String(r.id || '');
     if (id === 'f:milk' || id === 'f:evaporated_milk' || id === 'f:crio_bru' || id === 'f:tomato_soup' ||
         id === 'f:cream_soup_chx' || id === 'f:cream_soup_mush' || id === 'f:soup_rts') return true;
+    if (mIngFluidG(r) >= 60) return true;
     var nm = String(r.name || '');
     if (/\b(?:oil|butter|syrup|honey|vinegar|sauce|dressing|ranch|mayo|mustard|ketchup|salsa|gravy|egg\s*whites?|egg\s*substitute|liquid\s*eggs?|cream\s*cheese|oats|oatmeal|yogurt|cottage\s*cheese|ice\s*cream)\b/i.test(nm)) return false;
     return /\b(?:crio\s*br[uü]|milk|fairlife|kefir|protein\s*shake|shake|smoothie|energy\s*drink|celsius|monster|alani|red\s*bull|ghost|reign|coffee|espresso|latte|cold\s*brew|tea|chai|matcha|soda|diet\s*soda|cola|pop|sparkling\s*water|seltzer|water|electrolyte|liquid\s*i\.?v\.?|lmnt|gatorade|powerade|juice|lemonade|limeade|bone\s*broth|broth|stock)\b/i.test(nm);
@@ -224,8 +243,19 @@
   function mItemFluidOz(r, x) {
     if (!r) return 0;
     var mult = fin(x) && x > 0 ? x : 1;
+    if (Array.isArray(r.parts) && r.parts.length && LIVE && LIVE.BY_ID) {
+      var partOz = 0;
+      r.parts.forEach(function (pt) {
+        var pr = LIVE.BY_ID[pt.id];
+        if (pr && mIsMealDrink(pr)) partOz += mItemFluidOz(pr, (pt.x || 1) * mult);
+      });
+      if (partOz > 0) return partOz;
+    }
+    var ingG = mIngFluidG(r);
+    if (ingG >= 60) return Math.max(1, Math.round((ingG / 29.5735) * mult));
+    if (!mIsMealDrink(r)) return 0;
     var id = String(r.id || ''), nm = String(r.name || ''), u = String(r.unit || '');
-    if (id === 'f:crio_bru' || /\b(?:crio\s*br[uü]|coffee|espresso|latte|cold\s*brew|tea|chai|matcha)\b/i.test(nm)) {
+    if (id === 'f:crio_bru' || (r.food && /\b(?:crio\s*br[uü]|coffee|espresso|latte|cold\s*brew|tea|chai|matcha)\b/i.test(nm))) {
       if (u === 'oz' && mult < 3) return 8;
       if (u === 'oz') return Math.max(1, Math.round(mult));
       if (u === 'cup' || u === 'cups') return Math.max(1, Math.round(8 * mult));
@@ -250,6 +280,13 @@
     }
     return Math.max(1, Math.round(8 * mult));
   }
+  function mHydChip(r, x) {
+    var oz = mItemFluidOz(r, x);
+    if (!(oz > 0)) return '';
+    return '<span class="mhyd-chip num">' +
+      '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2C8 2 3.8 6.8 3.8 10a4.2 4.2 0 0 0 8.4 0C12.2 6.8 8 2 8 2Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>' +
+      oz + ' oz fluid</span>';
+  }
   function mMealLiquids(k) {
     if (!MDAYS || !LIVE || !LIVE.BY_ID) return { oz: 0, items: [] };
     var day = MDAYS[k];
@@ -264,15 +301,7 @@
         if (!it || !it.id) return;
         var r = LIVE.BY_ID[it.id];
         if (!r) return;
-        var oz = 0;
-        if (mIsMealDrink(r)) {
-          oz = mItemFluidOz(r, it.x);
-        } else if (Array.isArray(r.parts)) {
-          r.parts.forEach(function (pt) {
-            var pr = LIVE.BY_ID[pt.id];
-            if (pr && mIsMealDrink(pr)) oz += mItemFluidOz(pr, (pt.x || 1) * (it.x || 1));
-          });
-        }
+        var oz = mItemFluidOz(r, it.x);
         if (oz > 0) {
           totalOz += oz;
           list.push({ name: r.name, meal: mName, oz: oz, eaten: !!it.eaten });
@@ -639,5 +668,6 @@
 
   return { MAM: MAM, mAmOf: mAmOf, mAmWrite: mAmWrite, mAmClean: mAmClean, mAmSum: mAmSum, mAmDays: mAmDays, mDrinksClean: mDrinksClean,
     mWaterGoalOz: mWaterGoalOz, mWaterOz: mWaterOz, mDrinksOz: mDrinksOz, mCafMg: mCafMg, mHydrationCardHTML: mHydrationCardHTML,
+    mItemFluidOz: mItemFluidOz, mHydChip: mHydChip,
     mCheckinHTML: mCheckinHTML, mCheckinClick: mCheckinClick, mCheckinInput: mCheckinInput };
 };

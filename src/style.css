@@ -8596,8 +8596,37 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   opacity: 0.85;
   z-index: 1;
 }
-#view-macros .mwk-d.done .mwk-b i {
+#view-macros .mwk-d.done .mwk-b i,
+#view-macros .mwk-d.on .mwk-b i,
+#view-macros .mwk-d.over .mwk-b i {
   opacity: 0.92;
+}
+#view-macros .mwk-s:empty,
+#view-macros .mwk-d .mwk-s {
+  display: none;
+}
+
+/* Inline hydration badge on meal food/recipe rows */
+.mfl-hyd, .mhyd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--pill-water);
+  white-space: nowrap;
+}
+.mfl-hyd {
+  margin-left: 6px;
+}
+.mfl-hyd svg, .mhyd-chip svg {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  display: block;
+}
+.mfl-mac .mhyd-chip, .mfl-q .mhyd-chip, .mrow-m .mhyd-chip {
+  margin-left: 6px;
 }
 .mwk-icos {
   position: absolute;

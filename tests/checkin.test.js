@@ -155,7 +155,10 @@ module.exports = {
     await p.waitForTimeout(200);
     await p.evaluate(() => {
       const days = JSON.parse(localStorage.getItem('bsc.macroDays') || '{}');
-      days['2026-10-26'] = { b: [{ id: 'f:crio_bru', x: 1, eaten: 1 }, { id: 'f:milk', x: 1, eaten: 1 }] };
+      days['2026-10-26'] = {
+        b: [{ id: 'f:crio_bru', x: 1, eaten: 1 }, { id: 'f:milk', x: 1, eaten: 1 }],
+        s: [{ id: 26, x: 1 }]
+      };
       localStorage.setItem('bsc.macroDays', JSON.stringify(days));
     });
     await p.reload();
@@ -167,6 +170,13 @@ module.exports = {
     t.ok('logging liquid foods/drinks in a meal (Crio Bru + Milk) auto-counts their fluid oz in Water & Drinks',
       /Auto-counted from meals/.test(await txt(p, '#macroSlots .mhyd-card')) &&
       /oz from meals/.test(await txt(p, '#macroSlots .mhyd-card')));
+    t.ok('logging a Crio Bru recipe (#26 Crio Bru Power Morning Cocktail) shows its 16 oz hydration badge on the meal card and auto-counts in Water & Drinks',
+      /Crio Bru Power Morning Cocktail/.test(await txt(p, '#macroSlots .mhyd-card')) &&
+      /\+16 oz Crio Bru Power Morning Cocktail/.test(await txt(p, '#macroSlots .mhyd-card')) &&
+      await p.evaluate(() => {
+        const badge = document.querySelector('#macroSlots [data-mslot="s"] .mfl-hyd');
+        return !!badge && /16 oz/.test(badge.textContent);
+      }));
     await p.click('#macroSlots .mhyd-card [data-hyd="fold"]');
     await p.waitForTimeout(150);
     t.ok('tapping Water & Drinks header collapses the section like a meal card',

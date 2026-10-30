@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My Day — slim strip</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#1C1916}
+a{color:#E0A15A}a:hover{color:#F0BD80}
+button{font:inherit;color:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #1C1916; color: #EDE6DA; font-family: 'DM Sans', system-ui, sans-serif; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+
+<div style="display: flex; align-items: center; gap: 8px; height: 44px">
+<button aria-label="Previous day" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #3A332C; background: transparent; cursor: pointer">‹</button>
+<div style="flex: 1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px">
+<sc-for list="{{week}}" as="d" hint-placeholder-count="7">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; color: #A89F92">
+<div style="{{d.labelStyle}}">{{d.l}}</div>
+<div style="{{d.dotStyle}}"></div>
+</div>
+</sc-for>
+</div>
+<button aria-label="Next day" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #3A332C; background: transparent; cursor: pointer">›</button>
+</div>
+
+<button onClick="{{toggle}}" aria-expanded="{{open}}" style="width: 100%; text-align: left; background: #24201C; border: 1px solid #3A332C; border-radius: 20px; padding: 12px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 12px; width: 100%">
+<div style="width: 72px; height: 72px; flex: none; border-radius: 50%; background: conic-gradient(#7CC48A 0 95%, #3A332C 95% 100%); display: flex; align-items: center; justify-content: center">
+<div style="width: 62px; height: 62px; border-radius: 50%; background: conic-gradient(#6FB3E0 0 60%, #2E2924 60% 100%); display: flex; align-items: center; justify-content: center">
+<div style="width: 56px; height: 56px; border-radius: 50%; background: #24201C; display: flex; flex-direction: column; align-items: center; justify-content: center">
+<div style="font-family: Fraunces, Georgia, serif; font-size: 17px; font-weight: 600; line-height: 1">1,338</div>
+<div style="font-size: 11px; color: #A89F92">kcal</div>
+</div>
+</div>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 7px; min-width: 0">
+<sc-for list="{{macros}}" as="m" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px">
+<span style="{{m.keyStyle}}">{{m.k}}</span>
+<div style="flex: 1; display: flex; gap: 2px"><sc-for list="{{m.ticks}}" as="t" hint-placeholder-count="12"><div style="{{t.style}}"></div></sc-for></div>
+<span style="width: 52px; text-align: right">{{m.v}}<span style="color: #A89F92">/{{m.t}}</span></span>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; align-items: center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E0A15A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Fibre low" style="filter: drop-shadow(0 0 4px #E0A15A)"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19l8-8"/></svg>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E0A15A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Salt near ceiling" style="filter: drop-shadow(0 0 4px #E0A15A)"><path d="M8 10h8l-1 10H9z"/><path d="M8 10c0-3 2-6 4-6s4 3 4 6"/><path d="M11 7h.01M13 7h.01"/></svg>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7CC48A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Workout done" style="filter: drop-shadow(0 0 4px #7CC48A)"><path d="M3 12h18M6 8v8M18 8v8M3 10v4M21 10v4"/></svg>
+</div>
+</div>
+<sc-if value="{{open}}" hint-placeholder-val="{{false}}">
+<div style="border-top: 1px solid #3A332C; padding-top: 10px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%">
+<div style="background: #1C1916; border-radius: 12px; padding: 10px"><div style="font-size: 11px; color: #A89F92">Calories</div><div style="font-size: 15px; font-weight: 700">1,338 / 1,413</div><div style="font-size: 12px; color: #A89F92">75 left</div></div>
+<div style="background: #1C1916; border-radius: 12px; padding: 10px"><div style="font-size: 11px; color: #A89F92">Water</div><div style="font-size: 15px; font-weight: 700; color: #6FB3E0">1.8 / 3 L</div><div style="font-size: 12px; color: #A89F92">1.2 L to go</div></div>
+<div style="background: #1C1916; border-radius: 12px; padding: 10px"><div style="font-size: 11px; color: #A89F92">Fibre</div><div style="font-size: 15px; font-weight: 700; color: #E0A15A">7 / 20 g</div><div style="font-size: 12px; color: #A89F92">13 short of floor</div></div>
+<div style="background: #1C1916; border-radius: 12px; padding: 10px"><div style="font-size: 11px; color: #A89F92">Salt</div><div style="font-size: 15px; font-weight: 700; color: #E0A15A">2,274 mg</div><div style="font-size: 12px; color: #A89F92">26 under ceiling</div></div>
+</div>
+</sc-if>
+<div style="font-size: 11px; color: #A89F92; text-align: center; width: 100%">{{hint}}</div>
+</button>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{meals}}" as="m" hint-placeholder-count="6">
+<div style="{{m.rowStyle}}">
+<div style="{{m.checkStyle}}">✓</div>
+<div style="flex: 1; font-size: 14px; font-weight: 700; letter-spacing: 0.06em">{{m.name}}</div>
+<div style="font-size: 13px; color: #A89F92">{{m.kcal}}</div>
+<div style="display: flex; gap: 4px"><div style="{{m.d1}}"></div><div style="{{m.d2}}"></div><div style="{{m.d3}}"></div><div style="{{m.d4}}"></div></div>
+</div>
+</sc-for>
+</div>
+
+<div style="margin-top: auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding-bottom: 20px">
+<button style="height: 52px; border-radius: 14px; border: 1px solid #3A332C; background: transparent; font-size: 13px; cursor: pointer">Rebalance</button>
+<button style="height: 52px; border-radius: 14px; border: 1px solid #3A332C; background: transparent; font-size: 13px; cursor: pointer">Sweep</button>
+<button style="height: 52px; border-radius: 14px; border: 1px solid #3A332C; background: transparent; font-size: 13px; cursor: pointer">Add meal</button>
+<button style="height: 52px; border-radius: 14px; border: none; background: #C9A27A; color: #1C1916; font-size: 13px; font-weight: 700; cursor: pointer">Complete</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { open: false }; }
+  renderVals() {
+    const P = '#7CC48A', F = '#E0A15A', C = '#A99BE0', OFF = '#3A332C';
+    const mk = (k, col, v, t) => {
+      const lit = Math.round(12 * Math.min(v / t, 1));
+      const ticks = [];
+      for (let i = 0; i < 12; i++) ticks.push({ style: 'flex:1;height:8px;border-radius:4px;background:' + (i < lit ? col : OFF) });
+      return { k, v, t, ticks, keyStyle: 'width:12px;font-weight:700;color:' + col };
+    };
+    const macros = [mk('P', P, 160, 171), mk('F', F, 57, 61), mk('C', C, 47, 45)];
+    const days = [['M', P], ['T', F], ['W', P], ['T', P], ['F', null], ['S', null], ['S', null]];
+    const week = days.map((x, k) => ({ l: x[0], labelStyle: k === 3 ? 'color:#EDE6DA;font-weight:700' : '', dotStyle: x[1] ? 'width:10px;height:10px;border-radius:50%;background:' + x[1] + (k === 3 ? ';box-shadow:0 0 0 3px #1C1916,0 0 0 4px #EDE6DA' : '') : 'width:10px;height:10px;border-radius:50%;box-sizing:border-box;border:1px solid #3A332C' }));
+    const dot = (col) => 'width:8px;height:8px;border-radius:50%;background:' + col;
+    const row = 'display:flex;align-items:center;gap:12px;height:48px;padding:0 14px;border-radius:14px;background:#24201C;border:1px solid #3A332C';
+    const chk = 'width:28px;height:28px;border-radius:50%;background:#7CC48A;color:#1C1916;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700';
+    const meals = [
+      ['WAKE UP', '180', P, P, P, P], ['BREAKFAST · skipped', '—', OFF, OFF, OFF, OFF], ['SNACKS', '210', OFF, OFF, OFF, P],
+      ['LUNCH', '420', F, P, F, F], ['DINNER', '388', P, P, P, P], ['EVENING SNACK', '140', F, P, F, F]
+    ].map((m) => ({ name: m[0], kcal: m[1], rowStyle: m[1] === '—' ? row + ';opacity:.55' : row, checkStyle: m[1] === '—' ? chk.replace('#7CC48A', '#3A332C') : chk, d1: dot(m[2]), d2: dot(m[3]), d3: dot(m[4]), d4: dot(m[5]) }));
+    return { macros, week, meals, open: this.state.open, toggle: () => this.setState({ open: !this.state.open }), hint: this.state.open ? 'Tap to collapse' : 'Tap for details' };
+  }
+}
+</script>
+</body>
+</html>

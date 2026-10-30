@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My Day — week of pills</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Fraunces:opsz,wght@9..144,600&amp;display=swap">
+<style>
+body{margin:0;background:#1C1916}
+a{color:#E0A15A}a:hover{color:#F0BD80}
+button{font:inherit;color:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #1C1916; color: #EDE6DA; font-family: 'DM Sans', system-ui, sans-serif; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 12px; overflow-y: auto">
+
+<div style="width: 100%; background: #24201C; border: 1px solid #3A332C; border-radius: 20px; padding: 14px 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; flex: none">
+<button onClick="{{toggle}}" aria-expanded="{{open}}" style="width: 100%; text-align: left; background: transparent; border: none; padding: 0; cursor: pointer; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 4px; box-sizing: border-box">
+<div><span style="font-family: Fraunces, Georgia, serif; font-size: 24px; font-weight: 600">1,338</span><span style="font-size: 13px; color: #A89F92"> / 1,413 kcal</span></div>
+<div style="display: flex; gap: 6px; align-items: center; font-size: 13px; color: #6FB3E0">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6FB3E0" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c-3 4-6 7-6 11a6 6 0 0012 0c0-4-3-7-6-11z"/></svg>1.8 / 3 L
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; width: 100%">
+<sc-for list="{{week}}" as="d" hint-placeholder-count="7">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 11px; color: #A89F92">
+<div style="{{d.labelStyle}}">{{d.l}}</div>
+<div style="{{d.boxStyle}}">
+<sc-for list="{{d.dots}}" as="p" hint-placeholder-count="32"><div style="{{p.style}}"></div></sc-for>
+<div style="position: absolute; left: 7px; top: 7px; width: 26px; height: 98px; border-radius: 13px; overflow: hidden; background: #2E2924; display: flex; align-items: flex-end"><div style="{{d.fillStyle}}"></div></div>
+<div style="position: absolute; left: 7px; top: 7px; width: 26px; height: 98px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="{{d.fibre}}"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19l8-8"/></svg>
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="{{d.salt}}"><path d="M8 10h8l-1 10H9z"/><path d="M8 10c0-3 2-6 4-6s4 3 4 6"/><path d="M11 7h.01M13 7h.01"/></svg>
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="{{d.gym}}"><path d="M3 12h18M6 8v8M18 8v8M3 10v4M21 10v4"/></svg>
+</div>
+</div>
+<div style="{{d.labelStyle}}">{{d.n}}</div>
+</div>
+</sc-for>
+</div>
+<div style="font-size: 11px; color: #A89F92; text-align: center; width: 100%">{{hint}}</div>
+</button>
+
+<sc-if value="{{open}}" hint-placeholder-val="{{false}}">
+<div style="border-top: 1px solid #3A332C; padding-top: 14px; display: flex; flex-direction: column; gap: 16px">
+
+<div style="display: flex; gap: 14px; align-items: center">
+<div style="position: relative; width: 80px; height: 170px; flex: none">
+<sc-for list="{{big}}" as="p" hint-placeholder-count="44"><div style="{{p.style}}"></div></sc-for>
+<div style="position: absolute; left: 12px; top: 12px; width: 56px; height: 146px; border-radius: 28px; overflow: hidden; background: #2E2924; display: flex; align-items: flex-end"><div style="{{todayFill}}"></div></div>
+<div style="position: absolute; left: 12px; top: 12px; width: 56px; height: 146px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Fibre" style="{{t.fibre}}"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19l8-8"/></svg>
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Salt" style="{{t.salt}}"><path d="M8 10h8l-1 10H9z"/><path d="M8 10c0-3 2-6 4-6s4 3 4 6"/><path d="M11 7h.01M13 7h.01"/></svg>
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Workout" style="{{t.gym}}"><path d="M3 12h18M6 8v8M18 8v8M3 10v4M21 10v4"/></svg>
+</div>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0">
+<div style="font-size: 11px; letter-spacing: 0.08em; color: #A89F92">ENERGY BALANCE</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px">
+<div><div style="font-size: 17px; font-weight: 700">1,338</div><div style="font-size: 11px; color: #A89F92">eaten</div></div>
+<div><div style="font-size: 17px; font-weight: 700">2,410</div><div style="font-size: 11px; color: #A89F92">burned · watch est.</div></div>
+<div><div style="font-size: 17px; font-weight: 700; color: #7CC48A">≈ −1,072</div><div style="font-size: 11px; color: #A89F92">net</div></div>
+</div>
+<div style="font-size: 11px; color: #A89F92">Macro split · actual vs plan</div>
+<div style="display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 2px"><div style="flex: 640; background: #7CC48A"></div><div style="flex: 513; background: #E0A15A"></div><div style="flex: 188; background: #FF6B3D"></div></div>
+<div style="display: flex; height: 4px; border-radius: 2px; overflow: hidden; gap: 2px; opacity: .45"><div style="flex: 48; background: #7CC48A"></div><div style="flex: 39; background: #E0A15A"></div><div style="flex: 13; background: #A99BE0"></div></div>
+<div style="display: flex; justify-content: space-between; font-size: 11px"><span style="color: #7CC48A">P 48%</span><span style="color: #E0A15A">F 38%</span><span style="color: #FF6B3D">C 14% · over</span></div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 11px; letter-spacing: 0.08em; color: #A89F92">FUEL DETAIL</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{fuel}}" as="f" hint-placeholder-count="6">
+<div style="background: #1C1916; border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 5px">
+<div style="display: flex; justify-content: space-between; font-size: 12px"><span style="color: #A89F92">{{f.name}}</span><span style="{{f.tagStyle}}">{{f.tag}}</span></div>
+<div style="font-size: 14px; font-weight: 700">{{f.val}}</div>
+<div style="height: 4px; border-radius: 2px; background: #3A332C; overflow: hidden"><div style="{{f.bar}}"></div></div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 11px; letter-spacing: 0.08em; color: #A89F92">MEALS · WHERE THE CALORIES CAME FROM</div>
+<sc-for list="{{mealBars}}" as="b" hint-placeholder-count="5">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px">
+<span style="width: 38px; color: #A89F92">{{b.time}}</span>
+<span style="width: 76px; white-space: nowrap; overflow: hidden">{{b.name}}</span>
+<div style="flex: 1; height: 10px; display: flex"><div style="{{b.bar}}"><div style="{{b.p}}"></div><div style="{{b.f}}"></div><div style="{{b.c}}"></div></div></div>
+<span style="width: 30px; text-align: right">{{b.kcal}}</span>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 11px; letter-spacing: 0.08em; color: #A89F92">MOVE · from Health Connect</div>
+<div style="background: #1C1916; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 18px; font-weight: 700">8,412 <span style="font-size: 12px; color: #A89F92; font-weight: 400">/ 10,000 steps</span></span><span style="font-size: 12px; color: #A89F92">3.9 mi</span></div>
+<div style="display: flex; gap: 2px; align-items: flex-end; height: 26px">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="16"><div style="{{s}}"></div></sc-for>
+</div>
+<div style="display: flex; justify-content: space-between; font-size: 11px; color: #A89F92"><span>6a</span><span>noon</span><span>6p</span><span>now</span></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+<div style="background: #1C1916; border-radius: 12px; padding: 8px 10px"><div style="font-size: 12px; color: #A89F92">Active burn</div><div style="font-size: 14px; font-weight: 700">512 kcal</div></div>
+<div style="background: #1C1916; border-radius: 12px; padding: 8px 10px"><div style="font-size: 12px; color: #A89F92">Workout</div><div style="font-size: 14px; font-weight: 700">Strength · 42 min</div></div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 11px; letter-spacing: 0.08em; color: #A89F92">HEART</div>
+<div style="background: #1C1916; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; font-size: 12px"><span><span style="font-size: 18px; font-weight: 700">58</span> <span style="color: #A89F92">resting bpm</span></span><span style="color: #A89F92">avg 74 · peak 142</span></div>
+<svg width="100%" height="44" viewBox="0 0 300 44" preserveAspectRatio="none" role="img" aria-label="Heart rate through the day"><polyline points="{{hrPoints}}" fill="none" stroke="#E07A7A" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>
+<div style="display: flex; justify-content: space-between; font-size: 11px; color: #A89F92"><span>6a</span><span>workout 5:40p</span><span>now</span></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+<div style="background: #1C1916; border-radius: 12px; padding: 8px 10px"><div style="font-size: 12px; color: #A89F92">HRV</div><div style="font-size: 14px; font-weight: 700">48 ms <span style="font-size: 12px; color: #7CC48A; font-weight: 400">↑ vs wk</span></div></div>
+<div style="background: #1C1916; border-radius: 12px; padding: 8px 10px"><div style="font-size: 12px; color: #A89F92">Blood oxygen</div><div style="font-size: 14px; font-weight: 700">97%</div></div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 11px; letter-spacing: 0.08em; color: #A89F92">RECOVER</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+<div style="background: #1C1916; border-radius: 12px; padding: 8px 10px"><div style="font-size: 12px; color: #A89F92">Sleep</div><div style="font-size: 14px; font-weight: 700">7h 12m</div><div style="font-size: 11px; color: #A89F92">1h 28m deep</div></div>
+<div style="background: #1C1916; border-radius: 12px; padding: 8px 10px"><div style="font-size: 12px; color: #A89F92">Weight</div><div style="font-size: 14px; font-weight: 700">[weight] lb</div><div style="font-size: 11px; color: #A89F92">7-day trend</div></div>
+</div>
+</div>
+
+</div>
+</sc-if>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px; flex: none">
+<sc-for list="{{meals}}" as="m" hint-placeholder-count="6">
+<div style="{{m.rowStyle}}">
+<div style="{{m.checkStyle}}">✓</div>
+<div style="flex: 1; font-size: 14px; font-weight: 700; letter-spacing: 0.06em">{{m.name}}</div>
+<div style="font-size: 13px; color: #A89F92">{{m.kcal}}</div>
+<div style="display: flex; gap: 4px"><div style="{{m.d1}}"></div><div style="{{m.d2}}"></div><div style="{{m.d3}}"></div><div style="{{m.d4}}"></div></div>
+</div>
+</sc-for>
+</div>
+
+<div style="margin-top: auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding-bottom: 20px; flex: none">
+<button style="height: 52px; border-radius: 14px; border: 1px solid #3A332C; background: transparent; font-size: 13px; cursor: pointer">Rebalance</button>
+<button style="height: 52px; border-radius: 14px; border: 1px solid #3A332C; background: transparent; font-size: 13px; cursor: pointer">Sweep</button>
+<button style="height: 52px; border-radius: 14px; border: 1px solid #3A332C; background: transparent; font-size: 13px; cursor: pointer">Add meal</button>
+<button style="height: 52px; border-radius: 14px; border: none; background: #C9A27A; color: #1C1916; font-size: 13px; font-weight: 700; cursor: pointer">Complete</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { open: false }; }
+  renderVals() {
+    const P = '#7CC48A', F = '#E0A15A', C = '#A99BE0', OFF = '#3A332C', FIRE = '#FF6B3D', CREAM = '#EDE6DA', AMBER = '#E0A15A';
+    const heat = (p, col, d) => {
+      if (p > 1.02) return 'background:' + FIRE + ';box-shadow:0 0 ' + (d + 2) + 'px ' + FIRE;
+      if (p >= 0.99) return 'background:' + col + ';box-shadow:0 0 ' + d + 'px ' + col;
+      return 'background:' + col + ';opacity:' + (0.25 + 0.6 * p).toFixed(2);
+    };
+    const pill = (w, h, n, d, prog) => {
+      const a = d / 2, R = w / 2 - a, L = h - w, cx = w / 2, cyT = a + R, cyB = a + R + L;
+      const q = Math.PI * R / 2, Pm = 2 * L + 2 * Math.PI * R;
+      const at = (s) => {
+        if (s < q) { const f = s / R; return [cx + R * Math.sin(f), cyT - R * Math.cos(f)]; }
+        s -= q; if (s < L) return [w - a, cyT + s];
+        s -= L; if (s < 2 * q) { const f = s / R; return [cx + R * Math.cos(f), cyB + R * Math.sin(f)]; }
+        s -= 2 * q; if (s < L) return [a, cyB - s];
+        s -= L; const f = s / R; return [cx - R * Math.cos(f), cyT - R * Math.sin(f)];
+      };
+      const plan = [[0.48, P], [0.39, F], [0.13, C]];
+      const slots = n + 3, out = [];
+      let i = 0, used = 0;
+      plan.forEach(([sh, col], si) => {
+        const cnt = si === 2 ? n - used : Math.round(n * sh);
+        used += cnt;
+        const p = prog ? prog[si] : 0;
+        const lit = Math.round(cnt * Math.min(p, 1));
+        for (let j = 0; j < cnt; j++, i++) {
+          const [x, y] = at((i / slots) * Pm);
+          const look = j < lit ? heat(p, col, d) : 'background:' + OFF + ';opacity:.45';
+          out.push({ style: 'position:absolute;left:' + (x - d / 2).toFixed(1) + 'px;top:' + (y - d / 2).toFixed(1) + 'px;width:' + d + 'px;height:' + d + 'px;border-radius:50%;' + look });
+        }
+        i++;
+      });
+      return out;
+    };
+    const icon = (p, glow) => {
+      if (p > 1.02) return 'stroke:' + FIRE + ';filter:drop-shadow(0 0 ' + glow + 'px ' + FIRE + ')';
+      if (p >= 0.99) return 'stroke:' + CREAM + ';filter:drop-shadow(0 0 ' + glow + 'px ' + CREAM + ')';
+      return 'stroke:' + CREAM + ';opacity:' + (0.15 + 0.7 * p).toFixed(2);
+    };
+    const warn = (p, glow) => {
+      if (p > 1) return 'stroke:' + FIRE + ';filter:drop-shadow(0 0 ' + (glow + 1) + 'px ' + FIRE + ')';
+      if (p >= 0.9) return 'stroke:' + AMBER + ';filter:drop-shadow(0 0 ' + glow + 'px ' + AMBER + ')';
+      if (p >= 0.7) return 'stroke:' + AMBER + ';opacity:' + (0.4 + (p - 0.7) * 2).toFixed(2);
+      return 'stroke:' + CREAM + ';opacity:' + (p ? 0.2 : 0.15);
+    };
+    const fill = (k) => {
+      if (!k) return 'width:100%;height:0';
+      const h = Math.round(Math.min(k, 1) * 100);
+      const bg = k > 1.02 ? 'linear-gradient(' + FIRE + ' 0 12%, #4F8A5E 12% 100%)' : '#4F8A5E';
+      return 'width:100%;height:' + h + '%;background:' + bg;
+    };
+    const days = [
+      { l: 'M', n: 26, m: [1, 1.08, 1], k: 1.04, fi: 0.9, sa: 0.6, gy: 1 },
+      { l: 'T', n: 27, m: [0.9, 0.7, 0.8], k: 0.82, fi: 0.6, sa: 1.06, gy: 1 },
+      { l: 'W', n: 28, m: [1, 0.95, 1], k: 0.97, fi: 1, sa: 0.75, gy: 1 },
+      { l: 'T', n: 29, m: [0.94, 0.93, 1.04], k: 0.95, fi: 0.35, sa: 0.99, gy: 1 },
+      { l: 'F', n: 30, m: null, k: 0, fi: 0, sa: 0, gy: 0.3 },
+      { l: 'S', n: 31, m: null, k: 0, fi: 0, sa: 0, gy: 0 },
+      { l: 'S', n: 1, m: null, k: 0, fi: 0, sa: 0, gy: 0 }
+    ];
+    const week = days.map((x, k) => ({
+      l: x.l, n: x.n,
+      dots: pill(40, 112, 32, 3.5, x.m),
+      labelStyle: k === 3 ? 'color:#EDE6DA;font-weight:700' : '',
+      boxStyle: 'position:relative;width:40px;height:112px' + (k === 3 ? ';border-radius:20px;box-shadow:0 0 0 2px #24201C,0 0 0 3px #EDE6DA' : ''),
+      fillStyle: fill(x.k),
+      fibre: icon(x.fi, 3), salt: warn(x.sa, 3), gym: icon(x.gy, 3)
+    }));
+    const td = days[3];
+    const big = pill(80, 170, 44, 5, td.m);
+    const t = { fibre: icon(td.fi, 6), salt: warn(td.sa, 6), gym: icon(td.gy, 6) };
+
+    const floor = (name, v, goal, unit) => { const p = v / goal; return { name, val: v.toLocaleString() + ' / ' + goal.toLocaleString() + ' ' + unit, tag: p >= 1 ? 'met' : Math.round(goal - v) + ' short', tagStyle: 'color:' + (p >= 1 ? P : '#A89F92'), bar: 'height:100%;width:' + Math.round(Math.min(p, 1) * 100) + '%;background:' + P + ';opacity:' + (0.35 + 0.65 * Math.min(p, 1)).toFixed(2) }; };
+    const ceil = (name, v, cap, unit) => { const p = v / cap; const col = p > 1 ? FIRE : p >= 0.7 ? AMBER : '#A89F92'; return { name, val: v.toLocaleString() + ' / ' + cap.toLocaleString() + ' ' + unit, tag: p > 1 ? 'over' : p >= 0.9 ? 'near limit' : 'ok', tagStyle: 'color:' + col, bar: 'height:100%;width:' + Math.round(Math.min(p, 1) * 100) + '%;background:' + col }; };
+    const fuel = [floor('Fibre', 7, 20, 'g'), ceil('Sodium', 2274, 2300, 'mg'), ceil('Sugar', 18, 36, 'g'), ceil('Sat fat', 14, 20, 'g'), floor('Potassium', 2900, 3400, 'mg'), ceil('Cholesterol', 210, 300, 'mg')];
+
+    const mealsRaw = [['6:30a', 'Wake up', 180, 0.5, 0.3, 0.2], ['3:10p', 'Snacks', 210, 0.2, 0.3, 0.5], ['12:15p', 'Lunch', 420, 0.45, 0.45, 0.1], ['6:45p', 'Dinner', 388, 0.55, 0.38, 0.07], ['9:00p', 'Eve snack', 140, 0.4, 0.5, 0.1]];
+    const maxK = 420;
+    const seg = (fr, col) => 'height:100%;flex:' + fr + ';background:' + col;
+    const mealBars = mealsRaw.map((m) => ({ time: m[0], name: m[1], kcal: m[2], bar: 'height:100%;display:flex;border-radius:5px;overflow:hidden;width:' + Math.round(m[2] / maxK * 100) + '%', p: seg(m[3], P), f: seg(m[4], F), c: seg(m[5], C) }));
+
+    const stepVals = [0, 2, 6, 9, 3, 2, 8, 12, 5, 3, 2, 4, 14, 10, 6, 3];
+    const steps = stepVals.map((v) => 'flex:1;border-radius:2px;background:#6FB3E0;height:' + Math.max(2, Math.round(v / 14 * 26)) + 'px;opacity:' + (0.3 + v / 14 * 0.7).toFixed(2));
+    const hr = [62, 60, 66, 78, 72, 70, 74, 82, 76, 71, 69, 73, 80, 128, 142, 118, 90, 78, 74, 70];
+    const hrPoints = hr.map((v, i) => (i / (hr.length - 1) * 300).toFixed(1) + ',' + (42 - (v - 55) / 92 * 40).toFixed(1)).join(' ');
+
+    const dot = (col) => 'width:8px;height:8px;border-radius:50%;background:' + col;
+    const row = 'display:flex;align-items:center;gap:12px;height:48px;padding:0 14px;border-radius:14px;background:#24201C;border:1px solid #3A332C';
+    const chk = 'width:28px;height:28px;border-radius:50%;background:#7CC48A;color:#1C1916;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700';
+    const meals = [
+      ['WAKE UP', '180', P, P, P, P], ['BREAKFAST · skipped', '—', OFF, OFF, OFF, OFF], ['SNACKS', '210', OFF, OFF, OFF, P],
+      ['LUNCH', '420', F, P, F, F], ['DINNER', '388', P, P, P, P], ['EVENING SNACK', '140', F, P, F, F]
+    ].map((m) => ({ name: m[0], kcal: m[1], rowStyle: m[1] === '—' ? row + ';opacity:.55' : row, checkStyle: m[1] === '—' ? chk.replace('#7CC48A', '#3A332C') : chk, d1: dot(m[2]), d2: dot(m[3]), d3: dot(m[4]), d4: dot(m[5]) }));
+    return { week, big, t, todayFill: fill(td.k), fuel, mealBars, steps, hrPoints, meals, open: this.state.open, toggle: () => this.setState({ open: !this.state.open }), hint: this.state.open ? 'Tap to collapse' : 'Tap for today’s detail' };
+  }
+}
+</script>
+</body>
+</html>

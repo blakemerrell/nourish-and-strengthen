@@ -152,6 +152,7 @@
       mcSpark(cut(d.waist), 'Waist', '″', 'var(--pill-water)', all, 1.5) +
       mcSpark(cut(d.strength), 'Strength, 100 = where you started', '', 'var(--pill-p)', all, 8) +
       '<p class="mc-rc-foot">Each line on its own scale: compare directions, not heights. The last 16 weeks.</p>' +
+      (window.HHPhotos ? window.HHPhotos.slotsHTML() : '') +
     '</div>';
   }
 

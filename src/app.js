@@ -4374,6 +4374,8 @@
 
     if (S.chartOpen) {
       root.innerHTML = macroChartHTML();
+      // the Recomp tab's photos come from the phone's own store, after the sheet is drawn
+      if (window.HHPhotos) window.HHPhotos.fill(root);
       document.body.style.overflow = 'hidden';
       if (keepScroll) root.querySelector('.scrim').scrollTop = keepScroll;
       return;

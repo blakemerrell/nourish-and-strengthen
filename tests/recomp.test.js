@@ -53,6 +53,35 @@ module.exports = {
       /^Recomposition over the last \d+ weeks: weight holding, waist down [\d.]+″, strength up [\d.]+%\.$/.test(r.say), r.say);
     t.ok('three lines, weight, waist and strength, and strength said against where it started',
       r.lines === 3 && Number(r.strength) > 100, JSON.stringify(r));
+
+    /* ---- the month's photos, on the phone only ----
+     * A front chosen goes into the phone's own store and shows in its slot;
+     * nothing of it lands in localStorage, which the household's sync
+     * mirrors; Remove takes it back out. */
+    const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAEElEQVR4nGP4z8DwnwEJAwA14QH/9fF1TwAAAABJRU5ErkJggg==', 'base64');
+    const lsBefore = await p.evaluate(() => JSON.stringify(localStorage).length);
+    await p.setInputFiles('input[data-photo$=":front"]', { name: 'front.png', mimeType: 'image/png', buffer: PNG });
+    await p.waitForTimeout(600);
+    const ph = await p.evaluate(() => new Promise((ok) => {
+      const slot = document.querySelector('[data-photoslot$=":front"]');
+      const img = slot && slot.querySelector('img');
+      const rq = indexedDB.open('hh-photos');
+      rq.onsuccess = () => {
+        const g = rq.result.transaction('p').objectStore('p').getAllKeys();
+        g.onsuccess = () => ok({ src: img ? img.src.slice(0, 5) : '', keys: g.result,
+          del: !slot.querySelector('[data-photodel]').hidden, ls: JSON.stringify(localStorage).length });
+      };
+    }));
+    t.ok('a front photo is kept in the phone\u2019s own store, shown in its slot, and nothing of it reaches localStorage',
+      ph.src === 'blob:' && ph.keys.length === 1 && /:front$/.test(ph.keys[0]) && ph.del && ph.ls - lsBefore < 200,
+      JSON.stringify({ ...ph, lsBefore }));
+    await p.click('[data-photodel$=":front"]');
+    await p.waitForTimeout(400);
+    const gone = await p.evaluate(() => new Promise((ok) => {
+      const rq = indexedDB.open('hh-photos');
+      rq.onsuccess = () => { const g = rq.result.transaction('p').objectStore('p').count(); g.onsuccess = () => ok(g.result); };
+    }));
+    t.ok('and Remove takes it out of the store', gone === 0, String(gone));
     await p.context().close();
   },
 };

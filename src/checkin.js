@@ -212,34 +212,65 @@
     return out;
   }
 
-  var ING_LIQ_KEYS = {
-    crio_bru: 1, milk: 1, evaporated_milk: 1, water: 1, cola: 1,
-    tomato_soup: 1, soup_rts: 1, cream_soup_chx: 1, cream_soup_mush: 1
-  };
-  function mIngFluidG(r) {
-    if (!r || !Array.isArray(r.ingp) || !r.ingp.length) return 0;
-    var sec = String(r.secName || ''), nm = String(r.name || '');
-    var isDrinkOrSoup = sec === 'Power Drinks' ||
-      /\b(?:crio\s*br[uü]|shake|smoothie|latte|steamer|cocoa|frosty|julius|milk|drink|coffee|espresso|cold\s*brew|tea|chai|matcha|soup|broth|stew|chowder)\b/i.test(nm);
-    if (!isDrinkOrSoup) return 0;
-    var liqG = 0;
-    r.ingp.forEach(function (p) {
-      if (p && ING_LIQ_KEYS[p.k] && fin(p.g) && p.g > 0) liqG += p.g;
-    });
-    if (!(liqG > 0)) return 0;
-    var servN = fin(r.servN) && r.servN > 0 ? r.servN : 1;
-    return liqG / servN;
-  }
+  /* What counts as a drink by its name. A food or a recipe whose name says
+     milk, coffee, a shake, Crio Bru — "Bru" or "Brew", because Blake's own is
+     Protein Crio Brew and it counted nothing while the name had to say "Bru".
+     The first list is what a name can say and still be food: milk in a
+     gelatin cup or a pudding is in the name, and nobody drinks either. */
   function mIsMealDrink(r) {
     if (!r) return false;
     var id = String(r.id || '');
     if (id === 'f:milk' || id === 'f:evaporated_milk' || id === 'f:crio_bru' || id === 'f:tomato_soup' ||
         id === 'f:cream_soup_chx' || id === 'f:cream_soup_mush' || id === 'f:soup_rts') return true;
-    if (mIngFluidG(r) >= 60) return true;
     var nm = String(r.name || '');
-    if (/\b(?:oil|butter|syrup|honey|vinegar|sauce|dressing|ranch|mayo|mustard|ketchup|salsa|gravy|egg\s*whites?|egg\s*substitute|liquid\s*eggs?|cream\s*cheese|oats|oatmeal|yogurt|cottage\s*cheese|ice\s*cream)\b/i.test(nm)) return false;
-    return /\b(?:crio\s*br[uü]|milk|fairlife|kefir|protein\s*shake|shake|smoothie|energy\s*drink|celsius|monster|alani|red\s*bull|ghost|reign|coffee|espresso|latte|cold\s*brew|tea|chai|matcha|soda|diet\s*soda|cola|pop|sparkling\s*water|seltzer|water|electrolyte|liquid\s*i\.?v\.?|lmnt|gatorade|powerade|juice|lemonade|limeade|bone\s*broth|broth|stock)\b/i.test(nm);
+    if (/\b(?:oil|butter|syrup|honey|vinegar|sauce|dressing|ranch|mayo|mustard|ketchup|salsa|gravy|egg\s*whites?|egg\s*substitute|liquid\s*eggs?|cream\s*cheese|oats|oatmeal|porridge|yogurt|cottage\s*cheese|ice\s*cream|gelatin|pudding|custard|whip|fluff)\b/i.test(nm)) return false;
+    return /\b(?:crio\s*br(?:[uü]|ew)|milk|fairlife|kefir|protein\s*shake|shake|smoothie|energy\s*drink|celsius|monster|alani|red\s*bull|ghost|reign|coffee|espresso|latte|cold\s*brew|tea|chai|matcha|soda|diet\s*soda|cola|pop|sparkling\s*water|seltzer|water|electrolyte|liquid\s*i\.?v\.?|lmnt|gatorade|powerade|juice|lemonade|limeade|bone\s*broth|broth|stock)\b/i.test(nm);
   }
+  /* Soup is not a drink and is still mostly water you take in, so a bowl of
+     it counts (Antigravity's catch, 2026-10-30: the chicken noodle soup's
+     fourteen ounces were going nowhere). A stew and a chowder the same. */
+  function mIsSoup(r) {
+    return !!r && !r.food && /\b(?:soup|stew|chowder|bisque)\b/i.test(String(r.name || ''));
+  }
+
+  /* The fluid a recipe carries, read from its own ingredients.
+   *
+     Before this a recipe only counted if its NAME sounded like a drink, and
+     then it counted a flat cup. Blake's own "Protein Crio Brew" — two cups of
+     brewed Crio Bru and a cup of milk, about 24 oz — counted nothing at all.
+     The six Crio Bru recipes in the book counted 8 oz each though most pour 12.
+   *
+     Every recipe, the book's and your own, already carries its ingredients
+     parsed to grams (ingp), so the honest number is right there: add up the
+     lines that are a drinkable liquid, per serving, times what you ate.
+   *
+     Only for a drink (the Power Drinks section, or a drink by its name) or a
+     soup, and only when the liquid is most of the recipe (FLUID_SHARE of its
+     weight). Run across the book without those two guards, it counted ten
+     ounces from soft pretzels and cheddar bagels — the pot of water they are
+     boiled in is an ingredient line — four from rice that drinks its water
+     up, and six from the milk in a rice pudding. Water in a recipe is almost
+     always cooking water; water in a drink or a soup is the point of it. */
+  var FLUIDS = { crio_bru: 1, milk: 1, water: 1, broth: 1 };
+  var FLUID_SHARE = 0.6;
+  function mRecipeFluidOz(r, x) {
+    if (!r || r.food || !Array.isArray(r.ingp) || !r.ingp.length) return 0;
+    if (!(r.secName === 'Power Drinks' || mIsMealDrink(r) || mIsSoup(r))) return 0;
+    var wet = 0, all = 0;
+    r.ingp.forEach(function (it) {
+      var g = (Number(it && it.g) || 0) * (it && it.pe > 0 ? it.pe : 1);
+      all += g;
+      if (it && FLUIDS[it.k]) wet += g;
+    });
+    if (!(wet > 0) || wet < all * FLUID_SHARE) return 0;
+    var mult = fin(x) && x > 0 ? x : 1;
+    return Math.max(1, Math.round(wet / (r.servN || 1) / 29.5735 * mult));
+  }
+
+  /* How many ounces one line of a meal adds to the day's water: a saved
+     combo by its parts, a recipe by its ingredients, and anything else that
+     is a drink by its name and its unit. One answer, read by the Water card
+     and by the badge on the meal row, so the two cannot disagree. */
   function mItemFluidOz(r, x) {
     if (!r) return 0;
     var mult = fin(x) && x > 0 ? x : 1;
@@ -247,15 +278,15 @@
       var partOz = 0;
       r.parts.forEach(function (pt) {
         var pr = LIVE.BY_ID[pt.id];
-        if (pr && mIsMealDrink(pr)) partOz += mItemFluidOz(pr, (pt.x || 1) * mult);
+        if (pr) partOz += mItemFluidOz(pr, (pt.x || 1) * mult);
       });
       if (partOz > 0) return partOz;
     }
-    var ingG = mIngFluidG(r);
-    if (ingG >= 60) return Math.max(1, Math.round((ingG / 29.5735) * mult));
+    var recOz = mRecipeFluidOz(r, mult);
+    if (recOz > 0) return recOz;
     if (!mIsMealDrink(r)) return 0;
     var id = String(r.id || ''), nm = String(r.name || ''), u = String(r.unit || '');
-    if (id === 'f:crio_bru' || (r.food && /\b(?:crio\s*br[uü]|coffee|espresso|latte|cold\s*brew|tea|chai|matcha)\b/i.test(nm))) {
+    if (id === 'f:crio_bru' || /\b(?:crio\s*br(?:[uü]|ew)|coffee|espresso|latte|cold\s*brew|tea|chai|matcha)\b/i.test(nm)) {
       if (u === 'oz' && mult < 3) return 8;
       if (u === 'oz') return Math.max(1, Math.round(mult));
       if (u === 'cup' || u === 'cups') return Math.max(1, Math.round(8 * mult));

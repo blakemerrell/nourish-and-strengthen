@@ -979,6 +979,9 @@
             ? '<button class="mtray-fn" data-mfood="' + esc(String(r.id)) + '" data-mx="' + it.x + '" data-mfslot="' + esc(sk) + '" aria-label="' + name + ', the food">'
             : '<button class="mtray-fn" data-open="' + esc(String(r.id)) + '" data-mx="' + it.x + '" aria-label="' + name + ', the recipe">';
           var single = !kitchen && !it.l;
+          /* The water a line adds, under its name (Antigravity, 2026-10-30;
+             moved under the name rather than beside it, where on a phone it
+             took the width a long name needs: "Crio Bru Power Mornin…"). */
           var fOz = mItemFluidOz(r, it.x);
           var hydTag = fOz > 0
             ? '<span class="mfl-hyd num" title="' + fOz + ' oz hydration" aria-label="' + fOz + ' oz hydration">' +
@@ -987,7 +990,7 @@
             : '';
           var line = '<div class="mfl-r">' +
               '<span class="mfl-lf">' + mBadgeHTML(r) + '</span>' +
-              door + '<span class="mfl-nm">' + name + '</span>' + hydTag + '</button>' +
+              door + (hydTag ? '<span class="mfl-nmw"><span class="mfl-nm">' + name + '</span>' + hydTag + '</span>' : '<span class="mfl-nm">' + name + '</span>') + '</button>' +
               '<button class="mfl-amt split-pill' + (it.l ? ' locked' : '') + (single ? ' single' : '') + '" data-mamt="' + esc(k + '|' + tag) + '" aria-expanded="' + open + '" aria-label="' + name + ', ' +
                 esc(kitchen ? kitchen + ', ' + metric : metric) + (it.l ? ', locked' : '') + '. ' + (open ? 'Close' : 'Change it') + '">' +
                 '<span class="mtray-fm sp-k"><b>' + (it.l ? LOCK_SM : '') + esc(kitchen) + '</b></span>' +

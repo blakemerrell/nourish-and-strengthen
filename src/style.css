@@ -8616,8 +8616,14 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   color: var(--pill-water);
   white-space: nowrap;
 }
+.mfl-nmw {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
 .mfl-hyd {
-  margin-left: 6px;
+  margin-top: 2px;
 }
 .mfl-hyd svg, .mhyd-chip svg {
   width: 11px;

@@ -8984,3 +8984,10 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 
 /* the sodium tile's letters, in the pill and in the day's detail */
 .mwk-ico-salt text, .mpt-bigicos text { font-family: var(--sans); }
+/* A phone keeps :hover on whatever was last tapped, so the calories wore a
+   pale box after every tap that opened the day's detail — the box Blake had
+   just asked to be rid of. Hover tints only where there is a pointer that
+   really hovers. */
+@media (hover: none) {
+  #view-macros .mday-kc .mpillwk-hbtn:hover { background: transparent; }
+}

@@ -12851,6 +12851,37 @@
     dayText: dayText,
     /* The workouts saved on a day, by name — Nourish ticks "Trained today"
        off this, so a session logged here moves the day's carbohydrate there. */
+    /* Strength by the week, for Nourish's recomp chart: each lift's best
+       estimated max that week (counting sets only, Epley as everywhere
+       here) against that same lift's first week on record, averaged over
+       the lifts done that week. 100 is where you started; 105 is five per
+       cent stronger across what you lifted. Relative per lift, so a heavy
+       squat does not drown out a light curl, and a lift added later starts
+       at its own 100 rather than looking like a jump. Oldest week first;
+       weeks keyed by their Monday. */
+    strengthWeeks: function () {
+      var first = {}, weeks = {};
+      ix().list.forEach(function (wo) {
+        var dk = wo.dk || dayKey(new Date(wo.st));
+        var d = new Date(dk + 'T12:00:00');
+        d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+        var wk = dayKey(d);
+        (wo.x || []).forEach(function (x) {
+          var b = liftE1({ e: x.e, s: (x.s || []).filter(counts) }, wo);
+          if (!(b > 0)) return;
+          var w = weeks[wk] || (weeks[wk] = {});
+          if (!(w[x.e] > b)) w[x.e] = b;
+        });
+      });
+      return Object.keys(weeks).sort().map(function (wk) {
+        var rs = [];
+        Object.keys(weeks[wk]).forEach(function (e) {
+          if (!first[e]) first[e] = weeks[wk][e];
+          rs.push(weeks[wk][e] / first[e]);
+        });
+        return { wk: wk, idx: Math.round(100 * rs.reduce(function (a, b) { return a + b; }, 0) / rs.length * 10) / 10, n: rs.length };
+      });
+    },
     trainedOn: function (k) {
       return ix().list.filter(function (wo) { return (wo.dk || dayKey(new Date(wo.st))) === k; })
         .map(function (wo) { return wo.n || 'Workout'; });

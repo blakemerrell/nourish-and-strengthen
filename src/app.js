@@ -3244,6 +3244,7 @@
   function mCafMg(k) { return CHECKIN.mCafMg(k); }
   function mHydrationCardHTML(k, goalOz) { return CHECKIN.mHydrationCardHTML(k, goalOz); }
   function mItemFluidOz(r, x) { return CHECKIN.mItemFluidOz(r, x); }
+  function mBodyDays() { return CHECKIN.mBodyDays(); }
   function mHydChip(r, x) { return CHECKIN.mHydChip(r, x); }
   function mCheckinHTML(k) { return CHECKIN.mCheckinHTML(k); }
   function mCheckinClick(b, k) { return CHECKIN.mCheckinClick(b, k); }
@@ -3583,7 +3584,7 @@
 
   /* src/charts.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var CHARTS = window.HiveParts.charts({ MDAYS: MDAYS, MSALT_DAY: MSALT_DAY, MWEIGHTS: MWEIGHTS, S: S, dayKey: dayKey, keyDate: keyDate, mDayN: mDayN, mInfoBtn: mInfoBtn, mInfoText: mInfoText, mPlanWeight: mPlanWeight, mPretty: mPretty, mReadProfile: mReadProfile, mSodiumOn: mSodiumOn });
+  var CHARTS = window.HiveParts.charts({ MDAYS: MDAYS, MSALT_DAY: MSALT_DAY, MWEIGHTS: MWEIGHTS, S: S, dayKey: dayKey, keyDate: keyDate, mDayN: mDayN, mInfoBtn: mInfoBtn, mInfoText: mInfoText, mPlanWeight: mPlanWeight, mPretty: mPretty, mReadProfile: mReadProfile, mSodiumOn: mSodiumOn, mBodyDays: mBodyDays });
   function mcDaysApart(a, b) { return CHARTS.mcDaysApart(a, b); }
   function mcRead(svg, clientX) { return CHARTS.mcRead(svg, clientX); }
   function macroChartHTML() { return CHARTS.macroChartHTML(); }

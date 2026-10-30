@@ -27,6 +27,7 @@
   var mPretty = app.mPretty;
   var mReadProfile = app.mReadProfile;
   var mSodiumOn = app.mSodiumOn;
+  var mBodyDays = app.mBodyDays;
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -46,8 +47,113 @@
    * a cut means the chart goes quiet exactly when it should be speaking.
    */
   var MC_KEYS = [
-    ['weight', 'Weight'], ['off', 'Off plan'], ['jump', 'Day to day'], ['rate', 'Rate']
+    ['weight', 'Weight'], ['off', 'Off plan'], ['jump', 'Day to day'], ['rate', 'Rate'], ['recomp', 'Recomp']
   ];
+
+  /* ---- Recomp: the scale, the tape and the bar, week by week ----
+   *
+     Blake, 2026-10-30, eating near maintenance while he lifts: "Even though
+     I'm maintaining, am I getting stronger and thinning up in other places?"
+     The scale alone cannot answer that — a pound of fat gone and a pound of
+     muscle come reads as nothing — so three lines share the weeks: the
+     week's average weight, the waist from the weekly tape, and strength
+     from Strengthen (each lift against its own first week, 100 = where you
+     started). Each is drawn on its own scale, so it is the direction that
+     compares, never the height. */
+  function mcMonday(k) {
+    var d = keyDate(k);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return dayKey(d);
+  }
+  function mcRecompData() {
+    var wByWk = {};
+    Object.keys(MWEIGHTS).forEach(function (k) {
+      var v = MWEIGHTS[k];
+      if (!(v > 0)) return;
+      var wk = mcMonday(k);
+      (wByWk[wk] = wByWk[wk] || []).push(v);
+    });
+    var weight = Object.keys(wByWk).sort().map(function (wk) {
+      return { wk: wk, v: Math.round(mcMean(wByWk[wk]) * 10) / 10 };
+    });
+    var waByWk = {};
+    (mBodyDays ? mBodyDays() : []).forEach(function (d) {
+      if (d.bm && d.bm.wa > 0) waByWk[mcMonday(d.k)] = d.bm.wa;      // the week's last tape
+    });
+    var waist = Object.keys(waByWk).sort().map(function (wk) { return { wk: wk, v: waByWk[wk] }; });
+    var strength = [];
+    try {
+      strength = window.Train && window.Train.strengthWeeks
+        ? window.Train.strengthWeeks().map(function (r) { return { wk: r.wk, v: r.idx }; }) : [];
+    } catch (e) { strength = []; }
+    return { weight: weight, waist: waist, strength: strength };
+  }
+  /* The change from the first of the last few weeks to the latest, over the
+     same span for all three, so they are read over the same stretch. */
+  function mcSpan(sr, weeks) {
+    if (sr.length < 2) return null;
+    var tail = sr.slice(-weeks);
+    if (tail.length < 2) return null;
+    return { from: tail[0].v, to: tail[tail.length - 1].v, n: tail.length };
+  }
+  function mcRecompSay(d) {
+    var W = 8;
+    var w = mcSpan(d.weight, W), wa = mcSpan(d.waist, W), st = mcSpan(d.strength, W);
+    if (!wa || !st) {
+      return 'Two weekly tapes and two weeks of logged lifts, and this says which way you are going.';
+    }
+    var wPct = w ? (w.to - w.from) / w.from * 100 : 0;
+    var waD = wa.to - wa.from, stD = st.to - st.from;
+    var steady = Math.abs(wPct) < 1;
+    var leaner = waD <= -0.25, wider = waD >= 0.25, stronger = stD >= 1, weaker = stD <= -1;
+    var span = 'over the last ' + Math.max(wa.n, st.n) + ' weeks';
+    if (steady && leaner && stronger) return 'Recomposition ' + span + ': weight holding, waist down ' + Math.abs(waD) + '″, strength up ' + stD.toFixed(1) + '%.';
+    if (leaner && stronger) return 'Leaner and stronger ' + span + ': waist down ' + Math.abs(waD) + '″, strength up ' + stD.toFixed(1) + '%.';
+    if (leaner && weaker) return 'Waist down ' + Math.abs(waD) + '″ but strength down ' + Math.abs(stD).toFixed(1) + '% ' + span + ': watch protein and sleep.';
+    if (wider && !stronger) return 'Waist up ' + waD + '″ without strength to show for it ' + span + '.';
+    if (stronger) return 'Strength up ' + stD.toFixed(1) + '% ' + span + ', waist ' + (waD === 0 ? 'unchanged' : (waD > 0 ? 'up ' : 'down ') + Math.abs(waD) + '″') + '.';
+    return 'No clear change ' + span + '. A few more weeks of tape and logged lifts will tell.';
+  }
+  // one small line on its own scale, with its first and last values said
+  /* minSpan keeps a scale from magnifying noise: a pound of water up and
+     down across a week drew as a mountain range when the line had only its
+     own few tenths to fill the height with. */
+  function mcSpark(sr, label, unit, color, wks, minSpan) {
+    var head = '<div class="mc-rc-h"><span>' + label + '</span>';
+    if (sr.length < 2) {
+      return '<div class="mc-rc">' + head + '<b>' + (sr.length ? sr[0].v + unit : '—') + '</b></div>' +
+        '<div class="mc-rc-none">' + (sr.length ? 'One week so far.' : 'Nothing yet.') + '</div></div>';
+    }
+    var W = 300, H = 56, P = 4;
+    var xs = function (wk) { var i = wks.indexOf(wk); return P + (W - 2 * P) * (wks.length > 1 ? i / (wks.length - 1) : 0.5); };
+    var vs = sr.map(function (r) { return r.v; });
+    var lo = Math.min.apply(null, vs), hi = Math.max.apply(null, vs);
+    var need = Math.max(minSpan || 0, 1e-9);
+    if (hi - lo < need) { var mid = (hi + lo) / 2; lo = mid - need / 2; hi = mid + need / 2; }
+    var ys = function (v) { return P + (H - 2 * P) * (1 - (v - lo) / (hi - lo)); };
+    var pts = sr.map(function (r) { return xs(r.wk).toFixed(1) + ',' + ys(r.v).toFixed(1); }).join(' ');
+    var last = sr[sr.length - 1];
+    return '<div class="mc-rc">' + head + '<b>' + last.v + unit + '</b></div>' +
+      '<svg class="mc-rc-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="' +
+        esc(label) + ' from ' + sr[0].v + unit + ' to ' + last.v + unit + ' over ' + sr.length + ' weeks">' +
+        '<polyline points="' + pts + '" fill="none" stroke="' + color + '" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>' +
+        '<circle cx="' + xs(last.wk).toFixed(1) + '" cy="' + ys(last.v).toFixed(1) + '" r="3" fill="' + color + '"/>' +
+      '</svg></div>';
+  }
+  function mcRecompHTML() {
+    var d = mcRecompData();
+    var wks = {};
+    [d.weight, d.waist, d.strength].forEach(function (sr) { sr.forEach(function (r) { wks[r.wk] = 1; }); });
+    var all = Object.keys(wks).sort().slice(-16);                 // the last sixteen weeks
+    var cut = function (sr) { return sr.filter(function (r) { return all.indexOf(r.wk) >= 0; }); };
+    return '<div class="mc-recomp">' +
+      '<p class="mc-rc-say" role="status">' + esc(mcRecompSay(d)) + '</p>' +
+      mcSpark(cut(d.weight), 'Weight, the week\u2019s average', ' lb', 'var(--ink-2)', all, 6) +
+      mcSpark(cut(d.waist), 'Waist', '″', 'var(--pill-water)', all, 1.5) +
+      mcSpark(cut(d.strength), 'Strength, 100 = where you started', '', 'var(--pill-p)', all, 8) +
+      '<p class="mc-rc-foot">Each line on its own scale: compare directions, not heights. The last 16 weeks.</p>' +
+    '</div>';
+  }
 
   function mcMean(a) {
     return a.reduce(function (s2, x) { return s2 + x; }, 0) / (a.length || 1);
@@ -311,6 +417,20 @@
   }
 
   function macroChartHTML() {
+    if (S.chartWhich === 'recomp') {
+      return '<div class="scrim no-print" data-close="1">' +
+        '<div class="sheet mc-sheet" role="dialog" aria-modal="true" aria-label="The numbers over time">' +
+          '<div class="sheet-top">' +
+            '<div class="sheet-eyebrow">Over time</div>' +
+            '<button class="sheet-x" data-close="1" aria-label="Close">&times;</button>' +
+          '</div>' +
+          '<div class="mc-tabs">' + MC_KEYS.map(function (t) {
+            return '<button data-mchart="' + t[0] + '" aria-pressed="' +
+              (S.chartWhich === t[0] ? 'true' : 'false') + '">' + t[1] + '</button>';
+          }).join('') + '</div>' +
+          mcRecompHTML() +
+        '</div></div>';
+    }
     var full = mcSeries(S.chartWhich);
     var rng = S.mcRange || 'all';
     var sr = mcInRange(full, rng);

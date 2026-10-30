@@ -224,6 +224,13 @@
         id === 'f:cream_soup_chx' || id === 'f:cream_soup_mush' || id === 'f:soup_rts') return true;
     var nm = String(r.name || '');
     if (/\b(?:oil|butter|syrup|honey|vinegar|sauce|dressing|ranch|mayo|mustard|ketchup|salsa|gravy|egg\s*whites?|egg\s*substitute|liquid\s*eggs?|cream\s*cheese|oats|oatmeal|porridge|yogurt|cottage\s*cheese|ice\s*cream|gelatin|pudding|custard|whip|fluff)\b/i.test(nm)) return false;
+    /* A food whose label measures it in millilitres or fluid ounces is a
+       drink, whatever its flavour is called. Blake's energy drinks are named
+       for their flavours — "Gorilla Mind Red Gummy Fish", "Bucked Up Rainbow
+       Candy" — and the name test found nothing to drink in either, while
+       the label said 220 mL. The list above still keeps oil, syrup and
+       sauces out, which are poured by the millilitre too. */
+    if (r.food && /(?:^|\d|\s|\()(?:ml|millilit(?:er|re)s?|fl\.?\s*oz)\b/i.test(String(r.unit || ''))) return true;
     return /\b(?:crio\s*br(?:[uü]|ew)|milk|fairlife|kefir|protein\s*shake|shake|smoothie|energy\s*drink|celsius|monster|alani|red\s*bull|ghost|reign|coffee|espresso|latte|cold\s*brew|tea|chai|matcha|soda|diet\s*soda|cola|pop|sparkling\s*water|seltzer|water|electrolyte|liquid\s*i\.?v\.?|lmnt|gatorade|powerade|juice|lemonade|limeade|bone\s*broth|broth|stock)\b/i.test(nm);
   }
   /* Soup is not a drink and is still mostly water you take in, so a bowl of

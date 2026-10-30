@@ -269,5 +269,32 @@ module.exports = {
         /Protein Crio Brew/.test(w.textContent) && /24 oz/.test((w.querySelector('.mfl-hyd') || {}).textContent || ''))),
       await r.evaluate(() => [...document.querySelectorAll('#macroSlots .mfl-hyd')].map((b) => b.textContent).join(' | ')));
     await r.context().close();
+
+    /* ---- a drink named for its flavour --------------------------------
+     * Blake's energy drinks, "Gorilla Mind Red Gummy Fish" at half a 440 mL
+     * can, counted no water: nothing in the name says drink. The label's
+     * own unit does. Olive oil, poured by the millilitre too, stays food. */
+    const v = await t.fresh({ viewport: { width: 390, height: 844 } });
+    await v.clock.setFixedTime(new Date(2026, 9, 26, 7, 30, 0));
+    await v.evaluate(() => {
+      localStorage.setItem('bsc.myFoods', JSON.stringify({
+        gorilla: { name: 'Gorilla Mind Red Gummy Fish', unit: '440 mL', kcal: 10, p: 0, f: 0, c: 2 },
+        evoo: { name: 'Olive oil', unit: '15 mL', kcal: 120, p: 0, f: 14, c: 0 } }));
+      localStorage.setItem('bsc.macroDays', JSON.stringify({ '2026-10-26': {
+        s: [{ id: 'f:my:gorilla', x: 0.5 }], d: [{ id: 'f:my:evoo', x: 1 }] } }));
+    });
+    await v.reload();
+    await v.waitForTimeout(700);
+    await v.click('.tab[data-view="macros"]');
+    await v.waitForTimeout(300);
+    await v.evaluate(() => {
+      const c = document.querySelector('#macroSlots .mhyd-card');
+      if (c.classList.contains('shut')) c.querySelector('[data-hyd="fold"]').click();
+    });
+    await v.waitForTimeout(150);
+    const vLiq = await txt(v, '#macroSlots .mhyd-card');
+    t.ok('a drink whose label is in mL counts as water, whatever its flavour is called; olive oil does not',
+      /\+7 oz\s*Gorilla Mind/.test(vLiq) && !/Olive oil/.test(vLiq) && /7 \/ 100 oz/.test(vLiq), vLiq);
+    await v.context().close();
   }
 };

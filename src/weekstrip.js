@@ -139,9 +139,15 @@
             st = 'fill:' + col + ';opacity:' + (0.28 + 0.57 * Math.min(1, prog)).toFixed(2);
           }
         }
-        out.push('<text class="' + cls + '" x="' + pt[0].toFixed(1) + '" y="' + pt[1].toFixed(1) +
-          '" font-size="' + d + '" text-anchor="middle" dominant-baseline="central" style="' + st + '">' +
-          m.toUpperCase() + '</text>');
+        /* A ring round each letter, the letter a size smaller inside it, so
+           every mark reads as a bead with its initial on it (2026-10-30).
+           One colour for both: the style's fill becomes the group's colour. */
+        var cxs = pt[0].toFixed(1), cys = pt[1].toFixed(1);
+        out.push('<g class="' + cls + '" style="' + st.replace(/^fill:/, 'color:') + '">' +
+          '<circle cx="' + cxs + '" cy="' + cys + '" r="' + (d / 2 - 0.35).toFixed(2) +
+          '" fill="none" stroke="currentColor" stroke-width="' + (d / 9).toFixed(2) + '"/>' +
+          '<text x="' + cxs + '" y="' + cys + '" font-size="' + (d * 0.66).toFixed(2) +
+          '" text-anchor="middle" dominant-baseline="central" fill="currentColor">' + m.toUpperCase() + '</text></g>');
       }
       i++;
     });
@@ -211,7 +217,7 @@
          (Blake, 2026-10-30: "shorten the pills just a little"), which gives
          the meals below another twelve pixels; still room for the three
          icons inside. */
-      var dotsSVG = mPillDotsSVG(40, 92, 16, 7, targets, totAll);
+      var dotsSVG = mPillDotsSVG(40, 92, 13, 8.5, targets, totAll);
       var fibStyle = mFibreIconStyle(fibVal, fibFloor);
       var saltStyle = mSaltIconStyle(naVal, naCap);
       var gymStyle = mGymIconStyle(train, trained);

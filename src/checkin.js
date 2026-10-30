@@ -405,7 +405,13 @@
     var pct = goal > 0 ? Math.max(0, Math.min(100, Math.round(wt / goal * 100))) : 0;
     var shown = mDrinksShown(k), cf = r.cf || {}, mg = mCafMg(k);
     var drinks = mDrinksRowsHTML(shown, cf, true);
-    var shut = !!(S.mHydShut && S.mHydShut[k]) && !S.mViewAll;
+    /* Shut until you open it. It used to arrive open, a meter, four vessels
+       and a drinks drawer under the last meal, on every visit; Blake
+       (2026-10-30): "The water and drinks tab at the bottom opens expanded. I
+       don't want it to open expanded." The header already carries the
+       ounces and the caffeine, which is what a glance wants. Opening is per
+       day, like the meal cards, and print (mViewAll) still shows it all. */
+    var shut = !(S.mHydOpen && S.mHydOpen[k]) && !S.mViewAll;
     var vs = mVesselsOf(k);
     var vParts = [];
     VESSELS0.forEach(function (v) {
@@ -517,8 +523,8 @@
     var raw = b.getAttribute('data-am') || b.getAttribute('data-hyd') || '';
     var a = raw.split(':'), r = mAmOf(k);
     if (a[0] === 'fold') {
-      S.mHydShut = S.mHydShut || {};
-      S.mHydShut[k] = !S.mHydShut[k];
+      S.mHydOpen = S.mHydOpen || {};
+      S.mHydOpen[k] = !S.mHydOpen[k];
     } else if (a[0] === 'caftog') {
       S.hydCafOpen = !S.hydCafOpen;
     } else if (a[0] === 'sl') {

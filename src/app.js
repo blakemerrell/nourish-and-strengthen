@@ -6641,8 +6641,8 @@
       Array.prototype.forEach.call(document.querySelectorAll('#macroSlots [data-mview]'), function (b) {
         held[b.getAttribute('data-mview')] = nv;
       });
-      S.mHydShut = S.mHydShut || {};
-      S.mHydShut[vk] = nv === 1;
+      S.mHydOpen = S.mHydOpen || {};
+      S.mHydOpen[vk] = nv !== 1;
       if (nv !== 3 && S.mAmt && S.mAmt.indexOf(vk + '|') === 0) { S.mAmt = ''; S.mType = null; }
       keepingFocus(renderMacros);
     });

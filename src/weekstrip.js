@@ -1,6 +1,7 @@
-/* The week you are in, seven blocks wide (mWeekHTML): each day's letter,
- * its date, and the colour of how it went, with the target's place along
- * each square's rail (MWK_GOAL). No words on it: the colour is the verdict,
+/* The week you are in, seven pills wide (mWeekHTML): each day's letter,
+ * its date, and how it went — calories as the fill, full at target
+ * (mPillFillHTML), macros as the dots round the rim, fibre, salt and the
+ * lift glowing inside. No words on it: the colour is the verdict,
  * and the button's label says it to a listener. The longer account is with
  * the code.
  *
@@ -33,10 +34,54 @@
      reason"): each day's verdict is its colour, and the button's label says
      it to a listener. */
 
-  /* Where the target sits along each square's rail, as a fraction of it. Two
-     thirds: enough of the rail before it to read a half-eaten day, enough
-     after it to tell 103% from 140%. */
-  var MWK_GOAL = 0.66;
+  /* What a day's calories pour into its pill.
+   *
+     The target used to sit two thirds of the way up, so a day could read
+     past it — and a day eaten exactly to plan stopped at two thirds, which
+     looks like a day that came up short. Blake, on a 1,399 of 1,413 Thursday
+     drawn as a half-full glass: "I did good yesterday. I want that pill to be
+     full and I want it to be green."
+   *
+     So the TOP of the pill is the target now. A day under it fills to its
+     share. A day the verdict calls on target fills to the brim, even at 99%,
+     because the verdict is the one rule (mVerdict) and a 1% gap drawn as a
+     sliver of empty glass is the verdict contradicting itself. A day over it
+     is still full, and what says how far over is a hairline dropped down to
+     where the target was (.mwk-g), with everything above that line running
+     warm. Two over days are told apart by how far down the line sits rather
+     than by how tall the fill stands, which is what the old two-thirds rail
+     was for.
+   *
+     The colour is one ramp painted across the whole pill and uncovered from
+     the bottom: cool blue at the foot, green at the target, then amber and
+     on to red past it. The blue is only the foot: green from a little past
+     half way, so a day on target reads as a green pill, which is what was
+     asked for. "Blue to green to orange-red if I really go over" —
+     so a fill's colour is where it got to, not a verdict stamped on a block,
+     and an over day fades into the warm end instead of wearing a hard cap.
+     The background is sized to the pill rather than to the fill, so a
+     half-full day shows the lower half of the ramp instead of the whole ramp
+     squeezed into half the height. */
+  function mPillFillHTML(gotRaw, tK) {
+    var ratio = gotRaw / tK;
+    var v = mVerdict('kcal', gotRaw, tK);
+    if (v !== 'over') {
+      var h = v === 'on' ? 100 : Math.max(2, Math.min(100, ratio * 100));
+      return '<i style="height:' + h.toFixed(1) + '%;background:linear-gradient(to top, var(--pill-cool), var(--pill-fill) 55%);' +
+        'background-size:100% ' + (10000 / h).toFixed(1) + '%;background-position:bottom"></i>';
+    }
+    /* Where the target falls in a full pill, and the band above it. Red only
+       arrives when the day is well past the line (a fifth over); a day a few
+       per cent over shades to amber and stops at fire-orange. */
+    var tPct = 100 / ratio;
+    var band = 100 - tPct;
+    var stops = 'var(--pill-cool) 0%, var(--pill-fill) ' + (tPct * 0.55).toFixed(1) + '%, var(--pill-fill) ' +
+      tPct.toFixed(1) + '%, var(--pill-amber) ' +
+      (tPct + band * 0.35).toFixed(1) + '%, var(--pill-fire) ' +
+      (ratio >= 1.2 ? (tPct + band * 0.7).toFixed(1) + '%, var(--pill-red) 100%' : '100%');
+    return '<i class="is-over" style="height:100%;background:linear-gradient(to top, ' + stops + ')"></i>' +
+      '<span class="mwk-g" style="bottom:' + tPct.toFixed(1) + '%"></span>';
+  }
 
   function mPillDotsSVG(w, h, n, d, targets, tot) {
     var rDot = (d / 2).toFixed(2);
@@ -139,15 +184,7 @@
       if (dk === k && state && state !== ' over' && got < tK && !mDayJudged(dk)) {
         state = ' open';
       }
-      var spark = '';
-      if (got && tK) {
-        var ratio = got / tK;
-        var vK = mVerdict('kcal', gotRaw, tK);
-        var bg = vK === 'over'
-          ? 'background:linear-gradient(var(--pill-fire) 0 14%, var(--pill-fill) 14% 100%);'
-          : 'background:var(--pill-fill);';
-        spark = '<i style="' + bg + 'height:' + Math.min(100, ratio * 100 * MWK_GOAL).toFixed(1) + '%"></i>';
-      }
+      var spark = got && tK ? mPillFillHTML(gotRaw, tK) : '';
       var fibFloor = Math.max(1, Math.round(tK * 14 / 1000));
       var naCap = 2300;
       var fibVal = totAll ? totAll.fib : 0;
@@ -172,7 +209,7 @@
               '<svg class="mwk-ico mwk-ico-salt" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="' + saltStyle + '"><path d="M8 10h8l-1 10H9z"/><path d="M8 10c0-3 2-6 4-6s4 3 4 6"/><path d="M11 7h.01M13 7h.01"/></svg>' +
               (train || trained ? '<svg class="mwk-ico mwk-lift" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="' + gymStyle + '"><title>Lifting day</title><path d="M3 12h18M6 8v8M18 8v8M3 10v4M21 10v4"/></svg>' : '<span class="mwk-ico-sp"></span>') +
             '</span>' +
-          '</span><span class="mwk-g"></span>' +
+          '</span>' +
         '</span>' +
         '<span class="mwk-n"><b>' + d.getDate() + '</b></span>' +
         '<span class="mwk-s">' + (word || '&nbsp;') + '</span>' +

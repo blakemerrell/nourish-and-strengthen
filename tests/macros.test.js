@@ -249,13 +249,17 @@ module.exports = nourish({
       }));
     /* Silent has to mean silent. An empty container that still draws its
        divider and holds its margin is the furniture this change was made to
-       remove — the card would look exactly as it did, minus the words. */
+       remove — the card would look exactly as it did, minus the words.
+       Since the week of pills the region is the screen-reader-only kind
+       (a 1px clipped box, out of the flow), so "no height" is at most that
+       pixel, and "out of the flow" is what keeps it from holding a line. */
     t.ok('and it draws no rule and takes no height while it is empty',
       await p.evaluate(() => {
         const lim = document.querySelector('.mlimits');
         return lim.children.length === 0 &&
           parseFloat(getComputedStyle(lim).borderTopWidth) === 0 &&
-          Math.round(lim.getBoundingClientRect().height) === 0;
+          Math.round(lim.getBoundingClientRect().height) <= 1 &&
+          getComputedStyle(lim).position === 'absolute';
       }), await p.evaluate(() => {
         const l = document.querySelector('.mlimits');
         return getComputedStyle(l).borderTopWidth + ' / ' +
@@ -308,9 +312,17 @@ module.exports = nourish({
       /\bpast\b/.test(limSay.states.split(' ')[1] || '') &&
       !/\bmet\b/.test(limSay.states.split(' ')[1] || ''),
       limSay.states);
-    // and now the rule IS drawn, because there is something under it
-    t.ok('and only now does it draw its rule across the card', limSay.border > 0,
-      String(limSay.border));
+    /* The lines used to appear under the week with a rule across the card.
+       Since the week of pills they are not drawn at all (Blake, 2026-10-30:
+       the fibre and salt line "is shown visually inside the pill with the
+       glowing icons"), and the room went back to the meal cards. They are
+       still SAID: the region above is where a screen reader hears them. */
+    t.ok('and they are spoken, not drawn: the pill\u2019s icons carry them on screen',
+      await limPg.evaluate(() => {
+        const lim = document.querySelector('.mlimits');
+        return lim.children.length === 2 && lim.getBoundingClientRect().height <= 1 &&
+          !!document.querySelector('.mwk-d.now .mwk-ico-salt');
+      }), String(limSay.border));
     /* Fibre's patience, asserted directly: empty the snack slot and the same
        shortfall stops being a finding, because the rest of the day is what
        fixes it. Salt keeps talking — a ceiling can be busted at lunch. */

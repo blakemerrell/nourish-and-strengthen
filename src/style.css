@@ -8399,6 +8399,8 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   --pill-c: #7A67C7;
   --pill-fill: oklch(0.68 0.095 148);
   --pill-fire: #D94E24;
+  --pill-red: #B3261E;
+  --pill-cool: oklch(0.66 0.085 235);
   --pill-amber: #C77D32;
   --pill-water: #2E7EB3;
   --pill-tile: var(--paper-soft);
@@ -8413,6 +8415,8 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
     --pill-c: #A99BE0;
     --pill-fill: #4F8A5E;
     --pill-fire: #FF6B3D;
+    --pill-red: #E5484D;
+    --pill-cool: #3F7FA8;
     --pill-amber: #E0A15A;
     --pill-water: #6FB3E0;
     --pill-tile: #1C1916;
@@ -8579,6 +8583,19 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 #view-macros .mwk-d:not(.done) .mwk-b i {
   opacity: 0.55;
 }
+/* An over day's target: a hairline across the full pill at the height the
+   target was, so the warm band above it is read as the overshoot. It sits
+   over the fill and under the icons. The old week-wide line at two thirds
+   is gone with the two-thirds rail it marked. */
+#view-macros .mwk-b .mwk-g {
+  left: 0;
+  right: 0;
+  height: 2px;
+  margin-bottom: -1px;
+  background: var(--pill-ico);
+  opacity: 0.85;
+  z-index: 1;
+}
 #view-macros .mwk-d.done .mwk-b i {
   opacity: 0.92;
 }
@@ -8613,6 +8630,18 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   filter: none;
 }
 
+/* No "Tap for day's detail" line any more, and no fibre and salt lines
+   under the week (Blake, 2026-10-30: the week of pills was meant to give the
+   meal cards room, and the two had grown it). The hint is not drawn — the
+   kcal row and the day's own pill both open the detail — and the salt and
+   fibre warnings now live in the pill's icons. The limits region stays on
+   the page, as the role="status" live region it is, so a screen reader is
+   still told when salt crosses its line; it is just not drawn. */
+#view-macros .mlimits {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  margin: 0; padding: 0; border: 0;
+}
 .mpillwk-hint {
   width: 100%;
   min-height: 44px;

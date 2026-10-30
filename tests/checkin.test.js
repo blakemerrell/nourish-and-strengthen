@@ -127,6 +127,17 @@ module.exports = {
     t.ok('Today’s Eating card logs +16 oz water in one tap', (await am(p)).wt === 16, JSON.stringify(await am(p)));
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(300);
+    /* It arrives shut (Blake, 2026-10-30: "I don't want it to open
+       expanded"): the header still says the ounces, and the vessels wait
+       behind a tap. */
+    t.ok('Water & Drinks arrives folded, the ounces still on its header',
+      await p.evaluate(() => {
+        const c = document.querySelector('#macroSlots .mhyd-card');
+        return !!c && c.classList.contains('shut') && !c.querySelector('.mhyd-body') &&
+          /56 \/ 100 oz/.test(c.textContent);
+      }), await txt(p, '#macroSlots .mhyd-card'));
+    await p.click('#macroSlots .mhyd-card [data-hyd="fold"]');
+    await p.waitForTimeout(150);
     t.ok('Nourish renders Water & Drinks counting both plain water (16 oz) and drink fluid (40 oz) = 56 / 100 oz',
       /Water & Drinks/.test(await txt(p, '#macroSlots .mhyd-card')) && /56 \/ 100 oz/.test(await txt(p, '#macroSlots .mhyd-card')) &&
       /16 oz water \+ 40 oz from drinks/.test(await txt(p, '#macroSlots .mhyd-card')),
@@ -151,6 +162,8 @@ module.exports = {
     await p.waitForTimeout(600);
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(250);
+    await p.click('#macroSlots .mhyd-card [data-hyd="fold"]');
+    await p.waitForTimeout(150);
     t.ok('logging liquid foods/drinks in a meal (Crio Bru + Milk) auto-counts their fluid oz in Water & Drinks',
       /Auto-counted from meals/.test(await txt(p, '#macroSlots .mhyd-card')) &&
       /oz from meals/.test(await txt(p, '#macroSlots .mhyd-card')));

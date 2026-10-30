@@ -43,9 +43,11 @@
   var mEditDay = app.mEditDay;
   var mFillRoom = app.mFillRoom;
   var mFoldForget = app.mFoldForget;
+  var mHydChip = app.mHydChip || function () { return ''; };
   var mHydrationCardHTML = app.mHydrationCardHTML;
   var mIcon = app.mIcon;
   var mIsFav = app.mIsFav;
+  var mItemFluidOz = app.mItemFluidOz || function () { return 0; };
   var mLatestKey = app.mLatestKey;
   var mLongDate = app.mLongDate;
   var mMacLine = app.mMacLine;
@@ -368,7 +370,7 @@
       : '<button class="mstep-x mitem-amt ' + (spent ? 'mstep-wake" data-medit="' : 'mstep-type" data-mtype="') + tag + '" aria-label="' +
           name + ', ' + esc(mDialText(r, it.x)) + '. ' + (spent ? 'Correct it' : 'Type an amount') + '">' + esc(mDialText(r, it.x)) + '</button>';
     return '<div class="mfl-x no-print">' +
-        '<div class="mfl-mac"><span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mSaltChip(r, it.x) + '</div>' +
+        '<div class="mfl-mac"><span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mHydChip(r, it.x) + mSaltChip(r, it.x) + '</div>' +
         '<div class="mfl-ctl">' +
           '<span class="mfl-ics">' +
             '<button class="mfl-ic" data-mdel="' + tag + '" aria-label="Remove ' + name + '">' + I_BIN + '</button>' +
@@ -462,7 +464,7 @@
       sum +
       '<div class="mrow-dr">' +
       '<span class="mrow-m mitem-r2">' + (measure ? '<span class="mitem-uom">' + esc(measure) + '</span> &middot; ' : '') +
-        '<span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mSaltChip(r, it.x) + mWhyChip(it, tag) + '</span>' +
+        '<span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mHydChip(r, it.x) + mSaltChip(r, it.x) + mWhyChip(it, tag) + '</span>' +
       (menuOpen ? '' : '<button ' + doorAttr + ' hidden>' + I_INFO + 'Details</button>') +
       /* Typing opens an EMPTY box with the amount shown faint behind it, so
          what you type is the amount. Opened holding the number, it relied on
@@ -977,9 +979,18 @@
             ? '<button class="mtray-fn" data-mfood="' + esc(String(r.id)) + '" data-mx="' + it.x + '" data-mfslot="' + esc(sk) + '" aria-label="' + name + ', the food">'
             : '<button class="mtray-fn" data-open="' + esc(String(r.id)) + '" data-mx="' + it.x + '" aria-label="' + name + ', the recipe">';
           var single = !kitchen && !it.l;
+          /* The water a line adds, under its name (Antigravity, 2026-10-30;
+             moved under the name rather than beside it, where on a phone it
+             took the width a long name needs: "Crio Bru Power Mornin…"). */
+          var fOz = mItemFluidOz(r, it.x);
+          var hydTag = fOz > 0
+            ? '<span class="mfl-hyd num" title="' + fOz + ' oz hydration" aria-label="' + fOz + ' oz hydration">' +
+                '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2C8 2 3.8 6.8 3.8 10a4.2 4.2 0 0 0 8.4 0C12.2 6.8 8 2 8 2Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>' +
+                fOz + ' oz</span>'
+            : '';
           var line = '<div class="mfl-r">' +
               '<span class="mfl-lf">' + mBadgeHTML(r) + '</span>' +
-              door + '<span class="mfl-nm">' + name + '</span></button>' +
+              door + (hydTag ? '<span class="mfl-nmw"><span class="mfl-nm">' + name + '</span>' + hydTag + '</span>' : '<span class="mfl-nm">' + name + '</span>') + '</button>' +
               '<button class="mfl-amt split-pill' + (it.l ? ' locked' : '') + (single ? ' single' : '') + '" data-mamt="' + esc(k + '|' + tag) + '" aria-expanded="' + open + '" aria-label="' + name + ', ' +
                 esc(kitchen ? kitchen + ', ' + metric : metric) + (it.l ? ', locked' : '') + '. ' + (open ? 'Close' : 'Change it') + '">' +
                 '<span class="mtray-fm sp-k"><b>' + (it.l ? LOCK_SM : '') + esc(kitchen) + '</b></span>' +
@@ -994,7 +1005,7 @@
              Details each shut line says what it costs on a quiet line of its
              own, and the keys are on the one you tap, as on Foods. */
           var quiet = view === 3 && !open && !S.mViewAll
-            ? '<div class="mfl-q no-print"><span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mSaltChip(r, it.x) + '</div>' : '';
+            ? '<div class="mfl-q no-print"><span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mHydChip(r, it.x) + mSaltChip(r, it.x) + '</div>' : '';
           return '<div class="mtray-f' + (r.food ? '' : ' mtray-go') + (it.eaten ? ' eaten' : '') + (it.l ? ' held' : '') + (open ? ' open' : '') + '">' +
             line + (open ? mLineOpenHTML(M, r, it, i) : quiet) + '</div>';
         }).join('');

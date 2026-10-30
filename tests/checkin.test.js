@@ -127,6 +127,17 @@ module.exports = {
     t.ok('Today’s Eating card logs +16 oz water in one tap', (await am(p)).wt === 16, JSON.stringify(await am(p)));
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(300);
+    /* It arrives shut (Blake, 2026-10-30: "I don't want it to open
+       expanded"): the header still says the ounces, and the vessels wait
+       behind a tap. */
+    t.ok('Water & Drinks arrives folded, the ounces still on its header',
+      await p.evaluate(() => {
+        const c = document.querySelector('#macroSlots .mhyd-card');
+        return !!c && c.classList.contains('shut') && !c.querySelector('.mhyd-body') &&
+          /56 \/ 100 oz/.test(c.textContent);
+      }), await txt(p, '#macroSlots .mhyd-card'));
+    await p.click('#macroSlots .mhyd-card [data-hyd="fold"]');
+    await p.waitForTimeout(150);
     t.ok('Nourish renders Water & Drinks counting both plain water (16 oz) and drink fluid (40 oz) = 56 / 100 oz',
       /Water & Drinks/.test(await txt(p, '#macroSlots .mhyd-card')) && /56 \/ 100 oz/.test(await txt(p, '#macroSlots .mhyd-card')) &&
       /16 oz water \+ 40 oz from drinks/.test(await txt(p, '#macroSlots .mhyd-card')),
@@ -144,16 +155,28 @@ module.exports = {
     await p.waitForTimeout(200);
     await p.evaluate(() => {
       const days = JSON.parse(localStorage.getItem('bsc.macroDays') || '{}');
-      days['2026-10-26'] = { b: [{ id: 'f:crio_bru', x: 1, eaten: 1 }, { id: 'f:milk', x: 1, eaten: 1 }] };
+      days['2026-10-26'] = {
+        b: [{ id: 'f:crio_bru', x: 1, eaten: 1 }, { id: 'f:milk', x: 1, eaten: 1 }],
+        s: [{ id: 26, x: 1 }]
+      };
       localStorage.setItem('bsc.macroDays', JSON.stringify(days));
     });
     await p.reload();
     await p.waitForTimeout(600);
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(250);
+    await p.click('#macroSlots .mhyd-card [data-hyd="fold"]');
+    await p.waitForTimeout(150);
     t.ok('logging liquid foods/drinks in a meal (Crio Bru + Milk) auto-counts their fluid oz in Water & Drinks',
       /Auto-counted from meals/.test(await txt(p, '#macroSlots .mhyd-card')) &&
       /oz from meals/.test(await txt(p, '#macroSlots .mhyd-card')));
+    t.ok('logging a Crio Bru recipe (#26 Crio Bru Power Morning Cocktail) shows its 16 oz hydration badge on the meal card and auto-counts in Water & Drinks',
+      /Crio Bru Power Morning Cocktail/.test(await txt(p, '#macroSlots .mhyd-card')) &&
+      /\+16 oz Crio Bru Power Morning Cocktail/.test(await txt(p, '#macroSlots .mhyd-card')) &&
+      await p.evaluate(() => {
+        const badge = document.querySelector('#macroSlots [data-mslot="s"] .mfl-hyd');
+        return !!badge && /16 oz/.test(badge.textContent);
+      }));
     await p.click('#macroSlots .mhyd-card [data-hyd="fold"]');
     await p.waitForTimeout(150);
     t.ok('tapping Water & Drinks header collapses the section like a meal card',
@@ -197,5 +220,54 @@ module.exports = {
     await q.reload();
     await q.waitForTimeout(800);
     t.ok('weighed but not checked in: Today asks how you slept', /How did you sleep\?/.test(await txt(q, '.td-weigh')), await txt(q, '.td-weigh'));
+    await q.context().close();
+
+    /* ---- a recipe's fluid, from its ingredients --------------------------
+     * Blake's own Protein Crio Brew (two cups of brewed Crio Bru, a cup of
+     * 2% milk, whey, creatine, sweetener) counted no water at all: the name
+     * says "Brew", not "Bru", and the old rule only went by the name. The
+     * liquid lines are 480 + 244 g of a 770 g serving, so about 24 oz. And
+     * overnight oats, which soak in half a cup of water, are still food. */
+    const r = await t.fresh({ viewport: { width: 390, height: 844 } });
+    await r.clock.setFixedTime(new Date(2026, 9, 26, 7, 30, 0));
+    await r.evaluate(() => window.Store.saveRecipe({ id: 'ucriobrew', book: 3, secNum: 1, secName: 'Ours', own: true,
+      name: 'Protein Crio Brew', ing: ['2 cups Crio Bru', '3 tablespoons Splenda', '1 scoop whey protein', '1 scoop creatine', '1 cup of 2% milk'],
+      steps: ['Brew, mix, pour.'], servings: '1 Serving', servN: 1, time: '15', diff: 'Easy',
+      macro: { kcal: 260, p: 35, c: 14, f: 6, na: 200, fib: 1 },
+      ingp: [{ k: 'crio_bru', g: 480 }, { k: 'free', g: 12 }, { k: 'whey', g: 30 }, { k: 'free', g: 5 }, { k: 'milk', g: 244 }] }));
+    await r.evaluate(() => {
+      localStorage.setItem('bsc.macroDays', JSON.stringify({ '2026-10-26': {
+        s: [{ id: 'ucriobrew', x: 1 }], b: [{ id: 27, x: 1, eaten: 1 }],
+        l: [{ id: 362, x: 1, eaten: 1 }], d: [{ id: 234, x: 1, eaten: 1 }] } }));
+    });
+    await r.reload();
+    await r.waitForTimeout(700);
+    await r.click('.tab[data-view="macros"]');
+    await r.waitForTimeout(300);
+    /* Overnight oats run breakfast over its share, and the sheet that offers
+       to take it from later meals sits over the card; a click on the header
+       itself, not at its coordinates, is what a reader of this test means. */
+    t.ok('the day\u2019s water is that drink and the soup: 24 + 14 = 38 oz',
+      /38 \/ 100 oz/.test(await txt(r, '#macroSlots .mhyd-card')), await txt(r, '#macroSlots .mhyd-card'));
+    // open it if it is folded (it arrives folded once the card stops opening by default)
+    await r.evaluate(() => {
+      const c = document.querySelector('#macroSlots .mhyd-card');
+      if (c.classList.contains('shut')) c.querySelector('[data-hyd="fold"]').click();
+    });
+    await r.waitForTimeout(150);
+    const liq = await txt(r, '#macroSlots .mhyd-card .mhyd-meals');
+    t.ok('your own Crio Bru drink counts its brewed Crio Bru and milk as water (about 24 oz)',
+      /\+24 oz\s*Protein Crio Brew/.test(liq), liq);
+    t.ok('and a recipe that only soaks in water, like overnight oats, does not',
+      !/Overnight Oats/.test(liq), liq);
+    /* Soup counts (Antigravity's catch): mostly water, and you take it in.
+       A rice pudding's milk does not: nobody calls pudding a drink. */
+    t.ok('a bowl of chicken noodle soup counts its broth, and rice pudding does not',
+      /\+14 oz\s*Chicken Noodle Soup/.test(liq) && !/Rice Pudding/.test(liq), liq);
+    t.ok('and the drink wears its ounces under its own name on the meal card',
+      await r.evaluate(() => [...document.querySelectorAll('#macroSlots .mfl-nmw')].some((w) =>
+        /Protein Crio Brew/.test(w.textContent) && /24 oz/.test((w.querySelector('.mfl-hyd') || {}).textContent || ''))),
+      await r.evaluate(() => [...document.querySelectorAll('#macroSlots .mfl-hyd')].map((b) => b.textContent).join(' | ')));
+    await r.context().close();
   }
 };

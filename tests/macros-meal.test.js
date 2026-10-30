@@ -952,68 +952,48 @@ module.exports = nourish({
       return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
     }));
     await spk.waitForTimeout(350);
-    /* Heights now, not widths: the rail became a bar standing in a chart
-       cell, with the target a hairline across the week. Everything below
-       is measured up from the track's foot. */
+    /* The pill's brim is the target (Blake, 2026-10-30: a day eaten to plan
+       "full and green"). Under fills to its share; on target fills to the
+       brim; over is full too, and a hairline (.mwk-g) dropped to where the
+       target was is what says how far over. Measured in pixels up from the
+       well's foot, because pixels are what an eye is given. */
     const spkRead = await spk.evaluate(() => [...document.querySelectorAll('.mwk-d')].map((d) => {
       const fill = d.querySelector('.mwk-b i'), rail = d.querySelector('.mwk-b');
-      const mark = d.querySelector('.mwk-g');
+      const mark = d.querySelector('.mwk-b .mwk-g');
       const lab = d.getAttribute('aria-label') || '';
       const ate = Number((lab.match(/, (\d+) (?:eaten|on the day)/) || [])[1] || 0);
       const tgt = Number((lab.match(/(\d+) calorie target/) || [])[1] || 0);
+      const inner = rail ? rail.clientHeight : null;
       return { pct: tgt ? ate / tgt : 0,
         verdict: (d.className.match(/\b(under|on|over)\b/) || [''])[0],
-        /* Measured in pixels, because a percentage is what the code wrote and
-           pixels are what an eye is given. */
         px: fill ? fill.getBoundingClientRect().height : null,
-        railPx: rail ? rail.getBoundingClientRect().height : null,
-        markPx: (mark && rail)
-          ? rail.getBoundingClientRect().bottom - mark.getBoundingClientRect().bottom : null };
+        inner: inner,
+        /* how far below the brim the target line sits */
+        drop: (mark && rail)
+          ? mark.getBoundingClientRect().top - (rail.getBoundingClientRect().top + rail.clientTop) : null };
     }));
     const spkFed = spkRead.filter((d) => d.pct > 0);
-    t.ok('every day with food on it carries a rail, and the empty ones do not',
+    t.ok('every day with food on it carries a fill, and the empty ones do not',
       spkFed.length === 4 && spkFed.every((d) => d.px !== null) &&
       spkRead.filter((d) => !d.pct).every((d) => d.px === null),
       JSON.stringify(spkRead.map((d) => Math.round(d.pct * 100) + '%:' +
         (d.px === null ? 'none' : Math.round(d.px)))));
 
-    /* The whole point: two days that are both "over" are told apart. */
-    const spkNear = spkFed.filter((d) => d.pct > 1.02 && d.pct < 1.12)[0];
-    const spkFar = spkFed.filter((d) => d.pct > 1.3)[0];
+    /* Under stops short of the brim and draws no line; over and on fill it. */
+    t.ok('a day under its target stops short of the brim, and an over day fills it',
+      spkFed.filter((d) => d.verdict === 'under').every((d) => d.px < d.inner - 2 && d.drop === null) &&
+      spkFed.filter((d) => d.verdict === 'over' || d.verdict === 'on').every((d) => d.px >= d.inner - 1),
+      JSON.stringify(spkFed.map((d) => Math.round(d.pct * 100) + '% ' + d.verdict + ': fill ' +
+        Math.round(d.px) + ' of ' + d.inner)));
+
+    /* The whole point of the line: two days that are both over, both full,
+       are told apart by how far down the target sits. */
+    const spkOver = spkFed.filter((d) => d.verdict === 'over').sort((x, y) => x.pct - y.pct);
+    const spkNear = spkOver[0], spkFar = spkOver[spkOver.length - 1];
     t.ok('two days that are both over read as different distances',
-      !!spkNear && !!spkFar && spkNear.verdict === 'over' && spkFar.verdict === 'over' &&
-      spkFar.px - spkNear.px >= 6,
-      JSON.stringify({ near: spkNear && Math.round(spkNear.px),
-        far: spkFar && Math.round(spkFar.px), rail: spkFed[0].railPx }));
-
-    /* The mark is where the target is, and that is the whole legend: the
-       fill has either passed the notch or it has not.
-     *
-       Asserted as a RELATIONSHIP rather than by seeding a day at exactly
-       100% of target. The first version fed a chosen multiple of one food
-       and demanded the fill land on the mark — the multiple drifted 4%, the
-       "on target" day arrived at 104%, and the assertion failed for
-       arithmetic reasons with nothing to do with the rail. What a reader
-       uses is the side, not the pixel. */
-    t.ok('a day under its target stops short of the mark, and one over passes it',
-      spkFed.length === 4 &&
-      spkFed.filter((d) => d.pct < 0.98).every((d) => d.px < d.markPx - 1) &&
-      /* And a day only a whisker over is not evidence either way. The fill
-         is 0.66 of the track per unit of target and the mark sits at 0.66 of
-         it, so at 109% the two are a pixel apart — inside the rendering's
-         own noise, and inside the 4% the butter multiple drifts by. Same
-         reasoning as the sentence above, pointed at the other end: what a
-         reader uses is the side, and a day this close has no side. */
-      spkFed.filter((d) => d.pct > 1.15).every((d) => d.px > d.markPx + 1),
-      JSON.stringify(spkFed.map((d) => Math.round(d.pct * 100) + '%: fill ' +
-        Math.round(d.px) + ' vs mark ' + Math.round(d.markPx))));
-
-    /* The mark is in the same place on all seven, so the week reads across as
-       well as down — seven rails each scaled to their own day would be seven
-       charts, not one. */
-    t.ok('and the target line sits at the same height on every bar',
-      spkFed.every((d) => Math.abs(d.markPx - spkFed[0].markPx) <= 1),
-      JSON.stringify(spkFed.map((d) => Math.round(d.markPx))));
+      spkOver.length >= 2 && spkOver.every((d) => d.drop !== null && d.drop > 0) &&
+      spkFar.pct > 1.3 && spkFar.drop - spkNear.drop >= 6,
+      JSON.stringify(spkOver.map((d) => Math.round(d.pct * 100) + '%: line ' + Math.round(d.drop) + 'px down')));
 
     /* And the verdict colour is untouched: this adds distance, it does not
        replace the thing that was already working. */

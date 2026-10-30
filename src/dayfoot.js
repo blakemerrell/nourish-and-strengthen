@@ -612,10 +612,14 @@
         '<span class="mpillwk-clab">Trends &rsaquo;</span>' +
       '</button>' +
     '</div>';
-    var footHint = '<button type="button" class="mpillwk-hint" id="macroTrayToggle" data-mpilltray="toggle" aria-expanded="' + (trayOpen ? 'true' : 'false') + '">' +
-      (trayOpen ? 'Tap to collapse' : 'Tap for day\u2019s detail') +
-    '</button>' +
-    '<div class="mpillwk-a11y">' + bars + '</div>' +
+    /* There was a "Tap for day's detail" button here, a 44-pixel row of its
+       own. Blake (2026-10-30): "I want to be able to tap and see the day's
+       detail but I don't know if I need that word right there cuz it's
+       taking up space." The kcal row above (#macroTrayHead) and the day's
+       own pill on the strip both open the tray, so the words went and the
+       row went with them; the head button keeps the aria-expanded and the
+       label a listener needs. */
+    var footHint = '<div class="mpillwk-a11y">' + bars + '</div>' +
     trayHTML;
     return {
       head: headBar,

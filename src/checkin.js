@@ -212,20 +212,81 @@
     return out;
   }
 
+  /* What counts as a drink by its name. A food or a recipe whose name says
+     milk, coffee, a shake, Crio Bru — "Bru" or "Brew", because Blake's own is
+     Protein Crio Brew and it counted nothing while the name had to say "Bru".
+     The first list is what a name can say and still be food: milk in a
+     gelatin cup or a pudding is in the name, and nobody drinks either. */
   function mIsMealDrink(r) {
     if (!r) return false;
     var id = String(r.id || '');
     if (id === 'f:milk' || id === 'f:evaporated_milk' || id === 'f:crio_bru' || id === 'f:tomato_soup' ||
         id === 'f:cream_soup_chx' || id === 'f:cream_soup_mush' || id === 'f:soup_rts') return true;
     var nm = String(r.name || '');
-    if (/\b(?:oil|butter|syrup|honey|vinegar|sauce|dressing|ranch|mayo|mustard|ketchup|salsa|gravy|egg\s*whites?|egg\s*substitute|liquid\s*eggs?|cream\s*cheese|oats|oatmeal|yogurt|cottage\s*cheese|ice\s*cream)\b/i.test(nm)) return false;
-    return /\b(?:crio\s*br[uü]|milk|fairlife|kefir|protein\s*shake|shake|smoothie|energy\s*drink|celsius|monster|alani|red\s*bull|ghost|reign|coffee|espresso|latte|cold\s*brew|tea|chai|matcha|soda|diet\s*soda|cola|pop|sparkling\s*water|seltzer|water|electrolyte|liquid\s*i\.?v\.?|lmnt|gatorade|powerade|juice|lemonade|limeade|bone\s*broth|broth|stock)\b/i.test(nm);
+    if (/\b(?:oil|butter|syrup|honey|vinegar|sauce|dressing|ranch|mayo|mustard|ketchup|salsa|gravy|egg\s*whites?|egg\s*substitute|liquid\s*eggs?|cream\s*cheese|oats|oatmeal|porridge|yogurt|cottage\s*cheese|ice\s*cream|gelatin|pudding|custard|whip|fluff)\b/i.test(nm)) return false;
+    return /\b(?:crio\s*br(?:[uü]|ew)|milk|fairlife|kefir|protein\s*shake|shake|smoothie|energy\s*drink|celsius|monster|alani|red\s*bull|ghost|reign|coffee|espresso|latte|cold\s*brew|tea|chai|matcha|soda|diet\s*soda|cola|pop|sparkling\s*water|seltzer|water|electrolyte|liquid\s*i\.?v\.?|lmnt|gatorade|powerade|juice|lemonade|limeade|bone\s*broth|broth|stock)\b/i.test(nm);
   }
+  /* Soup is not a drink and is still mostly water you take in, so a bowl of
+     it counts (Antigravity's catch, 2026-10-30: the chicken noodle soup's
+     fourteen ounces were going nowhere). A stew and a chowder the same. */
+  function mIsSoup(r) {
+    return !!r && !r.food && /\b(?:soup|stew|chowder|bisque)\b/i.test(String(r.name || ''));
+  }
+
+  /* The fluid a recipe carries, read from its own ingredients.
+   *
+     Before this a recipe only counted if its NAME sounded like a drink, and
+     then it counted a flat cup. Blake's own "Protein Crio Brew" — two cups of
+     brewed Crio Bru and a cup of milk, about 24 oz — counted nothing at all.
+     The six Crio Bru recipes in the book counted 8 oz each though most pour 12.
+   *
+     Every recipe, the book's and your own, already carries its ingredients
+     parsed to grams (ingp), so the honest number is right there: add up the
+     lines that are a drinkable liquid, per serving, times what you ate.
+   *
+     Only for a drink (the Power Drinks section, or a drink by its name) or a
+     soup, and only when the liquid is most of the recipe (FLUID_SHARE of its
+     weight). Run across the book without those two guards, it counted ten
+     ounces from soft pretzels and cheddar bagels — the pot of water they are
+     boiled in is an ingredient line — four from rice that drinks its water
+     up, and six from the milk in a rice pudding. Water in a recipe is almost
+     always cooking water; water in a drink or a soup is the point of it. */
+  var FLUIDS = { crio_bru: 1, milk: 1, water: 1, broth: 1 };
+  var FLUID_SHARE = 0.6;
+  function mRecipeFluidOz(r, x) {
+    if (!r || r.food || !Array.isArray(r.ingp) || !r.ingp.length) return 0;
+    if (!(r.secName === 'Power Drinks' || mIsMealDrink(r) || mIsSoup(r))) return 0;
+    var wet = 0, all = 0;
+    r.ingp.forEach(function (it) {
+      var g = (Number(it && it.g) || 0) * (it && it.pe > 0 ? it.pe : 1);
+      all += g;
+      if (it && FLUIDS[it.k]) wet += g;
+    });
+    if (!(wet > 0) || wet < all * FLUID_SHARE) return 0;
+    var mult = fin(x) && x > 0 ? x : 1;
+    return Math.max(1, Math.round(wet / (r.servN || 1) / 29.5735 * mult));
+  }
+
+  /* How many ounces one line of a meal adds to the day's water: a saved
+     combo by its parts, a recipe by its ingredients, and anything else that
+     is a drink by its name and its unit. One answer, read by the Water card
+     and by the badge on the meal row, so the two cannot disagree. */
   function mItemFluidOz(r, x) {
     if (!r) return 0;
     var mult = fin(x) && x > 0 ? x : 1;
+    if (Array.isArray(r.parts) && r.parts.length && LIVE && LIVE.BY_ID) {
+      var partOz = 0;
+      r.parts.forEach(function (pt) {
+        var pr = LIVE.BY_ID[pt.id];
+        if (pr) partOz += mItemFluidOz(pr, (pt.x || 1) * mult);
+      });
+      if (partOz > 0) return partOz;
+    }
+    var recOz = mRecipeFluidOz(r, mult);
+    if (recOz > 0) return recOz;
+    if (!mIsMealDrink(r)) return 0;
     var id = String(r.id || ''), nm = String(r.name || ''), u = String(r.unit || '');
-    if (id === 'f:crio_bru' || /\b(?:crio\s*br[uü]|coffee|espresso|latte|cold\s*brew|tea|chai|matcha)\b/i.test(nm)) {
+    if (id === 'f:crio_bru' || /\b(?:crio\s*br(?:[uü]|ew)|coffee|espresso|latte|cold\s*brew|tea|chai|matcha)\b/i.test(nm)) {
       if (u === 'oz' && mult < 3) return 8;
       if (u === 'oz') return Math.max(1, Math.round(mult));
       if (u === 'cup' || u === 'cups') return Math.max(1, Math.round(8 * mult));
@@ -250,6 +311,13 @@
     }
     return Math.max(1, Math.round(8 * mult));
   }
+  function mHydChip(r, x) {
+    var oz = mItemFluidOz(r, x);
+    if (!(oz > 0)) return '';
+    return '<span class="mhyd-chip num">' +
+      '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2C8 2 3.8 6.8 3.8 10a4.2 4.2 0 0 0 8.4 0C12.2 6.8 8 2 8 2Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>' +
+      oz + ' oz fluid</span>';
+  }
   function mMealLiquids(k) {
     if (!MDAYS || !LIVE || !LIVE.BY_ID) return { oz: 0, items: [] };
     var day = MDAYS[k];
@@ -264,15 +332,7 @@
         if (!it || !it.id) return;
         var r = LIVE.BY_ID[it.id];
         if (!r) return;
-        var oz = 0;
-        if (mIsMealDrink(r)) {
-          oz = mItemFluidOz(r, it.x);
-        } else if (Array.isArray(r.parts)) {
-          r.parts.forEach(function (pt) {
-            var pr = LIVE.BY_ID[pt.id];
-            if (pr && mIsMealDrink(pr)) oz += mItemFluidOz(pr, (pt.x || 1) * (it.x || 1));
-          });
-        }
+        var oz = mItemFluidOz(r, it.x);
         if (oz > 0) {
           totalOz += oz;
           list.push({ name: r.name, meal: mName, oz: oz, eaten: !!it.eaten });
@@ -405,7 +465,13 @@
     var pct = goal > 0 ? Math.max(0, Math.min(100, Math.round(wt / goal * 100))) : 0;
     var shown = mDrinksShown(k), cf = r.cf || {}, mg = mCafMg(k);
     var drinks = mDrinksRowsHTML(shown, cf, true);
-    var shut = !!(S.mHydShut && S.mHydShut[k]) && !S.mViewAll;
+    /* Shut until you open it. It used to arrive open, a meter, four vessels
+       and a drinks drawer under the last meal, on every visit; Blake
+       (2026-10-30): "The water and drinks tab at the bottom opens expanded. I
+       don't want it to open expanded." The header already carries the
+       ounces and the caffeine, which is what a glance wants. Opening is per
+       day, like the meal cards, and print (mViewAll) still shows it all. */
+    var shut = !(S.mHydOpen && S.mHydOpen[k]) && !S.mViewAll;
     var vs = mVesselsOf(k);
     var vParts = [];
     VESSELS0.forEach(function (v) {
@@ -517,8 +583,8 @@
     var raw = b.getAttribute('data-am') || b.getAttribute('data-hyd') || '';
     var a = raw.split(':'), r = mAmOf(k);
     if (a[0] === 'fold') {
-      S.mHydShut = S.mHydShut || {};
-      S.mHydShut[k] = !S.mHydShut[k];
+      S.mHydOpen = S.mHydOpen || {};
+      S.mHydOpen[k] = !S.mHydOpen[k];
     } else if (a[0] === 'caftog') {
       S.hydCafOpen = !S.hydCafOpen;
     } else if (a[0] === 'sl') {
@@ -633,5 +699,6 @@
 
   return { MAM: MAM, mAmOf: mAmOf, mAmWrite: mAmWrite, mAmClean: mAmClean, mAmSum: mAmSum, mAmDays: mAmDays, mDrinksClean: mDrinksClean,
     mWaterGoalOz: mWaterGoalOz, mWaterOz: mWaterOz, mDrinksOz: mDrinksOz, mCafMg: mCafMg, mHydrationCardHTML: mHydrationCardHTML,
+    mItemFluidOz: mItemFluidOz, mHydChip: mHydChip,
     mCheckinHTML: mCheckinHTML, mCheckinClick: mCheckinClick, mCheckinInput: mCheckinInput };
 };

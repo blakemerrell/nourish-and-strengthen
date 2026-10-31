@@ -289,6 +289,16 @@ module.exports = {
       await r.evaluate(() => [...document.querySelectorAll('#macroSlots .mfl-nmw')].some((w) =>
         /Protein Crio Brew/.test(w.textContent) && /24 oz/.test((w.querySelector('.mfl-hyd') || {}).textContent || ''))),
       await r.evaluate(() => [...document.querySelectorAll('#macroSlots .mfl-hyd')].map((b) => b.textContent).join(' | ')));
+    /* Once, not twice: the ounces under the name, and not again as "oz
+       fluid" on the macro line under it (Blake, 2026-10-30). */
+    for (let n = 0; n < 3 && !(await r.$('#macroSlots .mfl-q')); n++) {   // to Details, where each line has its macro line
+      await r.click('#macroViews'); await r.waitForTimeout(150);
+    }
+    const once = await r.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray-f')]
+      .filter((f) => f.querySelector('.mfl-hyd') && f.querySelector('.mfl-q'))
+      .map((f) => !f.querySelector('.mhyd-chip')));
+    t.ok('and says it once: no second "oz fluid" on a line that already wears its ounces',
+      once.length > 0 && once.every(Boolean), JSON.stringify(once));
     await r.context().close();
 
     /* ---- a drink named for its flavour --------------------------------

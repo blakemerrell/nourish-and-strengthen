@@ -7228,6 +7228,13 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .mfl-amt .mtray-fm small i { font-style: normal; }
 @media (max-width: 380px) {
   .mfl-amt .mtray-fm small { display: none; }
+  /* A drink's droplet widens its pill by ~30px, and at 320 the pill came to
+     186px of a 180px column: the name's button, which never shrinks below a
+     thumb, was drawn under it. Tighter padding won a few pixels, not the
+     forty needed, so on a narrow phone such a pill keeps its measure and
+     the droplet and lets the grams go; they are still in the pill's label
+     and on the dial when the line opens. */
+  .mfl-amt.has-hyd:not(.single) .sp-g { display: none; }
 }
 .mfl-amt .mtray-fm .mcard-lk { width: 11px; height: 11px; margin-right: 3px; vertical-align: -1px; color: var(--ochre-text); }
 .mfl-amt .sp-r {

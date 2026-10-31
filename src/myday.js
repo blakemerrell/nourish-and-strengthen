@@ -105,6 +105,7 @@
   var I_SWAP = ICO('<path d="M4 8h13"/><path d="M14 4.5 17.5 8 14 11.5"/><path d="M20 16H7"/><path d="M10 12.5 6.5 16l3.5 3.5"/>');
   var I_PIN = ICO('<path d="M8.5 3.5h7M12 3.5v6.4M9.6 9.9c-.6 2.5-2.2 4-3.9 4.6h12.6c-1.7-.6-3.3-2.1-3.9-4.6Z"/><path d="M12 14.5v6"/>');
   var I_STAR = ICO('<path d="M12 3.8l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8Z"/>');
+  var I_DROP = ICO('<path d="M12 3s-6.3 7.2-6.3 12a6.3 6.3 0 0 0 12.6 0C18.3 10.2 12 3 12 3Z"/>');
   var I_WEIGH = ICO('<path d="M4 20h16l-2-11H6z"/><circle cx="12" cy="6" r="2"/><path d="M10 14h4"/>');
   var I_BIN = ICO('<path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 12.5h9l1-12.5"/><path d="M10.5 11v5"/><path d="M13.5 11v5"/>');
   var I_DOTS = '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></g></svg>';
@@ -364,6 +365,11 @@
     var pinned = M.pins.some(function (p) { return p.id === it.id; });
     var spent = it.eaten && S.mEdit !== tag;
     var dialU = mDialG(r) ? 'g' : mDialUnit(r);
+    /* The droplet in the shut line's pill sits inside the pill's button, so
+       it cannot take focus of its own; a keyboard or a screen reader had no
+       way to mute a drink's water. The open line carries the same switch as
+       one of its keys (the click handler is the pill droplet's). */
+    var fOz = mItemFluidOz(r, it.x);
     var amount = S.mType === tag
       ? '<span class="mstep-x mitem-amt mitem-typing"><input class="mstep-in" type="text" inputmode="decimal" autocomplete="off" data-mtypein="' + tag + '" ' +
           'aria-label="' + name + ', in ' + esc(dialU) + '" value="" placeholder="' + esc(String(mDialFromX(r, it.x))) + '"><i>' + esc(dialU) + '</i></span>'
@@ -380,6 +386,8 @@
               (pinned ? 'Unpin ' + name + ' from ' + esc(M.name) : 'Pin ' + name + ' to ' + esc(M.name) + ' every day') + '">' + I_PIN + '</button>' : '') +
             (mCanFav(r) ? '<button class="mfl-ic" data-mfav="' + esc(String(r.id)) + '" aria-pressed="' + (mIsFav(r) ? 'true' : 'false') + '" aria-label="' +
               (mIsFav(r) ? 'Take ' + name + ' out of favourites' : 'Favourite ' + name) + '">' + I_STAR + '</button>' : '') +
+            (fOz > 0 ? '<button class="mfl-ic" data-mhyd="' + tag + '" aria-pressed="' + (it.nh ? 'false' : 'true') + '" aria-label="' +
+              (it.nh ? 'Count ' + name + ' toward hydration, ' + fOz + ' oz' : 'Stop counting ' + name + ' toward hydration, ' + fOz + ' oz') + '">' + I_DROP + '</button>' : '') +
           '</span>' +
           '<span class="mfl-dial' + (spent ? ' spent' : '') + '">' +
             '<button class="mfl-k" data-mstep="' + tag + ':down"' + (spent ? ' disabled' : '') + ' aria-label="Less ' + name + '">' + I_MINUS + '</button>' +

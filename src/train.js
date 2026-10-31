@@ -12989,7 +12989,12 @@
       if (wo.mc && mcValid(wo.mc) && mcScore(wo.mc)) {
         lines.push('Circuit: ' + mcSay(wo.mc) + ' \u2014 ' + mcScore(wo.mc));
       }
-      var stCount = setsOf(wo), volTotal = volOf(wo);
+      /* setsOf and volOf trust wo.x to be a list of exercises with sets,
+         which a saved workout always is; what Nourish hands over need not
+         be (a workout with no x threw here, the catch around the bridge
+         swallowed it, and nothing reached Health Connect at all). */
+      var safe = { u: wo.u, x: (Array.isArray(wo.x) ? wo.x : []).filter(function (x) { return x && Array.isArray(x.s); }) };
+      var stCount = setsOf(safe), volTotal = volOf(safe);
       if (stCount > 0 || volTotal > 0) {
         lines.push(stCount + (stCount === 1 ? ' set' : ' sets') + (volTotal > 0 ? ' \u00b7 ' + fmtBig(volTotal) + ' ' + u : ''));
       }

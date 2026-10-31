@@ -427,7 +427,8 @@
       return shell(
         '<button class="mcasc-fold" data-msend="open" aria-expanded="false">' +
           '<span class="mcasc-pill-i" aria-hidden="true">i</span>' +
-          '<span class="mcasc-pill-tx">' + pillSay + '</span>' +
+          // the eye's short version; a reader hears the full one below, once
+          '<span class="mcasc-pill-tx" aria-hidden="true">' + pillSay + '</span>' +
           '<span class="mcasc-foldt vis-hidden">' +
             '<span class="mcasc-t">' + head + '</span> ' +
             '<span class="mcasc-s">' + said + '</span>' +

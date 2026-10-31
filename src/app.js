@@ -3262,6 +3262,7 @@
   var healthPulling = false;
   var healthMealSig = {};
   var healthDaySynced = {};
+  var healthWoSynced = {};
   var healthMeta = { status: '', lastSync: 0, todaySteps: 0 };
   var MHEALTH_LABELS = { b: 'Breakfast', l: 'Lunch', d: 'Dinner', s: 'Snacks' };
 
@@ -3360,15 +3361,35 @@
     if (!(wo && window.NourishAndroid && window.NourishAndroid.writeWorkout)) return;
     var dk = /^\d{4}-\d{2}-\d{2}$/.test(String(k || '')) ? k : todayKey();
     try {
-      window.NourishAndroid.writeWorkout(JSON.stringify({
+      var payload = (window.Train && window.Train.healthWorkout && window.Train.healthWorkout(wo)) || {
         id: 'nourish-wo-' + (wo.id || dk),
         dayKey: dk,
         startMs: Number(wo.st) || (Date.now() - 3600000),
         endMs: Number(wo.en) || Date.now(),
         title: wo.n ? 'Strengthen \u00b7 ' + wo.n : 'Strengthen Workout',
-        notes: wo.nt || ''
-      }));
+        notes: wo.nt || '',
+        exercises: []
+      };
+      var sig = payload.startMs + ':' + payload.endMs + ':' + payload.title + ':' + payload.notes;
+      healthWoSynced[payload.id] = sig;
+      window.NourishAndroid.writeWorkout(JSON.stringify(payload));
     } catch (e) { /* native bridge unavailable */ }
+  }
+
+  function mHealthSyncRecentWorkouts() {
+    if (!(window.NourishAndroid && window.NourishAndroid.writeWorkout && window.Train && window.Train.recentWorkouts)) return;
+    try {
+      var list = window.Train.recentWorkouts(30) || [];
+      list.forEach(function (wo) {
+        if (!wo) return;
+        var wid = 'nourish-wo-' + (wo.id || wo.dk || '');
+        var payload = window.Train.healthWorkout ? window.Train.healthWorkout(wo) : null;
+        if (!payload) return;
+        var sig = payload.startMs + ':' + payload.endMs + ':' + payload.title + ':' + payload.notes;
+        if (healthWoSynced[wid] === sig) return;
+        mHealthPushWorkout(wo.dk, wo);
+      });
+    } catch (e) { /* ignore */ }
   }
 
   function healthRefreshStatus() {
@@ -3447,7 +3468,10 @@
         });
       }
       if (changed) dinerKeep();
-      if (healthMeta.status === 'granted') mHealthSyncRecentMeals();
+      if (healthMeta.status === 'granted') {
+        mHealthSyncRecentMeals();
+        mHealthSyncRecentWorkouts();
+      }
       if (S.view === 'today' && window.Today) window.Today.render();
       if (S.view === 'macros') renderMacros();
       if (S.view === 'train' && window.Train) window.Train.render();

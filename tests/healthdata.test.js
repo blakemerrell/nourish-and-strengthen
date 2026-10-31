@@ -94,5 +94,45 @@ module.exports = { name: 'Health Connect, all of it that makes sense', async run
   t.ok('Strengthen says it over the session you are about to start',
     /^Under-recovered · resting HR 61/.test(ready) && /flat day is information/.test(ready), ready);
   if (process.env.SHOT) await p.screenshot({ path: process.env.SHOT.replace('.png', '-train.png') });
+
+  /* Outgoing workout sync to Health Connect includes specific exercises, sets, weights, reps, and recent backfill */
+  const syncedWo = await p.evaluate((tk) => {
+    const pushed = [];
+    window.NourishAndroid = {
+      getHealthStatus: () => JSON.stringify({ available: true, status: 'granted', lastSync: Date.now() }),
+      writeWorkout: (raw) => pushed.push(JSON.parse(raw)),
+      writeNutrition: () => {},
+      writeWeight: () => {}
+    };
+    const st = Date.now() - 2 * 86400000;
+    const wo = {
+      id: 'w_test_1', n: 'Upper A', dk: tk, st, en: st + 45 * 60000, u: 'kg',
+      nt: 'Felt strong',
+      x: [
+        { e: 'db-bench', s: [{ w: 36.287, r: 10 }, { w: 36.287, r: 9 }] },
+        { e: 'lat-pd', s: [{ w: 68.039, r: 12 }] }
+      ]
+    };
+    const rawT = JSON.parse(localStorage.getItem('bsc.train') || '{}');
+    rawT.wo = rawT.wo || {};
+    rawT.wo[wo.id] = wo;
+    localStorage.setItem('bsc.train', JSON.stringify(rawT));
+    window.Train._.reload();
+    window.Health.onData(JSON.stringify({ status: 'granted', syncedAt: Date.now(), days: {} }));
+    return pushed;
+  }, today);
+  t.ok('Strengthen workouts sync specific exercises, weights, reps, and per-exercise segments to Health Connect (including 30-day backfill)',
+    syncedWo.length === 1 &&
+      syncedWo[0].title === 'Strengthen · Upper A' &&
+      /Dumbbell Bench Press: 80 lb × 10, 80 lb × 9/.test(syncedWo[0].notes) &&
+      /Lat Pulldown: 150 lb × 12/.test(syncedWo[0].notes) &&
+      Array.isArray(syncedWo[0].exercises) &&
+      syncedWo[0].exercises.length === 2 &&
+      syncedWo[0].exercises[0].e === 'db-bench' &&
+      syncedWo[0].exercises[0].reps === 19 &&
+      syncedWo[0].exercises[1].e === 'lat-pd' &&
+      syncedWo[0].exercises[1].reps === 12,
+    JSON.stringify(syncedWo));
+
   await p.context().close();
 } };

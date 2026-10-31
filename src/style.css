@@ -8548,11 +8548,13 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   pointer-events: none;
   overflow: visible;
 }
-.mwk-dot.is-on {
-  filter: drop-shadow(0 0 2px currentColor);
+/* The rim's three tracks (weekstrip.js): on target glows in the pill's
+   green, over glows orange and stops at the end of its own third. */
+.mwk-tr-ate.is-on {
+  filter: drop-shadow(0 0 2px var(--pill-fill));
 }
-.mwk-dot.is-over {
-  filter: drop-shadow(0 0 3px var(--pill-fire));
+.mwk-tr-ate.is-over, .mwk-tr-l.is-over {
+  filter: drop-shadow(0 0 3px var(--pill-fire)) drop-shadow(0 0 1px var(--pill-fire));
 }
 #view-macros .mwk-b {
   position: absolute;

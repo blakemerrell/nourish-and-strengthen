@@ -67,7 +67,7 @@
   function mPillTrayHTML(k, day, targets, slots, tot, tK, fib, fibFloor, na, naCap, waterOz, goalOz) {
     var train = mIsTrainingDay ? mIsTrainingDay(k) : false;
     var trained = mTrainedAt ? mTrainedAt(k) > 0 : false;
-    var bigDots = mPillDotsSVG ? mPillDotsSVG(80, 170, 26, 10, targets, tot.all) : '';
+    var bigDots = mPillDotsSVG ? mPillDotsSVG(80, 170, 5, 11, targets, tot) : '';
     var fibStyle = mFibreIconStyle ? mFibreIconStyle(fib, fibFloor) : '';
     var saltStyle = mSaltIconStyle ? mSaltIconStyle(na, naCap) : '';
     var gymStyle = mGymIconStyle ? mGymIconStyle(train, trained) : '';

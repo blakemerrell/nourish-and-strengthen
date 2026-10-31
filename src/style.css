@@ -9088,3 +9088,13 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   background: transparent; border: 1px solid var(--line-soft); color: var(--muted); font-family: var(--sans);
 }
 .mc-sub button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink); font-weight: 600; }
+.ds-rec.good b { color: var(--green); }
+.ds-rec.fair b { color: var(--ochre-text); }
+.ds-rec.low b { color: var(--dial-over); }
+
+/* Strengthen's recovery line over today's session (train.js readyLine). */
+.tr-ready { font-size: 0.8125rem; color: var(--muted); line-height: 1.45; margin: 4px 0 8px; }
+.tr-ready b { color: var(--ink); }
+.tr-ready.good b { color: var(--green); }
+.tr-ready.fair b { color: var(--ochre-text); }
+.tr-ready.low b { color: var(--dial-over); }

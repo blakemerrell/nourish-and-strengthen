@@ -630,6 +630,7 @@ src/myday.js          My Day, drawn: renderMacros, the day picker, the day with 
 src/gauges.js         a meal's numbers at a glance: the assumed day, the gauge, the pills
 src/charts.js         the charts: four process behaviour charts over the mornings and the meals
 src/photos.js         progress photos for Trends › Recomp, a front and a side a month, kept on the phone only (IndexedDB), never synced
+src/healthdata.js     what Health Connect knows beyond steps, sleep and weight (heart, calories, workouts, body, breathing), kept on the phone only, never synced
 src/keep.js           keeping plates together as one food of your own
 src/favpick.js        "What do you actually eat": the favourite star as a grid of chips
 src/copyfrom.js       a meal from another day

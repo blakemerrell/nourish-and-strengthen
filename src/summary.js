@@ -270,6 +270,21 @@
       mini(sl / 8, 'var(--pill-cool)', slSay, 'sleep') +
       mini(lift ? 1 : 0, 'var(--pill-p)', lift ? lift.sets : '\u2014', lift ? 'sets lifted' : 'no lifting') +
     '</div>' +
+    (function () {
+      /* The watch's say, under the rings: how recovered, and any workout it
+         recorded that Strengthen did not (src/healthdata.js). */
+      var HD = window.HealthData;
+      if (!HD) return '';
+      var rec = HD.recovery(k, sl), ex = HD.sessions(k), out = '';
+      if (rec && (typeof HD.day(k).rhr === 'number' || typeof HD.day(k).hrv === 'number')) {
+        out += '<div class="ds-lift ds-rec ' + rec.level + '"><b>' + esc(rec.word) + '</b> \u00b7 ' + esc(rec.why.join(' \u00b7 ')) + '</div>';
+      }
+      ex.forEach(function (e) {
+        out += '<div class="ds-lift"><b>' + esc(e.title || e.type) + '</b> \u00b7 ' + e.min + ' min' +
+          (e.hrAvg ? ' \u00b7 avg ' + e.hrAvg + ' bpm' : '') + (e.kcal ? ' \u00b7 ' + e.kcal + ' kcal' : '') + ' (watch)</div>';
+      });
+      return out;
+    })() +
     (lift ? '<div class="ds-lift"><b>' + esc(lift.n) + '</b>' +
       (lift.mins ? ' \u00b7 ' + lift.mins + ' min' : '') +
       (lift.volPct !== null ? ' \u00b7 weight moved ' + (lift.volPct > 0 ? '+' : lift.volPct < 0 ? '\u2212' : '') + Math.abs(lift.volPct) + '% on last time' : '') +

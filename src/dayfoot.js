@@ -245,20 +245,62 @@
         '<div class="mpt-tv"><b>' + (trained ? 'Strength &check;' : 'Lifting day') + '</b></div>' +
       '</div>');
     }
+    /* What the watch knows beyond steps and sleep (src/healthdata.js,
+       2026-10-30): how recovered you are this morning, the night's stages,
+       the calories the watch saw you burn moving, workouts it recorded that
+       Strengthen did not (golf), and body fat when a scale measures it. */
+    var HD = window.HealthData;
+    var hd = HD ? HD.day(k) : {};
+    var hm = function (m) { var h = Math.floor(m / 60), r = Math.round(m % 60); return h ? h + 'h' + (r ? ' ' + r + 'm' : '') : r + 'm'; };
+    var rec = HD ? HD.recovery(k, sleepHrs) : null;
+    if (rec && (typeof hd.rhr === 'number' || typeof hd.hrv === 'number')) {
+      var rCol = rec.level === 'good' ? 'var(--pill-p)' : rec.level === 'fair' ? 'var(--pill-amber)' : 'var(--pill-fire)';
+      moveTiles.push('<div class="mpt-tile mpt-wo" data-mrec="' + rec.level + '">' +
+        '<div class="mpt-th"><span class="mpt-tn">Recovery</span><span class="mpt-tt" style="color:' + rCol + '">' + esc(rec.word.toLowerCase()) + '</span></div>' +
+        '<div class="mpt-wo-s">' + esc(rec.why.join(' \u00b7 ')) + '</div>' +
+      '</div>');
+    }
+    (HD ? HD.sessions(k) : []).forEach(function (e) {
+      moveTiles.push('<div class="mpt-tile mpt-wo" data-mwatch="1">' +
+        '<div class="mpt-th"><span class="mpt-tn">' + esc(e.type) + '</span><span class="mpt-tt">watch</span></div>' +
+        '<div class="mpt-tv"><b>' + (e.title && e.title !== e.type ? esc(e.title) + '</b> <span class="mpt-wo-s">' + hm(e.min) + '</span>' : hm(e.min) + '</b>') + '</div>' +
+        '<div class="mpt-wo-s">' + [
+          e.hrAvg ? 'avg ' + e.hrAvg + ' bpm' + (e.hrMax ? ', peak ' + e.hrMax : '') : '',
+          e.kcal ? e.kcal.toLocaleString() + ' kcal' : '',
+          e.distM ? (Math.round(e.distM / 160.934) / 10) + ' mi' : ''
+        ].filter(Boolean).join(' \u00b7 ') + '</div>' +
+      '</div>');
+    });
     if (sleepHrs > 0) {
       var sH = Math.floor(sleepHrs);
       var sM = Math.round((sleepHrs - sH) * 60);
+      var stg = hd.sleepStages || null;
       moveTiles.push('<div class="mpt-tile">' +
         '<div class="mpt-th"><span class="mpt-tn">Sleep</span></div>' +
         '<div class="mpt-tv num"><b>' + sH + 'h' + (sM ? ' ' + sM + 'm' : '') + '</b></div>' +
+        (stg && (stg.deep || stg.rem) ? '<div class="mpt-wo-s">' + [
+          stg.deep ? 'deep ' + hm(stg.deep) : '', stg.rem ? 'REM ' + hm(stg.rem) : ''
+        ].filter(Boolean).join(' \u00b7 ') + '</div>' : '') +
+      '</div>');
+    }
+    if (hd.actKcal > 0) {
+      moveTiles.push('<div class="mpt-tile" data-mact="1">' +
+        '<div class="mpt-th"><span class="mpt-tn">Active</span><span class="mpt-tt">watch</span></div>' +
+        '<div class="mpt-tv num"><b>' + Math.round(hd.actKcal).toLocaleString() + '</b> kcal</div>' +
+        (hd.distM > 0 ? '<div class="mpt-wo-s">' + (Math.round(hd.distM / 160.934) / 10) + ' mi</div>' : '') +
       '</div>');
     }
     if (dayW > 0 && mWShow && mWUnit) {
       moveTiles.push('<div class="mpt-tile">' +
         '<div class="mpt-th"><span class="mpt-tn">Weight</span></div>' +
         '<div class="mpt-tv num"><b>' + esc(mWShow(dayW)) + ' ' + esc(mWUnit()) + '</b></div>' +
+        (hd.bodyFat > 0 ? '<div class="mpt-wo-s">' + hd.bodyFat + '% body fat</div>' : '') +
       '</div>');
     }
+    /* The full-width tiles first, so a lone half tile never leaves a hole
+       beside a wide one; the halves pair up underneath. */
+    moveTiles = moveTiles.filter(function (t) { return t.indexOf('mpt-wo') > 0; })
+      .concat(moveTiles.filter(function (t) { return t.indexOf('mpt-wo') < 0; }));
     var moveSection = moveTiles.length
       ? '<div class="mpt-sec">' +
           '<div class="mpt-sh">MOVE &amp; RECOVER</div>' +

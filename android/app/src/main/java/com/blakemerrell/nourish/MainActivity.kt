@@ -29,12 +29,26 @@ import androidx.credentials.GetCredentialRequest
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
+import androidx.health.connect.client.records.BodyFatRecord
+import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
+import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.HeartRateVariabilityRmssdRecord
+import androidx.health.connect.client.records.LeanBodyMassRecord
 import androidx.health.connect.client.records.MealType
 import androidx.health.connect.client.records.NutritionRecord
+import androidx.health.connect.client.records.OxygenSaturationRecord
+import androidx.health.connect.client.records.Record
+import androidx.health.connect.client.records.RespiratoryRateRecord
+import androidx.health.connect.client.records.RestingHeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
+import androidx.health.connect.client.records.Vo2MaxRecord
 import androidx.health.connect.client.records.WeightRecord
+import androidx.health.connect.client.aggregate.AggregateMetric
+import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -60,7 +74,9 @@ import java.net.URL
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
+import java.time.Period
 import java.time.ZoneId
+import kotlin.reflect.KClass
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
 
@@ -75,14 +91,29 @@ class MainActivity : AppCompatActivity() {
         private const val OTA_BASE_URL = "https://blakemerrell.github.io/nourish-and-strengthen"
     }
 
-    private val healthPermissions = setOf(
-        HealthPermission.getReadPermission(StepsRecord::class),
-        HealthPermission.getReadPermission(SleepSessionRecord::class),
-        HealthPermission.getReadPermission(WeightRecord::class),
-        HealthPermission.getWritePermission(WeightRecord::class),
-        HealthPermission.getWritePermission(ExerciseSessionRecord::class),
-        HealthPermission.getWritePermission(NutritionRecord::class)
+    /* Everything Health Connect holds that this app has a use for
+       (Blake, 2026-10-30: "get it so we get ALL of health connect data that
+       makes sense to get on this end"). Read: activity (steps, distance,
+       active and total calories, workouts from the watch), the heart
+       (resting rate, variability, and the rate during a workout), sleep with
+       its stages, the body (weight, body fat, lean mass, VO2 max) and the
+       night's breathing (oxygen saturation, respiratory rate). Left out on
+       purpose: hydration and nutrition reads, which would count food and
+       water this app already logs a second time. Write: as before. */
+    private val readTypes: List<KClass<out Record>> = listOf(
+        StepsRecord::class, SleepSessionRecord::class, WeightRecord::class,
+        DistanceRecord::class, ActiveCaloriesBurnedRecord::class, TotalCaloriesBurnedRecord::class,
+        ExerciseSessionRecord::class, HeartRateRecord::class, RestingHeartRateRecord::class,
+        HeartRateVariabilityRmssdRecord::class, BodyFatRecord::class, LeanBodyMassRecord::class,
+        Vo2MaxRecord::class, OxygenSaturationRecord::class, RespiratoryRateRecord::class
     )
+
+    private val healthPermissions: Set<String> =
+        readTypes.map { HealthPermission.getReadPermission(it) }.toSet() + setOf(
+            HealthPermission.getWritePermission(WeightRecord::class),
+            HealthPermission.getWritePermission(ExerciseSessionRecord::class),
+            HealthPermission.getWritePermission(NutritionRecord::class)
+        )
 
     private val requestHealthPermissionsLauncher = registerForActivityResult(
         PermissionController.createRequestPermissionResultContract()
@@ -293,6 +324,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         lifecycleScope.launch {
             if (currentHealthStatus() == "granted") {
+                askForNewPermissionsOnce()
                 syncHealthDataToWeb()
             }
         }
@@ -484,6 +516,186 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /* A phone that connected before this version granted steps, sleep and
+       weight only. Ask once for what has been added since, then leave it to
+       the Connect button in Settings: asking on every open would nag. */
+    private suspend fun askForNewPermissionsOnce() {
+        try {
+            val client = HealthConnectClient.getOrCreate(this@MainActivity)
+            val granted = client.permissionController.getGrantedPermissions()
+            val missing = healthPermissions - granted
+            val askedFor = prefs().getInt("perm_ask_count", 0)
+            if (missing.isNotEmpty() && askedFor < healthPermissions.size) {
+                prefs().edit().putInt("perm_ask_count", healthPermissions.size).apply()
+                withContext(Dispatchers.Main) {
+                    requestHealthPermissionsLauncher.launch(healthPermissions)
+                }
+            }
+        } catch (_: Exception) {
+            // nothing asked; the Settings button still can
+        }
+    }
+
+    private fun exerciseName(t: Int): String = when (t) {
+        ExerciseSessionRecord.EXERCISE_TYPE_GOLF -> "Golf"
+        ExerciseSessionRecord.EXERCISE_TYPE_WALKING -> "Walk"
+        ExerciseSessionRecord.EXERCISE_TYPE_RUNNING -> "Run"
+        ExerciseSessionRecord.EXERCISE_TYPE_RUNNING_TREADMILL -> "Treadmill run"
+        ExerciseSessionRecord.EXERCISE_TYPE_BIKING -> "Ride"
+        ExerciseSessionRecord.EXERCISE_TYPE_BIKING_STATIONARY -> "Bike"
+        ExerciseSessionRecord.EXERCISE_TYPE_HIKING -> "Hike"
+        ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING -> "Strength"
+        ExerciseSessionRecord.EXERCISE_TYPE_WEIGHTLIFTING -> "Weights"
+        ExerciseSessionRecord.EXERCISE_TYPE_SWIMMING_POOL -> "Swim"
+        ExerciseSessionRecord.EXERCISE_TYPE_SWIMMING_OPEN_WATER -> "Swim"
+        ExerciseSessionRecord.EXERCISE_TYPE_YOGA -> "Yoga"
+        ExerciseSessionRecord.EXERCISE_TYPE_ELLIPTICAL -> "Elliptical"
+        ExerciseSessionRecord.EXERCISE_TYPE_ROWING_MACHINE -> "Rowing"
+        ExerciseSessionRecord.EXERCISE_TYPE_STAIR_CLIMBING_MACHINE -> "Stairs"
+        ExerciseSessionRecord.EXERCISE_TYPE_HIGH_INTENSITY_INTERVAL_TRAINING -> "HIIT"
+        ExerciseSessionRecord.EXERCISE_TYPE_TENNIS -> "Tennis"
+        ExerciseSessionRecord.EXERCISE_TYPE_BASKETBALL -> "Basketball"
+        ExerciseSessionRecord.EXERCISE_TYPE_SKIING -> "Skiing"
+        ExerciseSessionRecord.EXERCISE_TYPE_SNOWBOARDING -> "Snowboarding"
+        else -> "Workout"
+    }
+
+    /* The extra reads, all over the same thirty days (as far back as Health
+       Connect lets an app read without the history permission), merged into
+       the day objects the web side already takes. Each block stands alone:
+       a type not granted, or one that throws, leaves the rest untouched. */
+    private suspend fun readExtras(
+        client: HealthConnectClient,
+        granted: Set<String>,
+        zone: ZoneId,
+        startDay: LocalDate,
+        today: LocalDate,
+        daysJson: JSONObject
+    ): org.json.JSONArray {
+        fun can(t: KClass<out Record>) = granted.contains(HealthPermission.getReadPermission(t))
+        fun dayOf(k: String): JSONObject = daysJson.optJSONObject(k) ?: JSONObject().also { daysJson.put(k, it) }
+        val from = startDay.atStartOfDay(zone).toInstant()
+        val to = today.plusDays(1).atStartOfDay(zone).toInstant()
+        val range = TimeRangeFilter.between(from, to)
+
+        // Day totals in one grouped call: only the metrics granted, since one
+        // missing permission fails the whole request.
+        val metrics = mutableSetOf<AggregateMetric<*>>()
+        if (can(DistanceRecord::class)) metrics.add(DistanceRecord.DISTANCE_TOTAL)
+        if (can(ActiveCaloriesBurnedRecord::class)) metrics.add(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL)
+        if (can(TotalCaloriesBurnedRecord::class)) metrics.add(TotalCaloriesBurnedRecord.ENERGY_TOTAL)
+        if (can(RestingHeartRateRecord::class)) metrics.add(RestingHeartRateRecord.BPM_AVG)
+        if (metrics.isNotEmpty()) {
+            try {
+                val rows = client.aggregateGroupByPeriod(
+                    AggregateGroupByPeriodRequest(
+                        metrics = metrics,
+                        timeRangeFilter = TimeRangeFilter.between(
+                            startDay.atStartOfDay(), today.plusDays(1).atStartOfDay()
+                        ),
+                        timeRangeSlicer = Period.ofDays(1)
+                    )
+                )
+                for (r in rows) {
+                    val k = r.startTime.toLocalDate().toString()
+                    val res = r.result
+                    res[DistanceRecord.DISTANCE_TOTAL]?.let { if (it.inMeters > 0) dayOf(k).put("distM", it.inMeters.roundToInt()) }
+                    res[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.let { if (it.inKilocalories > 0) dayOf(k).put("actKcal", it.inKilocalories.roundToInt()) }
+                    res[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.let { if (it.inKilocalories > 0) dayOf(k).put("totKcal", it.inKilocalories.roundToInt()) }
+                    res[RestingHeartRateRecord.BPM_AVG]?.let { if (it > 0) dayOf(k).put("rhr", it) }
+                }
+            } catch (_: Exception) {
+                // no day totals this time
+            }
+        }
+
+        // Heart rate variability: the day's mean RMSSD.
+        if (can(HeartRateVariabilityRmssdRecord::class)) {
+            try {
+                val byDay = mutableMapOf<String, MutableList<Double>>()
+                client.readRecords(ReadRecordsRequest(HeartRateVariabilityRmssdRecord::class, range)).records.forEach {
+                    byDay.getOrPut(it.time.atZone(zone).toLocalDate().toString()) { mutableListOf() }
+                        .add(it.heartRateVariabilityMillis)
+                }
+                for ((k, v) in byDay) dayOf(k).put("hrv", (v.average() * 10).roundToInt() / 10.0)
+            } catch (_: Exception) { }
+        }
+
+        // The body: the day's last reading of each.
+        if (can(BodyFatRecord::class)) {
+            try {
+                client.readRecords(ReadRecordsRequest(BodyFatRecord::class, range)).records
+                    .groupBy { it.time.atZone(zone).toLocalDate().toString() }
+                    .forEach { (k, v) -> v.maxByOrNull { it.time }?.let { dayOf(k).put("bodyFat", (it.percentage.value * 10).roundToInt() / 10.0) } }
+            } catch (_: Exception) { }
+        }
+        if (can(LeanBodyMassRecord::class)) {
+            try {
+                client.readRecords(ReadRecordsRequest(LeanBodyMassRecord::class, range)).records
+                    .groupBy { it.time.atZone(zone).toLocalDate().toString() }
+                    .forEach { (k, v) -> v.maxByOrNull { it.time }?.let { dayOf(k).put("leanLb", (it.mass.inPounds * 10).roundToInt() / 10.0) } }
+            } catch (_: Exception) { }
+        }
+        if (can(Vo2MaxRecord::class)) {
+            try {
+                client.readRecords(ReadRecordsRequest(Vo2MaxRecord::class, range)).records
+                    .groupBy { it.time.atZone(zone).toLocalDate().toString() }
+                    .forEach { (k, v) -> v.maxByOrNull { it.time }?.let { dayOf(k).put("vo2", (it.vo2MillilitersPerMinuteKilogram * 10).roundToInt() / 10.0) } }
+            } catch (_: Exception) { }
+        }
+        // The night's breathing: means, filed on the morning they end in.
+        if (can(OxygenSaturationRecord::class)) {
+            try {
+                client.readRecords(ReadRecordsRequest(OxygenSaturationRecord::class, range)).records
+                    .groupBy { it.time.atZone(zone).toLocalDate().toString() }
+                    .forEach { (k, v) -> dayOf(k).put("spo2", (v.map { it.percentage.value }.average() * 10).roundToInt() / 10.0) }
+            } catch (_: Exception) { }
+        }
+        if (can(RespiratoryRateRecord::class)) {
+            try {
+                client.readRecords(ReadRecordsRequest(RespiratoryRateRecord::class, range)).records
+                    .groupBy { it.time.atZone(zone).toLocalDate().toString() }
+                    .forEach { (k, v) -> dayOf(k).put("resp", (v.map { it.rate }.average() * 10).roundToInt() / 10.0) }
+            } catch (_: Exception) { }
+        }
+
+        // Workouts from the watch or any other app — not the ones this app
+        // wrote for Strengthen, which the web side already has — each with its
+        // heart rate and calories over its own minutes.
+        val ex = org.json.JSONArray()
+        if (can(ExerciseSessionRecord::class)) {
+            try {
+                val sessions = client.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, range)).records
+                    .filter { it.metadata.dataOrigin.packageName != packageName }
+                for (s in sessions) {
+                    val o = JSONObject()
+                    o.put("d", s.startTime.atZone(zone).toLocalDate().toString())
+                    o.put("type", exerciseName(s.exerciseType))
+                    s.title?.takeIf { it.isNotBlank() }?.let { o.put("title", it.take(80)) }
+                    o.put("st", s.startTime.toEpochMilli())
+                    o.put("en", s.endTime.toEpochMilli())
+                    o.put("min", Duration.between(s.startTime, s.endTime).toMinutes())
+                    o.put("src", s.metadata.dataOrigin.packageName)
+                    val sm = mutableSetOf<AggregateMetric<*>>()
+                    if (can(HeartRateRecord::class)) { sm.add(HeartRateRecord.BPM_AVG); sm.add(HeartRateRecord.BPM_MAX) }
+                    if (can(ActiveCaloriesBurnedRecord::class)) sm.add(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL)
+                    if (can(DistanceRecord::class)) sm.add(DistanceRecord.DISTANCE_TOTAL)
+                    if (sm.isNotEmpty()) {
+                        try {
+                            val a = client.aggregate(AggregateRequest(sm, TimeRangeFilter.between(s.startTime, s.endTime)))
+                            a[HeartRateRecord.BPM_AVG]?.let { o.put("hrAvg", it) }
+                            a[HeartRateRecord.BPM_MAX]?.let { o.put("hrMax", it) }
+                            a[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.let { if (it.inKilocalories > 0) o.put("kcal", it.inKilocalories.roundToInt()) }
+                            a[DistanceRecord.DISTANCE_TOTAL]?.let { if (it.inMeters > 0) o.put("distM", it.inMeters.roundToInt()) }
+                        } catch (_: Exception) { }
+                    }
+                    ex.put(o)
+                }
+            } catch (_: Exception) { }
+        }
+        return ex
+    }
+
     private suspend fun currentHealthStatus(): String = withContext(Dispatchers.IO) {
         val sdkStatus = HealthConnectClient.getSdkStatus(
             this@MainActivity,
@@ -519,7 +731,7 @@ class MainActivity : AppCompatActivity() {
             val granted = client.permissionController.getGrantedPermissions()
             val zone = ZoneId.systemDefault()
             val today = LocalDate.now(zone)
-            val startDay = today.minusDays(14)
+            val startDay = today.minusDays(30)
             val daysJson = JSONObject()
 
             var d = startDay
@@ -585,11 +797,33 @@ class MainActivity : AppCompatActivity() {
                         )
                     ).records
                     val minsByMorning = mutableMapOf<String, Long>()
+                    // the night's stages, in minutes, where the watch recorded them
+                    val stagesByMorning = mutableMapOf<String, MutableMap<String, Long>>()
                     for (s in sleeps) {
                         val morningKey = s.endTime.atZone(zone).toLocalDate().toString()
                         val mins = Duration.between(s.startTime, s.endTime).toMinutes()
                         if (mins > 0) {
                             minsByMorning[morningKey] = (minsByMorning[morningKey] ?: 0L) + mins
+                        }
+                        for (st in s.stages) {
+                            val name = when (st.stage) {
+                                SleepSessionRecord.STAGE_TYPE_DEEP -> "deep"
+                                SleepSessionRecord.STAGE_TYPE_REM -> "rem"
+                                SleepSessionRecord.STAGE_TYPE_LIGHT, SleepSessionRecord.STAGE_TYPE_SLEEPING -> "light"
+                                SleepSessionRecord.STAGE_TYPE_AWAKE, SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED, SleepSessionRecord.STAGE_TYPE_OUT_OF_BED -> "awake"
+                                else -> null
+                            } ?: continue
+                            val m = Duration.between(st.startTime, st.endTime).toMinutes()
+                            val bucket = stagesByMorning.getOrPut(morningKey) { mutableMapOf() }
+                            bucket[name] = (bucket[name] ?: 0L) + m
+                        }
+                    }
+                    for ((k, st) in stagesByMorning) {
+                        val o = JSONObject()
+                        for ((n, m) in st) if (m > 0) o.put(n, m)
+                        if (o.length() > 0) {
+                            val dayObj = daysJson.optJSONObject(k) ?: JSONObject().also { daysJson.put(k, it) }
+                            dayObj.put("sleepStages", o)
                         }
                     }
                     for ((k, mins) in minsByMorning) {
@@ -604,8 +838,11 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            val ex = readExtras(client, granted, zone, startDay, today, daysJson)
+
             val nowMs = System.currentTimeMillis()
             prefs().edit().putLong("last_sync", nowMs).apply()
+            out.put("ex", ex)
             out.put("syncedAt", nowMs)
             out.put("days", daysJson)
             out

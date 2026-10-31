@@ -3548,7 +3548,7 @@
      names here, as declarations, so they answer from anywhere in this file. */
   var WEEKSTRIP = window.HiveParts.weekstrip({ MDAYS: MDAYS, M_MONS: M_MONS, M_WDAYS: M_WDAYS, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mDay: mDay, mDayDone: mDayDone, mDayJudged: mDayJudged, mDayTargets: mDayTargets, mEarliestKey: mEarliestKey, mIsTrainingDay: mIsTrainingDay, mStrengthOn: mStrengthOn, mLatestKey: mLatestKey, mTotals: mTotals, mTrainedAt: mTrainedAt, mVerdict: mVerdict });
   function mWeekHTML(k, todayK) { return WEEKSTRIP.mWeekHTML(k, todayK); }
-  function mPillDotsSVG(w, h, n, d, targets, tot) { return WEEKSTRIP.mPillDotsSVG(w, h, n, d, targets, tot); }
+  function mPillDotsSVG(w, h, sw, fs, targets, tots) { return WEEKSTRIP.mPillDotsSVG(w, h, sw, fs, targets, tots); }
   function mFibreIconStyle(fib, fibFloor) { return WEEKSTRIP.mFibreIconStyle(fib, fibFloor); }
   function mSaltIconStyle(na, naCap) { return WEEKSTRIP.mSaltIconStyle(na, naCap); }
   function mGymIconStyle(train, trained) { return WEEKSTRIP.mGymIconStyle(train, trained); }

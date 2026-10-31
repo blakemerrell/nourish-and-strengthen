@@ -1,6 +1,6 @@
 /* The week you are in, seven pills wide (mWeekHTML): each day's letter,
  * its date, and how it went — calories as the fill, full at target
- * (mPillFillHTML), macros as the dots round the rim, fibre, salt and the
+ * (mPillFillHTML), macros as three tracks round the rim, fibre, salt and the
  * lift glowing inside. No words on it: the colour is the verdict,
  * and the button's label says it to a listener. The longer account is with
  * the code.
@@ -84,66 +84,69 @@
       '<span class="mwk-g" style="bottom:' + tPct.toFixed(1) + '%"></span>';
   }
 
-  /* The rim, in letters. Each macro's arc is drawn in its own initial —
-     P, F, C — rather than in dots, so the racetrack says which arc is which
-     without a legend (Blake, 2026-10-30: "turn those little dots into little
-     letters that fill up and glow with the color scheme"). d is the letter's
-     size in the pill's own units; the heat-map rules are the dots' rules:
-     unlit faint, lit brightening with progress, on target glowing in its own
-     colour, over target in fire. */
-  function mPillDotsSVG(w, h, n, d, targets, tot) {
-    var a = d / 2, R = w / 2 - a, L = h - w, cx = w / 2, cyT = a + R, cyB = a + R + L;
-    var q = Math.PI * R / 2, Pm = 2 * L + 2 * Math.PI * R;
-    function at(s) {
-      var f;
+  /* The rim: three equal tracks, P, F and C, a third of the way round each,
+     starting at the top and running clockwise, with the letter at the head
+     of its own third (Blake, 2026-10-30, after the rim of letters: "make each
+     a equal size track around the pill and just the letter at the start of
+     its 1/3 share of the track"). Equal, not shared out by calories: the
+     arcs used to be sized by each macro's share of the day, so protein's
+     arc was twice fat's and a glance could not compare them.
+   *
+     Two fills on each track. Faint is the plan: what the day's planned food
+     would bring that macro to, eaten or not — "where today ends if I stick
+     to it". Strong is what has been ticked eaten, on the heat map: cool
+     while it is low, the pill's green as it nears the target, glowing green
+     on it. Over, it stops at the end of its own third and glows orange
+     rather than running on into the next macro's track (his call: "Stop and
+     glow orange").
+   *
+     tots is mTotals(day): { all, eaten }. sw is the track's width and fs the
+     letter's size, both in the pill's own units. */
+  function mPillDotsSVG(w, h, sw, fs, targets, tots) {
+    var all = tots && tots.all ? tots.all : null, ate = tots && tots.eaten ? tots.eaten : null;
+    var i = sw / 2 + 0.5, r = w / 2, rr = r - i, x0 = i, x1 = w - i, y0 = i, y1 = h - i;
+    var d = 'M' + r + ',' + y0 + ' A' + rr + ',' + rr + ' 0 0 1 ' + x1 + ',' + (y0 + rr) +
+      ' V' + (y1 - rr) + ' A' + rr + ',' + rr + ' 0 0 1 ' + x0 + ',' + (y1 - rr) +
+      ' V' + (y0 + rr) + ' A' + rr + ',' + rr + ' 0 0 1 ' + r + ',' + y0;
+    /* Where a share of the way round falls on the track's own line, for the
+       letters, which sit on the track at the head of their third — set
+       inside the rim they were hidden under the pill's body. */
+    function at(frac, ins) {
+      var R = r - ins, L = h - w, cx = r, cyT = r, cyB = r + L;
+      var q = Math.PI * R / 2, s = frac * (2 * L + 4 * q), f;
       if (s < q) { f = s / R; return [cx + R * Math.sin(f), cyT - R * Math.cos(f)]; }
-      s -= q; if (s < L) return [w - a, cyT + s];
+      s -= q; if (s < L) return [w - ins, cyT + s];
       s -= L; if (s < 2 * q) { f = s / R; return [cx + R * Math.cos(f), cyB + R * Math.sin(f)]; }
-      s -= 2 * q; if (s < L) return [a, cyB - s];
+      s -= 2 * q; if (s < L) return [ins, cyB - s];
       s -= L; f = s / R; return [cx - R * Math.cos(f), cyT - R * Math.sin(f)];
     }
-    var pK = (targets.p || 0) * 4, fK = (targets.f || 0) * 9, cK = (targets.c || 0) * 4;
-    var totK = pK + fK + cK;
-    var shP = totK > 0 ? pK / totK : 0.40;
-    var shF = totK > 0 ? fK / totK : 0.30;
-    var shC = totK > 0 ? Math.max(0, 1 - shP - shF) : 0.30;
-    var arcs = [
-      ['p', shP, 'var(--pill-p)'],
-      ['f', shF, 'var(--pill-f)'],
-      ['c', shC, 'var(--pill-c)']
-    ];
-    var slots = n + 3, out = [];
-    var i = 0, used = 0;
-    arcs.forEach(function (arc, si) {
-      var m = arc[0], sh = arc[1], col = arc[2];
-      var cnt = si === 2 ? Math.max(1, n - used) : Math.max(1, Math.round(n * sh));
-      if (si < 2 && used + cnt >= n) cnt = Math.max(1, n - used - (2 - si));
-      used += cnt;
-      var want = Math.max(1, targets[m] || 1);
-      var got = tot ? (tot[m] || 0) : 0;
-      var prog = got > 0 && targets[m] > 0 ? got / want : 0;
-      var v = got > 0 && targets[m] > 0 ? mVerdict(m, got, want) : '';
-      var lit = Math.round(cnt * Math.min(prog, 1));
-      for (var j = 0; j < cnt; j++, i++) {
-        var pt = at((i / slots) * Pm);
-        var st = 'fill:var(--pill-off);opacity:0.45';
-        var cls = 'mwk-dot';
-        if (j < lit) {
-          if (v === 'over') {
-            st = 'fill:var(--pill-fire)';
-            cls += ' is-over';
-          } else if (v === 'on') {
-            st = 'fill:' + col;
-            cls += ' is-on';
-          } else {
-            st = 'fill:' + col + ';opacity:' + (0.28 + 0.57 * Math.min(1, prog)).toFixed(2);
-          }
-        }
-        out.push('<text class="' + cls + '" x="' + pt[0].toFixed(1) + '" y="' + pt[1].toFixed(1) +
-          '" font-size="' + d + '" text-anchor="middle" dominant-baseline="central" style="' + st + '">' +
-          m.toUpperCase() + '</text>');
-      }
-      i++;
+    /* The letter's room at the head of each third, in the path's units (the
+       whole rim is 300): its own width and a little air either side. */
+    var per = 2 * (h - w) + 2 * Math.PI * rr;
+    var LET = (fs * 1.5) * 300 / per;
+    function arc(cls, start, len, st) {
+      if (len <= 0.2) return '';
+      return '<path class="' + cls + '" d="' + d + '" pathLength="300" fill="none" stroke-width="' + sw +
+        '" stroke-linecap="round" stroke-dasharray="' + len.toFixed(1) + ' 300" stroke-dashoffset="' +
+        (-start).toFixed(1) + '" style="' + st + '"/>';
+    }
+    var GAP = 3, SEG = 100 - GAP - LET, out = [];
+    ['p', 'f', 'c'].forEach(function (m, k) {
+      var head = k * 100 + GAP / 2, start = head + LET;
+      var want = targets && targets[m] > 0 ? targets[m] : 0;
+      var plan = want && all ? all[m] / want : 0;
+      var got = want && ate ? ate[m] : 0;
+      var prog = want ? got / want : 0;
+      var v = got > 0 && want ? mVerdict(m, got, want) : '';
+      var col = v === 'over' ? 'var(--pill-fire)' : v === 'on' || prog >= 0.5 ? 'var(--pill-fill)' : 'var(--pill-cool)';
+      out.push(arc('mwk-tr', start, SEG, 'stroke:var(--pill-off);opacity:0.2'));
+      out.push(arc('mwk-tr-plan', start, SEG * Math.min(plan, 1), 'stroke:var(--pill-cool);opacity:0.45'));
+      out.push(arc('mwk-tr-ate' + (v === 'over' ? ' is-over' : v === 'on' ? ' is-on' : ''), start,
+        SEG * Math.min(prog, 1), 'stroke:' + col + (v ? '' : ';opacity:0.85')));
+      var pt = at((head + LET / 2) / 300, i);
+      out.push('<text class="mwk-tr-l' + (v === 'over' ? ' is-over' : '') + '" data-m="' + m + '" x="' + pt[0].toFixed(1) +
+        '" y="' + pt[1].toFixed(1) + '" font-size="' + fs + '" text-anchor="middle" dominant-baseline="central" style="fill:' +
+        (got > 0 ? col : 'var(--pill-off)') + '">' + m.toUpperCase() + '</text>');
     });
     return '<svg class="mwk-dots-svg" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true">' + out.join('') + '</svg>';
   }
@@ -200,7 +203,8 @@
       var trained = (mTrainedAt ? mTrainedAt(dk) > 0 : false) ||
         (mStrengthOn ? mStrengthOn(dk).length > 0 : false);
       var dayObj = MDAYS[dk] ? mDay(dk) : null;
-      var totAll = dayObj ? mTotals(dayObj).all : null;
+      var tots = dayObj ? mTotals(dayObj) : null;
+      var totAll = tots ? tots.all : null;
       var gotRaw = totAll ? totAll.kcal : 0;
       var got = Math.round(gotRaw);
       var state = !got || !tK ? '' : ' ' + mVerdict('kcal', gotRaw, tK);
@@ -214,12 +218,12 @@
       var naCap = 2300;
       var fibVal = totAll ? totAll.fib : 0;
       var naVal = totAll ? totAll.na : 0;
-      /* 40 × 92, the pill's own box (--mwk-h), so the dots trace its edge
+      /* 40 × 92, the pill's own box (--mwk-h), so the tracks trace its edge
          rather than a taller shape shrunk to fit. Shortened from 104
          (Blake, 2026-10-30: "shorten the pills just a little"), which gives
          the meals below another twelve pixels; still room for the three
          icons inside. */
-      var dotsSVG = mPillDotsSVG(40, 92, 16, 7, targets, totAll);
+      var dotsSVG = mPillDotsSVG(40, 92, 3, 8, targets, tots);
       var fibStyle = mFibreIconStyle(fibVal, fibFloor);
       var saltStyle = mSaltIconStyle(naVal, naCap);
       var gymStyle = mGymIconStyle(train, trained);

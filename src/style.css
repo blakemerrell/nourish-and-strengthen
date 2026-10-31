@@ -8217,20 +8217,30 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 }
 .wg-done-btn { width: 100%; min-height: 48px; font-size: 0.96875rem; font-weight: 650; }
 
-/* Nourish Water & Drinks card (#macroSlots .mhyd-card) */
+/* Nourish Water & Drinks modal sheet (.mhyd-sheet / .mhyd-card) */
+.mhyd-sheet {
+  padding-top: 14px;
+}
+.mhyd-card {
+  display: flex; flex-direction: column; gap: 10px;
+}
 #macroSlots .mhyd-card {
   background: var(--card); border: 1px solid var(--line); border-radius: 12px;
-  padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; margin-top: 4px;
+  padding: 10px 12px 12px; margin-top: 4px;
 }
 .mhyd-card.shut {
   padding: 6px 12px;
 }
+.mhyd-top {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
 .mhyd-head {
   width: 100%; min-height: 44px; border: 0; background: none; padding: 0; margin: 0;
   display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
-  font: inherit; color: var(--ink); text-align: left; cursor: pointer;
+  font: inherit; color: var(--ink); text-align: left;
   -webkit-tap-highlight-color: transparent;
 }
+button.mhyd-head { cursor: pointer; }
 .mhyd-head:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; border-radius: 8px; }
 .mhyd-title {
   display: inline-flex; align-items: center; gap: 6px;
@@ -8310,7 +8320,7 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   font-size: 0.8125rem; padding: 2px 8px; border-radius: 999px;
   background: var(--card); border: 1px solid var(--line); color: var(--ink);
 }
-.mhyd-mchip small { color: var(--muted); }
+.mhyd-mchip small { font-size: 0.8125rem; color: var(--muted); }
 .mhyd-caf {
   border-top: 1px solid var(--line-soft); padding-top: 4px;
   display: flex; flex-direction: column; gap: 6px;
@@ -8978,7 +8988,13 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 #view-macros .mday-kc .mpillwk-k b { font-size: 1.25rem; }
 #view-macros .mday-kc .mpillwk-w {
   position: relative; flex: none; display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; padding: 0;
+  width: 28px; height: 28px; padding: 0; cursor: pointer; border-radius: 8px;
+}
+#view-macros .mday-kc .mpillwk-w::after {
+  content: ''; position: absolute; inset: -8px;
+}
+#view-macros .mday-kc .mpillwk-w:focus-visible {
+  outline: 2px solid var(--ochre); outline-offset: 2px;
 }
 #view-macros .mday-kc .mpillwk-w.is-full {
   filter: drop-shadow(0 0 5px rgba(96, 165, 250, 0.55));

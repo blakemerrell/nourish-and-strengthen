@@ -3584,7 +3584,7 @@
 
   /* src/myday.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var MYDAY = window.HiveParts.myday({ MDAYS: MDAYS, MWEIGHTS: MWEIGHTS, M_MONS: M_MONS, S: S, WGAPI: WGAPI, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mpIcon: mpIcon, leaf: leaf, mAhead: mAhead, mBatchStrip: mBatchStrip, mCanFav: mCanFav, mCascadeLineHTML: mCascadeLineHTML, mCopyItems: mCopyItems, mDay: mDay, mDayTargets: mDayTargets, mDialUnit: mDialUnit, mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mEditDay: mEditDay, mFillRoom: mFillRoom, mFoldForget: mFoldForget, mHydChip: mHydChip, mHydrationCardHTML: mHydrationCardHTML, mIcon: mIcon, mIsFav: mIsFav, mItemFluidOz: mItemFluidOz, mLatestKey: mLatestKey, mLongDate: mLongDate, mMacLine: mMacLine, mMarkAccountUI: mMarkAccountUI, mMealAsk: mMealAsk, mMealPillsSay: mMealPillsSay, mReadProfile: mReadProfile, mReadSlots: mReadSlots, mSaltChip: mSaltChip, mSendOf: mSendOf, mServeG: mServeG, mSkipped: mSkipped, mSnapTargets: mSnapTargets, mViewKey: mViewKey, mWaterGoalOz: mWaterGoalOz, mWeekHTML: mWeekHTML, mWhyChip: mWhyChip, mWhyStrip: mWhyStrip, macroFootHTML: macroFootHTML, macroWeighHTML: macroWeighHTML, syncShrunk: syncShrunk, todayKey: todayKey, mDialFromX: mDialFromX, mDialG: mDialG, mDialMeasure: mDialMeasure, mDialText: mDialText, LIVE: LIVE });
+  var MYDAY = window.HiveParts.myday({ MDAYS: MDAYS, MWEIGHTS: MWEIGHTS, M_MONS: M_MONS, S: S, WGAPI: WGAPI, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mpIcon: mpIcon, leaf: leaf, mAhead: mAhead, mBatchStrip: mBatchStrip, mCanFav: mCanFav, mCascadeLineHTML: mCascadeLineHTML, mCopyItems: mCopyItems, mDay: mDay, mDayTargets: mDayTargets, mDialUnit: mDialUnit, mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mEditDay: mEditDay, mFillRoom: mFillRoom, mFoldForget: mFoldForget, mHydChip: mHydChip, mIcon: mIcon, mIsFav: mIsFav, mItemFluidOz: mItemFluidOz, mLatestKey: mLatestKey, mLongDate: mLongDate, mMacLine: mMacLine, mMarkAccountUI: mMarkAccountUI, mMealAsk: mMealAsk, mMealPillsSay: mMealPillsSay, mReadSlots: mReadSlots, mSaltChip: mSaltChip, mSendOf: mSendOf, mServeG: mServeG, mSkipped: mSkipped, mSnapTargets: mSnapTargets, mViewKey: mViewKey, mWeekHTML: mWeekHTML, mWhyChip: mWhyChip, mWhyStrip: mWhyStrip, macroFootHTML: macroFootHTML, macroWeighHTML: macroWeighHTML, syncShrunk: syncShrunk, todayKey: todayKey, mDialFromX: mDialFromX, mDialG: mDialG, mDialMeasure: mDialMeasure, mDialText: mDialText, LIVE: LIVE });
   function renderMacros() {
     var r = MYDAY.renderMacros();
     if (S.view === 'today' && window.Today) window.Today.render();
@@ -4249,7 +4249,7 @@
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mslotdel', 'data-mslotmove', 'data-mholdclose', 'data-maddslot', 'data-mslotpreset', 'data-maddpop', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
-    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd'];
+    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd', 'data-hydmodal', 'data-hyd', 'data-hydmg', 'data-hydoz'];
 
   function focusKey(el) {
     if (!el || el === document.body || !el.getAttribute) return null;
@@ -4479,6 +4479,15 @@
       root.classList.remove('hide');
       var xb = root.querySelector('.sheet-x');
       if (xb) xb.focus();
+      return;
+    }
+
+    if (S.hydOpen) {
+      var prHyd = mReadProfile();
+      root.innerHTML = mHydrationCardHTML(mViewKey(), mWaterGoalOz(prHyd && prHyd.lb));
+      document.body.style.overflow = 'hidden';
+      root.classList.remove('hide');
+      if (keepScroll) root.querySelector('.scrim').scrollTop = keepScroll;
       return;
     }
 
@@ -6854,16 +6863,34 @@
       }
     });
 
-    /* The day's box in the head row: its calories open the day's detail.
+    /* The day's box in the head row: its calories open the day's detail,
+       and the filling water droplet opens the Water & Drinks modal sheet.
        The date beside them is a label over the phone's calendar and needs
        nothing here. */
     $('macroSum').addEventListener('click', function (e) {
+      if (e.target.closest('[data-hydmodal="open"]')) {
+        rememberOpener();
+        S.hydOpen = true;
+        pushSheet({ m: 1 });
+        renderModal();
+        return;
+      }
       if (!e.target.closest('[data-mpilltray="toggle"]')) return;
       S.mPillTrayOpen = !S.mPillTrayOpen;
       if (S.mPillTrayOpen && (window.scrollY || window.pageYOffset || 0) > 0) {
         window.scrollTo(0, 0);
       }
       keepingFocus(renderMacros);
+    });
+    $('macroSum').addEventListener('keydown', function (e) {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('[data-hydmodal="open"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        rememberOpener();
+        S.hydOpen = true;
+        pushSheet({ m: 1 });
+        renderModal();
+      }
     });
 
     $('macroMore').addEventListener('click', function (e) {
@@ -8700,6 +8727,10 @@
           requestAnimationFrame(function () { tsay.textContent = tw; });
         }
       }
+      var hm = e.target.closest && e.target.closest('[data-hyd]');
+      if (hm && S.hydOpen) {
+        if (mCheckinClick(hm, mViewKey())) keepingFocus(function () { renderMacros(); renderModal(); });
+      }
     });
 
     /* The name, once it is typed: kept, and sent if the switch is on. An
@@ -8768,6 +8799,11 @@
       if (S.macroTargOpen && e.target.classList.contains('mtm-share')) mtmShowTotal();
       // and the folded summary follows the ticks, ready for when it folds
       if (S.macroTargOpen && e.target.closest('.mtm-secs')) mtSecSumSync(e.target.closest('.mtm-row'));
+      if (S.hydOpen && e.target.hasAttribute && (e.target.hasAttribute('data-hydmg') || e.target.hasAttribute('data-hydoz'))) {
+        clearTimeout(hydAmTimer);
+        var hEl = e.target, hKey = mViewKey();
+        hydAmTimer = setTimeout(function () { mCheckinInput(hEl, hKey); }, 500);
+      }
     });
 
     // a select fires change, not input, in enough browsers to matter
@@ -8846,6 +8882,10 @@
         }
         e.target.dataset.prev = e.target.value;
       }
+      if (S.hydOpen && e.target.hasAttribute && (e.target.hasAttribute('data-hydmg') || e.target.hasAttribute('data-hydoz'))) {
+        clearTimeout(hydAmTimer);
+        if (mCheckinInput(e.target, mViewKey())) keepingFocus(function () { renderMacros(); renderModal(); });
+      }
     });
 
     $('newRecipe').addEventListener('click', function () { openEditor('new'); });
@@ -8885,7 +8925,7 @@
       // Plan's sheets too: Plan my week, a day's dinner, Add to a day stayed up on Escape
       if (e.key === 'Escape' && (S.openId || S.syncOpen || S.macroPick || S.macroTargOpen || S.newFood ||
         S.keepMeal || S.chartOpen || S.foodOpen || S.mCopyFrom || S.pwOpen || S.daySheet || S.addOpen ||
-        S.favPick || S.tdSheet || S.mDoneOpen || (WGAPI && WGAPI.isOpen && WGAPI.isOpen()))) close();
+        S.favPick || S.tdSheet || S.mDoneOpen || S.hydOpen || (WGAPI && WGAPI.isOpen && WGAPI.isOpen()))) close();
     });
   }
 
@@ -9057,6 +9097,7 @@
     S.newFood = null;
     S.syncOpen = false;
     S.mDoneOpen = '';
+    S.hydOpen = false;
     S.mpQuery = '';
     S.mpShelf = '';
     S.mpSpot = '';

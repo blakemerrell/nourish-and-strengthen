@@ -44,7 +44,6 @@
   var mFillRoom = app.mFillRoom;
   var mFoldForget = app.mFoldForget;
   var mHydChip = app.mHydChip || function () { return ''; };
-  var mHydrationCardHTML = app.mHydrationCardHTML;
   var mIcon = app.mIcon;
   var mIsFav = app.mIsFav;
   var mItemFluidOz = app.mItemFluidOz || function () { return 0; };
@@ -54,7 +53,6 @@
   var mMarkAccountUI = app.mMarkAccountUI;
   var mMealAsk = app.mMealAsk;
   var mMealPillsSay = app.mMealPillsSay;
-  var mReadProfile = app.mReadProfile;
   var mReadSlots = app.mReadSlots;
   var mSaltChip = app.mSaltChip;
   var mSendOf = app.mSendOf;
@@ -62,7 +60,6 @@
   var mSkipped = app.mSkipped;
   var mSnapTargets = app.mSnapTargets;
   var mViewKey = app.mViewKey;
-  var mWaterGoalOz = app.mWaterGoalOz;
   var mWeekHTML = app.mWeekHTML;
   var mWhyChip = app.mWhyChip;
   var mWhyStrip = app.mWhyStrip;
@@ -1138,10 +1135,6 @@
     Object.keys(day).forEach(function (sk) {
       if (onPlanKeys.indexOf(sk) < 0) html += trayHTML(sk, slots.names[sk] || 'Meal', false);
     });
-    if (!ahead) {
-      var prHyd = mReadProfile();
-      html += mHydrationCardHTML(k, mWaterGoalOz(prHyd && prHyd.lb));
-    }
     var addPop = $('macroAddPop');
     var addBtn = $('macroAddMeal');
     if (addPop) {

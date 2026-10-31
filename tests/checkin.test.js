@@ -148,31 +148,28 @@ module.exports = {
     t.ok('Today’s Eating card logs +16 oz water in one tap', (await am(p)).wt === 16, JSON.stringify(await am(p)));
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(300);
-    /* It arrives shut (Blake, 2026-10-30: "I don't want it to open
-       expanded"): the header still says the ounces, and the vessels wait
-       behind a tap. */
-    t.ok('Water & Drinks arrives folded, the ounces still on its header',
-      await p.evaluate(() => {
-        const c = document.querySelector('#macroSlots .mhyd-card');
-        return !!c && c.classList.contains('shut') && !c.querySelector('.mhyd-body') &&
-          /56 \/ 100 oz/.test(c.textContent);
-      }), await txt(p, '#macroSlots .mhyd-card'));
-    await p.click('#macroSlots .mhyd-card [data-hyd="fold"]');
+    /* Water & Drinks is now a modal sheet opened by tapping the water droplet
+       in the top header row (Blake, 2026-10-31: "turning the hydration bar at
+       the bottom of the day bars, into a modal that I access by tapping the
+       water droplet at the top of the screen"). */
+    t.ok('Water & Drinks is not a bar at the bottom of the day bars, and the top water droplet opens it',
+      await p.evaluate(() => !document.querySelector('#macroSlots .mhyd-card') && !!document.querySelector('#macroTrayHead [data-hydmodal="open"]')));
+    await p.click('#macroTrayHead [data-hydmodal="open"]');
     await p.waitForTimeout(150);
-    t.ok('Nourish renders Water & Drinks counting both plain water (16 oz) and drink fluid (40 oz) = 56 / 100 oz',
-      /Water & Drinks/.test(await txt(p, '#macroSlots .mhyd-card')) && /56 \/ 100 oz/.test(await txt(p, '#macroSlots .mhyd-card')) &&
-      /16 oz water \+ 40 oz from drinks/.test(await txt(p, '#macroSlots .mhyd-card')),
-      await txt(p, '#macroSlots .mhyd-card'));
-    await p.click('#macroSlots .mhyd-card [data-hyd="wt:8"]');
+    t.ok('tapping the water droplet opens the Water & Drinks modal counting both plain water (16 oz) and drink fluid (40 oz) = 56 / 100 oz',
+      /Water & Drinks/.test(await txt(p, '#modalRoot .mhyd-card')) && /56 \/ 100 oz/.test(await txt(p, '#modalRoot .mhyd-card')) &&
+      /16 oz water \+ 40 oz from drinks/.test(await txt(p, '#modalRoot .mhyd-card')),
+      await txt(p, '#modalRoot .mhyd-card'));
+    await p.click('#modalRoot .mhyd-card [data-hyd="wt:8"]');
     await p.waitForTimeout(200);
-    t.ok('+8 oz on Nourish Water & Drinks card updates plain water to 24 oz and total hydration to 64 / 100 oz',
-      (await am(p)).wt === 24 && /64 \/ 100 oz/.test(await txt(p, '#macroSlots .mhyd-card')));
-    await p.click('#macroSlots .mhyd-card [data-hyd="wt:42"]');
+    t.ok('+8 oz on Nourish Water & Drinks modal updates plain water to 24 oz and total hydration to 64 / 100 oz',
+      (await am(p)).wt === 24 && /64 \/ 100 oz/.test(await txt(p, '#modalRoot .mhyd-card')));
+    await p.click('#modalRoot .mhyd-card [data-hyd="wt:42"]');
     await p.waitForTimeout(200);
     t.ok('tapping the 42 oz Stanley mug card tracks vessel count (1× 42oz Stanley, 1× 16oz bottle, 1× 8oz cup) and updates total to 106 / 100 oz',
-      (await am(p)).wt === 66 && (await am(p)).vs.v42 === 1 && /106 \/ 100 oz/.test(await txt(p, '#macroSlots .mhyd-card')) &&
-      /1× 42oz Stanley/.test(await txt(p, '#macroSlots .mhyd-card')));
-    await p.click('#macroSlots .mhyd-card [data-hyd="wt:-42"]');
+      (await am(p)).wt === 66 && (await am(p)).vs.v42 === 1 && /106 \/ 100 oz/.test(await txt(p, '#modalRoot .mhyd-card')) &&
+      /1× 42oz Stanley/.test(await txt(p, '#modalRoot .mhyd-card')));
+    await p.click('#modalRoot .mhyd-card [data-hyd="wt:-42"]');
     await p.waitForTimeout(200);
     await p.evaluate(() => {
       const days = JSON.parse(localStorage.getItem('bsc.macroDays') || '{}');
@@ -186,32 +183,26 @@ module.exports = {
     await p.waitForTimeout(600);
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(250);
-    await p.click('#macroSlots .mhyd-card [data-hyd="fold"]');
+    await p.click('#macroTrayHead [data-hydmodal="open"]');
     await p.waitForTimeout(150);
     t.ok('logging liquid foods/drinks in a meal (Crio Bru + Milk) auto-counts their fluid oz in Water & Drinks',
-      /Auto-counted from meals/.test(await txt(p, '#macroSlots .mhyd-card')) &&
-      /oz from meals/.test(await txt(p, '#macroSlots .mhyd-card')));
+      /Auto-counted from meals/.test(await txt(p, '#modalRoot .mhyd-card')) &&
+      /oz from meals/.test(await txt(p, '#modalRoot .mhyd-card')));
     t.ok('logging a Crio Bru recipe (#26 Crio Bru Power Morning Cocktail) shows its 16 oz hydration badge on the meal card and auto-counts in Water & Drinks',
-      /Crio Bru Power Morning Cocktail/.test(await txt(p, '#macroSlots .mhyd-card')) &&
-      /\+16 oz Crio Bru Power Morning Cocktail/.test(await txt(p, '#macroSlots .mhyd-card')) &&
+      /Crio Bru Power Morning Cocktail/.test(await txt(p, '#modalRoot .mhyd-card')) &&
+      /\+16 oz Crio Bru Power Morning Cocktail/.test(await txt(p, '#modalRoot .mhyd-card')) &&
       await p.evaluate(() => {
         const badge = document.querySelector('#macroSlots [data-mslot="s"] .mfl-hyd');
         return !!badge && /16 oz/.test(badge.textContent);
       }));
-    await p.click('#macroSlots .mhyd-card [data-hyd="fold"]');
+    await p.click('#modalRoot .mhyd-sheet .sheet-x');
     await p.waitForTimeout(150);
-    t.ok('tapping Water & Drinks header collapses the section like a meal card',
-      await p.evaluate(() => {
-        const c = document.querySelector('#macroSlots .mhyd-card');
-        return c && c.classList.contains('shut') && !c.querySelector('.mhyd-body');
-      }));
-    await p.click('#macroSlots .mhyd-card [data-hyd="fold"]');
+    t.ok('tapping × closes the Water & Drinks modal sheet',
+      await p.evaluate(() => !document.querySelector('#modalRoot .mhyd-card')));
+    await p.click('#macroTrayHead [data-hydmodal="open"]');
     await p.waitForTimeout(150);
-    t.ok('tapping Water & Drinks header again expands it back open',
-      await p.evaluate(() => {
-        const c = document.querySelector('#macroSlots .mhyd-card');
-        return c && !c.classList.contains('shut') && !!c.querySelector('.mhyd-body');
-      }));
+    t.ok('tapping the top water droplet again reopens the Water & Drinks modal sheet',
+      await p.evaluate(() => !!document.querySelector('#modalRoot .mhyd-card .mhyd-body')));
 
     await p.reload();
     await p.waitForTimeout(800);
@@ -257,6 +248,7 @@ module.exports = {
       macro: { kcal: 260, p: 35, c: 14, f: 6, na: 200, fib: 1 },
       ingp: [{ k: 'crio_bru', g: 480 }, { k: 'free', g: 12 }, { k: 'whey', g: 30 }, { k: 'free', g: 5 }, { k: 'milk', g: 244 }] }));
     await r.evaluate(() => {
+      localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 190, f: 70, c: 230 }));
       localStorage.setItem('bsc.macroDays', JSON.stringify({ '2026-10-26': {
         s: [{ id: 'ucriobrew', x: 1 }], b: [{ id: 27, x: 1, eaten: 1 }],
         l: [{ id: 362, x: 1, eaten: 1 }], d: [{ id: 234, x: 1, eaten: 1 }] } }));
@@ -265,18 +257,11 @@ module.exports = {
     await r.waitForTimeout(700);
     await r.click('.tab[data-view="macros"]');
     await r.waitForTimeout(300);
-    /* Overnight oats run breakfast over its share, and the sheet that offers
-       to take it from later meals sits over the card; a click on the header
-       itself, not at its coordinates, is what a reader of this test means. */
-    t.ok('the day\u2019s water is that drink and the soup: 24 + 14 = 38 oz',
-      /38 \/ 100 oz/.test(await txt(r, '#macroSlots .mhyd-card')), await txt(r, '#macroSlots .mhyd-card'));
-    // open it if it is folded (it arrives folded once the card stops opening by default)
-    await r.evaluate(() => {
-      const c = document.querySelector('#macroSlots .mhyd-card');
-      if (c.classList.contains('shut')) c.querySelector('[data-hyd="fold"]').click();
-    });
+    await r.click('#macroTrayHead [data-hydmodal="open"]');
     await r.waitForTimeout(150);
-    const liq = await txt(r, '#macroSlots .mhyd-card .mhyd-meals');
+    t.ok('the day\u2019s water is that drink and the soup: 24 + 14 = 38 oz',
+      /38 \/ 100 oz/.test(await txt(r, '#modalRoot .mhyd-card')), await txt(r, '#modalRoot .mhyd-card'));
+    const liq = await txt(r, '#modalRoot .mhyd-card .mhyd-meals');
     t.ok('your own Crio Bru drink counts its brewed Crio Bru and milk as water (about 24 oz)',
       /\+24 oz\s*Protein Crio Brew/.test(liq), liq);
     t.ok('and a recipe that only soaks in water, like overnight oats, does not',
@@ -285,6 +270,8 @@ module.exports = {
        A rice pudding's milk does not: nobody calls pudding a drink. */
     t.ok('a bowl of chicken noodle soup counts its broth, and rice pudding does not',
       /\+14 oz\s*Chicken Noodle Soup/.test(liq) && !/Rice Pudding/.test(liq), liq);
+    await r.click('#modalRoot .mhyd-sheet .sheet-x');
+    await r.waitForTimeout(150);
     t.ok('and the drink wears its hydration droplet inside its portion pill on the meal card, tappable to toggle off/on',
       await r.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray-f')].some((row) =>
         /Protein Crio Brew/.test((row.querySelector('.mtray-fn') || {}).textContent || '') &&
@@ -296,7 +283,7 @@ module.exports = {
     await r.click('#macroSlots [data-mslot="s"] .mfl-hyd[data-mhydtoggle]');
     await r.waitForTimeout(150);
     t.ok('tapping the hydration droplet in the portion pill mutes that item’s hydration (38 oz -> 14 oz)',
-      /14 \/ 100 oz/.test(await txt(r, '#macroSlots .mhyd-card')) &&
+      /14 \/ 100 oz/.test(await txt(r, '#macroTrayHead')) &&
       await r.evaluate(() => {
         const b = document.querySelector('#macroSlots [data-mslot="s"] .mfl-hyd[data-mhydtoggle]');
         return !!b && b.classList.contains('off') && b.getAttribute('aria-pressed') === 'false';
@@ -304,7 +291,7 @@ module.exports = {
     await r.click('#macroSlots [data-mslot="s"] .mfl-hyd[data-mhydtoggle]');
     await r.waitForTimeout(150);
     t.ok('tapping the hydration droplet again restores its hydration (14 oz -> 38 oz)',
-      /38 \/ 100 oz/.test(await txt(r, '#macroSlots .mhyd-card')) &&
+      /38 \/ 100 oz/.test(await txt(r, '#macroTrayHead')) &&
       await r.evaluate(() => {
         const b = document.querySelector('#macroSlots [data-mslot="s"] .mfl-hyd[data-mhydtoggle]');
         return !!b && !b.classList.contains('off') && b.getAttribute('aria-pressed') === 'true';
@@ -328,6 +315,7 @@ module.exports = {
     const v = await t.fresh({ viewport: { width: 390, height: 844 } });
     await v.clock.setFixedTime(new Date(2026, 9, 26, 7, 30, 0));
     await v.evaluate(() => {
+      localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 190, f: 70, c: 230 }));
       localStorage.setItem('bsc.myFoods', JSON.stringify({
         gorilla: { name: 'Gorilla Mind Red Gummy Fish', unit: '440 mL', kcal: 10, p: 0, f: 0, c: 2 },
         evoo: { name: 'Olive oil', unit: '15 mL', kcal: 120, p: 0, f: 14, c: 0 } }));
@@ -338,12 +326,9 @@ module.exports = {
     await v.waitForTimeout(700);
     await v.click('.tab[data-view="macros"]');
     await v.waitForTimeout(300);
-    await v.evaluate(() => {
-      const c = document.querySelector('#macroSlots .mhyd-card');
-      if (c.classList.contains('shut')) c.querySelector('[data-hyd="fold"]').click();
-    });
+    await v.click('#macroTrayHead [data-hydmodal="open"]');
     await v.waitForTimeout(150);
-    const vLiq = await txt(v, '#macroSlots .mhyd-card');
+    const vLiq = await txt(v, '#modalRoot .mhyd-card');
     t.ok('a drink whose label is in mL counts as water, whatever its flavour is called; olive oil does not',
       /\+7 oz\s*Gorilla Mind/.test(vLiq) && !/Olive oil/.test(vLiq) && /7 \/ 100 oz/.test(vLiq), vLiq);
     await v.context().close();

@@ -581,35 +581,39 @@
         '</div>'
       : '';
     var cafOpen = !!(S.hydCafOpen || S.hydAdd);
-    return '<section class="mhyd-card' + (shut ? ' shut' : '') + ' no-print" data-amkey="' + esc(k) + '" aria-label="Water and drinks">' +
-      '<button type="button" class="mhyd-head" data-hyd="fold" aria-expanded="' + (!shut) + '" aria-label="Water and Drinks, ' + wt + ' of ' + goal + ' oz' + (mg > 0 ? ', ' + mg + ' mg caffeine' : '') + '. ' + (shut ? 'Expand' : 'Collapse') + '">' +
-        '<span class="mhyd-title"><svg class="mhyd-ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5C10 2.5 4.5 8.6 4.5 12.6a5.5 5.5 0 0 0 11 0C15.5 8.6 10 2.5 10 2.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>' +
-          '<b>Water &amp; Drinks</b><span class="mhyd-chev" aria-hidden="true">' + (shut ? '▸' : '▾') + '</span></span>' +
-        '<span class="mhyd-badges">' +
-          '<span class="mhyd-pill' + (wt >= goal ? ' hit' : '') + '"><b>' + wt + '</b> / ' + goal + ' oz' + (wt >= goal ? ' ✓' : '') + '</span>' +
-          (mg > 0 ? '<span class="mhyd-pill caf' + (mg > 400 ? ' over' : '') + '"><b>' + mg + '</b> mg caf</span>' : '') +
-        '</span>' +
-      '</button>' +
-      (shut ? '' :
-        '<div class="mhyd-body">' +
-          '<div class="mhyd-meter" role="meter" aria-label="Water intake" aria-valuemin="0" aria-valuemax="' + goal + '" aria-valuenow="' + wt + '">' +
-            '<i style="width:' + pct + '%"></i>' +
+    return '<div class="scrim no-print" data-close="1">' +
+      '<div class="sheet mhyd-sheet" role="dialog" aria-modal="true" aria-label="Water and drinks">' +
+        '<section class="mhyd-card no-print" data-amkey="' + esc(k) + '" aria-label="Water and drinks">' +
+          '<div class="mhyd-top">' +
+            '<span class="mhyd-title"><svg class="mhyd-ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5C10 2.5 4.5 8.6 4.5 12.6a5.5 5.5 0 0 0 11 0C15.5 8.6 10 2.5 10 2.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>' +
+              '<b>Water &amp; Drinks</b></span>' +
+            '<button type="button" class="sheet-x" data-close="1" aria-label="Close">&times;</button>' +
           '</div>' +
-          subLine +
-          '<div class="mhyd-water-btns">' + vesselsHTML + '</div>' +
-          mealLiqHTML +
-          '<div class="mhyd-caf' + (cafOpen ? ' open' : '') + '">' +
-            '<button type="button" class="mhyd-caf-tog" data-hyd="caftog" aria-expanded="' + cafOpen + '">' +
-              '<span class="mhyd-caf-t">Ad-hoc caffeine &amp; drinks</span>' +
-              '<span class="mhyd-caf-s">' + (mg ? mg + ' mg' : 'Scan or log drinks in meals, or tap here') + ' <i aria-hidden="true">' + (cafOpen ? '▾' : '▸') + '</i></span>' +
-            '</button>' +
-            (cafOpen
-              ? (drinks ? '<div class="am-drinks">' + drinks + '</div>' : '') +
-                (S.hydAdd ? mDrinkPanelHTML(true) : '<button type="button" class="nut-ask am-add" data-hyd="hadd">' + (shown.length ? 'Edit or add drinks' : '+ Add a drink') + '</button>')
-              : '') +
+          '<div class="mhyd-badges">' +
+            '<span class="mhyd-pill' + (wt >= goal ? ' hit' : '') + '"><b>' + wt + '</b> / ' + goal + ' oz' + (wt >= goal ? ' ✓' : '') + '</span>' +
+            (mg > 0 ? '<span class="mhyd-pill caf' + (mg > 400 ? ' over' : '') + '"><b>' + mg + '</b> mg caf</span>' : '') +
           '</div>' +
-        '</div>') +
-    '</section>';
+          '<div class="mhyd-body">' +
+            '<div class="mhyd-meter" role="meter" aria-label="Water intake" aria-valuemin="0" aria-valuemax="' + goal + '" aria-valuenow="' + wt + '">' +
+              '<i style="width:' + pct + '%"></i>' +
+            '</div>' +
+            subLine +
+            '<div class="mhyd-water-btns">' + vesselsHTML + '</div>' +
+            mealLiqHTML +
+            '<div class="mhyd-caf' + (cafOpen ? ' open' : '') + '">' +
+              '<button type="button" class="mhyd-caf-tog" data-hyd="caftog" aria-expanded="' + cafOpen + '">' +
+                '<span class="mhyd-caf-t">Ad-hoc caffeine &amp; drinks</span>' +
+                '<span class="mhyd-caf-s">' + (mg ? mg + ' mg' : 'Scan or log drinks in meals, or tap here') + ' <i aria-hidden="true">' + (cafOpen ? '▾' : '▸') + '</i></span>' +
+              '</button>' +
+              (cafOpen
+                ? (drinks ? '<div class="am-drinks">' + drinks + '</div>' : '') +
+                  (S.hydAdd ? mDrinkPanelHTML(true) : '<button type="button" class="nut-ask am-add" data-hyd="hadd">' + (shown.length ? 'Edit or add drinks' : '+ Add a drink') + '</button>')
+                : '') +
+            '</div>' +
+          '</div>' +
+        '</section>' +
+      '</div>' +
+    '</div>';
   }
   /* Your drinks, their ounces & milligrams, and a new one. Edited here rather
      than in a settings screen of their own, because this is the only place a

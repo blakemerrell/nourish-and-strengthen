@@ -702,7 +702,7 @@
       '</svg>';
     var headBar = '<button type="button" class="mpillwk-hbtn" id="macroTrayHead" data-mpilltray="toggle" aria-expanded="' + (trayOpen ? 'true' : 'false') + '" aria-label="' + fullKcal.toLocaleString() + ' of ' + tK.toLocaleString() + ' calories, ' + waterOz + ' of ' + goalOz + ' oz water (' + waterPct + '%). ' + (trayOpen ? 'Collapse day detail' : 'Open day detail') + '">' +
         '<span class="mpillwk-k"><b class="serif num">' + fullKcal.toLocaleString() + '</b><span class="mpillwk-kt"> / ' + tK.toLocaleString() + '<span class="mpillwk-ku"> kcal</span></span></span>' +
-        '<span class="mpillwk-w' + (waterPct >= 100 ? ' is-full' : '') + '" data-water-pct="' + waterPct + '" title="' + waterOz + ' / ' + goalOz + ' oz (' + waterPct + '%)">' + dropSVG + '<span class="vis-hidden">' + waterOz + ' / ' + goalOz + ' oz</span></span>' +
+        '<span class="mpillwk-w' + (waterPct >= 100 ? ' is-full' : '') + '" role="button" tabindex="0" data-hydmodal="open" data-water-pct="' + waterPct + '" title="' + waterOz + ' / ' + goalOz + ' oz (' + waterPct + '%) — Water &amp; Drinks" aria-label="Water and Drinks, ' + waterOz + ' of ' + goalOz + ' oz (' + waterPct + '%)">' + dropSVG + '<span class="vis-hidden">' + waterOz + ' / ' + goalOz + ' oz</span></span>' +
       '</button>';
     /* There was a "Tap for day's detail" button here, a 44-pixel row of its
        own. Blake (2026-10-30): "I want to be able to tap and see the day's

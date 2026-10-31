@@ -202,7 +202,44 @@
         '<div class="mpt-tv num"><b>' + daySteps.toLocaleString() + '</b> / ' + stepGoal.toLocaleString() + '</div>' +
       '</div>');
     }
-    if (train || trained) {
+    /* The workout, from Strengthen rather than a tick (Blake, 2026-10-30:
+       "Workout lifting day I feel should show some interesting stats from my
+       workout today/plan for the day"). Done, it is the session in numbers:
+       minutes, sets, the weight moved against the last time that workout
+       was done, and the records it set. Not done yet, it is today's planned
+       session as the block has it. It takes the grid's full width, because
+       a workout is the one tile with more than one number to say. */
+    var TR = window.Train;
+    var ds = null, plan = null;
+    try { ds = TR && TR.dayStats ? TR.dayStats(k) : null; } catch (e) { ds = null; }
+    if (!ds && k === tk) {
+      try { plan = TR && TR.today ? TR.today() : null; } catch (e) { plan = null; }
+      if (plan && (!plan.name || plan.due > 0 || plan.finished || plan.easy)) plan = null;
+    }
+    if (ds) {
+      var volSay = ds.volPct === null ? '' : (ds.volPct > 0 ? '+' : ds.volPct < 0 ? '\u2212' : '') + Math.abs(ds.volPct) + '%';
+      moveTiles.push('<div class="mpt-tile mpt-wo" data-mwo="done">' +
+        '<div class="mpt-th"><span class="mpt-tn">Workout</span><span class="mpt-tt" style="color:var(--pill-p)">done</span></div>' +
+        '<div class="mpt-tv"><b>' + esc(ds.n) + '</b>' + (ds.mins ? ' <span class="mpt-wo-s">' + ds.mins + ' min</span>' : '') + '</div>' +
+        '<div class="mpt-wo-stats">' +
+          '<span><b class="num">' + ds.sets + '</b><i>sets</i></span>' +
+          (volSay ? '<span><b class="num">' + volSay + '</b><i>weight moved vs last</i></span>'
+            : '<span><b class="num">' + ds.vol.toLocaleString() + '</b><i>' + ds.u + ' moved</i></span>') +
+          '<span><b class="num">' + ds.recs + '</b><i>' + (ds.recs === 1 ? 'record' : 'records') + '</i></span>' +
+        '</div>' +
+        (ds.top ? '<div class="mpt-wo-s">Best: ' + esc(ds.top.n) + ', est. max ' + ds.top.e1 + ' ' + ds.u + '</div>' : '') +
+      '</div>');
+    } else if (plan) {
+      var lifts = plan.lifts || [];
+      moveTiles.push('<div class="mpt-tile mpt-wo" data-mwo="plan">' +
+        '<div class="mpt-th"><span class="mpt-tn">Workout</span><span class="mpt-tt" style="color:var(--muted)">planned</span></div>' +
+        '<div class="mpt-tv"><b>' + esc(plan.name) + '</b>' + (plan.mins ? ' <span class="mpt-wo-s">~' + plan.mins + ' min</span>' : '') + '</div>' +
+        '<div class="mpt-wo-s">' + (plan.week ? esc(plan.week) + ' \u00b7 ' : '') + lifts.length + (lifts.length === 1 ? ' lift' : ' lifts') + '</div>' +
+        (lifts.length ? '<ul class="mpt-wo-l">' + lifts.slice(0, 3).map(function (l) {
+          return '<li><span>' + esc(l.name) + '</span><span class="num">' + esc(l.say) + '</span></li>';
+        }).join('') + (lifts.length > 3 ? '<li class="mpt-wo-more">and ' + (lifts.length - 3) + ' more</li>' : '') + '</ul>' : '') +
+      '</div>');
+    } else if (train || trained) {
       moveTiles.push('<div class="mpt-tile">' +
         '<div class="mpt-th"><span class="mpt-tn">Workout</span><span class="mpt-tt" style="color:' + (trained ? 'var(--pill-p)' : 'var(--muted)') + '">' + (trained ? 'logged' : 'planned') + '</span></div>' +
         '<div class="mpt-tv"><b>' + (trained ? 'Strength &check;' : 'Lifting day') + '</b></div>' +

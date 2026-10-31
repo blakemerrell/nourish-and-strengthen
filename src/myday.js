@@ -1031,9 +1031,12 @@
              it. Blake chose "one open, macros under each" (2026-10-24,
              mockup https://claude.ai/artifact/LyyEvDjgiF94XKqV5u9tJf): in
              Details each shut line says what it costs on a quiet line of its
-             own, and the keys are on the one you tap, as on Foods. */
+             own, and the keys are on the one you tap, as on Foods. The
+             water already rides under the name (hydTag), so this line
+             leaves it off (Blake, 2026-10-30: "Water hydration is
+             duplicated", 16 oz under the name and 16 oz fluid beneath). */
           var quiet = view === 3 && !open && !S.mViewAll
-            ? '<div class="mfl-q no-print"><span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mHydChip(r, it.x) + mSaltChip(r, it.x) + '</div>' : '';
+            ? '<div class="mfl-q no-print"><span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + (fOz > 0 ? '' : mHydChip(r, it.x)) + mSaltChip(r, it.x) + '</div>' : '';
           return '<div class="mtray-f' + (r.food ? '' : ' mtray-go') + (it.eaten ? ' eaten' : '') + (it.l ? ' held' : '') + (open ? ' open' : '') + '">' +
             line + (open ? mLineOpenHTML(M, r, it, i) : quiet) + '</div>';
         }).join('');

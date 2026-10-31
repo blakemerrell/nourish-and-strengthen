@@ -46,9 +46,25 @@
    * limits chase the trend until nothing can ever be outside them, which on
    * a cut means the chart goes quiet exactly when it should be speaking.
    */
-  var MC_KEYS = [
-    ['weight', 'Weight'], ['off', 'Off plan'], ['jump', 'Day to day'], ['rate', 'Rate'], ['recomp', 'Recomp']
-  ];
+  /* Five tabs folded to three (Blake, 2026-10-30, "Fold baby fold!"):
+     Weight, Body and Vs plan. Weight is the scale's three readings — the
+     trend, the weekly rate and the overnight change — as a quiet row under
+     it, because they are one question asked three ways and the overnight
+     one is mostly water. Body is the recomp. The third was to be Habits,
+     but what it holds is the weight against the plan, so it says that:
+     Vs plan. */
+  var MC_TABS = [['weight', 'Weight', ['weight', 'rate', 'jump']], ['recomp', 'Body', ['recomp']], ['off', 'Vs plan', ['off']]];
+  var MC_SUB = [['weight', 'Trend'], ['rate', 'Weekly rate'], ['jump', 'Overnight']];
+  function mcTabsHTML() {
+    var w = S.chartWhich;
+    var tabs = '<div class="mc-tabs">' + MC_TABS.map(function (t) {
+      return '<button data-mchart="' + t[0] + '" aria-pressed="' + (t[2].indexOf(w) >= 0 ? 'true' : 'false') + '">' + t[1] + '</button>';
+    }).join('') + '</div>';
+    if (MC_TABS[0][2].indexOf(w) < 0) return tabs;
+    return tabs + '<div class="mc-sub">' + MC_SUB.map(function (t) {
+      return '<button data-mchart="' + t[0] + '" aria-pressed="' + (w === t[0] ? 'true' : 'false') + '">' + t[1] + '</button>';
+    }).join('') + '</div>';
+  }
 
   /* ---- Recomp: the scale, the tape and the bar, week by week ----
    *
@@ -425,10 +441,7 @@
             '<div class="sheet-eyebrow">Over time</div>' +
             '<button class="sheet-x" data-close="1" aria-label="Close">&times;</button>' +
           '</div>' +
-          '<div class="mc-tabs">' + MC_KEYS.map(function (t) {
-            return '<button data-mchart="' + t[0] + '" aria-pressed="' +
-              (S.chartWhich === t[0] ? 'true' : 'false') + '">' + t[1] + '</button>';
-          }).join('') + '</div>' +
+          mcTabsHTML() +
           mcRecompHTML() +
         '</div></div>';
     }
@@ -449,10 +462,7 @@
           '<div class="sheet-eyebrow">Over time</div>' +
           '<button class="sheet-x" data-close="1" aria-label="Close">&times;</button>' +
         '</div>' +
-        '<div class="mc-tabs">' + MC_KEYS.map(function (t) {
-          return '<button data-mchart="' + t[0] + '" aria-pressed="' +
-            (S.chartWhich === t[0] ? 'true' : 'false') + '">' + t[1] + '</button>';
-        }).join('') + '</div>' +
+        mcTabsHTML() +
         (full.need ? '' : '<div class="mc-rng">' + MC_RANGES.map(function (r) {
           return '<button data-mcrng="' + r[0] + '" aria-pressed="' + (rng === r[0]) + '">' + r[1] + '</button>';
         }).join('') + mInfoBtn('mc-' + S.chartWhich, 'What this chart shows') + '</div>' +

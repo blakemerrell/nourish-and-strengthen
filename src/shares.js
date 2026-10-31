@@ -417,10 +417,19 @@
        screen. The line stays, because what happened to the day is worth
        being able to see; the apparatus for changing it does not. */
     if (shut) {
+      var pillLand = off
+        ? (over ? 'no meal shrinks' : 'no meal grows')
+        : (un < -0.5 ? Math.abs(un) + ' over' : un > 0.5 ? un + ' short' : 'lands on plan');
+      var pillSay = (ev.skipped
+        ? 'Skipped \u00b7 +' + amt + ' freed'
+        : (over ? '+' : '\u2212') + amt + (over ? ' over' : ' under') + ' share') +
+        ' \u00b7 ' + pillLand;
       return shell(
         '<button class="mcasc-fold" data-msend="open" aria-expanded="false">' +
-          '<span class="mcasc-foldt">' +
-            '<span class="mcasc-t">' + head + '</span>' +
+          '<span class="mcasc-pill-i" aria-hidden="true">i</span>' +
+          '<span class="mcasc-pill-tx">' + pillSay + '</span>' +
+          '<span class="mcasc-foldt vis-hidden">' +
+            '<span class="mcasc-t">' + head + '</span> ' +
             '<span class="mcasc-s">' + said + '</span>' +
           '</span>' +
           '<span class="mcasc-cue" aria-hidden="true">&#8964;</span>' +

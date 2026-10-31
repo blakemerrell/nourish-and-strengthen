@@ -3777,7 +3777,7 @@
 
   /* src/summary.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var SUMMARY = window.HiveParts.summary({ mDayJudged: mDayJudged, mDaySummary: mDaySummary, mLongDate: mLongDate, mVerdict: mVerdict });
+  var SUMMARY = window.HiveParts.summary({ mDayJudged: mDayJudged, mDaySummary: mDaySummary, mLongDate: mLongDate, mVerdict: mVerdict, mAmOf: mAmOf, MWEIGHTS: MWEIGHTS, mBodyDays: mBodyDays, keyDate: keyDate, dayKey: dayKey, todayKey: todayKey, mReadProfile: mReadProfile, mWUnit: mWUnit });
   function mSummaryHTML(k) { return SUMMARY.mSummaryHTML(k); }
 
   /* src/plansheet.js, handed what it reads of the app's and kept under its own

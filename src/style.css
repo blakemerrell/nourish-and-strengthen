@@ -9037,3 +9037,54 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .mc-ph-l { font-size: 0.8125rem; color: var(--ink-2); }
 .mc-ph-del { min-height: 44px; border: 1px solid var(--line-firm); border-radius: 10px; background: transparent; color: var(--ink-2); font-size: 0.8125rem; }
 .mc-ph-pick:focus-within .mc-ph-img { box-shadow: 0 0 0 2px var(--ochre); }
+
+/* The workout tile in Move & recover (dayfoot.js): the whole grid's width,
+   the session in numbers once done, the planned session before it.
+   Blake, 2026-10-30: "should show some interesting stats from my workout
+   today/plan for the day". */
+#view-macros .mpt-wo { grid-column: 1 / -1; }
+.mpt-wo-s { font-size: 0.8125rem; color: var(--muted-2); font-weight: 400; }
+.mpt-wo-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; text-align: center; }
+.mpt-wo-stats span { display: flex; flex-direction: column; gap: 1px; }
+.mpt-wo-stats b { font-size: 1.25rem; }
+.mpt-wo-stats i { font-style: normal; font-size: 0.8125rem; color: var(--muted-2); line-height: 1.2; }
+.mpt-wo-l { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 0.8125rem; }
+.mpt-wo-l li { display: flex; justify-content: space-between; gap: 8px; }
+.mpt-wo-l li span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.mpt-wo-l li span.num { color: var(--muted-2); white-space: nowrap; }
+.mpt-wo-more { color: var(--muted-2); }
+
+/* The day card's new rows (summary.js, 2026-10-30): the one thing that moved
+   the day, move and recover as three small rings, the week's lifting and
+   sleep under its bars, and where it is all heading. */
+.ds-one { margin-bottom: 10px; }
+.ds-one-r { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; font-size: 0.9375rem; color: var(--ink); }
+.ds-one-r b { font-weight: 700; }
+.ds-one-s { font-size: 0.8125rem; color: var(--muted); margin-top: 3px; }
+.ds-move { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ds-mini { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.ds-mini svg { width: 56px; height: 56px; display: block; }
+.ds-mini b { position: absolute; top: 28px; left: 0; right: 0; transform: translateY(-50%); text-align: center; font-size: 0.8125rem; font-weight: 700; color: var(--ink); }
+.ds-mini span { font-size: 0.8125rem; color: var(--muted); }
+.ds-lift { font-size: 0.8125rem; color: var(--muted); margin-top: 10px; line-height: 1.45; }
+.ds-lift b { color: var(--ink); }
+.ds-wrow { display: flex; gap: 6px; margin-top: 4px; }
+.ds-wrow span { flex: 1 1 0; text-align: center; font-size: 0.8125rem; color: var(--muted); min-height: 1.1em; }
+.ds-wrow span.today { color: var(--ochre-text); font-weight: 700; }
+.ds-wkey { font-size: 0.8125rem; color: var(--muted); margin-top: 6px; }
+.ds-tr { display: flex; justify-content: space-between; gap: 8px; font-size: 0.875rem; color: var(--muted); padding: 3px 0; }
+.ds-tr b { color: var(--ink); font-weight: 600; }
+.ds-tr b.up { color: var(--dial-over); }
+.ds-tr b.down, .ds-tr b.good { color: var(--green); }
+.ds-tr + .ds-facts { margin-top: 10px; }
+
+/* Trends' three tabs (charts.js, 2026-10-30): equal widths in one row, and
+   under Weight a quieter row for its three readings. */
+.mc-tabs { flex-wrap: nowrap; }
+.mc-tabs button { flex: 1 1 0; }
+.mc-sub { display: flex; gap: 4px; margin: -2px 0 10px; }
+.mc-sub button {
+  flex: 1 1 0; min-height: 44px; font-size: 0.8125rem; padding: 4px 8px; border-radius: 999px;
+  background: transparent; border: 1px solid var(--line-soft); color: var(--muted); font-family: var(--sans);
+}
+.mc-sub button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink); font-weight: 600; }

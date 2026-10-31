@@ -42,9 +42,13 @@ module.exports = nourish({
     await chartPage.waitForTimeout(300);
     t.ok('the bars open onto their own history',
       await chartPage.evaluate(() => !!document.querySelector('.mc-sheet') &&
-        document.querySelectorAll('[data-mchart]').length === 5));   // Recomp joined weight, off-plan, day-to-day and rate, 2026-10-30
+        document.querySelectorAll('.mc-tabs [data-mchart]').length === 3 &&     // Weight, Body, Vs plan since 2026-10-30
+        document.querySelectorAll('.mc-sub [data-mchart]').length === 3));     // and Weight's trend, rate, overnight
 
     const chart = async (which) => {
+      /* Rate and overnight live under Weight since the tabs folded to three
+         (2026-10-30), so they are reached through it. */
+      if (!(await chartPage.$('[data-mchart="' + which + '"]'))) await chartPage.click('.mc-tabs [data-mchart="weight"]');
       await chartPage.click('[data-mchart="' + which + '"]');
       await chartPage.waitForTimeout(200);
       return chartPage.evaluate(() => ({

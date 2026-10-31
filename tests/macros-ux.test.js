@@ -945,6 +945,7 @@ module.exports = nourish({
       t.ok('and dragging along it follows the finger: "' + r2.t + '"', r2.t !== r1.t && r2.cx > r1.cx, JSON.stringify(r2));
       /* The other three charts read the same way. */
       for (const which of ['off', 'jump', 'rate']) {
+        if (!(await pg.$('[data-mchart="' + which + '"]'))) await pg.click('.mc-tabs [data-mchart="weight"]');   // under Weight since 2026-10-30
         await pg.click('[data-mchart="' + which + '"]');
         await pg.waitForTimeout(200);
         await pg.click('[data-mcrng="all"]');

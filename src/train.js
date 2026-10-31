@@ -12891,6 +12891,40 @@
       return ix().list.filter(function (wo) { return (wo.dk || dayKey(new Date(wo.st))) === k; })
         .map(function (wo) { return { n: wo.n || 'Workout', st: wo.st, en: wo.en || 0, sets: setsOf(wo) }; });
     },
+    /* A day's lifting in numbers, for Nourish's workout tile and its day
+       card (Blake, 2026-10-30: "Workout lifting day I feel should show some
+       interesting stats from my workout today"). The last workout saved on
+       the day: its minutes, its counting sets, the weight moved (weight ×
+       reps over counting sets, in your unit), that against the last time a
+       workout of the same name was done, the records Finish counted, and
+       the lift with the best estimated max. null on a day with none. */
+    dayStats: function (k) {
+      var list = ix().list;
+      var mine = list.filter(function (wo) { return (wo.dk || dayKey(new Date(wo.st))) === k; });
+      if (!mine.length) return null;
+      var wo = mine[mine.length - 1];
+      function moved(w) {
+        var v = 0, n = 0, top = null;
+        (w.x || []).forEach(function (x) {
+          var ss = (x.s || []).filter(counts);
+          n += ss.length;
+          ss.forEach(function (z) { var kg = conv(z.w, w.u); if (fin(kg) && kg > 0 && z.r > 0) v += kg * z.r; });
+          var b = liftE1({ e: x.e, s: ss }, w);
+          if (b > 0 && (!top || b > top.e1)) top = { n: lib(x.e).n, e1: Math.round(b) };
+        });
+        return { v: Math.round(v), n: n, top: top };
+      }
+      var me = moved(wo), prev = null;
+      list.forEach(function (w) { if (w.st < wo.st && (w.n || '') === (wo.n || '') && w !== wo) prev = w; });
+      var pv = prev ? moved(prev).v : 0;
+      var recs = 0;
+      try { recs = wins(wo).lines.filter(function (l) { return l.big; }).length; } catch (e) { recs = 0; }
+      return {
+        n: wo.n || 'Workout', mins: wo.en > wo.st ? Math.round((wo.en - wo.st) / 60000) : 0,
+        sets: me.n, vol: me.v, volPct: pv > 0 ? Math.round((me.v / pv - 1) * 100) : null,
+        recs: recs, top: me.top, u: T.pr.u === 'kg' ? 'kg' : 'lb'
+      };
+    },
     /* Your lifting weekdays while a block is running and you have picked
        them; null otherwise, and Nourish keeps its own. */
     liftDays: function () { return T.pr.ld.length ? T.pr.ld.slice() : null; },

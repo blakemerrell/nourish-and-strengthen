@@ -42,7 +42,7 @@ module.exports = nourish({
     await chartPage.waitForTimeout(300);
     t.ok('the bars open onto their own history',
       await chartPage.evaluate(() => !!document.querySelector('.mc-sheet') &&
-        document.querySelectorAll('[data-mchart]').length === 4));
+        document.querySelectorAll('[data-mchart]').length === 5));   // Recomp joined weight, off-plan, day-to-day and rate, 2026-10-30
 
     const chart = async (which) => {
       await chartPage.click('[data-mchart="' + which + '"]');

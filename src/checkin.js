@@ -48,6 +48,10 @@
        cr  creatine taken: 1, or 0 for "not today" (zero is an answer, as it
            is for the training tick, so a phone can un-say it to another)
        cf  drinks: { drink id: how many }
+       bm  body measurements, inches: { wa waist, ch chest, ar arm, th thigh }.
+           Weekly, not daily (Blake, 2026-10-30): with his weight holding
+           while he lifts, the scale cannot tell fat lost from muscle gained,
+           and a tape at the navel can.
    *
      A field left out has not been answered, which is not the same as zero:
      a morning you skipped the check-in must be a gap on Review's charts, not
@@ -92,6 +96,16 @@
         if (/^[a-z0-9_]{1,24}$/.test(id) && fin(n) && n > 0 && n <= 40) cf[id] = Math.round(n);
       });
       if (Object.keys(cf).length) out.cf = cf;
+    }
+    /* Body measurements, in inches to the quarter: waist, chest, arm,
+       thigh. A tape outside 10 to 80 inches is a typo, not a body. */
+    if (plain(v.bm)) {
+      var bm = {};
+      ['wa', 'ch', 'ar', 'th'].forEach(function (f) {
+        var n = v.bm[f];
+        if (fin(n) && n >= 10 && n <= 80) bm[f] = Math.round(n * 4) / 4;
+      });
+      if (Object.keys(bm).length) out.bm = bm;
     }
     return out;
   }
@@ -423,6 +437,57 @@
         '<button class="am-b" ' + attr + '="cf:' + d.id + ':1" aria-label="One more ' + esc(low) + '">+</button></div>';
     }).join('');
   }
+  /* ---- body measurements ---- */
+  var BM_FIELDS = [['wa', 'Waist', 'at the navel'], ['ch', 'Chest', ''], ['ar', 'Arm', 'flexed'], ['th', 'Thigh', '']];
+  /* The last morning on or before k with a waist on it, or ''. */
+  function mBodyLastKey(k, field) {
+    var f = field || 'wa', best = '';
+    Object.keys(MAM).forEach(function (d) {
+      var r = MAM[d];
+      if (d <= k && d > best && plain(r) && plain(r.bm) && fin(r.bm[f])) best = d;
+    });
+    return best;
+  }
+  function mDaysBetween(a, b) { return Math.round((keyDate(b) - keyDate(a)) / 864e5); }
+  /* Every morning with a measurement, oldest first, for the trend. */
+  function mBodyDays() {
+    return Object.keys(MAM).filter(function (d) { return plain(MAM[d]) && plain(MAM[d].bm); }).sort()
+      .map(function (d) { return { k: d, bm: MAM[d].bm }; });
+  }
+  function mInch(n) { return fin(n) ? (Math.round(n * 4) / 4) + '' : ''; }
+  /* Asked once a week. Open on a morning when the last waist is six days
+     old or more (or never), or when this morning already has one; folded to
+     a single line otherwise, so the other six mornings stay as short as
+     they were. */
+  function mBodyHTML(k) {
+    var r = mAmOf(k), bm = plain(r.bm) ? r.bm : {};
+    var last = mBodyLastKey(k);
+    var age = last ? mDaysBetween(last, k) : -1;
+    var due = !last || age >= 6;
+    var open = due || last === k || S.amBodyOpen;
+    var lastBm = last ? MAM[last].bm : {};
+    var say = last === k ? 'Measured this morning ✓'
+      : last ? 'Last ' + (age === 1 ? 'yesterday' : age + ' days ago') + (lastBm.wa ? ' · waist ' + mInch(lastBm.wa) + '″' : '')
+      : 'Once a week, same morning, before eating';
+    if (!open) {
+      return '<div class="am-body">' + row('Measurements', say,
+        '<button class="am-tog" data-am="bmopen" aria-expanded="false">Measure</button>') + '</div>';
+    }
+    var inputs = BM_FIELDS.map(function (f) {
+      var v = fin(bm[f[0]]) ? mInch(bm[f[0]]) : '';
+      var prev = last && last !== k && fin(lastBm[f[0]]) ? mInch(lastBm[f[0]]) : '';
+      return '<label class="am-bm"><span class="am-bm-l">' + f[1] + (f[2] ? ' <small>' + f[2] + '</small>' : '') + '</span>' +
+        '<input type="text" class="am-in am-bm-in" id="amBm_' + f[0] + '" data-bm="' + f[0] + '" inputmode="decimal" maxlength="5" autocomplete="off" value="' +
+        v + '" placeholder="' + (prev || 'in') + '"></label>';
+    }).join('');
+    return '<div class="am-body open">' +
+      row('Measurements' + (due && last !== k ? ' <span class="am-due">this week</span>' : ''), say, '') +
+      '<div class="am-bm-grid">' + inputs + '</div>' +
+      '<div class="am-bm-act"><span class="am-bm-err" id="amBmErr" role="alert"></span>' +
+        '<button type="button" class="am-save' + (last === k ? ' saved' : '') + '" data-am="bmsave">' + (last === k ? 'Saved ✓' : 'Save') + '</button></div>' +
+    '</div>';
+  }
+
   function mCheckinHTML(k) {
     var r = mAmOf(k);
     // sleep: a stepper by the quarter hour, from 7 the first time it is touched
@@ -454,7 +519,7 @@
       (drinks ? '<div class="am-drinks">' + drinks + '</div>' : '') +
       (S.amAdd ? mDrinkPanelHTML(false) : '<button class="nut-ask am-add" data-am="add">Add a drink</button>') +
       '</div>';
-    return '<div class="am no-print" data-amkey="' + k + '">' + sleep + steps + cre + caf + '</div>';
+    return '<div class="am no-print" data-amkey="' + k + '">' + sleep + steps + cre + caf + mBodyHTML(k) + '</div>';
   }
   /* Dedicated Water & Drinks card for Nourish day view (src/myday.js):
      ounces of water (plain water + fluid from drinks) with +8 / +16 / +24 / −8 oz
@@ -603,6 +668,32 @@
         if (!mCheckinInput(stIn, k)) return false;
         stIn.blur();
       }
+    } else if (a[0] === 'bmopen') {
+      S.amBodyOpen = true;
+    } else if (a[0] === 'bmsave') {
+      /* Inches, a point allowed ("34.5", "34,5"); empty leaves that one out.
+         Nothing is written while any box holds something that is not a
+         measurement, and the box that is wrong says so. */
+      var bmNew = {}, bad = '';
+      BM_FIELDS.forEach(function (f) {
+        var el = document.getElementById('amBm_' + f[0]);
+        if (!el) return;
+        var t = String(el.value || '').replace(',', '.').replace(/[\s"″]|in$/g, '');
+        el.setAttribute('aria-invalid', 'false');
+        if (!t) return;
+        var n = Number(t);
+        if (!/^\d{1,2}(\.\d{1,2})?$/.test(t) || n < 10 || n > 80) {
+          el.setAttribute('aria-invalid', 'true');
+          if (!bad) bad = f[1];
+          return;
+        }
+        bmNew[f[0]] = Math.round(n * 4) / 4;
+      });
+      var errEl = document.getElementById('amBmErr');
+      if (bad) { if (errEl) errEl.textContent = bad + ': enter inches, 10 to 80'; return false; }
+      if (errEl) errEl.textContent = '';
+      mAmWrite(k, 'bm', Object.keys(bmNew).length ? bmNew : undefined);
+      S.amBodyOpen = false;
     } else if (a[0] === 'cr') {
       mAmWrite(k, 'cr', r.cr === 1 ? 0 : 1);
     } else if (a[0] === 'wt') {
@@ -706,6 +797,6 @@
 
   return { MAM: MAM, mAmOf: mAmOf, mAmWrite: mAmWrite, mAmClean: mAmClean, mAmSum: mAmSum, mAmDays: mAmDays, mDrinksClean: mDrinksClean,
     mWaterGoalOz: mWaterGoalOz, mWaterOz: mWaterOz, mDrinksOz: mDrinksOz, mCafMg: mCafMg, mHydrationCardHTML: mHydrationCardHTML,
-    mItemFluidOz: mItemFluidOz, mHydChip: mHydChip,
+    mItemFluidOz: mItemFluidOz, mHydChip: mHydChip, mBodyDays: mBodyDays,
     mCheckinHTML: mCheckinHTML, mCheckinClick: mCheckinClick, mCheckinInput: mCheckinInput };
 };

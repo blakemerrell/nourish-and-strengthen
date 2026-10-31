@@ -116,6 +116,7 @@ var CORE = [
   './src/myday.js?v=0',
   './src/gauges.js?v=0',
   './src/charts.js?v=0',
+  './src/photos.js?v=0',
   './src/keep.js?v=0',
   './src/favpick.js?v=0',
   './src/copyfrom.js?v=0',

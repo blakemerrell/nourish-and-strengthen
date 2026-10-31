@@ -8991,3 +8991,47 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 @media (hover: none) {
   #view-macros .mday-kc .mpillwk-hbtn:hover { background: transparent; }
 }
+
+/* ---- the weekly measurements, under the morning check-in ----
+   Four boxes in two columns, each its name over the tape's number, the last
+   week's figure faint inside an empty one so the change is plain as it is
+   typed (Blake, 2026-10-30: recomp, where the scale holds and the tape
+   moves). */
+.am-body { margin-top: 2px; }
+.am-bm-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin: 4px 0 8px; }
+.am-bm { display: flex; flex-direction: column; gap: 4px; font-size: 0.875rem; color: var(--ink-2); }
+.am-bm-l small { color: var(--muted-2); font-size: 0.8125rem; }
+.am-bm-in { width: 100%; min-height: 44px; box-sizing: border-box; font-variant-numeric: tabular-nums; }
+.am-bm-act { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.am-bm-err { flex: 1; color: var(--dial-over); font-size: 0.8125rem; }
+.am-due { font-size: 0.8125rem; font-weight: 600; color: var(--ochre-text); margin-left: 4px; }
+
+/* ---- Trends › Recomp: three small lines over the same weeks ---- */
+.mc-recomp { display: flex; flex-direction: column; gap: 14px; padding: 4px 0 8px; }
+.mc-rc-say { margin: 0; font-size: 0.9375rem; line-height: 1.4; color: var(--ink); font-weight: 600; text-wrap: pretty; }
+.mc-rc { display: flex; flex-direction: column; gap: 4px; }
+.mc-rc-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 0.8125rem; color: var(--muted-2); }
+.mc-rc-h b { font-size: 1rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.mc-rc-svg { display: block; width: 100%; height: 56px; }
+.mc-rc-none { font-size: 0.8125rem; color: var(--muted-2); }
+.mc-rc-foot { margin: 0; font-size: 0.8125rem; color: var(--muted-2); }
+
+/* ---- Recomp photos: two to a row, kept on the phone ---- */
+.mc-ph { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; border-top: 1px solid var(--line-soft); }
+.mc-ph-note { font-size: 0.8125rem; color: var(--muted-2); }
+.mc-ph-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.mc-ph-slot { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.mc-ph-pick { display: flex; flex-direction: column; gap: 4px; cursor: pointer; }
+.mc-ph-img {
+  display: block; aspect-ratio: 3 / 4; border-radius: 10px; overflow: hidden;
+  border: 1px dashed var(--line-firm); background: var(--paper-soft);
+}
+.mc-ph-slot.has .mc-ph-img { border-style: solid; }
+.mc-ph-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mc-ph-pick .mc-ph-img:empty::after {
+  content: '+'; display: flex; align-items: center; justify-content: center; height: 100%;
+  font-size: 2rem; color: var(--muted-2);
+}
+.mc-ph-l { font-size: 0.8125rem; color: var(--ink-2); }
+.mc-ph-del { min-height: 44px; border: 1px solid var(--line-firm); border-radius: 10px; background: transparent; color: var(--ink-2); font-size: 0.8125rem; }
+.mc-ph-pick:focus-within .mc-ph-img { box-shadow: 0 0 0 2px var(--ochre); }

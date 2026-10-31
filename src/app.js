@@ -3382,11 +3382,12 @@
       var list = window.Train.recentWorkouts(30) || [];
       list.forEach(function (wo) {
         if (!wo) return;
-        var wid = 'nourish-wo-' + (wo.id || wo.dk || '');
         var payload = window.Train.healthWorkout ? window.Train.healthWorkout(wo) : null;
         if (!payload) return;
+        // keyed by the id the push itself records under, so a workout with
+        // no dk of its own is recognised as sent and not written every pass
         var sig = payload.startMs + ':' + payload.endMs + ':' + payload.title + ':' + payload.notes;
-        if (healthWoSynced[wid] === sig) return;
+        if (healthWoSynced[payload.id] === sig) return;
         mHealthPushWorkout(wo.dk, wo);
       });
     } catch (e) { /* ignore */ }
@@ -4248,7 +4249,7 @@
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mslotdel', 'data-mslotmove', 'data-mholdclose', 'data-maddslot', 'data-mslotpreset', 'data-maddpop', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
-    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave'];
+    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd'];
 
   function focusKey(el) {
     if (!el || el === document.body || !el.getAttribute) return null;
@@ -6306,9 +6307,11 @@
          whether that plate counts toward today's water (e.g. a protein powder
          mixed into already-counted Crio Bru and milk). Also updates its pin
          if the food is pinned to this meal. */
-      var htg = e.target.closest('[data-mhydtoggle]');
+      var htg = e.target.closest('[data-mhydtoggle], [data-mhyd]');
       if (htg) {
-        var hp = htg.dataset.mhydtoggle.split(':');
+        // data-mhyd is the same switch as a key on the open line, named apart
+        // so keepingFocus finds that key again and not the pill's droplet
+        var hp = (htg.dataset.mhydtoggle || htg.dataset.mhyd).split(':');
         var hvk = mViewKey(), hsk = hp[0], hidx = Number(hp[1]);
         var hnh = 0, hid = null;
         mEditDay(hvk, function (day) {

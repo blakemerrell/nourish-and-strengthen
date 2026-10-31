@@ -48,6 +48,7 @@ import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.records.Vo2MaxRecord
 import androidx.health.connect.client.records.WeightRecord
+import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.aggregate.AggregateMetric
 import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
 import androidx.health.connect.client.request.AggregateRequest
@@ -1110,6 +1111,16 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
 
+                    // The workout's own id ("nourish-wo-<id>") is the record's
+                    // clientRecordId, so a workout whose start was corrected in
+                    // Strengthen replaces its old record instead of leaving it
+                    // behind at the old time: clearing only the new time range
+                    // never reached the old one. The range clear stays for
+                    // records written before they carried the id.
+                    val clientId = obj.optString("id", "").takeIf { it.isNotBlank() }
+                    if (clientId != null) {
+                        client.deleteRecords(ExerciseSessionRecord::class, emptyList(), listOf(clientId))
+                    }
                     client.deleteRecords(
                         ExerciseSessionRecord::class,
                         TimeRangeFilter.between(startInstant.minusSeconds(5), endInstant.plusSeconds(5))
@@ -1124,7 +1135,10 @@ class MainActivity : AppCompatActivity() {
                                 exerciseType = ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING,
                                 title = title.take(100),
                                 notes = notes.takeIf { it.isNotBlank() }?.take(1000),
-                                segments = segments
+                                segments = segments,
+                                metadata = if (clientId != null)
+                                    Metadata(clientRecordId = clientId, clientRecordVersion = System.currentTimeMillis())
+                                else Metadata()
                             )
                         )
                     )

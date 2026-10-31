@@ -184,7 +184,11 @@
           var pr = LIVE.BY_ID[p.id];
           if (!pr || !pr.macro) return;                // no macros, nothing to solve
           if (mOnDay(day, p.id)) return;               // already there, by any route
-          (day[ps.k] = day[ps.k] || []).push({ id: p.id, x: p.x || 1, eaten: 0 });
+          // and its hydration switch, as mRenderDay's seeding keeps it: a pin
+          // muted for water (a powder in an already-counted drink) stays muted
+          var seeded = { id: p.id, x: p.x || 1, eaten: 0 };
+          if (p.nh) seeded.nh = 1;
+          (day[ps.k] = day[ps.k] || []).push(seeded);
         });
       });
 

@@ -9934,6 +9934,8 @@
     T.wo[wo.id] = clean(nw);
     stamp('wo', wo.id);
     S.ed = null;
+    var h = hive();
+    if (h && h.trained) { try { h.trained(nw.dk, T.wo[wo.id]); } catch (e) { /* My Day is not up */ } }
     return true;
   }
 
@@ -12944,6 +12946,68 @@
         sets: me.n, vol: me.v, volPct: pv > 0 ? Math.round((me.v / pv - 1) * 100) : null,
         recs: recs, top: me.top, u: T.pr.u === 'kg' ? 'kg' : 'lb'
       };
+    },
+    /* For Health Connect (Blake, 2026-10-30: "is my specific workout
+       exercises being synced to health connect? I think they should be"):
+       one workout formatted with its full exercise, set, weight and rep
+       breakdown plus per-exercise segments, and the last 30 days of logged
+       workouts for backfill. */
+    healthWorkout: function (wo) {
+      if (!wo || typeof wo !== 'object') return null;
+      var u = T.pr.u === 'kg' ? 'kg' : 'lb';
+      var dk = wo.dk || dayKey(new Date(wo.st || Date.now()));
+      var stMs = Number(wo.st) || (Date.now() - 3600000);
+      var enMs = Number(wo.en) > stMs ? Number(wo.en) : (stMs + 45 * 60000);
+      var lines = [];
+      var exList = [];
+      (wo.x || []).forEach(function (x) {
+        if (!x || !Array.isArray(x.s) || !x.s.length) return;
+        var info = lib(x.e);
+        var repsTotal = 0;
+        var setStrs = [];
+        x.s.forEach(function (s) {
+          if (!s) return;
+          var r = Number(s.r) || 0;
+          if (!s.wu && s.ty !== 'm' && r > 0) repsTotal += r;
+          var w = conv(s.w, wo.u);
+          var tag = s.wu ? ' (warm-up)' : s.ty === 'd' ? ' (drop)' : s.ty === 'f' ? ' (failure)' : s.ty === 'm' ? ' (missed)' : '';
+          setStrs.push((w > 0 ? fmtN(w) + ' ' + u + ' \u00d7 ' : '') + r + tag);
+        });
+        if (setStrs.length) {
+          lines.push(info.n + ': ' + setStrs.join(', '));
+          exList.push({
+            e: x.e || '',
+            name: info.n || 'Exercise',
+            m: info.m || '',
+            q: info.q || '',
+            p: info.p || '',
+            sets: x.s.filter(counts).length || x.s.length,
+            reps: repsTotal
+          });
+        }
+      });
+      if (wo.mc && mcValid(wo.mc) && mcScore(wo.mc)) {
+        lines.push('Circuit: ' + mcSay(wo.mc) + ' \u2014 ' + mcScore(wo.mc));
+      }
+      var stCount = setsOf(wo), volTotal = volOf(wo);
+      if (stCount > 0 || volTotal > 0) {
+        lines.push(stCount + (stCount === 1 ? ' set' : ' sets') + (volTotal > 0 ? ' \u00b7 ' + fmtBig(volTotal) + ' ' + u : ''));
+      }
+      if (wo.nt) lines.push('Note: ' + wo.nt);
+      return {
+        id: 'nourish-wo-' + (wo.id || dk),
+        dayKey: dk,
+        startMs: stMs,
+        endMs: enMs,
+        title: wo.n ? 'Strengthen \u00b7 ' + wo.n : 'Strengthen Workout',
+        notes: lines.join('\n'),
+        exercises: exList
+      };
+    },
+    recentWorkouts: function (days) {
+      var n = Number(days) > 0 ? Number(days) : 30;
+      var cut = Date.now() - n * DAY_MS;
+      return ix().list.filter(function (wo) { return wo && wo.st >= cut; });
     },
     /* Your lifting weekdays while a block is running and you have picked
        them; null otherwise, and Nourish keeps its own. */

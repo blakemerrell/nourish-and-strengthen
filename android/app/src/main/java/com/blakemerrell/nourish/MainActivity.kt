@@ -32,6 +32,7 @@ import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.DistanceRecord
+import androidx.health.connect.client.records.ExerciseSegment
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.HeartRateVariabilityRmssdRecord
@@ -110,6 +111,7 @@ class MainActivity : AppCompatActivity() {
 
     private val healthPermissions: Set<String> =
         readTypes.map { HealthPermission.getReadPermission(it) }.toSet() + setOf(
+            "android.permission.health.READ_HEALTH_DATA_HISTORY",
             HealthPermission.getWritePermission(WeightRecord::class),
             HealthPermission.getWritePermission(ExerciseSessionRecord::class),
             HealthPermission.getWritePermission(NutritionRecord::class)
@@ -731,58 +733,62 @@ class MainActivity : AppCompatActivity() {
             val granted = client.permissionController.getGrantedPermissions()
             val zone = ZoneId.systemDefault()
             val today = LocalDate.now(zone)
-            val startDay = today.minusDays(30)
+            val hasHistory = granted.contains("android.permission.health.READ_HEALTH_DATA_HISTORY")
+            val startDay = today.minusDays(if (hasHistory) 120L else 30L)
             val daysJson = JSONObject()
 
-            var d = startDay
-            while (!d.isAfter(today)) {
-                val dayObj = JSONObject()
-                val dayStart = d.atStartOfDay(zone).toInstant()
-                val dayEnd = d.plusDays(1).atStartOfDay(zone).toInstant()
-
-                // 1. Steps (de-duplicated across phone + watch via AggregateRequest)
-                if (granted.contains(HealthPermission.getReadPermission(StepsRecord::class))) {
-                    try {
-                        val agg = client.aggregate(
-                            AggregateRequest(
-                                metrics = setOf(StepsRecord.COUNT_TOTAL),
-                                timeRangeFilter = TimeRangeFilter.between(dayStart, dayEnd)
-                            )
+            // 1. Steps (de-duplicated across phone + watch in one grouped call)
+            if (granted.contains(HealthPermission.getReadPermission(StepsRecord::class))) {
+                try {
+                    val stepRows = client.aggregateGroupByPeriod(
+                        AggregateGroupByPeriodRequest(
+                            metrics = setOf(StepsRecord.COUNT_TOTAL),
+                            timeRangeFilter = TimeRangeFilter.between(
+                                startDay.atStartOfDay(),
+                                today.plusDays(1).atStartOfDay()
+                            ),
+                            timeRangeSlicer = Period.ofDays(1)
                         )
-                        val count = agg[StepsRecord.COUNT_TOTAL] ?: 0L
+                    )
+                    for (r in stepRows) {
+                        val k = r.startTime.toLocalDate().toString()
+                        val count = r.result[StepsRecord.COUNT_TOTAL] ?: 0L
                         if (count > 0L) {
+                            val dayObj = daysJson.optJSONObject(k) ?: JSONObject().also { daysJson.put(k, it) }
                             dayObj.put("steps", count)
                         }
-                    } catch (_: Exception) {
-                        // ignore step read failure for day
                     }
+                } catch (_: Exception) {
+                    // ignore step read failure
                 }
+            }
 
-                // 2. Weight (latest reading on day d, converted to pounds)
-                if (granted.contains(HealthPermission.getReadPermission(WeightRecord::class))) {
-                    try {
-                        val weights = client.readRecords(
-                            ReadRecordsRequest(
-                                recordType = WeightRecord::class,
-                                timeRangeFilter = TimeRangeFilter.between(dayStart, dayEnd)
+            // 2. Weight (latest reading on each day, converted to pounds, in one range read)
+            if (granted.contains(HealthPermission.getReadPermission(WeightRecord::class))) {
+                try {
+                    val weights = client.readRecords(
+                        ReadRecordsRequest(
+                            recordType = WeightRecord::class,
+                            timeRangeFilter = TimeRangeFilter.between(
+                                startDay.atStartOfDay(zone).toInstant(),
+                                today.plusDays(1).atStartOfDay(zone).toInstant()
                             )
-                        ).records
-                        val latest = weights.maxByOrNull { it.time }
-                        if (latest != null) {
-                            val lb = (latest.weight.inPounds * 10.0).roundToInt() / 10.0
-                            if (lb in 60.0..700.0) {
-                                dayObj.put("weightLb", lb)
+                        )
+                    ).records
+                    weights.groupBy { it.time.atZone(zone).toLocalDate().toString() }
+                        .forEach { (k, list) ->
+                            val latest = list.maxByOrNull { it.time }
+                            if (latest != null) {
+                                val lb = (latest.weight.inPounds * 10.0).roundToInt() / 10.0
+                                if (lb in 60.0..700.0) {
+                                    val dayObj = daysJson.optJSONObject(k) ?: JSONObject().also { daysJson.put(k, it) }
+                                    dayObj.put("weightLb", lb)
+                                }
                             }
                         }
-                    } catch (_: Exception) {
-                        // ignore weight read failure for day
-                    }
+                } catch (_: Exception) {
+                    // ignore weight read failure
                 }
-
-                if (dayObj.length() > 0) {
-                    daysJson.put(d.toString(), dayObj)
-                }
-                d = d.plusDays(1)
             }
 
             // 3. Sleep sessions (attributed to the morning LocalDate the sleep ended on)
@@ -1023,6 +1029,38 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        private fun segmentTypeFor(e: String, m: String, q: String, p: String): Int = when {
+            e == "kb-swing" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_KETTLEBELL_SWING
+            e == "back-ext" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_BACK_EXTENSION
+            e == "leg-press" || e == "seated-lp" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_LEG_PRESS
+            e == "leg-ext" || e == "bd-leg-ext" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_LEG_EXTENSION
+            e == "lying-curl" || e == "seated-curl" || e == "slide-curl" || e == "nordic" || e == "ball-curl" || e == "sl-leg-curl" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_LEG_CURL
+            e == "lat-pd" || e == "lat-pd-n" || e == "cb-straight" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_LAT_PULL_DOWN
+            e == "pullup" || e == "chinup" || e == "pullup-neg" || e == "as-pullup" || e == "bd-pullup" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_PULL_UP
+            e == "db-row" || e == "db-cs-row" || e == "kb-row" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_DUMBBELL_ROW
+            e == "hang-raise" || e == "capt-raise" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_LEG_RAISE
+            e == "situp" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_SIT_UP
+            e == "dec-crunch" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_BENCH_SIT_UP
+            e == "crunch" || e == "cb-crunch" || e == "mc-crunch" || e == "v-up" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_CRUNCH
+            e == "dead-bug" || e == "bird-dog" || e == "pallof" || e == "ab-wheel" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_PLANK
+            e == "lm-180" || e == "cb-woodchop" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_UPPER_TWIST
+            p == "flat" || p == "incline" || e == "cgbp" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_BENCH_PRESS
+            p == "squat" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_SQUAT
+            p == "single" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_LUNGE
+            p == "hinge" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_DEADLIFT
+            p == "thrust" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_HIP_THRUST
+            m == "front" && p == "press" && q == "bb" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_BARBELL_SHOULDER_PRESS
+            m == "front" && p == "press" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_SHOULDER_PRESS
+            m == "front" && p == "raise" && q == "db" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_DUMBBELL_FRONT_RAISE
+            m == "front" && p == "raise" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_FRONT_RAISE
+            m == "side" && q == "db" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_DUMBBELL_LATERAL_RAISE
+            m == "side" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_LATERAL_RAISE
+            m == "biceps" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_ARM_CURL
+            m == "triceps" && q == "db" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_DUMBBELL_TRICEPS_EXTENSION_TWO_ARM
+            m == "triceps" -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_DOUBLE_ARM_TRICEPS_EXTENSION
+            else -> ExerciseSegment.EXERCISE_SEGMENT_TYPE_WEIGHTLIFTING
+        }
+
         @JavascriptInterface
         fun writeWorkout(jsonStr: String) {
             lifecycleScope.launch(Dispatchers.IO) {
@@ -1043,6 +1081,35 @@ class MainActivity : AppCompatActivity() {
                     val startOffset = zone.rules.getOffset(startInstant)
                     val endOffset = zone.rules.getOffset(endInstant)
 
+                    val segments = mutableListOf<ExerciseSegment>()
+                    val exArr = obj.optJSONArray("exercises")
+                    if (exArr != null && exArr.length() > 0) {
+                        val n = exArr.length()
+                        val totalSpanMs = (endMs - startMs).coerceAtLeast(n * 2000L)
+                        val slotMs = totalSpanMs / n
+                        for (i in 0 until n) {
+                            val exObj = exArr.optJSONObject(i) ?: continue
+                            val segStartMs = startMs + i * slotMs
+                            val segEndMs = if (i == n - 1) endMs else (segStartMs + slotMs - 500L).coerceAtLeast(segStartMs + 1000L)
+                            if (segEndMs <= segStartMs || segEndMs > endMs) continue
+                            val segType = segmentTypeFor(
+                                exObj.optString("e", ""),
+                                exObj.optString("m", ""),
+                                exObj.optString("q", ""),
+                                exObj.optString("p", "")
+                            )
+                            val reps = exObj.optInt("reps", 0).coerceAtLeast(0)
+                            segments.add(
+                                ExerciseSegment(
+                                    startTime = Instant.ofEpochMilli(segStartMs),
+                                    endTime = Instant.ofEpochMilli(segEndMs),
+                                    segmentType = segType,
+                                    repetitions = reps
+                                )
+                            )
+                        }
+                    }
+
                     client.deleteRecords(
                         ExerciseSessionRecord::class,
                         TimeRangeFilter.between(startInstant.minusSeconds(5), endInstant.plusSeconds(5))
@@ -1056,7 +1123,8 @@ class MainActivity : AppCompatActivity() {
                                 endZoneOffset = endOffset,
                                 exerciseType = ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING,
                                 title = title.take(100),
-                                notes = notes.takeIf { it.isNotBlank() }?.take(500)
+                                notes = notes.takeIf { it.isNotBlank() }?.take(1000),
+                                segments = segments
                             )
                         )
                     )

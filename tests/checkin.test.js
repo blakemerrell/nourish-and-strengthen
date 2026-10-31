@@ -285,11 +285,31 @@ module.exports = {
        A rice pudding's milk does not: nobody calls pudding a drink. */
     t.ok('a bowl of chicken noodle soup counts its broth, and rice pudding does not',
       /\+14 oz\s*Chicken Noodle Soup/.test(liq) && !/Rice Pudding/.test(liq), liq);
-    t.ok('and the drink wears its ounces under its own name on the meal card',
-      await r.evaluate(() => [...document.querySelectorAll('#macroSlots .mfl-nmw')].some((w) =>
-        /Protein Crio Brew/.test(w.textContent) && /24 oz/.test((w.querySelector('.mfl-hyd') || {}).textContent || ''))),
+    t.ok('and the drink wears its hydration droplet inside its portion pill on the meal card, tappable to toggle off/on',
+      await r.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray-f')].some((row) =>
+        /Protein Crio Brew/.test((row.querySelector('.mtray-fn') || {}).textContent || '') &&
+        /24 oz/.test((row.querySelector('.mfl-amt .mfl-hyd') || {}).textContent || ''))),
       await r.evaluate(() => [...document.querySelectorAll('#macroSlots .mfl-hyd')].map((b) => b.textContent).join(' | ')));
-    /* Once, not twice: the ounces under the name, and not again as "oz
+    /* Tapping the hydration droplet inside the pill turns hydration off for
+       that item (e.g. protein powder mixed into already-counted Crio Bru +
+       milk), and tapping it again turns it back on. */
+    await r.click('#macroSlots [data-mslot="s"] .mfl-hyd[data-mhydtoggle]');
+    await r.waitForTimeout(150);
+    t.ok('tapping the hydration droplet in the portion pill mutes that item’s hydration (38 oz -> 14 oz)',
+      /14 \/ 100 oz/.test(await txt(r, '#macroSlots .mhyd-card')) &&
+      await r.evaluate(() => {
+        const b = document.querySelector('#macroSlots [data-mslot="s"] .mfl-hyd[data-mhydtoggle]');
+        return !!b && b.classList.contains('off') && b.getAttribute('aria-pressed') === 'false';
+      }));
+    await r.click('#macroSlots [data-mslot="s"] .mfl-hyd[data-mhydtoggle]');
+    await r.waitForTimeout(150);
+    t.ok('tapping the hydration droplet again restores its hydration (14 oz -> 38 oz)',
+      /38 \/ 100 oz/.test(await txt(r, '#macroSlots .mhyd-card')) &&
+      await r.evaluate(() => {
+        const b = document.querySelector('#macroSlots [data-mslot="s"] .mfl-hyd[data-mhydtoggle]');
+        return !!b && !b.classList.contains('off') && b.getAttribute('aria-pressed') === 'true';
+      }));
+    /* Once, not twice: the droplet in the pill, and not again as "oz
        fluid" on the macro line under it (Blake, 2026-10-30). */
     for (let n = 0; n < 3 && !(await r.$('#macroSlots .mfl-q')); n++) {   // to Details, where each line has its macro line
       await r.click('#macroViews'); await r.waitForTimeout(150);

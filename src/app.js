@@ -3245,7 +3245,7 @@
   function mHydrationCardHTML(k, goalOz) { return CHECKIN.mHydrationCardHTML(k, goalOz); }
   function mItemFluidOz(r, x) { return CHECKIN.mItemFluidOz(r, x); }
   function mBodyDays() { return CHECKIN.mBodyDays(); }
-  function mHydChip(r, x) { return CHECKIN.mHydChip(r, x); }
+  function mHydChip(r, x, off) { return CHECKIN.mHydChip(r, x, off); }
   function mCheckinHTML(k) { return CHECKIN.mCheckinHTML(k); }
   function mCheckinClick(b, k) { return CHECKIN.mCheckinClick(b, k); }
   function mCheckinInput(el, k) { return CHECKIN.mCheckinInput(el, k); }
@@ -6302,6 +6302,38 @@
         }
         return;
       }
+      /* Tapping the hydration droplet inside a food's portion pill toggles
+         whether that plate counts toward today's water (e.g. a protein powder
+         mixed into already-counted Crio Bru and milk). Also updates its pin
+         if the food is pinned to this meal. */
+      var htg = e.target.closest('[data-mhydtoggle]');
+      if (htg) {
+        var hp = htg.dataset.mhydtoggle.split(':');
+        var hvk = mViewKey(), hsk = hp[0], hidx = Number(hp[1]);
+        var hnh = 0, hid = null;
+        mEditDay(hvk, function (day) {
+          var it = (day[hsk] || [])[hidx];
+          if (!it) return;
+          if (it.nh) delete it.nh; else it.nh = 1;
+          hnh = it.nh ? 1 : 0;
+          hid = it.id;
+        });
+        if (hid !== null) {
+          var hslots = mReadSlots(), hsChanged = false;
+          hslots.list.forEach(function (s) {
+            if (s.k !== hsk || !s.pins) return;
+            s.pins.forEach(function (p) {
+              if (p.id === hid) {
+                if (hnh) p.nh = 1; else delete p.nh;
+                hsChanged = true;
+              }
+            });
+          });
+          if (hsChanged) mWriteSlots(hslots);
+        }
+        keepingFocus(renderMacros);
+        return;
+      }
       /* A food's line on the day opens under itself; one at a time. */
       var amt = e.target.closest('[data-mamt]');
       if (amt) {
@@ -6552,7 +6584,11 @@
         var pat = -1;
         psrec.pins.forEach(function (p, i2) { if (p.id === pit.id) pat = i2; });
         if (pat >= 0) psrec.pins.splice(pat, 1);
-        else psrec.pins.push({ id: pit.id, x: pit.x });
+        else {
+          var pinObj = { id: pit.id, x: pit.x };
+          if (pit.nh) pinObj.nh = 1;
+          psrec.pins.push(pinObj);
+        }
         mWriteSlots(pslots);
         S.mMenu = '';
         mRedraw();
@@ -7695,7 +7731,9 @@
           var cate = mAddsEaten(toK, csk);
           mEditDay(toK, function (d6) {
             d6[csk] = (d6[csk] || []).concat(its.map(function (it) {
-              return { id: it.id, x: it.x, eaten: cate };
+              var cItem = { id: it.id, x: it.x, eaten: cate };
+              if (it.nh) cItem.nh = 1;
+              return cItem;
             }));
           });
           mToast(its.length + (its.length === 1 ? ' plate' : ' plates') + ' from ' + esc(mLongDate(fromK)) +

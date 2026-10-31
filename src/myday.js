@@ -370,7 +370,7 @@
       : '<button class="mstep-x mitem-amt ' + (spent ? 'mstep-wake" data-medit="' : 'mstep-type" data-mtype="') + tag + '" aria-label="' +
           name + ', ' + esc(mDialText(r, it.x)) + '. ' + (spent ? 'Correct it' : 'Type an amount') + '">' + esc(mDialText(r, it.x)) + '</button>';
     return '<div class="mfl-x no-print">' +
-        '<div class="mfl-mac"><span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mHydChip(r, it.x) + mSaltChip(r, it.x) + '</div>' +
+        '<div class="mfl-mac"><span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mHydChip(r, it.x, it.nh) + mSaltChip(r, it.x) + '</div>' +
         '<div class="mfl-ctl">' +
           '<span class="mfl-ics">' +
             '<button class="mfl-ic" data-mdel="' + tag + '" aria-label="Remove ' + name + '">' + I_BIN + '</button>' +
@@ -464,7 +464,7 @@
       sum +
       '<div class="mrow-dr">' +
       '<span class="mrow-m mitem-r2">' + (measure ? '<span class="mitem-uom">' + esc(measure) + '</span> &middot; ' : '') +
-        '<span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mHydChip(r, it.x) + mSaltChip(r, it.x) + mWhyChip(it, tag) + '</span>' +
+        '<span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mHydChip(r, it.x, it.nh) + mSaltChip(r, it.x) + mWhyChip(it, tag) + '</span>' +
       (menuOpen ? '' : '<button ' + doorAttr + ' hidden>' + I_INFO + 'Details</button>') +
       /* Typing opens an EMPTY box with the amount shown faint behind it, so
          what you type is the amount. Opened holding the number, it relied on
@@ -695,7 +695,11 @@
         mEditDay(k, function (day0) {
           slots.list.forEach(function (s) {
             (s.pins || []).forEach(function (p) {
-              if (LIVE.BY_ID[p.id]) (day0[s.k] = day0[s.k] || []).push({ id: p.id, x: p.x || 1, eaten: 0 });
+              if (LIVE.BY_ID[p.id]) {
+                var seeded = { id: p.id, x: p.x || 1, eaten: 0 };
+                if (p.nh) seeded.nh = 1;
+                (day0[s.k] = day0[s.k] || []).push(seeded);
+              }
             });
           });
         }, true);
@@ -1007,22 +1011,29 @@
             ? '<button class="mtray-fn" data-mfood="' + esc(String(r.id)) + '" data-mx="' + it.x + '" data-mfslot="' + esc(sk) + '" aria-label="' + name + ', the food">'
             : '<button class="mtray-fn" data-open="' + esc(String(r.id)) + '" data-mx="' + it.x + '" aria-label="' + name + ', the recipe">';
           var single = !kitchen && !it.l;
-          /* The water a line adds, under its name (Antigravity, 2026-10-30;
-             moved under the name rather than beside it, where on a phone it
-             took the width a long name needs: "Crio Bru Power Mornin…"). */
+          /* The water a line adds rides inside the right half of its portion
+             pill next to the metric measure (Blake, 2026-10-31: "move it
+             inside the little pill next to the milliliters. Then let me tap
+             it to turn it off if it's not applicable in that drink"). Tapping
+             the droplet toggles `it.nh` so a powder mixed into already-counted
+             Crio Bru and milk can be muted for that drink. */
           var fOz = mItemFluidOz(r, it.x);
+          var hydOff = !!(fOz > 0 && it.nh);
           var hydTag = fOz > 0
-            ? '<span class="mfl-hyd num" title="' + fOz + ' oz hydration" aria-label="' + fOz + ' oz hydration">' +
-                '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2C8 2 3.8 6.8 3.8 10a4.2 4.2 0 0 0 8.4 0C12.2 6.8 8 2 8 2Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>' +
-                fOz + ' oz</span>'
+            ? '<span class="mfl-hyd num' + (hydOff ? ' off' : '') + '" data-mhydtoggle="' + esc(tag) + '" role="button" tabindex="-1" aria-pressed="' + (!hydOff) + '" title="' +
+                (hydOff ? 'Hydration off (' + fOz + ' oz) — tap to count toward hydration' : fOz + ' oz hydration — tap to turn off for this drink') +
+                '" aria-label="' + (hydOff ? 'Hydration off, ' + fOz + ' oz. Tap to count toward hydration' : fOz + ' oz hydration. Tap to turn off for this drink') + '">' +
+                '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2C8 2 3.8 6.8 3.8 10a4.2 4.2 0 0 0 8.4 0C12.2 6.8 8 2 8 2Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>' +
+                (hydOff ? '<path d="M3 13L13 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' : '') +
+                '</svg><span class="vis-hidden">' + fOz + ' oz</span></span>'
             : '';
           var line = '<div class="mfl-r">' +
               '<span class="mfl-lf">' + mBadgeHTML(r) + '</span>' +
-              door + (hydTag ? '<span class="mfl-nmw"><span class="mfl-nm">' + name + '</span>' + hydTag + '</span>' : '<span class="mfl-nm">' + name + '</span>') + '</button>' +
-              '<button class="mfl-amt split-pill' + (it.l ? ' locked' : '') + (single ? ' single' : '') + '" data-mamt="' + esc(k + '|' + tag) + '" aria-expanded="' + open + '" aria-label="' + name + ', ' +
-                esc(kitchen ? kitchen + ', ' + metric : metric) + (it.l ? ', locked' : '') + '. ' + (open ? 'Close' : 'Change it') + '">' +
+              door + '<span class="mfl-nm">' + name + '</span></button>' +
+              '<button class="mfl-amt split-pill' + (it.l ? ' locked' : '') + (single ? ' single' : '') + (fOz > 0 ? ' has-hyd' : '') + (hydOff ? ' hyd-off' : '') + '" data-mamt="' + esc(k + '|' + tag) + '" aria-expanded="' + open + '" aria-label="' + name + ', ' +
+                esc(kitchen ? kitchen + ', ' + metric : metric) + (fOz > 0 ? (hydOff ? ', hydration off' : ', ' + fOz + ' oz hydration') : '') + (it.l ? ', locked' : '') + '. ' + (open ? 'Close' : 'Change it') + '">' +
                 '<span class="mtray-fm sp-k"><b>' + (it.l ? LOCK_SM : '') + esc(kitchen) + '</b></span>' +
-                '<em class="num sp-g">' + esc(metric) + '</em></button>' +
+                '<span class="sp-r">' + hydTag + '<em class="num sp-g">' + esc(metric) + '</em></span></button>' +
               '<input class="mitem-ate" type="checkbox" data-meat="' + esc(tag) + '" aria-label="Eaten, ' + name + '"' +
                 (it.eaten ? ' checked' : '') + (ahead ? ' disabled' : '') + '>' +
             '</div>';
@@ -1032,11 +1043,11 @@
              mockup https://claude.ai/artifact/LyyEvDjgiF94XKqV5u9tJf): in
              Details each shut line says what it costs on a quiet line of its
              own, and the keys are on the one you tap, as on Foods. The
-             water already rides under the name (hydTag), so this line
+             water already rides in the portion pill (hydTag), so this line
              leaves it off (Blake, 2026-10-30: "Water hydration is
-             duplicated", 16 oz under the name and 16 oz fluid beneath). */
+             duplicated"). */
           var quiet = view === 3 && !open && !S.mViewAll
-            ? '<div class="mfl-q no-print"><span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + (fOz > 0 ? '' : mHydChip(r, it.x)) + mSaltChip(r, it.x) + '</div>' : '';
+            ? '<div class="mfl-q no-print"><span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + (fOz > 0 ? '' : mHydChip(r, it.x, it.nh)) + mSaltChip(r, it.x) + '</div>' : '';
           return '<div class="mtray-f' + (r.food ? '' : ' mtray-go') + (it.eaten ? ' eaten' : '') + (it.l ? ' held' : '') + (open ? ' open' : '') + '">' +
             line + (open ? mLineOpenHTML(M, r, it, i) : quiet) + '</div>';
         }).join('');

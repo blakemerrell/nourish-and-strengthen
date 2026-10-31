@@ -7205,14 +7205,20 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   .mfl-amt .mtray-fm small { display: none; }
 }
 .mfl-amt .mtray-fm .mcard-lk { width: 11px; height: 11px; margin-right: 3px; vertical-align: -1px; color: var(--ochre-text); }
-.mfl-amt em {
-  display: inline-flex; align-items: center; justify-content: flex-end;
+.mfl-amt .sp-r {
+  display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px;
   height: 24px; box-sizing: border-box; padding: 0 7px;
   border: 1px solid var(--line-firm); border-radius: 0 999px 999px 0; background: var(--card);
-  font-style: normal; font-size: 0.8125rem; font-weight: 600; line-height: 1.15; color: var(--note); white-space: nowrap; font-variant-numeric: tabular-nums;
 }
-.mfl-amt.single em { border-radius: 999px; background: var(--paper-soft); color: var(--ink); }
-.mfl-amt.locked em { border-color: var(--ochre); }
+.mfl-amt.single .sp-r { border-radius: 999px; background: var(--paper-soft); }
+.mfl-amt.locked .sp-r { border-color: var(--ochre); }
+.mfl-amt .sp-g {
+  display: inline-flex; align-items: center; justify-content: flex-end;
+  height: 22px; box-sizing: border-box; padding: 0; border: 0; background: none;
+  font-style: normal; font-size: 0.8125rem; font-weight: 600; line-height: 1.15; color: var(--note); white-space: nowrap; font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.mfl-amt.single .sp-g { color: var(--ink); }
 /* The tick: the plate's own 30px box, drawn inside a 44px target that
    spills 7px past its column each way, so the line keeps its room and a
    thumb still gets a thumb's worth ("every control on the day is a thumb
@@ -8608,7 +8614,7 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   display: none;
 }
 
-/* Inline hydration badge on meal food/recipe rows */
+/* Inline hydration toggle inside portion pill & chip on meal food/recipe rows */
 .mfl-hyd, .mhyd-chip {
   display: inline-flex;
   align-items: center;
@@ -8618,18 +8624,26 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   color: var(--pill-water);
   white-space: nowrap;
 }
-.mfl-nmw {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 0;
-}
 .mfl-hyd {
-  margin-top: 2px;
+  position: relative;
+  padding: 2px 3px 2px 1px;
+  margin: -2px -1px -2px -2px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+.mfl-hyd::after {
+  content: '';
+  position: absolute;
+  inset: -10px -6px;
+}
+.mfl-hyd.off {
+  color: var(--note);
+  opacity: 0.52;
 }
 .mfl-hyd svg, .mhyd-chip svg {
-  width: 11px;
-  height: 11px;
+  width: 12px;
+  height: 12px;
   flex: none;
   display: block;
 }

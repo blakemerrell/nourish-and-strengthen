@@ -332,9 +332,9 @@
     }
     return Math.max(1, Math.round(8 * mult));
   }
-  function mHydChip(r, x) {
+  function mHydChip(r, x, off) {
     var oz = mItemFluidOz(r, x);
-    if (!(oz > 0)) return '';
+    if (!(oz > 0) || off) return '';
     return '<span class="mhyd-chip num">' +
       '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2C8 2 3.8 6.8 3.8 10a4.2 4.2 0 0 0 8.4 0C12.2 6.8 8 2 8 2Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>' +
       oz + ' oz fluid</span>';
@@ -350,7 +350,7 @@
       if (!Array.isArray(arr)) return;
       var mName = (slots.names && slots.names[sk]) || sk;
       arr.forEach(function (it) {
-        if (!it || !it.id) return;
+        if (!it || !it.id || it.nh) return;
         var r = LIVE.BY_ID[it.id];
         if (!r) return;
         var oz = mItemFluidOz(r, it.x);

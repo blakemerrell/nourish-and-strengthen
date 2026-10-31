@@ -3413,7 +3413,11 @@
       if (!data || typeof data !== 'object') return false;
       if (data.status) healthMeta.status = String(data.status);
       if (data.syncedAt) healthMeta.lastSync = Number(data.syncedAt) || Date.now();
-      var changed = false;
+      /* The rest of what Health Connect sent — heart, calories, workouts from
+         the watch, the body, the night's breathing — kept on this phone by
+         src/healthdata.js (Blake, 2026-10-30: "get ALL of health connect
+         data that makes sense"). */
+      var changed = !!(window.HealthData && window.HealthData.take(data));
       if (data.days && typeof data.days === 'object') {
         var tk = todayKey();
         Object.keys(data.days).sort().forEach(function (d) {

@@ -5622,11 +5622,31 @@
     return '<div id="trSesh" class="tr-card tr-next tr-sesh">' +
       '<div class="tr-eyebrow">' + (due === 0 ? 'Today' : 'Next' + (due ? ' · ' + esc(dueSay(due)) : '')) + ' · ' + wk + '</div>' +
       '<div class="tr-title">' + esc(p.n) + '</div>' +
+      readyLine() +
       body +
       restNote(p) +
       start +
       '<div class="tr-acts tr-next-a">' + planBtn + skip + '</div>' +
     '</div>';
+  }
+
+  /* How recovered you are this morning, over the session you are about to
+     start (Blake, 2026-10-30, wanting Strengthen to use the health data
+     too): resting heart rate and HRV against your own normal, and last
+     night's sleep, from src/healthdata.js and Nourish's morning record. A
+     line, not a gate: it says what the watch says and leaves the lifting to
+     you. Nothing when the watch has said nothing. */
+  function readyLine() {
+    var HD = window.HealthData;
+    if (!HD) return '';
+    var tk = dayKey(new Date()), sl = 0;
+    try { sl = Number((JSON.parse(localStorage.getItem('bsc.macroAm') || '{}')[tk] || {}).sl) || 0; } catch (e) { sl = 0; }
+    var d = HD.day(tk);
+    if (typeof d.rhr !== 'number' && typeof d.hrv !== 'number') return '';
+    var r = HD.recovery(tk, sl);
+    if (!r) return '';
+    var tip = r.level === 'low' ? ' Keep the top sets honest; a flat day is information, not failure.' : '';
+    return '<div class="tr-ready ' + r.level + '"><b>' + esc(r.word) + '</b> \u00b7 ' + esc(r.why.join(' \u00b7 ')) + '.' + tip + '</div>';
   }
 
   function wkName(ms, w) { return w >= accOf(ms) && !steady(ms) ? 'Deload week' : 'Week ' + (w + 1) + ' of ' + weeksOf(ms); }

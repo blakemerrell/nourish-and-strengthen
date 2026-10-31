@@ -1,8 +1,16 @@
 name: android
 
+# It sat in android/ until 2026-10-30, where GitHub never runs a workflow,
+# so no APK was ever built from a push. Builds on main, and on any pull
+# request that touches the Android app, so a change that does not compile
+# is caught before it merges.
 on:
   push:
     branches: [main]
+  pull_request:
+    paths:
+      - 'android/**'
+      - '.github/workflows/android.yml'
   workflow_dispatch:
 
 permissions:
@@ -61,12 +69,17 @@ jobs:
           echo "=== Signing Certificate Public Fingerprints (for Firebase Console) ==="
           keytool -list -v -keystore "$KS_FILE" -storepass "${KS_PASS:-nourish123}" -alias "${KEY_ALIAS:-nourish}" | grep -E "SHA1:|SHA256:" || true
 
+      # The version code must climb past 6, the build on Blake's phone and in
+      # Play (1.0.5, built by hand on 2026-10-28). This workflow's run number
+      # restarted at 1 when it moved here, and Android refuses an update with
+      # a lower code (INSTALL_FAILED_VERSION_DOWNGRADE); Antigravity caught it
+      # on #171. Expressions cannot add, so the shell does.
       - name: Build signed Release APK and Play Store AAB
         working-directory: android
-        env:
-          ANDROID_VERSION_CODE: ${{ github.run_number }}
-          ANDROID_VERSION_NAME: "1.0.${{ github.run_number }}"
         run: |
+          export ANDROID_VERSION_CODE=$(( GITHUB_RUN_NUMBER + 6 ))
+          export ANDROID_VERSION_NAME="1.0.$(( GITHUB_RUN_NUMBER + 5 ))"
+          echo "versionCode $ANDROID_VERSION_CODE, versionName $ANDROID_VERSION_NAME"
           gradle assembleRelease bundleRelease --no-daemon
           cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/nourish-and-strengthen.apk"
           cp app/build/outputs/bundle/release/app-release.aab "$RUNNER_TEMP/nourish-and-strengthen.aab"

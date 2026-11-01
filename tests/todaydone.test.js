@@ -69,8 +69,8 @@ module.exports = {
       s.fold === 'Breakfast eaten' && new RegExp('^' + want[0].kcal + ' cal · \\d+ g protein$').test(s.foldSub), JSON.stringify(s));
     t.ok('the rest stay open, each with its calories, the first one next',
       s.open.join() === ['Lunch:' + want[1].kcal + ' cal:next', 'Dinner:' + want[2].kcal + ' cal', 'Snacks:' + want[3].kcal + ' cal'].join(), JSON.stringify(s.open));
-    t.ok('the calories and protein stay on the card, and its corner says Nourish',
-      s.bars.join() === 'Calories,Protein' && /^Nourish/.test(s.tab), JSON.stringify(s));
+    t.ok('the macros stay on the card as meters, and its corner says Nourish',
+      s.bars.join() === 'Protein,Carbs,Fat' && /^Nourish/.test(s.tab), JSON.stringify(s));
 
     /* Ticked from Today: eaten in Nourish too, and folded in with breakfast. */
     await p.click('[data-td="eat"][data-k="l"]');
@@ -118,7 +118,7 @@ module.exports = {
     p.on('pageerror', (e) => errs.push(e.message));
     s = await read(p);
     t.ok('all four eaten: one green line, nothing left open, the numbers still there',
-      s.fold === 'Breakfast, lunch, dinner and snacks eaten' && s.open.length === 0 && s.bars.length === 2, JSON.stringify(s));
+      s.fold === 'Breakfast, lunch, dinner and snacks eaten' && s.open.length === 0 && s.bars.length === 3, JSON.stringify(s));
     /* N4: deleting one of two eaten items on Breakfast keeps bsc.macroDone[k] set because all remaining slots/items are still eaten. */
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(250);
@@ -148,7 +148,7 @@ module.exports = {
     s = await read(p);
     const acts = await p.evaluate(() => [...document.querySelectorAll('[data-card="eating"] [data-td]')].map((b) => b.dataset.td).join());
     t.ok('nothing planned: the Eating card says so, with the numbers, Fill my day and Add food',
-      s.title === 'Nothing planned for today' && s.bars.length === 2 && /fill/.test(acts) && /addfood/.test(acts), JSON.stringify({ s, acts }));
+      s.title === 'Nothing planned yet' && s.bars.length === 3 && /fill/.test(acts) && /addfood/.test(acts), JSON.stringify({ s, acts }));
     /* Nourish left on yesterday: Today's Fill still fills today. */
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(300);

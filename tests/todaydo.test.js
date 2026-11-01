@@ -47,7 +47,9 @@ module.exports = {
     /* ---- the weigh-in ---- */
     let line = await p.evaluate(() => {
       const b = document.querySelector('#todayRoot .td-weigh');
-      return b ? { first: b === document.querySelector('#todayRoot .td-cards').firstElementChild, txt: b.textContent, done: b.classList.contains('done') } : null;
+      // the first line of the morning card, which is the first card (2026-11-01)
+      const m = document.querySelector('#todayRoot .td-cards').firstElementChild;
+      return b ? { first: !!m && m.classList.contains('td-morning') && b === m.firstElementChild, txt: b.textContent, done: b.classList.contains('done') } : null;
     });
     t.ok('Weigh in is the first line on Today, with the last morning and the week', line && line.first && !line.done && /^Weigh in/.test(line.txt) && /last 192/.test(line.txt), JSON.stringify(line));
     const home = await p.evaluate(() => ({ inNourish: !!document.getElementById('macroWeigh').closest('#view-macros'),

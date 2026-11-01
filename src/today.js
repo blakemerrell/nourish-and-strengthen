@@ -107,6 +107,88 @@
         (am ? '<small class="td-am">' + esc(am) + '</small>' : '') + '</span>' +
       '<i aria-hidden="true">\u203a</i></button>';
   }
+  /* ---- the morning ----
+   * Blake, 2026-11-01, of the little sleep line under the weigh-in: "tiny and
+   * unhelpful… this is a place to really show some cool stuff and it is
+   * underwhelming." So the top of Today is one card for the whole morning:
+   * the weigh-in as it was, three rings — sleep against eight hours, HRV and
+   * resting heart rate against your own thirty-day normal — around one word
+   * for how ready you are, the reasons in a sentence, and the week under
+   * three of the numbers. The word, not a score out of a hundred: the data
+   * says recovered, fair or low, and a number would claim more than that
+   * (his choice, asked). The tray of everything else stays a tap away. */
+  var READY = { good: ['Ready', 'Ready to train'], fair: ['Easier', 'Go a little easier'], low: ['Rest', 'Take it light today'] };
+  function weekKeys(tk, n) {
+    var out = [], d = new Date(tk + 'T12:00:00');
+    for (var i = n - 1; i >= 0; i--) { var x = new Date(d); x.setDate(d.getDate() - i); out.push(dayKey(x)); }
+    return out;
+  }
+  function sparkSVG(vals, cls) {
+    var pts = [];
+    vals.forEach(function (v, i) { if (typeof v === 'number' && isFinite(v)) pts.push([i, v]); });
+    if (pts.length < 2) return '<span class="td-spk-none"></span>';
+    var ys = pts.map(function (q) { return q[1]; }), lo = Math.min.apply(null, ys), hi = Math.max.apply(null, ys);
+    if (hi - lo < 1e-9) { hi += 1; lo -= 1; }
+    var x = function (i) { return 2 + i * 96 / Math.max(1, vals.length - 1); }, y = function (v) { return 3 + (hi - v) / (hi - lo) * 18; };
+    var d = pts.map(function (q, i) { return (i ? 'L' : 'M') + x(q[0]).toFixed(1) + ' ' + y(q[1]).toFixed(1); }).join(' ');
+    var last = pts[pts.length - 1];
+    return '<svg class="td-spk ' + cls + '" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true"><path d="' + d + '"/>' +
+      '<circle cx="' + x(last[0]).toFixed(1) + '" cy="' + y(last[1]).toFixed(1) + '" r="2.4"/></svg>';
+  }
+  function ringsSVG(rings, word) {
+    var size = 124, c = size / 2, out = '';
+    rings.forEach(function (r, i) {
+      var rad = c - 7 - i * 13, C = 2 * Math.PI * rad, f = Math.max(0.02, Math.min(1, r.f));
+      out += '<circle cx="' + c + '" cy="' + c + '" r="' + rad + '" class="td-rg-bg"/>' +
+        '<circle cx="' + c + '" cy="' + c + '" r="' + rad + '" class="td-rg ' + r.cls + '" stroke-dasharray="' + (f * C).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 ' + c + ' ' + c + ')"/>';
+    });
+    return '<svg class="td-rings" viewBox="0 0 ' + size + ' ' + size + '" aria-hidden="true">' + out +
+      '<text x="50%" y="53%" text-anchor="middle" dominant-baseline="middle" class="td-rg-word">' + esc(word) + '</text></svg>';
+  }
+  function morningCard(d) {
+    var w = d.weigh, v = d.vitals;
+    if (!w && !v) return '';
+    var tk = dayKey(d.date), keys = weekKeys(tk, 7), by = {};
+    try {
+      var pr = window.Hive.progress ? window.Hive.progress(keys[0], tk) : null;
+      (pr ? pr.days : []).forEach(function (x) { by[x.k] = x; });
+    } catch (e) { by = {}; }
+    var HD = window.HealthData, hs = function (f) {
+      var m = {};
+      try { (HD && HD.series ? HD.series(f, keys[0], tk) : []).forEach(function (p) { m[p.k] = p.v; }); } catch (e) { /* none */ }
+      return keys.map(function (k) { return m[k]; });
+    };
+    var sleepH = v && v.sleepH ? v.sleepH : (by[tk] && by[tk].sl) || null;
+    var rings = [];
+    if (sleepH) rings.push({ f: sleepH / 8, cls: 'td-rg-sl', k: 'Sleep' });
+    if (v && v.hrv !== null && v.hrvNorm) rings.push({ f: v.hrv / v.hrvNorm, cls: 'td-rg-hrv', k: 'HRV' });
+    if (v && v.rhr !== null && v.rhrNorm) rings.push({ f: v.rhrNorm / v.rhr, cls: 'td-rg-rhr', k: 'Resting HR' });
+    if (rings.length < 3 && v && v.steps) rings.push({ f: v.steps / 8000, cls: 'td-rg-st', k: 'Steps' });
+    var lvl = v && v.rec ? v.rec.level : null, rd = lvl ? READY[lvl] : null;
+    var why = v && v.rec && v.rec.why && v.rec.why.length ? v.rec.why.join(', ') : '';
+    var head = rd ? rd[1] : sleepH ? 'Good morning' : 'Good morning';
+    var say = why ? why.charAt(0).toUpperCase() + why.slice(1) + '.' :
+      sleepH ? 'Slept ' + slH(sleepH) + '. Connect a watch for heart rate and HRV, and this says how ready you are.' :
+      'Weigh in and say how you slept, and this fills in.';
+    var hero = rings.length ? '<div class="td-mhero">' + ringsSVG(rings.slice(0, 3), rd ? rd[0] : slH(sleepH || 0)) +
+      '<div class="td-mhero-t"><b class="td-ready ' + (lvl || '') + '">' + esc(head) + '</b><span>' + esc(say) + '</span>' +
+        '<span class="td-rg-key">' + rings.slice(0, 3).map(function (r) { return '<span><i class="' + r.cls + '"></i>' + esc(r.k) + '</span>'; }).join('') + '</span></div></div>' : '';
+    // three numbers with their week: sleep, heart (HRV, else resting HR, else steps), weight
+    var tiles = [];
+    var slS = keys.map(function (k) { return by[k] && by[k].sl; });
+    if (sleepH || slS.some(Boolean)) tiles.push(['Sleep', sleepH ? slH(sleepH) : '—', sparkSVG(slS, 'td-spk-sl')]);
+    if (v && v.hrv !== null) tiles.push(['HRV', v.hrv + ' <small>ms</small>', sparkSVG(hs('hrv'), 'td-spk-hrv'), v.hrvNorm ? (v.hrv - v.hrvNorm >= 0 ? '+' : '−') + Math.abs(v.hrv - v.hrvNorm) + ' vs normal' : '']);
+    else if (v && v.rhr !== null) tiles.push(['Resting HR', v.rhr + ' <small>bpm</small>', sparkSVG(hs('rhr'), 'td-spk-rhr'), v.rhrNorm ? (v.rhr - v.rhrNorm > 0 ? '+' : '−') + Math.abs(v.rhr - v.rhrNorm) + ' vs normal' : '']);
+    else if (v && v.steps) tiles.push(['Steps', fmt(v.steps), sparkSVG(keys.map(function (k) { return by[k] && by[k].sy; }), 'td-spk-st')]);
+    var wS = keys.map(function (k) { return by[k] && by[k].w; });
+    if (w && (w.done || wS.some(Boolean))) tiles.push(['Weight', w.done ? String(w.now) : w.avg ? String(w.avg) : '—', sparkSVG(wS, 'td-spk-w'), w.week ? w.week + ' this week' : '']);
+    var tilesHTML = tiles.length ? '<div class="td-mtiles">' + tiles.map(function (t) {
+      return '<div class="td-mtile"><small>' + t[0] + '</small><b>' + t[1] + '</b>' + t[2] + (t[3] ? '<span>' + esc(t[3]) + '</span>' : '') + '</div>';
+    }).join('') + '</div>' : '';
+    return '<section class="td-morning" aria-label="Your morning">' + weighLine(w) + hero + tilesHTML + vitalsStrip(v) + '</section>';
+  }
+  function slH(h) { var hh = Math.floor(h), mm = Math.round((h - hh) * 60); if (mm === 60) { hh++; mm = 0; } return hh + 'h ' + (mm < 10 ? '0' : '') + mm + 'm'; }
+
   function readFlag(k) {
     try { return localStorage.getItem(k) === '1'; } catch (e) { return false; }
   }
@@ -206,11 +288,15 @@
     return '<section class="td-vitals' + (open ? ' open' : '') + '" aria-label="Morning readiness and watch vitals">' +
       '<div class="td-vitals-bar">' +
         '<button type="button" class="td-vitals-toggle" data-td="vitals" aria-expanded="' + (open ? 'true' : 'false') + '">' +
-          (badgeWord ? '<span class="td-rec-pill ' + lvl + '"><i class="td-rec-dot"></i>' + esc(badgeWord) + '</span>' : '') +
-          '<span class="td-vitals-inline">' + pills.join(' <span aria-hidden="true">\u00b7</span> ') + '</span>' +
+          /* In the morning card the rings and tiles already say these, so
+             the row says what is behind it; the badge and the line are kept
+             for a screen reader, which has no rings. */
+          '<span class="td-vitals-more" aria-hidden="true">More from your watch</span>' +
+          (badgeWord ? '<span class="td-rec-pill sr-only ' + lvl + '"><i class="td-rec-dot"></i>' + esc(badgeWord) + '</span>' : '') +
+          '<span class="td-vitals-inline sr-only">' + pills.join(' <span aria-hidden="true">\u00b7</span> ') + '</span>' +
           '<span class="td-vitals-chev" aria-hidden="true">' + (open ? '\u25b4' : '\u25be') + '</span>' +
         '</button>' +
-        '<button type="button" class="td-vitals-hub" data-td="hub" aria-label="Open 120-day Biometrics Hub">120d Hub \u203a</button>' +
+        '<button type="button" class="td-vitals-hub" data-td="hub" aria-label="Open 120-day Biometrics Hub">120-day trends \u203a</button>' +
       '</div>' + tray + '</section>';
   }
 
@@ -298,13 +384,12 @@
     var left = e.kcal.want - e.kcal.have, meals = e.meals || [];
     var big = '<p class="td-big"><b>' + fmt(Math.abs(left)) + '</b> ' + (left >= 0 ? 'left today' : 'over today') +
       (e.training ? '<span class="td-lift">Lifting day</span>' : '') + '</p>';
-    var macroPills = (e.c && e.f) ? '<div class="td-mpills">' +
-      '<span class="td-mpill"><b>' + fmt(e.p.have) + '</b>/' + fmt(e.p.want) + 'g P</span>' +
-      '<span class="td-mpill"><b>' + fmt(e.c.have) + '</b>/' + fmt(e.c.want) + 'g C</span>' +
-      '<span class="td-mpill"><b>' + fmt(e.f.have) + '</b>/' + fmt(e.f.want) + 'g F</span>' +
-    '</div>' : '';
-    var hero = '<div class="td-eat-hero">' + dualRingSVG(e) + '<div class="td-eat-hero-r">' + big + macroPills + '</div></div>';
-    var bars = bar('Calories', e.kcal.have, e.kcal.want, '', 'td-kcal') + bar('Protein', e.p.have, e.p.want, ' g', 'td-p');
+    var hero = '<div class="td-eat-hero">' + dualRingSVG(e) + '<div class="td-eat-hero-r">' + big + '</div></div>';
+    /* The day's three macros as meters under the ring. Calories were said
+       three times (the number left, the ring, and a bar), and protein twice;
+       the ring and the number say calories, and these say the rest. */
+    var bars = '<div class="td-mbars">' + bar('Protein', e.p.have, e.p.want, ' g', 'td-p') +
+      (e.c ? bar('Carbs', e.c.have, e.c.want, ' g', 'td-c') : '') + (e.f ? bar('Fat', e.f.have, e.f.want, ' g', 'td-f') : '') + '</div>';
     var w = e.water;
     var wStrip = w ? '<div class="td-water"><span class="td-water-l">💧 <b>' + fmt(w.have) + '</b> / ' + fmt(w.want) + ' oz' +
       (w.caf > 0 ? ' <small>· ' + fmt(w.caf) + ' mg caf</small>' : '') + '</span>' +
@@ -315,8 +400,8 @@
         ((w.plain !== undefined ? w.plain : w.have) > 0 ? '<button type="button" class="td-wbtn td-wsub" data-td="water" data-oz="-8" data-tk="' + esc(e.key || '') + '" aria-label="Remove 8 oz water">−8</button>' : '') +
       '</span></div>' : '';
     if (!meals.some(function (m) { return !m.empty; })) {
-      return card('eating', 'Eating', hero + title('Nothing planned for today') +
-        note('Nourish can fill your day from the recipes, to your ' + fmt(e.kcal.want) + ' calories and ' + fmt(e.p.want) + ' g of protein. Or add what you eat as you go.') +
+      return card('eating', 'Eating', hero + title('Nothing planned yet') +
+        note('Fill it from the recipes to your numbers, or add what you eat as you go.') +
         bars + wStrip + acts(btn(main, 'fill', 'Fill my day') + btn(false, 'addfood', 'Add food') + quiet('eatout', 'Eating out')), '', 'macros');
     }
     var eaten = meals.filter(function (m) { return m.eaten; }), open = meals.filter(function (m) { return !m.eaten && !m.empty; });
@@ -385,10 +470,13 @@
       return '<li><span>' + esc(l.name) + '</span><span>' + esc(l.say) + '</span></li>';
     }).join('');
     var more = (w.lifts || []).length > 5 ? '<li class="td-more"><span>+' + (w.lifts.length - 5) + ' more</span></li>' : '';
-    return card('workout', 'Workout', title(esc(w.name)) +
-      facts([w.week || '', w.mins ? 'About ' + w.mins + ' min' : '', (w.lifts || []).length + ' exercises']) +
-      (lifts ? '<ol class="td-lifts">' + lifts + more + '</ol>' : '') + litStrip(w) +
-      acts(btn(main, 'start', 'Start')), '', 'train');
+    /* The session first, the lit body beside it, and Start as the one big
+       button: Blake's mornings open on this card more than any other. */
+    return card('workout', 'Workout', '<div class="td-wk-top"><div>' + title(esc(w.name)) +
+      facts([w.week || '', w.mins ? 'About ' + w.mins + ' min' : '', (w.lifts || []).length + ' exercises']) + '</div></div>' +
+      litStrip(w) +
+      (lifts ? '<ol class="td-lifts">' + lifts + more + '</ol>' : '') +
+      '<button class="btn-primary td-btn td-start" data-td="start">Start ' + esc(w.name) + '</button>', '', 'train');
   }
 
   // a rest day's activity, done: one green card, at the bottom
@@ -477,7 +565,7 @@
     d.shop.wmMark = d.wmMark || '';
     html += (hp.d ? shopCard(d.shop) : '') + (hp.d || hp.w ? weekCard(d) : '') + (doneT && hp.d ? cookedCard(d.tonight) : '') +
       (doneW && hp.w ? workoutCard(d.workout, false) : '');
-    var topBars = (hp.e ? weighLine(d.weigh) : '') + ((hp.e || hp.w) ? vitalsStrip(d.vitals) : '');
+    var topBars = (hp.e || hp.w) ? morningCard(hp.e ? d : { date: d.date, weigh: null, vitals: d.vitals }) : '';
     root.innerHTML = '<div class="td-top"><div class="step-k">' + DAYNAME[d.date.getDay()] + ' · ' + MONTH[d.date.getMonth()] + ' ' + d.date.getDate() + '</div>' +
       '<h1 class="step-h td-h">Today</h1></div><div class="td-cards">' + topBars + html + '</div>';
   }

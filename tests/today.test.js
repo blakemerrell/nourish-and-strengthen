@@ -165,8 +165,9 @@ module.exports = {
     }));
     const fmt = (n) => Math.round(n).toLocaleString('en-US');
     t.ok('eating says what is left today, from the day’s own target',
-      eat.big === fmt(E.e.kcal.want - E.e.kcal.have) && eat.bars[0] === fmt(E.e.kcal.have) + ' of ' + fmt(E.e.kcal.want) &&
-      eat.bars[1] === fmt(E.e.p.have) + ' of ' + fmt(E.e.p.want) + ' g', JSON.stringify(eat));
+      // calories are the number left and the ring; the meters are protein, carbs and fat (2026-11-01)
+      eat.big === fmt(E.e.kcal.want - E.e.kcal.have) && eat.bars[0] === fmt(E.e.p.have) + ' of ' + fmt(E.e.p.want) + ' g' &&
+      eat.bars.length === 3, JSON.stringify(eat));
     t.ok('and says when it is a lifting day', (eat.meta === 'Lifting day') === !!E.e.training, eat.meta + ' / ' + E.e.training);
     const wk = await p.evaluate(() => ({
       title: (document.querySelector('[data-card="workout"] .td-title') || {}).textContent,
@@ -373,11 +374,12 @@ module.exports = {
     const vitals0 = await p.evaluate(() => ({
       hasStrip: !!document.querySelector('#todayRoot .td-vitals'),
       hasRing: !!document.querySelector('#todayRoot .td-dual-ring'),
-      mpills: document.querySelectorAll('#todayRoot .td-mpill').length,
+      // the P/C/F pills became meters under the ring (2026-11-01)
+      mpills: document.querySelectorAll('#todayRoot .td-mbars .td-bar').length,
       has24oz: !!document.querySelector('#todayRoot [data-td="water"][data-oz="24"]'),
       trayOpen: !!document.querySelector('#todayRoot .td-vitals-tray')
     }));
-    t.ok('Today renders Health Connect vitals strip, concentric Cal+Protein ring, P/C/F pills, and +24 oz button',
+    t.ok('Today renders Health Connect vitals strip, concentric Cal+Protein ring, P/C/F meters, and +24 oz button',
       vitals0.hasStrip && vitals0.hasRing && vitals0.mpills === 3 && vitals0.has24oz && !vitals0.trayOpen, JSON.stringify(vitals0));
 
     await p.click('#todayRoot [data-td="vitals"]');
@@ -402,8 +404,9 @@ module.exports = {
       rvSpan: window.Train._.state().S.rvSpan,
       hasHub: !!document.querySelector('#trSnapshotCard [data-hc-hub="1"]')
     }));
-    t.ok('120d Hub jump navigates to Strengthen Block snapshot card on This block span with 120d Biometrics Hub rendered',
-      hubJump.view === 'train' && hubJump.sub === 'block' && hubJump.rvSpan === 'block' && hubJump.hasHub, JSON.stringify(hubJump));
+    // the review is Strengthen's Progress tab since 2026-11-01 (Workout, Progress, History)
+    t.ok('120d Hub jump navigates to Strengthen Progress on This block span with 120d Biometrics Hub rendered',
+      hubJump.view === 'train' && hubJump.sub === 'progress' && hubJump.rvSpan === 'block' && hubJump.hasHub, JSON.stringify(hubJump));
 
     const edgeChecks = await p.evaluate(() => {
       // 1) Yesterday fallback + todaySteps priority

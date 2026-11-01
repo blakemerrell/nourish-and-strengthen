@@ -4418,7 +4418,7 @@
     sub: (function () {
       try {
         var v = localStorage.getItem(LS_SUB);
-        return ['block', 'history', 'lifts'].indexOf(v) >= 0 ? v : 'block';
+        return ['block', 'progress', 'history', 'lifts'].indexOf(v) >= 0 ? v : 'block';
       } catch (e) { return 'block'; }
     })(),
     qz: null,             // the quiz, while it is being answered; see quiz()
@@ -5649,6 +5649,9 @@
     var m = Math.round((Date.now() - t) / 60000);
     return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : 'at ' + hm(t);
   }
+  // Settings as a gear, so the tabs, the plate counter and it share one row
+  var GEAR_ICO = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1.1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>';
   function draw() {
     if (DRAG && DRAG.on) return;
     var root = $('trBody');
@@ -5657,10 +5660,14 @@
     if (view) view.classList.toggle('tr-focus', focusOn());
     var head = $('trHead');
     if (head) {
-      head.innerHTML = '<button class="ghost tr-plfree" data-t="plfree" aria-label="Plate counter">' + EA_ICO.plates + '</button>' +
-        '<button class="ghost" data-t="settings">Settings</button>';
+      /* Block, History and Lifts in the header row, where the word
+         Strengthen was: the top bar already says which tab this is, and the
+         tabs were a second row of chrome before anything of the block. */
+      head.innerHTML = segHTML() +
+        '<button class="ghost tr-plfree" data-t="plfree" aria-label="Plate counter">' + EA_ICO.plates + '</button>' +
+        '<button class="ghost tr-gear" data-t="settings" aria-label="Settings">' + GEAR_ICO + '</button>';
     }
-    var html = segHTML();
+    var html = '';
     if (SY.err && doc) {
       html += '<div class="tr-note tr-warn tr-syncerr" role="status">Not saved to your account yet \u2014 it keeps trying. ' +
         'Everything is safe on this phone meanwhile.</div>';
@@ -5678,8 +5685,9 @@
         esc(LIVE.n) + '</span> — back to it</button>';
     }
     if (S.sub === 'block') html += LIVE ? liveHTML() : blockHTML();
+    else if (S.sub === 'progress') html += snapshotAndHubHTML(active(), null);
     else if (S.sub === 'history') html += historyHTML();
-    else html += liftsHTML();
+    else html += histSeg('lifts') + liftsHTML();
     root.innerHTML = html;
     S.flash = '';
     drawRest();
@@ -5689,10 +5697,15 @@
     if (LIVE) wake();
   }
 
+  /* Workout, Progress, History (Blake, 2026-11-01). The block screen had
+     grown to five screens — the block, today's session, and below them the
+     whole review — so the review is a tab of its own, Progress, and Lifts
+     lives in History beside the workouts it is made of. */
   function segHTML() {
-    var tabs = [['block', LIVE ? 'Workout' : 'Block'], ['history', 'History'], ['lifts', 'Lifts']];
+    var cur = S.sub === 'lifts' ? 'history' : S.sub;
+    var tabs = [['block', 'Workout'], ['progress', 'Progress'], ['history', 'History']];
     return '<div class="seg tr-seg" role="group" aria-label="Strengthen">' + tabs.map(function (t) {
-      return '<button data-t="sub" data-v="' + t[0] + '" aria-pressed="' + (S.sub === t[0]) + '">' + t[1] + '</button>';
+      return '<button data-t="sub" data-v="' + t[0] + '" aria-pressed="' + (cur === t[0]) + '">' + t[1] + '</button>';
     }).join('') + '</div>';
   }
 
@@ -5765,13 +5778,12 @@
   function blockHTML() {
     var ms = active();
     if (S.draft) return draftHTML();
-    if (S.qz) return savedHTML() + quizHTML() + (!S.browse && !S.lib ? snapshotAndHubHTML(null, null) : '');
+    if (S.qz) return savedHTML() + quizHTML();
     if (S.opt) return optHTML();
-    if (!ms && !T.pr.qz) return savedHTML() + quizHTML() + (!S.browse && !S.lib ? snapshotAndHubHTML(null, null) : '');
+    if (!ms && !T.pr.qz) return savedHTML() + quizHTML();
     if (!ms || S.browse) {
       return savedHTML() + (ms ? '<button class="tr-back" data-t="unbrowse">Your block · <span>' + esc(ms.n) +
-        '</span> — back to it</button>' : actStrip()) + (S.lib ? libHTML() : picksHTML()) +
-        (!ms && !S.browse && !S.lib ? snapshotAndHubHTML(null, null) : '');
+        '</span> — back to it</button>' : actStrip()) + (S.lib ? libHTML() : picksHTML());
     }
     var nx = nextSlot(ms);
     var acc = accOf(ms);
@@ -5784,8 +5796,8 @@
        hid where the session sat in the block. */
     var sel = selOf(ms, nx);
     var html = savedHTML() + blockCard(ms, nx, sel) + seshHTML(ms, nx, sel);
+    html += litStripHTML(ms, nx);
     html += actStrip();
-    html += snapshotAndHubHTML(ms, nx);
     /* One thing to do on this screen, and it is Start. The other ways in are
        a quiet list below it, and ending the block, which can't be taken
        back, stands apart in red. */
@@ -7834,14 +7846,19 @@
      keeps one: each with its name, its dates and how it went, and inside it
      everything it held. Or every workout in a row, newest first, which is
      how it always read. */
+  /* History's own row: by block, by workout, and the lifts — each lift's
+     records and trend, which used to be a tab of its own. */
+  function histSeg(cur) {
+    var opts = (blockList().length ? [['hview', 'blk', 'Blocks']] : []).concat([['hview', 'wo', 'Workouts'], ['sub', 'lifts', 'Lifts']]);
+    return '<div class="seg tr-hseg" role="group" aria-label="History by">' + opts.map(function (o) {
+      return '<button data-t="' + o[0] + '" data-v="' + o[1] + '" aria-pressed="' + (cur === o[1]) + '">' + o[2] + '</button>';
+    }).join('') + '</div>';
+  }
   function historyHTML() {
     var blocks = blockList();
-    if (!blocks.length) return workoutsHTML();
+    if (!blocks.length) return histSeg('wo') + workoutsHTML();
     var hv = S.hv === 'wo' ? 'wo' : 'blk';
-    var seg = '<div class="seg tr-hseg" role="group" aria-label="History by">' +
-      [['blk', 'Blocks'], ['wo', 'Workouts']].map(function (o) {
-        return '<button data-t="hview" data-v="' + o[0] + '" aria-pressed="' + (hv === o[0]) + '">' + o[1] + '</button>';
-      }).join('') + '</div>';
+    var seg = histSeg(hv);
     if (hv === 'wo') return seg + workoutsHTML();
     var open = S.hb && T.ms[S.hb];
     return seg + (open ? blockPastHTML(open) : blocksHTML(blocks));
@@ -9258,6 +9275,26 @@
       pgPace(D) + pgMuscle(D) + pgMuscles(D) + pgLevers(D) + pgFood(D) + pgRest(D);
   }
 
+  /* The week's lit body, small, on the Workout tab: the motivator stays in
+     sight where you start a session, and a tap is the whole map on Progress. */
+  function litStripHTML(ms, nx) {
+    if (!ms) return '';
+    var w = nx ? nx.w : weeksOf(ms) - 1, prevLast = 0, started = false;
+    ix().list.forEach(function (wo) {
+      if (wo.ms !== ms.id) return;
+      if (wo.w === w - 1 && wo.st > prevLast) prevLast = wo.st;
+      if (wo.w === w) started = true;
+    });
+    if (nx && w > 0 && !started && prevLast && Date.now() - prevLast < 2 * DAY_MS) w--;
+    var wl = weekLit(ms, w);
+    if (!wl.n) return '';
+    var figs = anatMapSVG(wl.cls), st = litStreak(ms, w);
+    return '<button class="tr-card tr-litstrip' + (wl.all ? ' all-lit' : '') + '" data-t="sub" data-v="progress" aria-label="' + wl.hit + ' of ' + wl.n + ' muscles lit this week. See your progress">' +
+      '<span class="tr-litstrip-f" aria-hidden="true">' + figs.front.replace('tr-hm-svg', 'tr-hm-mini') + figs.back.replace('tr-hm-svg', 'tr-hm-mini') + '</span>' +
+      '<span class="tr-litstrip-t"><b>' + (wl.all ? 'Whole body lit' : wl.hit + ' of ' + wl.n + ' muscles lit') + '</b>' +
+      '<span>' + (st.now ? '\ud83d\udd25 ' + st.now + ' week' + (st.now === 1 ? '' : 's') + ' fully lit in a row' : 'this week, from your hard sets') + '</span></span>' +
+      '<span class="tr-litstrip-go" aria-hidden="true">Progress \u203a</span></button>';
+  }
   function snapshotAndHubHTML(ms, nx) {
     return '<section class="tr-snapshot-card" id="trSnapshotCard" aria-label="Block review and biometrics">' +
       '<div class="tr-snap-head"><span class="tr-eyebrow">Progress &amp; Biometrics</span></div>' +
@@ -11387,9 +11424,9 @@
     S.rvSpan = 'week';
     S.browse = false;
     S.qz = null;
-    S.sub = 'block';
+    S.sub = 'progress';
     if (LIVE) S.minim = 1;
-    try { localStorage.setItem(LS_SUB, 'block'); } catch (e) { /* private mode */ }
+    try { localStorage.setItem(LS_SUB, 'progress'); } catch (e) { /* private mode */ }
     draw();
     var el = $('trSnapshotCard');
     if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -11401,16 +11438,16 @@
     S.rvSpan = 'block';
     S.browse = false;
     S.qz = null;
-    S.sub = 'block';
+    S.sub = 'progress';
     if (LIVE) S.minim = 1;
-    try { localStorage.setItem(LS_SUB, 'block'); } catch (e) { /* private mode */ }
+    try { localStorage.setItem(LS_SUB, 'progress'); } catch (e) { /* private mode */ }
     draw();
     var el = $('trSnapshotCard');
     if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     else scrollTop();
   }
   function setSub(v) {
-    if (v === 'review') v = 'block';
+    if (v === 'review') v = 'progress';
     S.sub = v;
     // back to the workout is back to it full screen
     if (v === 'block') S.minim = 0;
@@ -12469,6 +12506,8 @@
     if (t === 'ldopen') { S.ldOpen = true; S.ldDraft = ldDays().slice(); draw(); return; }
     /* History, by block. */
     if (t === 'hview') {
+      S.sub = 'history';
+      try { localStorage.setItem(LS_SUB, 'history'); } catch (e) { /* private mode */ }
       S.hv = v === 'wo' ? 'wo' : 'blk'; S.hb = ''; S.hbSel = null; S.hbRen = '';
       try { localStorage.setItem(LS_HV, S.hv); } catch (e) { /* private mode */ }
       draw(); return;

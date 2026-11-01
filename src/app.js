@@ -9159,7 +9159,7 @@
       // counted the way Nourish counts its own day, one meal at a time
       var one = {}; one[sl.k] = its;
       var tot = mTotals(one).all, names = its.map(function (it) { return BY_ID[it.id].name; });
-      return { k: sl.k, n: sl.n, kcal: tot.kcal, p: tot.p, empty: !its.length,
+      return { k: sl.k, n: sl.n, kcal: tot.kcal, p: tot.p, c: tot.c, f: tot.f, empty: !its.length,
         eaten: !!its.length && its.every(function (it) { return it.eaten; }),
         name: names.length > 2 ? names.slice(0, 2).join(', ') + ' +' + (names.length - 2) : names.join(', ') };
     });
@@ -9191,6 +9191,60 @@
       // the rest of the morning, as the check-in under the box said it (src/checkin.js)
       am: mAmSum(tk), slept: mAmOf(tk).sl !== undefined };
   }
+  function todayVitals(tk) {
+    var HD = window.HealthData;
+    var amTk = mAmOf(tk), ydt = new Date(nowDateFromKey(tk)); ydt.setDate(ydt.getDate() - 1);
+    var yk = dayKey(ydt), amYk = mAmOf(yk);
+    var sleepH = typeof amTk.sl === 'number' && amTk.sl > 0 ? amTk.sl : null;
+    var liveSteps = healthMeta && healthMeta.todaySteps > 0 ? healthMeta.todaySteps : 0;
+    var steps = liveSteps > 0 ? liveSteps : (typeof amTk.sy === 'number' && amTk.sy > 0 ? amTk.sy : (typeof amYk.sy === 'number' && amYk.sy > 0 ? amYk.sy : null));
+    var stepsIsToday = liveSteps > 0;
+    if (!HD) return null;
+    var hd = HD.day ? HD.day(tk) : {};
+    var usedKey = tk, fromYesterday = false;
+    if (hd && typeof hd.rhr !== 'number' && typeof hd.hrv !== 'number' && !hd.sleepStages) {
+      var yh = HD.day ? HD.day(yk) : {};
+      if (yh && (typeof yh.rhr === 'number' || typeof yh.hrv === 'number' || yh.sleepStages || (typeof hd.actKcal !== 'number' && typeof yh.actKcal === 'number'))) {
+        hd = yh; usedKey = yk; fromYesterday = true;
+        if (!sleepH && typeof amYk.sl === 'number' && amYk.sl > 0) sleepH = amYk.sl;
+      }
+    }
+    var rec = HD.recovery ? HD.recovery(usedKey, sleepH || 0) : null;
+    var ex = HD.sessions ? HD.sessions(tk) : [];
+    if (!ex.length && fromYesterday && HD.sessions) ex = HD.sessions(yk);
+    var sp = HD.spanInfo ? HD.spanInfo() : { count: 0 };
+    var hasAny = !!(rec || (hd && Object.keys(hd).length) || ex.length || sp.count > 0);
+    if (!hasAny) return null;
+    var rN = HD.normal ? HD.normal('rhr', usedKey) : null;
+    var hN = HD.normal ? HD.normal('hrv', usedKey) : null;
+    return {
+      key: usedKey,
+      fromYesterday: fromYesterday,
+      rec: rec,
+      sleepH: sleepH,
+      steps: steps,
+      stepsIsToday: stepsIsToday,
+      rhr: hd && typeof hd.rhr === 'number' ? Math.round(hd.rhr) : null,
+      rhrNorm: rN !== null ? Math.round(rN) : null,
+      hrv: hd && typeof hd.hrv === 'number' ? Math.round(hd.hrv) : null,
+      hrvNorm: hN !== null ? Math.round(hN) : null,
+      actKcal: hd && typeof hd.actKcal === 'number' ? Math.round(hd.actKcal) : null,
+      totKcal: hd && typeof hd.totKcal === 'number' ? Math.round(hd.totKcal) : null,
+      distM: hd && typeof hd.distM === 'number' ? Math.round(hd.distM) : null,
+      bodyFat: hd && typeof hd.bodyFat === 'number' ? hd.bodyFat : null,
+      leanShow: hd && typeof hd.leanLb === 'number' ? mWShow(hd.leanLb) : null,
+      unit: mWUnit(),
+      vo2: hd && typeof hd.vo2 === 'number' ? hd.vo2 : null,
+      spo2: hd && typeof hd.spo2 === 'number' ? hd.spo2 : null,
+      resp: hd && typeof hd.resp === 'number' ? hd.resp : null,
+      sleepStages: hd && hd.sleepStages ? hd.sleepStages : null,
+      ex: ex,
+      spanCount: sp.count || 0
+    };
+  }
+  function nowDateFromKey(k) {
+    return /^\d{4}-\d{2}-\d{2}$/.test(k || '') ? new Date(k + 'T12:00:00') : new Date();
+  }
   function todayData() {
     var now = new Date(), tk = todayKey(), dk = CAL_DAYS[now.getDay()][0];
     /* Tonight is the day's dinner-section recipe or, failing one, whatever
@@ -9221,11 +9275,15 @@
       tonight: t ? { id: String(t.id), day: dk, name: r.name, time: r.time || '', x: t.x, lo: !!t.lo, twin: !!planTwin(t.id, dk),
         cooked: window.Store.cooked(dk), rating: window.Store.rating(t.id), plate: t.lo ? null : tonightPlate(t.id, tk) } : null,
       weigh: set ? todayWeigh(tk) : null,
+      vitals: todayVitals(tk),
       next: next,
       planned: CAL_DAYS.some(function (d) { return !!dinnerOf(d[0]); }),
       eating: set ? {
         set: true, key: tk, target: kcalOf(T), training: mIsTrainingDay(tk),
-        kcal: { have: tot.eaten.kcal, want: kcalOf(want) }, p: { have: tot.eaten.p, want: want.p },
+        kcal: { have: tot.eaten.kcal, want: kcalOf(want) },
+        p: { have: tot.eaten.p, want: want.p },
+        c: { have: tot.eaten.c, want: want.c },
+        f: { have: tot.eaten.f, want: want.f },
         water: { have: mWaterOz(tk), want: mWaterGoalOz(mReadProfile().lb), plain: mAmOf(tk).wt || 0, caf: mCafMg(tk) },
         room: tot.all.kcal < kcalOf(want) * 0.9, meals: todayMeals(tk)
       } : { set: false },
@@ -9234,8 +9292,11 @@
       wmMark: window.Walmart.mark,
       week: CAL_DAYS.map(function (d, i) {
         var dt = calDate(d[0]);
-        return { key: d[0], dow: i, letter: d[2].charAt(0), date: dt ? dt.getDate() : '', tk: dt ? dayKey(dt) : '',
-          dinner: !!dinnerOf(d[0]), past: calPastDay(d[0]), today: calIsToday(d[0]) };
+        var dEntry = dinnerOf(d[0]);
+        var dRec = dEntry && BY_ID[dEntry.id];
+        return { key: d[0], dow: i, letter: d[2].charAt(0), dayShort: d[2], date: dt ? dt.getDate() : '', tk: dt ? dayKey(dt) : '',
+          dinner: !!dEntry, dinnerName: dEntry ? (dEntry.lo ? 'Leftovers' : (dRec ? dRec.name : '')) : '',
+          past: calPastDay(d[0]), today: calIsToday(d[0]) };
       })
     };
   }
@@ -9344,6 +9405,7 @@
        not on the day Nourish was left parked on — Add food from Today
        was adding to Sep 30 while the card went on saying nothing planned. */
     go: function (v) { if (v === 'macros') S.macroDate = null; goView(v); },
+    openHub: function () { goView('train'); if (window.Train && window.Train.openHub) window.Train.openHub(); },
     open: function (id) { rememberOpener(); openRecipe(idOf(id)); },
     swap: function (id, day) { planSwap(idOf(id), day); },
     planWeek: function () { goView('plan'); pwOpen(); },

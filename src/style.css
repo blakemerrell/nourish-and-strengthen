@@ -9148,3 +9148,123 @@ button.mhyd-head { cursor: pointer; }
 .tr-ready.good b { color: var(--green); }
 .tr-ready.fair b { color: var(--ochre-text); }
 .tr-ready.low b { color: var(--dial-over); }
+
+/* ---- Unified Health OS: Today Vitals Strip & Eating Dual-Ring ------------ */
+.td-vitals {
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 8px 12px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px;
+}
+.td-vitals-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+}
+.td-vitals-toggle {
+  flex: 1 1 auto; min-height: 44px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: transparent; border: 0; padding: 4px 2px; text-align: left; font: inherit; color: var(--ink); cursor: pointer;
+}
+.td-rec-pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px;
+  font-size: 0.8125rem; font-weight: 700; background: var(--hint); color: var(--ink);
+}
+.td-rec-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; flex: none;
+}
+.td-rec-pill.good { color: var(--green); }
+.td-rec-pill.fair { color: var(--ochre-text); }
+.td-rec-pill.low { color: var(--dial-over); }
+.td-vitals-sum, .td-vitals-inline, .td-vitals-Inline {
+  font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.td-vitals-inline b, .td-vitals-Inline b { color: var(--ink); font-weight: 600; }
+.td-vitals-chev { margin-left: auto; font-size: 0.875rem; color: var(--muted); transition: transform 0.15s; }
+.td-vitals-hub {
+  min-height: 44px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-soft);
+  background: var(--paper-soft); color: var(--ochre-text); font-size: 0.8125rem; font-weight: 600; cursor: pointer;
+}
+.td-vitals-tray {
+  border-top: 1px solid var(--line-soft); padding-top: 10px; display: flex; flex-direction: column; gap: 10px;
+}
+.td-vt-why { margin: 0; font-size: 0.8125rem; color: var(--muted); line-height: 1.4; }
+.td-vt-block, .td-vitals-stage { display: flex; flex-direction: column; gap: 5px; }
+.td-vt-hd {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  font-size: 0.8125rem; color: var(--muted); font-weight: 600;
+}
+.td-stage-bar {
+  display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--line-soft); gap: 1px;
+}
+.td-stage-bar > i { display: block; height: 100%; }
+.st-deep, .td-st-deep { background: var(--bar-p); }
+.st-rem, .td-st-rem { background: var(--ochre); }
+.st-light, .td-st-light { background: var(--bar-kcal); }
+.st-awake, .td-st-awake { background: var(--muted-2); }
+.td-stage-leg { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.8125rem; color: var(--muted); }
+.td-stage-leg > span { display: inline-flex; align-items: center; gap: 5px; }
+.td-stage-leg b { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.dot-deep { background: var(--bar-p); }
+.dot-rem { background: var(--ochre); }
+.dot-light { background: var(--bar-kcal); }
+.dot-awake { background: var(--muted-2); }
+.td-vt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.td-vt-cell {
+  background: var(--paper-soft); border: 1px solid var(--line-soft); border-radius: 8px; padding: 7px 9px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.td-vt-cell small { font-size: 0.8125rem; color: var(--muted); }
+.td-vt-cell b { font-size: 0.9375rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.td-vt-cell span, .td-vt-cell i { font-style: normal; font-size: 0.8125rem; color: var(--muted); }
+.td-vt-ex { display: flex; flex-direction: column; gap: 4px; font-size: 0.8125rem; color: var(--muted); }
+.td-vt-exr { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.td-vt-ex b { color: var(--ink); }
+.td-vt-foot { display: flex; justify-content: flex-end; }
+.td-vt-hublink { min-height: 44px; font-size: 0.8125rem; }
+
+.td-eat-hero { display: flex; align-items: center; gap: 14px; }
+.td-dual-ring { width: 68px; height: 68px; flex: none; display: block; }
+.td-dr-bg, .td-ring-bg { fill: none; stroke: var(--line-soft); }
+.td-dr-kcal, .td-ring-kcal { fill: none; stroke: var(--bar-kcal); stroke-linecap: round; }
+.td-dr-p, .td-ring-p { fill: none; stroke: var(--bar-p); stroke-linecap: round; }
+.td-dr-pct { font: 700 13px/1 var(--sans); fill: var(--ink); }
+.td-dr-sub { font: 600 11px/1 var(--sans); fill: var(--muted); }
+.td-eat-hero-r, .td-eat-nums { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.td-mpills { display: flex; flex-wrap: wrap; gap: 6px; }
+.td-mpill {
+  font-size: 0.8125rem; padding: 2px 8px; border-radius: 999px; background: var(--paper-soft);
+  border: 1px solid var(--line-soft); color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.td-mpill b { color: var(--ink); font-weight: 600; }
+.td-fold-wrap { display: flex; flex-direction: column; gap: 6px; }
+.td-fold-btn {
+  flex: none; min-width: 44px; min-height: 44px; margin: -6px -8px -6px 0; padding: 0;
+  border: 0; border-radius: 8px; background: transparent; color: var(--muted);
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.td-eaten-list {
+  margin: 0; padding: 6px 10px; background: var(--paper-soft);
+  border-radius: 8px; border: 1px solid var(--line-soft); display: flex; flex-direction: column; gap: 4px;
+}
+.td-eaten-item {
+  min-height: 44px; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  background: transparent; border: 0; padding: 6px 4px; text-align: left; font: inherit;
+  font-size: 0.84375rem; color: var(--ink-2); cursor: pointer;
+}
+.td-eaten-item + .td-eaten-item { border-top: 1px solid var(--line-soft); }
+
+/* ---- Strengthen Unified Block Snapshot & 120d Biometrics Hub ------------- */
+.tr-snapshot-card { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.tr-snap-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.tr-hc-hub { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.tr-hc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.tr-hc-cell {
+  background: var(--paper-soft); border: 1px solid var(--line-soft); border-radius: 8px; padding: 8px 10px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.tr-hc-cell small { font-size: 0.8125rem; color: var(--muted); }
+.tr-hc-cell b { font-size: 1rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.tr-hc-cell span { font-size: 0.8125rem; color: var(--muted); }
+.tr-hc-ex { display: flex; flex-direction: column; gap: 6px; padding-top: 6px; border-top: 1px solid var(--line-soft); }
+.tr-hc-ex small { font-size: 0.8125rem; color: var(--muted); font-weight: 600; }
+.tr-hc-exlist { display: flex; flex-wrap: wrap; gap: 6px; }
+.tr-hc-exchip {
+  font-size: 0.8125rem; padding: 3px 9px; border-radius: 999px;
+  background: var(--paper-soft); border: 1px solid var(--line-soft); color: var(--ink-2);
+}

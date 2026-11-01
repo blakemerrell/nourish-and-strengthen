@@ -107,6 +107,113 @@
         (am ? '<small class="td-am">' + esc(am) + '</small>' : '') + '</span>' +
       '<i aria-hidden="true">\u203a</i></button>';
   }
+  function readFlag(k) {
+    try { return localStorage.getItem(k) === '1'; } catch (e) { return false; }
+  }
+  function writeFlag(k, on) {
+    try { if (on) localStorage.setItem(k, '1'); else localStorage.removeItem(k); } catch (e) { /* private */ }
+  }
+
+  function vitalsStrip(v) {
+    if (!v) return '';
+    var open = readFlag('bsc.tdVitalsOpen');
+    var rec = v.rec;
+    var lvl = rec ? rec.level : 'fair';
+    var badgeWord = rec ? (rec.sleepOnly ? (rec.word + ' (from sleep)') : rec.word) : '';
+    var pills = [];
+    if (v.fromYesterday) pills.push('Yesterday');
+    if (v.rhr !== null) {
+      var dr = v.rhrNorm !== null ? v.rhr - v.rhrNorm : 0;
+      pills.push('<b>' + v.rhr + '</b> bpm RHR' + (v.rhrNorm !== null && dr !== 0 ? ' (' + (dr > 0 ? '+' : '') + dr + ')' : ''));
+    }
+    if (v.hrv !== null) {
+      var dh = v.hrvNorm !== null ? v.hrv - v.hrvNorm : 0;
+      pills.push('<b>' + v.hrv + '</b> ms HRV' + (v.hrvNorm !== null && dh !== 0 ? ' (' + (dh > 0 ? '+' : '') + dh + ')' : ''));
+    }
+    if (v.sleepH) pills.push('<b>' + (Math.round(v.sleepH * 10) / 10) + 'h</b> sleep');
+    if (v.steps) pills.push('<b>' + (v.steps >= 1000 ? (Math.round(v.steps / 100) / 10) + 'k' : fmt(v.steps)) + '</b> steps');
+    else if (v.actKcal) pills.push('<b>' + fmt(v.actKcal) + '</b> active cal');
+    if (!pills.length && v.spanCount > 0) pills.push('<b>' + v.spanCount + 'd</b> Health Connect history');
+    if (!pills.length) return '';
+
+    var tray = '';
+    if (open) {
+      var st = v.sleepStages;
+      var stBar = '';
+      if (st) {
+        var totM = (st.deep || 0) + (st.rem || 0) + (st.light || 0) + (st.awake || 0);
+        if (totM > 0) {
+          var fmtM = function (m) { var h = Math.floor(m / 60), r = m % 60; return h > 0 ? h + 'h ' + r + 'm' : r + 'm'; };
+          var pDeep = Math.round((st.deep || 0) / totM * 100);
+          var pRem = Math.round((st.rem || 0) / totM * 100);
+          var pLight = Math.round((st.light || 0) / totM * 100);
+          var pAwake = (st.awake || 0) > 0 ? Math.max(1, 100 - pDeep - pRem - pLight) : 0;
+          stBar = '<div class="td-vt-block">' +
+            '<div class="td-vt-hd"><span>Sleep Architecture' + (v.fromYesterday ? ' (yesterday)' : '') + '</span>' +
+              '<span>' + fmtM((st.deep || 0) + (st.rem || 0) + (st.light || 0)) + ' asleep</span></div>' +
+            '<div class="td-stage-bar" role="img" aria-label="Sleep stages breakdown">' +
+              (pDeep > 0 ? '<i class="st-deep" style="width:' + pDeep + '%"></i>' : '') +
+              (pRem > 0 ? '<i class="st-rem" style="width:' + pRem + '%"></i>' : '') +
+              (pLight > 0 ? '<i class="st-light" style="width:' + pLight + '%"></i>' : '') +
+              (pAwake > 0 ? '<i class="st-awake" style="width:' + pAwake + '%"></i>' : '') +
+            '</div>' +
+            '<div class="td-stage-leg">' +
+              (st.deep ? '<span><b class="dot-deep"></b>Deep ' + fmtM(st.deep) + '</span>' : '') +
+              (st.rem ? '<span><b class="dot-rem"></b>REM ' + fmtM(st.rem) + '</span>' : '') +
+              (st.light ? '<span><b class="dot-light"></b>Light ' + fmtM(st.light) + '</span>' : '') +
+              (st.awake ? '<span><b class="dot-awake"></b>Awake ' + fmtM(st.awake) + '</span>' : '') +
+            '</div></div>';
+        }
+      }
+      var cells = [];
+      if (v.rhr !== null) cells.push('<div class="td-vt-cell"><small>Resting HR</small><b>' + v.rhr + ' bpm</b>' +
+        '<span>' + (v.rhrNorm !== null ? '30d norm: ' + v.rhrNorm + ' bpm' : 'Building 7d baseline') + '</span></div>');
+      if (v.hrv !== null) cells.push('<div class="td-vt-cell"><small>HRV (RMSSD)</small><b>' + v.hrv + ' ms</b>' +
+        '<span>' + (v.hrvNorm !== null ? '30d norm: ' + v.hrvNorm + ' ms' : 'Building 7d baseline') + '</span></div>');
+      if (v.actKcal !== null || v.totKcal !== null) {
+        cells.push('<div class="td-vt-cell"><small>Watch Burn</small><b>' + (v.actKcal !== null ? fmt(v.actKcal) + ' act' : fmt(v.totKcal) + ' tot') + '</b>' +
+          (v.totKcal !== null && v.actKcal !== null ? '<span>' + fmt(v.totKcal) + ' kcal total</span>' : '') + '</div>');
+      }
+      if (v.vo2 !== null || v.spo2 !== null || v.resp !== null) {
+        var vs = [];
+        if (v.vo2 !== null) vs.push('VO\u2082 ' + v.vo2);
+        if (v.spo2 !== null) vs.push('SpO\u2082 ' + v.spo2 + '%');
+        if (v.resp !== null) vs.push(v.resp + ' br/m');
+        cells.push('<div class="td-vt-cell"><small>Cardio &amp; Resp</small><b>' + esc(vs[0]) + '</b>' +
+          (vs.length > 1 ? '<span>' + esc(vs.slice(1).join(' \u00b7 ')) + '</span>' : '') + '</div>');
+      }
+      if (v.bodyFat !== null || v.leanShow !== null) {
+        cells.push('<div class="td-vt-cell"><small>Scale Composition</small><b>' +
+          (v.bodyFat !== null ? v.bodyFat + '% fat' : v.leanShow + ' ' + v.unit + ' lean') + '</b>' +
+          (v.bodyFat !== null && v.leanShow !== null ? '<span>' + v.leanShow + ' ' + v.unit + ' lean mass</span>' : '') + '</div>');
+      }
+      var exHtml = '';
+      if (v.ex && v.ex.length) {
+        exHtml = '<div class="td-vt-ex">' + v.ex.slice(0, 3).map(function (x) {
+          var meta = [x.min ? x.min + ' min' : '', x.hrAvg ? x.hrAvg + ' bpm avg' : '', x.kcal ? fmt(x.kcal) + ' kcal' : ''].filter(Boolean).join(' \u00b7 ');
+          return '<div class="td-vt-exr"><span>\u231a <b>' + esc(x.title || x.type) + '</b></span><span>' + esc(meta) + '</span></div>';
+        }).join('') + '</div>';
+      }
+      tray = '<div class="td-vitals-tray">' +
+        (rec && rec.why && rec.why.length ? '<p class="td-vt-why">' + esc(rec.why.join(' \u00b7 ')) + '</p>' : '') +
+        stBar +
+        (cells.length ? '<div class="td-vt-grid">' + cells.join('') + '</div>' : '') +
+        exHtml +
+        '<div class="td-vt-foot"><button type="button" class="nut-ask td-vt-hublink" data-td="hub">Explore 120-day Biometrics &amp; Trends in Strengthen \u203a</button></div>' +
+      '</div>';
+    }
+
+    return '<section class="td-vitals' + (open ? ' open' : '') + '" aria-label="Morning readiness and watch vitals">' +
+      '<div class="td-vitals-bar">' +
+        '<button type="button" class="td-vitals-toggle" data-td="vitals" aria-expanded="' + (open ? 'true' : 'false') + '">' +
+          (badgeWord ? '<span class="td-rec-pill ' + lvl + '"><i class="td-rec-dot"></i>' + esc(badgeWord) + '</span>' : '') +
+          '<span class="td-vitals-inline">' + pills.join(' <span aria-hidden="true">\u00b7</span> ') + '</span>' +
+          '<span class="td-vitals-chev" aria-hidden="true">' + (open ? '\u25b4' : '\u25be') + '</span>' +
+        '</button>' +
+        '<button type="button" class="td-vitals-hub" data-td="hub" aria-label="Open 120-day Biometrics Hub">120d Hub \u203a</button>' +
+      '</div>' + tray + '</section>';
+  }
+
   function tonightCard(d, main) {
     var t = d.tonight, nx = d.next.map(function (n) { return n.day + ': ' + n.name; }).join(' · ');
     if (t && t.lo) {
@@ -142,6 +249,20 @@
       '<div class="td-meter ' + cls + '" role="meter" aria-label="' + name + '" aria-valuemin="0" aria-valuemax="' + Math.round(want) +
       '" aria-valuenow="' + Math.round(have) + '"><i style="width:' + pct + '%"></i></div></div>';
   }
+  function dualRingSVG(e) {
+    var kPct = e.kcal.want > 0 ? Math.max(0, Math.min(1, e.kcal.have / e.kcal.want)) : 0;
+    var pPct = e.p.want > 0 ? Math.max(0, Math.min(1, e.p.have / e.p.want)) : 0;
+    var c1 = 2 * Math.PI * 36, c2 = 2 * Math.PI * 26;
+    var o1 = (c1 * (1 - kPct)).toFixed(1), o2 = (c2 * (1 - pPct)).toFixed(1);
+    return '<svg class="td-dual-ring" viewBox="0 0 88 88" role="img" aria-label="Calorie and protein progress ring">' +
+      '<circle class="td-dr-bg" cx="44" cy="44" r="36" stroke-width="6.5"/>' +
+      '<circle class="td-dr-kcal" cx="44" cy="44" r="36" stroke-width="6.5" stroke-dasharray="' + c1.toFixed(1) + '" stroke-dashoffset="' + o1 + '" transform="rotate(-90 44 44)"/>' +
+      '<circle class="td-dr-bg" cx="44" cy="44" r="26" stroke-width="6"/>' +
+      '<circle class="td-dr-p" cx="44" cy="44" r="26" stroke-width="6" stroke-dasharray="' + c2.toFixed(1) + '" stroke-dashoffset="' + o2 + '" transform="rotate(-90 44 44)"/>' +
+      '<text x="44" y="42" text-anchor="middle" class="td-dr-pct">' + Math.round(kPct * 100) + '%</text>' +
+      '<text x="44" y="54" text-anchor="middle" class="td-dr-sub">' + Math.round(e.p.have) + 'g P</text>' +
+    '</svg>';
+  }
   /* A meal on Today: a circle to tick it eaten, what it is, its calories.
      Eaten ones fold into one green line; the rest stay open. */
   function mealRow(m, next, tk) {
@@ -152,12 +273,21 @@
       '<span class="td-kc">' + fmt(m.kcal) + ' cal</span></div>';
   }
   function eatenLine(ms) {
+    var open = readFlag('bsc.tdEatenOpen');
     var n = ms.map(function (m) { return m.n.toLowerCase(); }), kc = 0, p = 0;
     ms.forEach(function (m) { kc += m.kcal; p += m.p; });
     var say = n.length === 1 ? n[0] : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1];
-    return '<button class="td-fold" data-td="go" data-go="macros">' + CHECK.replace('td-ic', 'td-fic') +
-      '<span><b>' + esc(say.charAt(0).toUpperCase() + say.slice(1)) + ' eaten</b><small>' + fmt(kc) + ' cal \u00b7 ' + fmt(p) + ' g protein</small></span>' +
-      '<i aria-hidden="true">\u203a</i></button>';
+    var list = open ? '<div class="td-eaten-list">' + ms.map(function (m) {
+      return '<button type="button" class="td-eaten-item" data-td="meal" data-k="' + esc(m.k) + '">' +
+        '<span><b>' + esc(m.n) + '</b> \u00b7 ' + esc(m.name) + '</span>' +
+        '<span>' + fmt(m.kcal) + ' cal \u00b7 ' + fmt(m.p) + 'g P</span></button>';
+    }).join('') + '</div>' : '';
+    return '<div class="td-fold-wrap">' +
+      '<div class="td-fold">' +
+        CHECK.replace('td-ic', 'td-fic') +
+        '<span><b>' + esc(say.charAt(0).toUpperCase() + say.slice(1)) + ' eaten</b><small>' + fmt(kc) + ' cal \u00b7 ' + fmt(p) + ' g protein</small></span>' +
+        '<button type="button" class="td-fold-btn" data-td="eatenfold" aria-expanded="' + (open ? 'true' : 'false') + '" aria-label="' + (open ? 'Hide eaten meals' : 'Show eaten meals') + '"><i aria-hidden="true">' + (open ? '\u25b4' : '\u203a') + '</i></button></div>' +
+      list + '</div>';
   }
   function eatingCard(e, main) {
     if (!e.set) {
@@ -168,6 +298,12 @@
     var left = e.kcal.want - e.kcal.have, meals = e.meals || [];
     var big = '<p class="td-big"><b>' + fmt(Math.abs(left)) + '</b> ' + (left >= 0 ? 'left today' : 'over today') +
       (e.training ? '<span class="td-lift">Lifting day</span>' : '') + '</p>';
+    var macroPills = (e.c && e.f) ? '<div class="td-mpills">' +
+      '<span class="td-mpill"><b>' + fmt(e.p.have) + '</b>/' + fmt(e.p.want) + 'g P</span>' +
+      '<span class="td-mpill"><b>' + fmt(e.c.have) + '</b>/' + fmt(e.c.want) + 'g C</span>' +
+      '<span class="td-mpill"><b>' + fmt(e.f.have) + '</b>/' + fmt(e.f.want) + 'g F</span>' +
+    '</div>' : '';
+    var hero = '<div class="td-eat-hero">' + dualRingSVG(e) + '<div class="td-eat-hero-r">' + big + macroPills + '</div></div>';
     var bars = bar('Calories', e.kcal.have, e.kcal.want, '', 'td-kcal') + bar('Protein', e.p.have, e.p.want, ' g', 'td-p');
     var w = e.water;
     var wStrip = w ? '<div class="td-water"><span class="td-water-l">💧 <b>' + fmt(w.have) + '</b> / ' + fmt(w.want) + ' oz' +
@@ -175,15 +311,16 @@
       '<span class="td-water-btns">' +
         '<button type="button" class="td-wbtn" data-td="water" data-oz="8" data-tk="' + esc(e.key || '') + '" aria-label="Add 8 oz water">+8 oz</button>' +
         '<button type="button" class="td-wbtn" data-td="water" data-oz="16" data-tk="' + esc(e.key || '') + '" aria-label="Add 16 oz water">+16 oz</button>' +
+        '<button type="button" class="td-wbtn" data-td="water" data-oz="24" data-tk="' + esc(e.key || '') + '" aria-label="Add 24 oz water">+24 oz</button>' +
         ((w.plain !== undefined ? w.plain : w.have) > 0 ? '<button type="button" class="td-wbtn td-wsub" data-td="water" data-oz="-8" data-tk="' + esc(e.key || '') + '" aria-label="Remove 8 oz water">−8</button>' : '') +
       '</span></div>' : '';
     if (!meals.some(function (m) { return !m.empty; })) {
-      return card('eating', 'Eating', big + title('Nothing planned for today') +
+      return card('eating', 'Eating', hero + title('Nothing planned for today') +
         note('Nourish can fill your day from the recipes, to your ' + fmt(e.kcal.want) + ' calories and ' + fmt(e.p.want) + ' g of protein. Or add what you eat as you go.') +
         bars + wStrip + acts(btn(main, 'fill', 'Fill my day') + btn(false, 'addfood', 'Add food') + quiet('eatout', 'Eating out')), '', 'macros');
     }
     var eaten = meals.filter(function (m) { return m.eaten; }), open = meals.filter(function (m) { return !m.eaten && !m.empty; });
-    return card('eating', 'Eating', big + (eaten.length ? eatenLine(eaten) : '') +
+    return card('eating', 'Eating', hero + (eaten.length ? eatenLine(eaten) : '') +
       (open.length ? '<div class="td-meals">' + open.map(function (m, i) { return mealRow(m, i === 0, e.key); }).join('') + '</div>' : '') +
       bars + wStrip + (open.length ? acts(quiet('eatout', 'Eating out')) : ''), '', 'macros');
   }
@@ -328,8 +465,9 @@
     d.shop.wmMark = d.wmMark || '';
     html += (hp.d ? shopCard(d.shop) : '') + (hp.d || hp.w ? weekCard(d) : '') + (doneT && hp.d ? cookedCard(d.tonight) : '') +
       (doneW && hp.w ? workoutCard(d.workout, false) : '');
+    var topBars = (hp.e ? weighLine(d.weigh) : '') + ((hp.e || hp.w) ? vitalsStrip(d.vitals) : '');
     root.innerHTML = '<div class="td-top"><div class="step-k">' + DAYNAME[d.date.getDay()] + ' · ' + MONTH[d.date.getMonth()] + ' ' + d.date.getDate() + '</div>' +
-      '<h1 class="step-h td-h">Today</h1></div><div class="td-cards">' + (hp.e ? weighLine(d.weigh) : '') + html + '</div>';
+      '<h1 class="step-h td-h">Today</h1></div><div class="td-cards">' + topBars + html + '</div>';
   }
 
   /* The doors. Each is the same function the full tab runs. */
@@ -345,6 +483,9 @@
     }
     var H = window.Hive, a = b.getAttribute('data-td'), id = b.getAttribute('data-id');
     if (a === 'go') { H.go(b.getAttribute('data-go')); return; }
+    if (a === 'vitals') { writeFlag('bsc.tdVitalsOpen', !readFlag('bsc.tdVitalsOpen')); render(); return; }
+    if (a === 'hub') { if (H.openHub) H.openHub(); else H.go('train'); return; }
+    if (a === 'eatenfold') { writeFlag('bsc.tdEatenOpen', !readFlag('bsc.tdEatenOpen')); render(); return; }
     if (a === 'eat') { H.eat(b.getAttribute('data-k'), b.getAttribute('data-tk')); return; }
     if (a === 'water') { if (H.addWater) H.addWater(Number(b.getAttribute('data-oz')), b.getAttribute('data-tk')); return; }
     if (a === 'open') H.open(id);

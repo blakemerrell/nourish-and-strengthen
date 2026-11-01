@@ -58,6 +58,8 @@
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
   }
 
+  var _seriesCache = {};
+
   /* Take what the Android app sent. Fields it sent for a day replace that
      day's; workouts are replaced over the window the read covered, so one
      deleted on the watch goes here too. Returns whether anything changed. */
@@ -81,8 +83,12 @@
           if (isFinite(m) && m > 0 && m < 1440) st[s] = Math.round(m);
         });
         if (Object.keys(st).length) out.sleepStages = st;
+        else delete out.sleepStages;
+      } else if (src.sleepStages === null || (src.sleepHours !== undefined && !src.sleepStages)) {
+        delete out.sleepStages;
       }
       if (Object.keys(out).length) H.d[k] = out;
+      else delete H.d[k];
     });
     if (Array.isArray(data.ex)) {
       var fresh = data.ex.filter(function (e) { return e && okDay(e.d) && Number(e.st) > 0; }).map(function (e) {
@@ -103,11 +109,17 @@
     Object.keys(H.d).forEach(function (k) { if (k < ck) delete H.d[k]; });
     H.ex = H.ex.filter(function (e) { return e.d >= ck; });
     var changed = JSON.stringify(H) !== before;
-    if (changed) save();
+    if (changed) { _seriesCache = {}; save(); }
     return changed;
   }
 
-  function day(k) { return H.d[k] || {}; }
+  function day(k) {
+    var src = H.d[k];
+    if (!src) return {};
+    var cp = Object.assign({}, src);
+    if (src.sleepStages) cp.sleepStages = Object.assign({}, src.sleepStages);
+    return cp;
+  }
   function sessions(k) { return H.ex.filter(function (e) { return e.d === k; }); }
 
   /* Your normal: the median of the thirty days before k (k itself left out,
@@ -123,6 +135,47 @@
     vs.sort(function (a, b) { return a - b; });
     var m = vs.length >> 1;
     return vs.length % 2 ? vs[m] : (vs[m - 1] + vs[m]) / 2;
+  }
+
+  /* Ordered time-series of field `f` across [fromK..toK] (or all stored days),
+     paired with its 30-day rolling median baseline when f is 'rhr' or 'hrv'. */
+  function series(f, fromK, toK) {
+    var ck = (f || '') + '|' + (fromK || '') + '|' + (toK || '');
+    if (_seriesCache[ck]) return _seriesCache[ck].map(function (p) { return Object.assign({}, p); });
+    var ks = Object.keys(H.d).sort();
+    var out = [];
+    var needBase = (f === 'rhr' || f === 'hrv');
+    for (var i = 0; i < ks.length; i++) {
+      var k = ks[i];
+      if (fromK && k < fromK) continue;
+      if (toK && k > toK) continue;
+      var v = H.d[k] && H.d[k][f];
+      if (typeof v !== 'number') continue;
+      var b = needBase ? normal(f, k) : null;
+      out.push({ k: k, v: v, norm: b, base: b, m: b });
+    }
+    _seriesCache[ck] = out;
+    return out.map(function (p) { return Object.assign({}, p); });
+  }
+
+  /* Watch exercise sessions within [fromK..toK]. */
+  function sessionsBetween(fromK, toK) {
+    return H.ex.filter(function (e) {
+      if (fromK && e.d < fromK) return false;
+      if (toK && e.d > toK) return false;
+      return true;
+    });
+  }
+
+  /* Summary of how many days of Health Connect history are stored. */
+  function spanInfo() {
+    var ks = Object.keys(H.d).sort();
+    return {
+      minKey: ks.length ? ks[0] : null,
+      maxKey: ks.length ? ks[ks.length - 1] : null,
+      count: ks.length,
+      days: ks.length
+    };
   }
 
   /* How recovered you are this morning, from what the watch can tell:
@@ -150,16 +203,25 @@
     }
     if (sleepH > 0) {
       seen++;
-      if (sleepH < 6) { bad++; why.push(sleepH + ' h sleep'); }
-      else if (sleepH < 7) { meh++; why.push(sleepH + ' h sleep'); }
-      else why.push(sleepH + ' h sleep');
+      var shLbl = (Math.round(sleepH * 10) / 10) + ' h sleep';
+      if (sleepH < 6) { bad++; why.push(shLbl); }
+      else if (sleepH < 7) { meh++; why.push(shLbl); }
+      else why.push(shLbl);
     }
     if (!seen) return null;
     var level = bad ? 'low' : meh ? 'fair' : 'good';
-    return { level: level, word: level === 'good' ? 'Recovered' : level === 'fair' ? 'Part recovered' : 'Under-recovered', why: why };
+    return {
+      level: level,
+      word: level === 'good' ? 'Recovered' : level === 'fair' ? 'Part recovered' : 'Under-recovered',
+      why: why,
+      sleepOnly: seen === 1 && sleepH > 0
+    };
   }
 
-  function wipe() { H = { d: {}, ex: [] }; try { localStorage.removeItem(KEY); } catch (e) { /* private */ } }
+  function wipe() { H = { d: {}, ex: [] }; _seriesCache = {}; try { localStorage.removeItem(KEY); } catch (e) { /* private */ } }
 
-  window.HealthData = { take: take, day: day, sessions: sessions, normal: normal, recovery: recovery, wipe: wipe };
+  window.HealthData = {
+    take: take, day: day, sessions: sessions, sessionsBetween: sessionsBetween,
+    series: series, spanInfo: spanInfo, normal: normal, recovery: recovery, wipe: wipe
+  };
 })();

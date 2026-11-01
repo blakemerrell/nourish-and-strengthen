@@ -563,8 +563,44 @@ class MainActivity : AppCompatActivity() {
         else -> "Workout"
     }
 
-    /* The extra reads, all over the same thirty days (as far back as Health
-       Connect lets an app read without the history permission), merged into
+    /* Read records in 30-day windows so a 120-day range never hits Health
+       Connect's single-call page cap (~1,000-5,000 records) or 30-day window
+       quirk on older providers. De-duplicates on metadata.id across chunk
+       boundaries. */
+    private suspend fun <T : Record> readRecordsChunked(
+        client: HealthConnectClient,
+        recordType: KClass<T>,
+        from: java.time.Instant,
+        to: java.time.Instant
+    ): List<T> {
+        val out = mutableListOf<T>()
+        val seen = mutableSetOf<String>()
+        var cur = from
+        val step = Duration.ofDays(30)
+        while (cur.isBefore(to)) {
+            val nxt = minOf(cur.plus(step), to)
+            var pageToken: String? = null
+            do {
+                val resp = client.readRecords(
+                    ReadRecordsRequest(
+                        recordType = recordType,
+                        timeRangeFilter = TimeRangeFilter.between(cur, nxt),
+                        pageToken = pageToken
+                    )
+                )
+                for (r in resp.records) {
+                    val id = r.metadata.id
+                    if (id.isEmpty() || seen.add(id)) out.add(r)
+                }
+                pageToken = resp.pageToken
+            } while (!pageToken.isNullOrEmpty())
+            cur = nxt
+        }
+        return out
+    }
+
+    /* The extra reads, all over the same window (up to 120 days when
+       READ_HEALTH_DATA_HISTORY is granted, otherwise 30 days), merged into
        the day objects the web side already takes. Each block stands alone:
        a type not granted, or one that throws, leaves the rest untouched. */
     private suspend fun readExtras(
@@ -574,12 +610,11 @@ class MainActivity : AppCompatActivity() {
         startDay: LocalDate,
         today: LocalDate,
         daysJson: JSONObject
-    ): org.json.JSONArray {
+    ): org.json.JSONArray? {
         fun can(t: KClass<out Record>) = granted.contains(HealthPermission.getReadPermission(t))
         fun dayOf(k: String): JSONObject = daysJson.optJSONObject(k) ?: JSONObject().also { daysJson.put(k, it) }
         val from = startDay.atStartOfDay(zone).toInstant()
         val to = today.plusDays(1).atStartOfDay(zone).toInstant()
-        val range = TimeRangeFilter.between(from, to)
 
         // Day totals in one grouped call: only the metrics granted, since one
         // missing permission fails the whole request.
@@ -616,7 +651,7 @@ class MainActivity : AppCompatActivity() {
         if (can(HeartRateVariabilityRmssdRecord::class)) {
             try {
                 val byDay = mutableMapOf<String, MutableList<Double>>()
-                client.readRecords(ReadRecordsRequest(HeartRateVariabilityRmssdRecord::class, range)).records.forEach {
+                readRecordsChunked(client, HeartRateVariabilityRmssdRecord::class, from, to).forEach {
                     byDay.getOrPut(it.time.atZone(zone).toLocalDate().toString()) { mutableListOf() }
                         .add(it.heartRateVariabilityMillis)
                 }
@@ -627,21 +662,21 @@ class MainActivity : AppCompatActivity() {
         // The body: the day's last reading of each.
         if (can(BodyFatRecord::class)) {
             try {
-                client.readRecords(ReadRecordsRequest(BodyFatRecord::class, range)).records
+                readRecordsChunked(client, BodyFatRecord::class, from, to)
                     .groupBy { it.time.atZone(zone).toLocalDate().toString() }
                     .forEach { (k, v) -> v.maxByOrNull { it.time }?.let { dayOf(k).put("bodyFat", (it.percentage.value * 10).roundToInt() / 10.0) } }
             } catch (_: Exception) { }
         }
         if (can(LeanBodyMassRecord::class)) {
             try {
-                client.readRecords(ReadRecordsRequest(LeanBodyMassRecord::class, range)).records
+                readRecordsChunked(client, LeanBodyMassRecord::class, from, to)
                     .groupBy { it.time.atZone(zone).toLocalDate().toString() }
                     .forEach { (k, v) -> v.maxByOrNull { it.time }?.let { dayOf(k).put("leanLb", (it.mass.inPounds * 10).roundToInt() / 10.0) } }
             } catch (_: Exception) { }
         }
         if (can(Vo2MaxRecord::class)) {
             try {
-                client.readRecords(ReadRecordsRequest(Vo2MaxRecord::class, range)).records
+                readRecordsChunked(client, Vo2MaxRecord::class, from, to)
                     .groupBy { it.time.atZone(zone).toLocalDate().toString() }
                     .forEach { (k, v) -> v.maxByOrNull { it.time }?.let { dayOf(k).put("vo2", (it.vo2MillilitersPerMinuteKilogram * 10).roundToInt() / 10.0) } }
             } catch (_: Exception) { }
@@ -649,14 +684,14 @@ class MainActivity : AppCompatActivity() {
         // The night's breathing: means, filed on the morning they end in.
         if (can(OxygenSaturationRecord::class)) {
             try {
-                client.readRecords(ReadRecordsRequest(OxygenSaturationRecord::class, range)).records
+                readRecordsChunked(client, OxygenSaturationRecord::class, from, to)
                     .groupBy { it.time.atZone(zone).toLocalDate().toString() }
                     .forEach { (k, v) -> dayOf(k).put("spo2", (v.map { it.percentage.value }.average() * 10).roundToInt() / 10.0) }
             } catch (_: Exception) { }
         }
         if (can(RespiratoryRateRecord::class)) {
             try {
-                client.readRecords(ReadRecordsRequest(RespiratoryRateRecord::class, range)).records
+                readRecordsChunked(client, RespiratoryRateRecord::class, from, to)
                     .groupBy { it.time.atZone(zone).toLocalDate().toString() }
                     .forEach { (k, v) -> dayOf(k).put("resp", (v.map { it.rate }.average() * 10).roundToInt() / 10.0) }
             } catch (_: Exception) { }
@@ -665,38 +700,39 @@ class MainActivity : AppCompatActivity() {
         // Workouts from the watch or any other app — not the ones this app
         // wrote for Strengthen, which the web side already has — each with its
         // heart rate and calories over its own minutes.
-        val ex = org.json.JSONArray()
-        if (can(ExerciseSessionRecord::class)) {
-            try {
-                val sessions = client.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, range)).records
-                    .filter { it.metadata.dataOrigin.packageName != packageName }
-                for (s in sessions) {
-                    val o = JSONObject()
-                    o.put("d", s.startTime.atZone(zone).toLocalDate().toString())
-                    o.put("type", exerciseName(s.exerciseType))
-                    s.title?.takeIf { it.isNotBlank() }?.let { o.put("title", it.take(80)) }
-                    o.put("st", s.startTime.toEpochMilli())
-                    o.put("en", s.endTime.toEpochMilli())
-                    o.put("min", Duration.between(s.startTime, s.endTime).toMinutes())
-                    o.put("src", s.metadata.dataOrigin.packageName)
-                    val sm = mutableSetOf<AggregateMetric<*>>()
-                    if (can(HeartRateRecord::class)) { sm.add(HeartRateRecord.BPM_AVG); sm.add(HeartRateRecord.BPM_MAX) }
-                    if (can(ActiveCaloriesBurnedRecord::class)) sm.add(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL)
-                    if (can(DistanceRecord::class)) sm.add(DistanceRecord.DISTANCE_TOTAL)
-                    if (sm.isNotEmpty()) {
-                        try {
-                            val a = client.aggregate(AggregateRequest(sm, TimeRangeFilter.between(s.startTime, s.endTime)))
-                            a[HeartRateRecord.BPM_AVG]?.let { o.put("hrAvg", it) }
-                            a[HeartRateRecord.BPM_MAX]?.let { o.put("hrMax", it) }
-                            a[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.let { if (it.inKilocalories > 0) o.put("kcal", it.inKilocalories.roundToInt()) }
-                            a[DistanceRecord.DISTANCE_TOTAL]?.let { if (it.inMeters > 0) o.put("distM", it.inMeters.roundToInt()) }
-                        } catch (_: Exception) { }
-                    }
-                    ex.put(o)
+        if (!can(ExerciseSessionRecord::class)) return null
+        return try {
+            val ex = org.json.JSONArray()
+            val sessions = readRecordsChunked(client, ExerciseSessionRecord::class, from, to)
+                .filter { it.metadata.dataOrigin.packageName != packageName }
+            for (s in sessions) {
+                val o = JSONObject()
+                o.put("d", s.startTime.atZone(zone).toLocalDate().toString())
+                o.put("type", exerciseName(s.exerciseType))
+                s.title?.takeIf { it.isNotBlank() }?.let { o.put("title", it.take(80)) }
+                o.put("st", s.startTime.toEpochMilli())
+                o.put("en", s.endTime.toEpochMilli())
+                o.put("min", Duration.between(s.startTime, s.endTime).toMinutes())
+                o.put("src", s.metadata.dataOrigin.packageName)
+                val sm = mutableSetOf<AggregateMetric<*>>()
+                if (can(HeartRateRecord::class)) { sm.add(HeartRateRecord.BPM_AVG); sm.add(HeartRateRecord.BPM_MAX) }
+                if (can(ActiveCaloriesBurnedRecord::class)) sm.add(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL)
+                if (can(DistanceRecord::class)) sm.add(DistanceRecord.DISTANCE_TOTAL)
+                if (sm.isNotEmpty()) {
+                    try {
+                        val a = client.aggregate(AggregateRequest(sm, TimeRangeFilter.between(s.startTime, s.endTime)))
+                        a[HeartRateRecord.BPM_AVG]?.let { o.put("hrAvg", it) }
+                        a[HeartRateRecord.BPM_MAX]?.let { o.put("hrMax", it) }
+                        a[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.let { if (it.inKilocalories > 0) o.put("kcal", it.inKilocalories.roundToInt()) }
+                        a[DistanceRecord.DISTANCE_TOTAL]?.let { if (it.inMeters > 0) o.put("distM", it.inMeters.roundToInt()) }
+                    } catch (_: Exception) { }
                 }
-            } catch (_: Exception) { }
+                ex.put(o)
+            }
+            ex
+        } catch (_: Exception) {
+            null
         }
-        return ex
     }
 
     private suspend fun currentHealthStatus(): String = withContext(Dispatchers.IO) {
@@ -764,18 +800,15 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            // 2. Weight (latest reading on each day, converted to pounds, in one range read)
+            // 2. Weight (latest reading on each day, converted to pounds, in chunked range reads)
             if (granted.contains(HealthPermission.getReadPermission(WeightRecord::class))) {
                 try {
-                    val weights = client.readRecords(
-                        ReadRecordsRequest(
-                            recordType = WeightRecord::class,
-                            timeRangeFilter = TimeRangeFilter.between(
-                                startDay.atStartOfDay(zone).toInstant(),
-                                today.plusDays(1).atStartOfDay(zone).toInstant()
-                            )
-                        )
-                    ).records
+                    val weights = readRecordsChunked(
+                        client,
+                        WeightRecord::class,
+                        startDay.atStartOfDay(zone).toInstant(),
+                        today.plusDays(1).atStartOfDay(zone).toInstant()
+                    )
                     weights.groupBy { it.time.atZone(zone).toLocalDate().toString() }
                         .forEach { (k, list) ->
                             val latest = list.maxByOrNull { it.time }
@@ -797,12 +830,12 @@ class MainActivity : AppCompatActivity() {
                 try {
                     val rangeStart = startDay.minusDays(1).atStartOfDay(zone).toInstant()
                     val rangeEnd = today.plusDays(1).atStartOfDay(zone).toInstant()
-                    val sleeps = client.readRecords(
-                        ReadRecordsRequest(
-                            recordType = SleepSessionRecord::class,
-                            timeRangeFilter = TimeRangeFilter.between(rangeStart, rangeEnd)
-                        )
-                    ).records
+                    val sleeps = readRecordsChunked(
+                        client,
+                        SleepSessionRecord::class,
+                        rangeStart,
+                        rangeEnd
+                    )
                     val minsByMorning = mutableMapOf<String, Long>()
                     // the night's stages, in minutes, where the watch recorded them
                     val stagesByMorning = mutableMapOf<String, MutableMap<String, Long>>()
@@ -849,7 +882,7 @@ class MainActivity : AppCompatActivity() {
 
             val nowMs = System.currentTimeMillis()
             prefs().edit().putLong("last_sync", nowMs).apply()
-            out.put("ex", ex)
+            if (ex != null) out.put("ex", ex)
             out.put("syncedAt", nowMs)
             out.put("days", daysJson)
             out

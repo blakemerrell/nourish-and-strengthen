@@ -5649,6 +5649,9 @@
     var m = Math.round((Date.now() - t) / 60000);
     return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : 'at ' + hm(t);
   }
+  // Settings as a gear, so the tabs, the plate counter and it share one row
+  var GEAR_ICO = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1.1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>';
   function draw() {
     if (DRAG && DRAG.on) return;
     var root = $('trBody');
@@ -5657,10 +5660,14 @@
     if (view) view.classList.toggle('tr-focus', focusOn());
     var head = $('trHead');
     if (head) {
-      head.innerHTML = '<button class="ghost tr-plfree" data-t="plfree" aria-label="Plate counter">' + EA_ICO.plates + '</button>' +
-        '<button class="ghost" data-t="settings">Settings</button>';
+      /* Block, History and Lifts in the header row, where the word
+         Strengthen was: the top bar already says which tab this is, and the
+         tabs were a second row of chrome before anything of the block. */
+      head.innerHTML = segHTML() +
+        '<button class="ghost tr-plfree" data-t="plfree" aria-label="Plate counter">' + EA_ICO.plates + '</button>' +
+        '<button class="ghost tr-gear" data-t="settings" aria-label="Settings">' + GEAR_ICO + '</button>';
     }
-    var html = segHTML();
+    var html = '';
     if (SY.err && doc) {
       html += '<div class="tr-note tr-warn tr-syncerr" role="status">Not saved to your account yet \u2014 it keeps trying. ' +
         'Everything is safe on this phone meanwhile.</div>';

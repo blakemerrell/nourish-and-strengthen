@@ -5147,7 +5147,7 @@ module.exports = {
       const span = hd.spanInfo();
 
       window.Train.openHub();
-      const subBtns = Array.from(document.querySelectorAll('#trBody [data-t="sub"]')).map((b) => b.dataset.v);
+      const subBtns = Array.from(document.querySelectorAll('#view-train [data-t="sub"]')).map((b) => b.dataset.v);
       const snapCard = document.getElementById('trSnapshotCard');
       const hubEl = document.querySelector('#trSnapshotCard [data-hc-hub="1"]');
       const hubHead = snapCard ? (snapCard.querySelector('.tr-hc-card .tr-eyebrow') || {}).textContent || '' : '';

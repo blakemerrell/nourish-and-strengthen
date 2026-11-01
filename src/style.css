@@ -9401,3 +9401,10 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
 .mwt-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0 0; font-size: 0.875rem; font-weight: 600; color: var(--ochre-text); }
 .mwt-h .nut-ask { min-height: 44px; }
 #macroWeekTiles:empty { display: none; }
+
+/* Strengthen's header row: the tabs where the title was, then the plate
+   counter and the gear (train.js, draw). */
+#view-train .view-head:has(.tr-headrow) { margin-bottom: 14px; align-items: center; }
+.week-acts.tr-headrow { flex: 1 1 auto; display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; min-width: 0; }
+.tr-headrow .tr-seg { margin: 0; flex: 1 1 auto; min-width: 0; }
+.tr-headrow .tr-gear, .tr-headrow .tr-plfree { flex: none; width: 44px; min-width: 44px; height: 44px; padding: 0; display: grid; place-items: center; }

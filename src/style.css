@@ -9323,9 +9323,25 @@ button.mhyd-head { cursor: pointer; }
 .tr-spk-off { fill: var(--ochre); opacity: 0.85; }
 .tr-spk-b { fill: var(--ink); opacity: 0.55; }
 .tr-spk-z { fill: var(--line-firm); }
-.tr-ontrack { margin: 6px 0 10px; }
-.tr-ontrack p { margin: 0 0 6px; font-size: 0.9375rem; color: var(--ink); }
+.tr-ontrack { margin: 6px 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.tr-ontrack p { margin: 0; font-size: 0.9375rem; color: var(--ink); }
 .tr-ot-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .tr-ot-chips span { font-size: 0.8125rem; border-radius: 999px; padding: 4px 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
 .tr-ot-chips span.ok { border-color: color-mix(in oklab, var(--green) 55%, var(--line)); color: var(--green); }
 .tr-ot-chips span.off { border-color: color-mix(in oklab, var(--ochre) 60%, var(--line)); color: var(--ochre-text); }
+
+/* Helping or hurting (train.js, pgLevers): a bar a habit from a centre line,
+   green to the right went with stronger workouts, orange to the left with
+   weaker ones. */
+.tr-lev { display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, 44%); gap: 8px 10px; align-items: center; margin-top: 8px; }
+.tr-lev-n { font-size: 0.875rem; color: var(--ink); line-height: 1.2; min-width: 0; }
+.tr-lev-n small { display: block; font-size: 0.8125rem; color: var(--muted); }
+.tr-lev-sure { letter-spacing: 1px; }
+.tr-lev-bar { position: relative; height: 24px; }
+.tr-lev-bar::before { content: ''; position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--line-firm); }
+.tr-lev-bar i { position: absolute; top: 5px; height: 14px; border-radius: 4px; }
+.tr-lev-bar i.h { left: 50%; background: var(--green); }
+.tr-lev-bar i.x { right: 50%; background: var(--pg-down); }
+.tr-lev-bar em { position: absolute; top: 3px; font-style: normal; font-size: 0.8125rem; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.tr-lev-axis { display: flex; justify-content: space-between; font-size: 0.8125rem; color: var(--muted); margin: 6px 0 0 auto; width: 44%; min-width: 120px; }
+.tr-lev-xw { color: var(--pg-down); }

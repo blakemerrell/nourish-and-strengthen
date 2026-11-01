@@ -4228,23 +4228,24 @@
      * The plan, four ways, said once at the top: is the weight coming off at
      * the plan's pace, were the workouts done, was protein hit, were the
      * calories near the target. Only what can be judged is counted — a week
-     * with no weigh-ins says nothing about pace — and the first one off is
-     * named, because "3 of 4" is only useful when it says which one. */
+     * with no weigh-ins says nothing about pace — and each is a chip, ticked
+     * or crossed, because "3 of 4" is only useful when it says which one. */
     var planDays = ms ? ms.days.filter(function (dd) { return !dd.ez; }).length : (Array.isArray(T.pr.ld) ? T.pr.ld.length : 0);
     var wkOk = (function () {
       if (!(w && w.now > 0 && w.was > 0) || !(nw && fin(nw.plan))) return null;
       return Math.abs(-(w.now - w.was) / w.was - nw.plan) <= 0.0025;
     })();
     var checks = [
-      ['Weight pace', wkOk],
+      ['Pace', wkOk],
       ['Workouts', planDays ? c.n >= planDays : null],
       ['Protein', nw && nw.pDays >= 3 ? nw.hit >= nw.pDays - 1 : null],
       ['Calories', nw && nw.days >= 3 && nw.target ? Math.abs(nw.kcal / nw.target - 1) <= 0.1 : null]
     ].filter(function (q) { return q[1] !== null; });
-    var nOk = checks.filter(function (q) { return q[1]; }).length, firstOff = checks.filter(function (q) { return !q[1]; })[0];
+    var nOk = checks.filter(function (q) { return q[1]; }).length;
     var verdict = checks.length ? '<div class="tr-ontrack" aria-label="On track with your plan">' +
-      '<p><b class="' + (nOk === checks.length ? 'tr-up' : '') + '">' + (nOk === checks.length ? 'On track' : 'On track on ' + nOk + ' of ' + checks.length) + '</b>' +
-        (firstOff ? ' · ' + esc(firstOff[0]) + ' is the one to fix.' : ' with your plan.') + '</p>' +
+      /* Short, because the card is drawn rather than written (a test holds
+         it under 260 characters): the chips say which is off. */
+      '<p><b class="' + (nOk === checks.length ? 'tr-up' : '') + '">On track ' + (nOk === checks.length ? '\u2713' : nOk + '/' + checks.length) + '</b></p>' +
       '<div class="tr-ot-chips">' + checks.map(function (q) {
         return '<span class="' + (q[1] ? 'ok' : 'off') + '">' + (q[1] ? '\u2713 ' : '\u2715 ') + esc(q[0]) + '</span>';
       }).join('') + '</div></div>' : '';
@@ -9065,6 +9066,68 @@
     return '<div class="tr-card tr-hc-card"><div class="tr-eyebrow">' + spanLbl + '</div>' + body + '</div>';
   }
 
+  /* ---- helping or hurting ----
+   * Blake, 2026-11-01: "all the metrics showing me how my health metrics and
+   * nutrition are all helping or hurting my health and progress". One bar a
+   * habit: how much stronger the next workouts were after days with it than
+   * after days without, in percentage points of the estimated max. Green to
+   * the right helps, orange to the left hurts. The dots are how sure: the
+   * gap against its own noise (Welch's t), three when it is twice its error,
+   * one when it is under once. Never a bar with fewer than three workouts on
+   * either side, and never a claim that one caused the other — the card says
+   * "went with", and the dots say how much to trust even that. */
+  var LEVERS = [
+    ['Protein at target', 'the day before', function (D, s) { var b = pgBefore(D, s.k); return b && b.tp > 0 ? b.p >= 0.9 * b.tp : null; }],
+    ['Carbs at target', 'the day before', function (D, s) { var b = pgBefore(D, s.k); return b && b.tc > 0 ? b.c >= 0.9 * b.tc : null; }],
+    ['Calories at target', 'the day before', function (D, s) { var b = pgBefore(D, s.k); return b && b.tk > 0 ? b.kc >= 0.9 * b.tk : null; }],
+    ['7+ hours of sleep', 'the night before', function (D, s) { var d = D.byK[s.k]; return d && fin(d.sl) ? d.sl >= 7 : null; }],
+    ['8,000+ steps', 'the day before', function (D, s) { var b = pgBefore(D, s.k); return b && fin(b.sy) ? b.sy >= 8000 : null; }],
+    ['Creatine', 'that morning', function (D, s) { var d = D.byK[s.k]; return d && (d.cr === 0 || d.cr === 1) ? d.cr === 1 : null; }],
+    ['100 mg+ caffeine', 'that day', function (D, s) { var d = D.byK[s.k]; return d && fin(d.mg) ? d.mg >= 100 : null; }],
+    ['Recovered (heart rate, HRV)', 'that morning', function (D, s) {
+      var hd = window.HealthData, d = D.byK[s.k], rc = null;
+      try { rc = hd && hd.recovery ? hd.recovery(s.k, d && fin(d.sl) ? d.sl : 0) : null; } catch (e) { rc = null; }
+      return rc && rc.level ? rc.level !== 'low' : null;
+    }]
+  ];
+  function pgLevers(D) {
+    var rows = [];
+    LEVERS.forEach(function (lv) {
+      var a = [], b = [];
+      D.sess.forEach(function (s) { var t = lv[2](D, s); if (t === true) a.push(s.ch); else if (t === false) b.push(s.ch); });
+      if (a.length < PG_MIN || b.length < PG_MIN) return;
+      var ma = pgMean(a), mb = pgMean(b);
+      var va = pgMean(a.map(function (v) { return (v - ma) * (v - ma); })) * a.length / Math.max(1, a.length - 1);
+      var vb = pgMean(b.map(function (v) { return (v - mb) * (v - mb); })) * b.length / Math.max(1, b.length - 1);
+      var se = Math.sqrt(va / a.length + vb / b.length), diff = ma - mb, tt = se > 0 ? Math.abs(diff) / se : 0;
+      rows.push({ n: lv[0], when: lv[1], d: diff, t: tt, na: a.length, nb: b.length, sure: tt >= 2 ? 3 : tt >= 1 ? 2 : 1 });
+    });
+    if (!rows.length) return pgCard('Helping or hurting', pgWait('Once you have logged food, the morning check-in and a few weeks of workouts, this shows which habits went with stronger workouts and which with weaker ones.'));
+    rows.sort(function (x, y) { return y.d - x.d; });
+    var max = Math.max(0.01, Math.max.apply(null, rows.map(function (r) { return Math.abs(r.d); })));
+    var bars = rows.map(function (r) {
+      // at most a third of the bar's width each way, so the figure beside the longest one still fits
+      var w = Math.min(1, Math.abs(r.d) / max) * 32, up = r.d >= 0;
+      var dots = '\u25cf\u25cf\u25cf'.slice(0, r.sure) + '\u25cb\u25cb\u25cb'.slice(0, 3 - r.sure);
+      return '<div class="tr-lev-n">' + esc(r.n) + '<small>' + esc(r.when) + ' \u00b7 sure <span class="tr-lev-sure" aria-label="' + r.sure + ' of 3">' + dots + '</span></small></div>' +
+        '<div class="tr-lev-bar" role="img" aria-label="' + esc(r.n) + ': next workout ' + pgPct(r.d) + ' on average"><i class="' + (up ? 'h' : 'x') + '" style="width:' + w.toFixed(1) + '%"></i>' +
+          '<em class="' + (up ? 'h' : 'x') + '" style="' + (up ? 'left' : 'right') + ':calc(50% + ' + w.toFixed(1) + '% + 4px)">' + pgPct(r.d) + '</em></div>';
+    }).join('');
+    /* The sentence names only what it is fairly sure of (two dots or more):
+       a top bar of one dot is as likely the noise as the habit. */
+    var helps = rows.filter(function (r) { return r.d > 0.002 && r.sure >= 2; });
+    var hurts = rows.filter(function (r) { return r.d < -0.002 && r.sure >= 2; });
+    var kid = (helps.length ? 'Your stronger workouts came after <b>' + esc(helps[0].n.toLowerCase()) + '</b>.' : '') +
+      (hurts.length ? (helps.length ? ' ' : '') + 'Weaker ones came after days with <b>' + esc(hurts[hurts.length - 1].n.toLowerCase()) + '</b>.' : '');
+    if (!kid) kid = 'Nothing stands out yet: every gap is small next to how much workouts vary.';
+    var math = rows.map(function (r) { return [r.n, pgSigned(r.d * 100, 1) + ' points', 'n = ' + r.na + ' vs ' + r.nb + ', t = ' + r.t.toFixed(1)]; });
+    return pgCard('Helping or hurting',
+      '<p class="tr-pg-say" style="margin-top:0">How much stronger your next workout was, on average, after each kind of day than after the other kind. <b class="tr-up">Green</b> went with stronger, <b class="tr-lev-xw">orange</b> with weaker.</p>' +
+      '<div class="tr-lev">' + bars + '</div><div class="tr-lev-axis"><span>weaker</span><span>stronger</span></div>' +
+      (kid ? pgSay(kid) : '') +
+      '<p class="tr-pg-wait">This is what went together, not proof of cause. More dots, more sure.</p>', math);
+  }
+
   function progressHTML(span) {
     var D = pgData(span);
     var head = D.span === 'block'
@@ -9076,7 +9139,7 @@
       '<p class="tr-pg-head">' + head + '</p>' +
       pgReadinessHTML(D) +
       hcBiometricsHubHTML(D) +
-      pgPace(D) + pgMuscle(D) + pgMuscles(D) + pgFood(D) + pgRest(D);
+      pgPace(D) + pgMuscle(D) + pgMuscles(D) + pgLevers(D) + pgFood(D) + pgRest(D);
   }
 
   function snapshotAndHubHTML(ms, nx) {

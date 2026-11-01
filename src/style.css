@@ -9268,3 +9268,136 @@ button.mhyd-head { cursor: pointer; }
   font-size: 0.8125rem; padding: 3px 9px; border-radius: 999px;
   background: var(--paper-soft); border: 1px solid var(--line-soft); color: var(--ink-2);
 }
+
+/* Light it up (train.js, muscleMapCard): on the review the map is shades of
+   green, not ochre into green — a muscle going green is the whole point, so
+   the steps toward it are green too, paler. A lit muscle glows a little, and
+   a whole body lit glows more. The exercise pages keep their own colours:
+   all of this is scoped to the review's card. */
+.tr-hm-card { --lit1: color-mix(in oklab, var(--green) 26%, var(--card)); --lit2: color-mix(in oklab, var(--green) 58%, var(--card)); }
+.tr-hm-card .tr-hm-svg .hm-low .belly, .tr-hm-mini .hm-low .belly { fill: var(--lit1); }
+.tr-hm-card .tr-hm-svg .hm-mid .belly, .tr-hm-mini .hm-mid .belly { fill: var(--lit2); }
+.tr-hm-card .tr-hm-svg .hm-low .seam, .tr-hm-card .tr-hm-svg .hm-mid .seam { stroke: color-mix(in oklab, var(--green) 45%, var(--card)); }
+.tr-hm-card .tr-hm-svg .hm-low .fiber, .tr-hm-card .tr-hm-svg .hm-mid .fiber { stroke: color-mix(in oklab, var(--green) 40%, var(--card)); }
+.tr-hm-card .tr-hm-svg .hm-hit { filter: drop-shadow(0 0 2px color-mix(in oklab, var(--green) 65%, transparent)); }
+.tr-hm-card.all-lit .tr-hm-svg .hm-hit { filter: drop-shadow(0 0 5px color-mix(in oklab, var(--green) 85%, transparent)); }
+.tr-hm-card .tr-hm-sw.hm-low, .tr-hm-card .tr-mus-dot.hm-low { background: var(--lit1); }
+.tr-hm-card .tr-hm-sw.hm-mid, .tr-hm-card .tr-mus-dot.hm-mid { background: var(--lit2); }
+.tr-lit-top { display: flex; align-items: center; gap: 14px; margin: 6px 0 4px; }
+.tr-lit-ring { flex: none; }
+.tr-lit-track { fill: none; stroke: var(--line); stroke-width: 7; }
+.tr-lit-fill { fill: none; stroke: var(--green); stroke-width: 7; stroke-linecap: round; }
+.tr-lit-ring text { font-size: 16px; font-weight: 700; fill: var(--ink); }
+.tr-lit-h { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.tr-lit-h b { font-family: var(--serif); font-size: 1.5rem; font-weight: 600; line-height: 1.15; color: var(--ink); }
+.tr-lit-h span { font-size: 0.875rem; color: var(--muted); line-height: 1.3; }
+.tr-hm-card.all-lit .tr-lit-h b { color: var(--green); }
+.tr-lit-next { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.tr-lit-next span { font-size: 0.8125rem; border-radius: 999px; padding: 6px 10px; border: 1px dashed var(--green); color: var(--ink); background: var(--card); }
+.tr-lit-next b { color: var(--green); }
+.tr-lit-streak { margin: 4px 0 8px; font-size: 0.9375rem; color: var(--ink); text-align: center; }
+/* each block week's pill carries a small figure of that week */
+.tr-hm-pills:has(.has-fig) { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 4px; }
+.tr-hm-pills:has(.has-fig) .tr-hm-pill:not(.has-fig) { border-radius: 10px; padding: 4px 2px; min-width: 0; font-size: 0.8125rem; }
+.tr-hm-pill.has-fig { border-radius: 10px; padding: 4px 2px 3px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.tr-hm-pill.has-fig span { font-size: 0.8125rem; line-height: 1.1; white-space: nowrap; }
+.tr-hm-pill.all-lit:not(.active) { border-color: var(--green); }
+.tr-hm-mini { width: 100%; max-width: 34px; height: auto; aspect-ratio: 1 / 2; display: block; }
+.tr-hm-mini[data-sex="f"] { aspect-ratio: 648 / 1452; }
+.tr-hm-mini .b-shell { fill: color-mix(in oklab, var(--ink) 20%, var(--paper)); }
+.tr-hm-mini .b-hair { fill: color-mix(in oklab, var(--ink) 82%, var(--paper)); }
+.tr-hm-mini .b-tendon { fill: var(--card); stroke: none; }
+.tr-hm-mini .b-line, .tr-hm-mini .seam, .tr-hm-mini .fiber { display: none; }
+.tr-hm-mini .hm-0 .belly { fill: color-mix(in oklab, var(--ink) 20%, var(--paper)); }
+.tr-hm-mini .hm-hit .belly { fill: var(--green); }
+
+/* Sparklines under the week card's numbers (train.js, spkLine/spkBars) and
+   the On track line above them. */
+.tr-spk { display: block; width: 100%; height: 26px; margin-top: 6px; overflow: visible; }
+.tr-spk-l { fill: none; stroke: var(--ochre); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.tr-spk-a { fill: var(--ochre); opacity: 0.14; }
+.tr-spk-d { fill: var(--ochre); }
+.tr-spk-g .tr-spk-l { stroke: var(--green); } .tr-spk-g .tr-spk-a, .tr-spk-g .tr-spk-d { fill: var(--green); }
+.tr-spk-t { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.45; vector-effect: non-scaling-stroke; }
+.tr-spk-ok { fill: var(--green); opacity: 0.85; }
+.tr-spk-off { fill: var(--ochre); opacity: 0.85; }
+.tr-spk-b { fill: var(--ink); opacity: 0.55; }
+.tr-spk-z { fill: var(--line-firm); }
+.tr-ontrack { margin: 6px 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.tr-ontrack p { margin: 0; font-size: 0.9375rem; color: var(--ink); }
+.tr-ot-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tr-ot-chips span { font-size: 0.8125rem; border-radius: 999px; padding: 4px 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+.tr-ot-chips span.ok { border-color: color-mix(in oklab, var(--green) 55%, var(--line)); color: var(--green); }
+.tr-ot-chips span.off { border-color: color-mix(in oklab, var(--ochre) 60%, var(--line)); color: var(--ochre-text); }
+
+/* Helping or hurting (train.js, pgLevers): a bar a habit from a centre line,
+   green to the right went with stronger workouts, orange to the left with
+   weaker ones. */
+.tr-lev { display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, 44%); gap: 8px 10px; align-items: center; margin-top: 8px; }
+.tr-lev-n { font-size: 0.875rem; color: var(--ink); line-height: 1.2; min-width: 0; }
+.tr-lev-n small { display: block; font-size: 0.8125rem; color: var(--muted); }
+.tr-lev-sure { letter-spacing: 1px; }
+.tr-lev-bar { position: relative; height: 24px; }
+.tr-lev-bar::before { content: ''; position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--line-firm); }
+.tr-lev-bar i { position: absolute; top: 5px; height: 14px; border-radius: 4px; }
+.tr-lev-bar i.h { left: 50%; background: var(--green); }
+.tr-lev-bar i.x { right: 50%; background: var(--pg-down); }
+.tr-lev-bar em { position: absolute; top: 3px; font-style: normal; font-size: 0.8125rem; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.tr-lev-axis { display: flex; justify-content: space-between; font-size: 0.8125rem; color: var(--muted); margin: 6px 0 0 auto; width: 44%; min-width: 120px; }
+.tr-lev-xw { color: var(--pg-down); }
+
+/* The muscles under the map are buttons now: each opens its own sheet. */
+button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px solid var(--line-soft); background: none; font: inherit; font-size: 0.8125rem; color: var(--ink); text-align: left; cursor: pointer; padding: 0 2px; }
+.tr-hm-svg g[data-t="musopen"] { cursor: pointer; }
+.tr-hm-mode { margin: 6px 0 4px; }
+.tr-mus-sheet { padding: 0 2px 8px; }
+.tr-mus-rec { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 0.9375rem; color: var(--ink); }
+.tr-mus-sheet .tr-mus-dot.hm-low { background: color-mix(in oklab, var(--green) 26%, var(--card)); }
+.tr-mus-sheet .tr-mus-dot.hm-mid { background: color-mix(in oklab, var(--green) 58%, var(--card)); }
+.tr-mus-sets-svg { display: block; width: 100%; height: auto; margin-top: 6px; }
+.tr-mus-sets-svg .tr-mus-ax { font-size: 13px; fill: var(--muted); }
+.tr-mus-sheet .tr-spk { height: 50px; }
+.tr-mus-lifts { list-style: none; margin: 10px 0 0; padding: 0; }
+.tr-mus-lifts li { display: flex; justify-content: space-between; gap: 10px; min-height: 36px; align-items: center; border-top: 1px solid var(--line-soft); font-size: 0.875rem; }
+/* A record set: the banner that names it (the app's own confetti and chime
+   already mark the moment). */
+.tr-pr-party { margin: 0 0 8px; padding: 12px 14px; border-radius: 12px;
+  background: color-mix(in oklab, var(--ochre) 16%, var(--card)); border: 1px solid color-mix(in oklab, var(--ochre) 45%, var(--line)); color: var(--ink); }
+.tr-pr-party b { font-size: 1.0625rem; }
+.tr-pr-party ul { margin: 4px 0 0; padding: 0 0 0 18px; font-size: 0.875rem; }
+.tr-mus-sheet .tr-spk-d { display: none; }
+
+/* My Day's week in charts (src/weektiles.js): turned on from the menu, six
+   tiles under the strip, each a number with the week under it. */
+.mwt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 4px 0 10px; }
+.mwt-tile { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px 8px; min-width: 0; }
+.mwt-k { font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.mwt-v { font-family: var(--serif); font-size: 1.375rem; font-weight: 600; color: var(--ink); margin-top: 2px; }
+.mwt-v small { font-family: var(--sans); font-size: 0.8125rem; font-weight: 400; color: var(--muted); }
+.mwt-s { font-size: 0.8125rem; color: var(--muted); line-height: 1.3; }
+.mwt-sp { display: block; width: 100%; height: 30px; margin: 4px 0; overflow: visible; }
+.mwt-none { font-size: 0.8125rem; color: var(--muted); margin: 8px 0; min-height: 22px; }
+.mwt-l { fill: none; stroke: var(--ochre); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mwt-a { fill: var(--ochre); opacity: 0.14; }
+.mwt-d { fill: var(--ochre); }
+.mwt-g .mwt-l { stroke: var(--green); } .mwt-g .mwt-a, .mwt-g .mwt-d { fill: var(--green); }
+.mwt-t { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.45; }
+.mwt-ok { fill: var(--green); opacity: 0.85; }
+.mwt-off { fill: var(--ochre); opacity: 0.85; }
+.mwt-z { fill: var(--line-firm); }
+.mwt-sleep .mwt-ok { fill: #3f7cb0; } .mwt-water .mwt-ok { fill: #3b82c4; }
+[data-theme="dark"] .mwt-sleep .mwt-ok { fill: #7fb3dc; } [data-theme="dark"] .mwt-water .mwt-ok { fill: #8cc0ea; }
+
+/* Today's workout card: this week's body map, small (today.js, litStrip). */
+.td-lit { display: flex; align-items: center; gap: 12px; margin: 10px 0 4px; padding: 8px 10px; border-radius: 10px; background: var(--paper-soft); }
+.td-lit-figs { display: flex; gap: 2px; flex: none; }
+.td-lit .tr-hm-mini { width: 40px; max-width: 40px; }
+.td-lit .tr-hm-mini .hm-low .belly { fill: color-mix(in oklab, var(--green) 26%, var(--card)); }
+.td-lit .tr-hm-mini .hm-mid .belly { fill: color-mix(in oklab, var(--green) 58%, var(--card)); }
+.td-lit-say { display: flex; flex-direction: column; font-size: 0.8125rem; color: var(--muted); line-height: 1.3; }
+.td-lit-say b { font-size: 0.9375rem; color: var(--ink); }
+.td-lit.all-lit { background: color-mix(in oklab, var(--green) 14%, var(--card)); }
+.td-lit.all-lit .td-lit-say b { color: var(--green); }
+.mwt-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0 0; font-size: 0.875rem; font-weight: 600; color: var(--ochre-text); }
+.mwt-h .nut-ask { min-height: 44px; }
+#macroWeekTiles:empty { display: none; }

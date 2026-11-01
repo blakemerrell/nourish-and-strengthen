@@ -108,6 +108,7 @@ var CORE = [
   './src/morning.js?v=0',
   './src/weighcard.js?v=0',
   './src/checkin.js?v=0',
+  './src/weektiles.js?v=0',
   './src/budget.js?v=0',
   './src/follow.js?v=0',
   './src/daystore.js?v=0',

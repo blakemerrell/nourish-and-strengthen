@@ -35,8 +35,8 @@ module.exports = {
     await p.click('[data-t="rvspan"][data-v="block"]');
     await p.waitForTimeout(300);
     let cs = await cards(p);
-    t.ok('This block: five cards, in the order the questions were asked',
-      cs.map((c) => c.eye).join('|') === 'On pace|Keeping muscle|Muscles|Food → lifts|Sleep & steps → lifts', cs.map((c) => c.eye).join('|'));
+    t.ok('This block: six cards, in the order the questions were asked',
+      cs.map((c) => c.eye).join('|') === 'On pace|Keeping muscle|Muscles|Helping or hurting|Food → lifts|Sleep & steps → lifts', cs.map((c) => c.eye).join('|'));
     t.ok('with no block running it says it is the last six weeks', /No block running/.test(await txt(p, '#view-train .tr-pg-head')));
     t.ok('On pace says how far along, and when, in a sentence', /of the way to 180 lb/.test(cs[0].text) && /get there around/.test(cs[0].text), cs[0].text);
     t.ok('Keeping muscle draws weight against strength, and says what it means',
@@ -44,10 +44,23 @@ module.exports = {
     t.ok('Muscles colours the body map by how the lifts moved', await p.evaluate(() =>
       document.querySelectorAll('.tr-pg .tr-hm-svg .pg-up').length > 0 && document.querySelectorAll('.tr-pg .tr-hm-svg .pg-down').length > 0));
     t.ok('and names the one slipping: the overhead press is front delts', /Front delts slipped/.test(cs[2].text), cs[2].text);
+    /* Helping or hurting (2026-11-01): a bar a habit, green to the right for
+       stronger next workouts, orange to the left for weaker, each with how
+       sure; the sentence names only what has two dots or more. */
+    const lev = await p.evaluate(() => {
+      const c = [...document.querySelectorAll('#view-train .tr-pg')].find((x) => /Helping/.test(x.querySelector('.tr-eyebrow').textContent));
+      return { names: [...c.querySelectorAll('.tr-lev-n')].map((n) => n.firstChild.textContent),
+        helps: c.querySelectorAll('.tr-lev-bar i.h').length, hurts: c.querySelectorAll('.tr-lev-bar i.x').length,
+        sure: [...c.querySelectorAll('.tr-lev-sure')].map((x) => x.textContent), text: c.textContent };
+    });
+    t.ok('Helping or hurting draws a bar for each habit with three or more workouts either side',
+      lev.names.includes('7+ hours of sleep') && lev.names.includes('Protein at target') && lev.helps >= 2, JSON.stringify(lev.names));
+    t.ok('each with how sure, in three dots', lev.sure.length === lev.names.length && lev.sure.every((x) => /^[\u25cf\u25cb]{3}$/.test(x)), lev.sure.join(' '));
+    t.ok('and says it is what went together, not proof of cause', /not proof of cause/.test(lev.text));
     t.ok('Food → lifts splits the workouts by the day before, protein and carbs',
-      /After you ate your protein/.test(cs[3].text) && /After a short protein day/.test(cs[3].text) && /After a day at your carbs/.test(cs[3].text), cs[3].text);
-    t.ok('Sleep & steps → lifts splits them by the night before', /After 7 or more hours of sleep/.test(cs[4].text) && /After under 7 hours/.test(cs[4].text), cs[4].text);
-    t.ok('and says the steps and the creatine', /Steps: [\d,]+ a day lately/.test(cs[4].text) && /Creatine: \d+ of \d+ mornings/.test(cs[4].text), cs[4].text);
+      /After you ate your protein/.test(cs[4].text) && /After a short protein day/.test(cs[4].text) && /After a day at your carbs/.test(cs[4].text), cs[4].text);
+    t.ok('Sleep & steps → lifts splits them by the night before', /After 7 or more hours of sleep/.test(cs[5].text) && /After under 7 hours/.test(cs[5].text), cs[5].text);
+    t.ok('and says the steps and the creatine', /Steps: [\d,]+ a day lately/.test(cs[5].text) && /Creatine: \d+ of \d+ mornings/.test(cs[5].text), cs[5].text);
     const viz = await p.evaluate(() => ({
       readiness: !!document.querySelector('#view-train .tr-readiness .tr-rd-badge'),
       wchart: !!document.querySelector('#view-train .tr-pg-wchart .tr-pg-wtrend'),
@@ -65,7 +78,7 @@ module.exports = {
     cs = await cards(p);
     t.ok('The math puts numbers under every card', cs.every((c) => c.stats > 0), cs.map((c) => c.stats).join(','));
     t.ok('the rate with its 95% interval', /lb\/wk/.test(cs[0].text) && /95% CI/.test(cs[0].text), cs[0].text);
-    t.ok('and a correlation is never shown without its n and p', [cs[3].text, cs[4].text].every((x) => !/r = /.test(x) || (/n = \d+/.test(x) && /p = /.test(x))));
+    t.ok('and a correlation is never shown without its n and p', [cs[4].text, cs[5].text].every((x) => !/r = /.test(x) || (/n = \d+/.test(x) && /p = /.test(x))));
 
     await p.click('[data-t="rvspan"][data-v="all"]');
     await p.waitForTimeout(300);
@@ -88,7 +101,7 @@ module.exports = {
     await q.click('.tr-seg [data-v="block"]').catch(() => {});
     await q.waitForTimeout(300);
     const empty = await q.evaluate(() => [...document.querySelectorAll('.tr-pg')].map((c) => !!c.querySelector('.tr-pg-wait')));
-    t.ok('with nothing logged, each card says what it needs instead of drawing nothing', empty.length === 5 && empty.every(Boolean), JSON.stringify(empty));
+    t.ok('with nothing logged, each card says what it needs instead of drawing nothing', empty.length === 6 && empty.every(Boolean), JSON.stringify(empty));
     t.ok('and nothing is wider than a 320 px phone', await q.evaluate(() => document.documentElement.scrollWidth <= 320), String(await q.evaluate(() => document.documentElement.scrollWidth)));
 
     // when remote database records arrive while viewing Review, the stats cards redraw live
@@ -112,7 +125,7 @@ module.exports = {
     await q.clock.runFor(200);
     const liveCards = await cards(q);
     t.ok('and when database records sync in, Review automatically redraws with the live stats',
-      /of the way to 180 lb/.test(liveCards[0].text) && /After you ate your protein/.test(liveCards[3].text) && /After 7 or more hours of sleep/.test(liveCards[4].text),
+      /of the way to 180 lb/.test(liveCards[0].text) && /After you ate your protein/.test(liveCards[4].text) && /After 7 or more hours of sleep/.test(liveCards[5].text),
       liveCards.map((c) => c.text).join(' || '));
   }
 };

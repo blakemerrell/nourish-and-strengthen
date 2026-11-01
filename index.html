@@ -273,6 +273,8 @@
                take me to the exact same place?" The meals and the help are
                accordions in the sheet, where they can be seen. -->
           <button role="menuitem" tabindex="-1" data-mchartopen="1">Trends</button>
+          <!-- the week in charts under the strip, on or off (src/weektiles.js) -->
+          <button role="menuitem" tabindex="-1" data-mwtiles="1" id="macroWtMenu">Week in charts</button>
           <button role="menuitem" tabindex="-1" data-mmore="plan">My plan</button>
           <button role="menuitem" tabindex="-1" data-mmore="foods">Food I eat</button>
           <button role="menuitem" tabindex="-1" data-mmore="eatout">Eating out</button>
@@ -322,6 +324,11 @@
     </div>
 
     <div class="mday-rail">
+      <!-- The week in charts (src/weektiles.js): the rail's first card, not
+           in the folding head above (its row made the sticky head taller)
+           nor between the two (the fold measures its gap to whatever comes
+           right after the head, and must find the day there). -->
+      <div class="mwt" id="macroWeekTiles"></div>
       <div class="mday-stop mday-weigh" id="macroWeigh"></div>
 
       <div id="macroSlots"></div>
@@ -500,6 +507,7 @@
 <script src="src/scale.js?v=0"></script>
 <script src="src/morning.js?v=0"></script>
 <script src="src/weighcard.js?v=0"></script>
+<script src="src/weektiles.js?v=0"></script>
 <script src="src/checkin.js?v=0"></script>
 <script src="src/budget.js?v=0"></script>
 <script src="src/follow.js?v=0"></script>

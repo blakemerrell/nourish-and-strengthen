@@ -4146,13 +4146,113 @@
 
   /* The week, at the top of the Review: 2x2 KPI cards + block progress strip.
      Nourish's This week lands here too. */
+  /* ---- sparklines: a week in a line or seven bars, under a number ----
+   * Blake, 2026-11-01: "Add mini charts or spark lines in some of the data
+   * boxes". A number says where the week ended up; the line under it says
+   * how it got there, which is the half a single number hides. */
+  function spkLine(vals, o) {
+    o = o || {};
+    var pts = [];
+    vals.forEach(function (v, i) { if (fin(v)) pts.push([i, v]); });
+    if (pts.length < 2) return '';
+    var W = 120, H = o.h || 26, ys = pts.map(function (q) { return q[1]; });
+    var lo = Math.min.apply(null, ys), hi = Math.max.apply(null, ys);
+    if (fin(o.t)) { lo = Math.min(lo, o.t); hi = Math.max(hi, o.t); }
+    if (hi - lo < 1e-9) { hi += 1; lo -= 1; }
+    var x = function (i) { return 2 + i * (W - 4) / Math.max(1, vals.length - 1); }, y = function (v) { return 3 + (hi - v) / (hi - lo) * (H - 6); };
+    var d = pts.map(function (q, i) { return (i ? 'L' : 'M') + x(q[0]).toFixed(1) + ' ' + y(q[1]).toFixed(1); }).join(' ');
+    var last = pts[pts.length - 1], cls = 'tr-spk' + (o.c ? ' ' + o.c : '');
+    return '<svg class="' + cls + '" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
+      (fin(o.t) ? '<line x1="0" x2="' + W + '" y1="' + y(o.t).toFixed(1) + '" y2="' + y(o.t).toFixed(1) + '" class="tr-spk-t"/>' : '') +
+      '<path d="' + d + ' L' + x(last[0]).toFixed(1) + ' ' + H + ' L' + x(pts[0][0]).toFixed(1) + ' ' + H + ' Z" class="tr-spk-a"/>' +
+      '<path d="' + d + '" class="tr-spk-l"/>' +
+      '<circle cx="' + x(last[0]).toFixed(1) + '" cy="' + y(last[1]).toFixed(1) + '" r="2.6" class="tr-spk-d"/></svg>';
+  }
+  // bars, one a day; with a target each is green within a tenth of it, ochre off it
+  function spkBars(vals, t, o) {
+    o = o || {};
+    if (!vals.some(function (v) { return v > 0; })) return '';
+    var W = 120, H = o.h || 26, n = vals.length, bw = (W - 2) / n;
+    var hi = Math.max.apply(null, vals.concat([fin(t) ? t : 0])) * 1.08 || 1, s = '';
+    vals.forEach(function (v, i) {
+      if (!(v > 0)) { s += '<rect x="' + (1 + i * bw + 1.5).toFixed(1) + '" y="' + (H - 1.5) + '" width="' + (bw - 3).toFixed(1) + '" height="1.5" class="tr-spk-z"/>'; return; }
+      var bh = Math.max(2, v / hi * (H - 2)), ok = !fin(t) || Math.abs(v / t - 1) <= 0.1 || (o.atLeast && v >= t);
+      s += '<rect x="' + (1 + i * bw + 1.5).toFixed(1) + '" y="' + (H - bh).toFixed(1) + '" width="' + (bw - 3).toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="1.5" class="' + (o.plain ? 'tr-spk-b' : ok ? 'tr-spk-ok' : 'tr-spk-off') + '"/>';
+    });
+    var ty = fin(t) && t > 0 ? (H - t / hi * (H - 2)).toFixed(1) : null;
+    return '<svg class="tr-spk" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' + s +
+      (ty ? '<line x1="0" x2="' + W + '" y1="' + ty + '" y2="' + ty + '" class="tr-spk-t"/>' : '') + '</svg>';
+  }
+  /* The seven days the week card covers, as Nourish saw them, and the hard
+     sets of each from the log. */
+  function wkDays(from, to) {
+    var h = hive(), nd = null, out = [], by = {};
+    try { nd = h && h.progress ? h.progress(from, to) : null; } catch (e) { nd = null; }
+    (nd ? nd.days : []).forEach(function (d) { by[d.k] = d; });
+    var sets = {};
+    ix().list.forEach(function (wo) {
+      var k = wo.dk || dayKey(new Date(wo.st));
+      if (k < from || k > to) return;
+      sets[k] = (sets[k] || 0) + wo.x.reduce(function (a, x) { return a + x.s.filter(counts).length; }, 0);
+    });
+    for (var d = new Date(from + 'T12:00:00'), g = 0; dayKey(d) <= to && g < 40; d.setDate(d.getDate() + 1), g++) {
+      var k = dayKey(d);
+      out.push(Object.assign({ k: k, sets: sets[k] || 0 }, by[k] || {}));
+    }
+    return out;
+  }
+  /* A strength line over four weeks: each session the mean change of its
+     lifts against the last time each was done, chained, starting at 100. */
+  function strLine(now) {
+    var from = now - 28 * DAY_MS, last = {}, v = 100, out = [];
+    ix().list.filter(function (wo) { return !wo.dl; }).slice().sort(function (a, b) { return a.st - b.st; }).forEach(function (wo) {
+      var ch = [];
+      wo.x.forEach(function (x) {
+        if (!x.s.length) return;
+        var e1 = liftE1(x, wo);
+        if (!(e1 > 0)) return;
+        if (wo.st >= from && last[x.e] > 0) ch.push(e1 / last[x.e]);
+        last[x.e] = e1;
+      });
+      if (wo.st >= from && wo.st <= now && ch.length) { v *= ch.reduce(function (a, b) { return a + b; }, 0) / ch.length; out.push(v); }
+    });
+    return out;
+  }
   function weekCard() {
     var c = checkin(), nw = c.nw, w = nw && nw.w, p = c.prog, ms = active();
     var md = function (k) { var d = new Date(k + 'T12:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
+    var days = wkDays(c.from, c.to);
+    var wFrom = new Date(c.from + 'T12:00:00'); wFrom.setDate(wFrom.getDate() - 7);
+    var wDays = wkDays(dayKey(wFrom), c.to);
+    /* ---- on track ----
+     * The plan, four ways, said once at the top: is the weight coming off at
+     * the plan's pace, were the workouts done, was protein hit, were the
+     * calories near the target. Only what can be judged is counted — a week
+     * with no weigh-ins says nothing about pace — and each is a chip, ticked
+     * or crossed, because "3 of 4" is only useful when it says which one. */
+    var planDays = ms ? ms.days.filter(function (dd) { return !dd.ez; }).length : (Array.isArray(T.pr.ld) ? T.pr.ld.length : 0);
+    var wkOk = (function () {
+      if (!(w && w.now > 0 && w.was > 0) || !(nw && fin(nw.plan))) return null;
+      return Math.abs(-(w.now - w.was) / w.was - nw.plan) <= 0.0025;
+    })();
+    var checks = [
+      ['Pace', wkOk],
+      ['Workouts', planDays ? c.n >= planDays : null],
+      ['Protein', nw && nw.pDays >= 3 ? nw.hit >= nw.pDays - 1 : null],
+      ['Calories', nw && nw.days >= 3 && nw.target ? Math.abs(nw.kcal / nw.target - 1) <= 0.1 : null]
+    ].filter(function (q) { return q[1] !== null; });
+    var nOk = checks.filter(function (q) { return q[1]; }).length;
+    var verdict = checks.length ? '<div class="tr-ontrack" aria-label="On track with your plan">' +
+      /* Short, because the card is drawn rather than written (a test holds
+         it under 260 characters): the chips say which is off. */
+      '<p><b class="' + (nOk === checks.length ? 'tr-up' : '') + '">On track ' + (nOk === checks.length ? '\u2713' : nOk + '/' + checks.length) + '</b></p>' +
+      '<div class="tr-ot-chips">' + checks.map(function (q) {
+        return '<span class="' + (q[1] ? 'ok' : 'off') + '">' + (q[1] ? '\u2713 ' : '\u2715 ') + esc(q[0]) + '</span>';
+      }).join('') + '</div></div>' : '';
     var html = '<div class="tr-card tr-week" aria-label="This week">' +
       '<div class="tr-eyebrow">This week · ' + esc(md(c.from)) + '–' + esc(md(c.to)) +
         '<span class="tr-chk-conf is-' + c.conf.level + '" aria-label="Check-in data confidence: ' + c.conf.score + '% (' + c.conf.days + ' of 7 food days, ' + c.conf.weighs + ' of 7 weigh-ins)">● ' + c.conf.score + '%</span>' +
-      '</div>' +
+      '</div>' + verdict +
       '<div class="tr-kpi-grid">';
 
     // 1. Weight KPI
@@ -4165,7 +4265,7 @@
         '<div class="tr-kpi-sub tr-wkx">' +
           (d === null ? '' : '<span class="tr-wka' + ok + '">' + (d <= 0 ? '▼' : '▲') + fmtN(Math.abs(d)) + '</span>') +
           (pl !== null && Math.abs(pl) >= 0.001 ? '<span class="tr-wkm">plan ' + (pl > 0 ? '▼' : '▲') + pctSay(pl) + '/wk</span>' : '') +
-        '</div></div>';
+        '</div>' + spkLine(wDays.map(function (x) { return x.w; })) + '</div>';
     } else {
       html += '<div class="tr-kpi-card tr-wkr tr-wkr-w">' +
         '<div class="tr-kpi-top"><span class="tr-wkl">Weight</span><span class="tr-kpi-tag">7d avg</span></div>' +
@@ -4187,6 +4287,7 @@
             (dots ? '<span class="tr-wkdots" role="img" aria-label="' + nw.hit + ' of ' + nw.pDays + ' days at target">' + dots + '</span>' : '') +
             '<span class="tr-wkm">' + nw.p + 'g</span></div>'
         : '') +
+      (nw && nw.days ? spkBars(days.map(function (x) { return x.kc || 0; }), tg || null) : '') +
     '</div>';
 
     // 3. Training KPI
@@ -4194,6 +4295,7 @@
       '<div class="tr-kpi-top"><span class="tr-wkl">Training</span><span class="tr-kpi-tag">7 days</span></div>' +
       '<div class="tr-kpi-val tr-wkv"><b>' + c.n + '</b> <small>session' + (c.n === 1 ? '' : 's') + '</small></div>' +
       '<div class="tr-kpi-sub tr-wkx"><span class="tr-wkm">' + c.sets + ' hard sets</span></div>' +
+      spkBars(days.map(function (x) { return x.sets; }), null, { plain: true }) +
     '</div>';
 
     // 4. Lifts KPI
@@ -4203,6 +4305,7 @@
         ? '<div class="tr-kpi-val"><span class="tr-up">▲ ' + p.up + '</span> <small>up</small></div>' +
           '<div class="tr-kpi-sub tr-wkv"><span class="tr-up">▲' + p.up + '</span> <span class="tr-lv">●' + p.flat + '</span> <span class="tr-dn">▼' + p.down + '</span></div>'
         : '<div class="tr-kpi-val tr-wkv"><span class="tr-wkm">not enough yet</span></div>') +
+      (p.n ? spkLine(strLine(Date.now()), { c: 'tr-spk-g', t: 100 }) : '') +
     '</div>';
 
     html += '</div>' +
@@ -5632,8 +5735,15 @@
   function savedHTML() {
     var wo = S.justSaved && T.wo[S.justSaved];
     if (!wo) return '';
-    var prs = prsIn(wo).length;
-    return '<div class="tr-saved" role="status"><span>Saved \u00b7 ' + esc(wo.n) + ' \u00b7 ' + setsOf(wo) + ' sets' +
+    var prList = prsIn(wo), prs = prList.length;
+    /* A record is a moment: Blake asked for it to feel like one. The app's
+       own confetti and chime already mark it (celebrate); this says what it
+       was for, each lift by name with what it beat, above the line that was
+       already here. */
+    var party = prs ? '<div class="tr-pr-party" role="status" aria-label="' + prs + ' new record' + (prs === 1 ? '' : 's') + '">' +
+        '<b>\ud83c\udfc6 New record' + (prs === 1 ? '' : 's') + '!</b>' +
+        '<ul>' + prList.slice(0, 4).map(function (r) { return '<li>' + esc(lib(r.e).n) + ' \u00b7 ' + esc(r.what) + '</li>'; }).join('') + '</ul></div>' : '';
+    return party + '<div class="tr-saved" role="status"><span>Saved \u00b7 ' + esc(wo.n) + ' \u00b7 ' + setsOf(wo) + ' sets' +
       (prs ? ' \u00b7 <span class="tr-pr">\ud83e\udd47 ' + prs + ' record' + (prs === 1 ? '' : 's') + '</span>' : '') + '</span>' +
       '<span class="tr-saved-a"><button class="tr-lnk" data-t="wocopy" data-id="' + esc(wo.id) + '">Copy</button>' +
       '<button class="tr-lnk" data-t="wosheet" data-id="' + esc(wo.id) + '">See it</button></span></div>';
@@ -8246,6 +8356,129 @@
       '</div>' +
     '</div>';
   }
+  /* ---- recovery ----
+   * How rested each muscle is: hours since its last hard set against how long
+   * a muscle that size usually takes, about two days for the small ones and
+   * three for the big ones — and a day longer when you said, at the session
+   * after, that it was still sore. A guide to what is ready, not a rule:
+   * Blake asked to see what is ready to train, and the map is where he looks. */
+  var REC_BIG = { chest: 1, back: 1, quads: 1, hams: 1, glutes: 1 };
+  function recOf(now) {
+    now = now || Date.now();
+    var last = {}, sore = {};
+    ix().list.forEach(function (wo) {
+      wo.x.forEach(function (x) {
+        if (!x.s.some(counts)) return;
+        var m = musOf(x.e);
+        if (!last[m] || wo.st > last[m].st) last[m] = wo;
+      });
+    });
+    var out = {};
+    MUSCLES.forEach(function (m) {
+      var wo = last[m.k];
+      if (!wo) { out[m.k] = { frac: 1, h: null, need: 0 }; return; }
+      var need = (REC_BIG[m.k] ? 72 : 48) + (soreAfter(wo, m.k) === -1 ? 24 : 0);
+      var h = Math.max(0, (now - (wo.en || wo.st)) / 3600e3);
+      out[m.k] = { frac: Math.min(1, h / need), h: h, need: need, left: Math.max(0, Math.ceil(need - h)) };
+    });
+    return out;
+  }
+  function recCls(r) { return r.frac >= 1 ? 'hm-hit' : r.frac >= 0.5 ? 'hm-mid' : 'hm-low'; }
+
+  /* ---- a muscle, tapped ----
+   * Its sets week by week against the plan, its strength line from its own
+   * lifts, and how rested it is. */
+  function musSheetHTML(sh) {
+    var m = sh.m, ms = active(), rows = '', bars = [], plan = [];
+    if (ms) {
+      var nx = nextSlot(ms), curW = nx ? nx.w : Math.max(0, weeksOf(ms) - 1);
+      for (var w = 0; w <= curW && w < weeksOf(ms); w++) {
+        bars.push(weekLoggedSets(ms, w).byMus[m] || 0);
+        plan.push(weekPlanSets(ms, w).byMus[m] || 0);
+      }
+    } else {
+      for (var i = 7; i >= 0; i--) {
+        var to = Date.now() - i * 7 * DAY_MS, fr = to - 7 * DAY_MS, n = 0;
+        ix().list.forEach(function (wo) { if (wo.st > fr && wo.st <= to) wo.x.forEach(function (x) { if (musOf(x.e) === m) n += x.s.filter(counts).length; }); });
+        bars.push(n);
+      }
+    }
+    var setsSvg = (function () {
+      if (!bars.some(function (v) { return v > 0; })) return '';
+      var W = 300, H = 70, n = bars.length, bw = W / n, hi = Math.max.apply(null, bars.concat(plan).concat([1])) * 1.1, out = '';
+      bars.forEach(function (v, j) {
+        var pl = plan[j] || 0, hit = pl ? v >= pl : v > 0, bh = Math.max(2, v / hi * (H - 14));
+        out += '<rect x="' + (j * bw + 4).toFixed(1) + '" y="' + (H - 14 - bh).toFixed(1) + '" width="' + (bw - 8).toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="3" class="' + (hit ? 'tr-spk-ok' : 'tr-spk-off') + '"/>';
+        if (pl) out += '<line x1="' + (j * bw + 2).toFixed(1) + '" x2="' + (j * bw + bw - 2).toFixed(1) + '" y1="' + (H - 14 - pl / hi * (H - 14)).toFixed(1) + '" y2="' + (H - 14 - pl / hi * (H - 14)).toFixed(1) + '" class="tr-spk-t"/>';
+        out += '<text x="' + (j * bw + bw / 2).toFixed(1) + '" y="' + (H - 1) + '" text-anchor="middle" class="tr-mus-ax">' + (ms ? 'W' + (j + 1) : (j === n - 1 ? 'now' : '')) + '</text>';
+      });
+      return '<svg class="tr-mus-sets-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Hard sets a week' + (ms ? ', against the plan' : '') + '">' + out + '</svg>';
+    })();
+    // its lifts: the best estimated max each session, chained into one line
+    var last = {}, v = 100, line = [], lifts = {};
+    ix().list.filter(function (wo) { return !wo.dl; }).slice().sort(function (a, b) { return a.st - b.st; }).forEach(function (wo) {
+      var ch = [];
+      wo.x.forEach(function (x) {
+        if (musOf(x.e) !== m || !x.s.length) return;
+        var e1 = liftE1(x, wo);
+        if (!(e1 > 0)) return;
+        if (last[x.e] > 0) ch.push(e1 / last[x.e]);
+        last[x.e] = e1;
+        lifts[x.e] = lifts[x.e] || { first: e1 };
+        lifts[x.e].now = e1;
+      });
+      if (ch.length) { v *= ch.reduce(function (a, b) { return a + b; }, 0) / ch.length; line.push(v); }
+    });
+    Object.keys(lifts).forEach(function (e) {
+      var l = lifts[e], ch = l.now / l.first - 1;
+      rows += '<li><span>' + esc(lib(e).n) + '</span><b class="' + (ch > 0.01 ? 'tr-up' : ch < -0.01 ? 'tr-dn' : '') + '">' + (ch >= 0 ? '+' : '\u2212') + fmtN(Math.round(Math.abs(ch) * 1000) / 10) + '%</b></li>';
+    });
+    var rc = recOf()[m];
+    var recSay = rc.h === null ? 'Not trained lately: ready.' : rc.frac >= 1 ? 'Rested and ready to train.' : 'Resting: ready in about ' + rc.left + ' hour' + (rc.left === 1 ? '' : 's') + '.';
+    return '<div class="tr-mus-sheet">' +
+      '<p class="tr-mus-rec ' + recCls(rc) + '"><i class="tr-mus-dot ' + recCls(rc) + '"></i>' + esc(recSay) + '</p>' +
+      '<div class="tr-eyebrow">Hard sets a week' + (ms ? ' \u00b7 the line is the plan' : '') + '</div>' + (setsSvg || '<p class="tr-pg-wait">No sets for it yet.</p>') +
+      '<div class="tr-eyebrow" style="margin-top:12px">Strength, all its lifts</div>' +
+      (line.length >= 2 ? spkLine(line, { c: 'tr-spk-g', t: 100, h: 50 }) : '<p class="tr-pg-wait">Do one of its lifts twice and its line starts.</p>') +
+      (rows ? '<ul class="tr-mus-lifts">' + rows + '</ul>' : '') + '</div>';
+  }
+
+  /* One block week's muscles, each lit or not as the map draws them. */
+  function weekLit(ms, w) {
+    var pw = weekPlanSets(ms, w), lw = weekLoggedSets(ms, w), cls = {}, n = 0, hit = 0;
+    MUSCLES.forEach(function (m) {
+      var pl = pw.byMus[m.k] || 0, lg = lw.byMus[m.k] || 0;
+      if (!pl && !lg) return;
+      n++;
+      cls[m.k] = hmCls(lg, pl || lg);
+      if (cls[m.k] === 'hm-hit') hit++;
+    });
+    return { cls: cls, n: n, hit: hit, all: n > 0 && hit === n };
+  }
+  /* Weeks running with the whole body lit, back from the newest one that is
+     over (and this one, once it is lit), and the best run in the block. */
+  function litStreak(ms, curW) {
+    var runs = [], run = 0, best = 0;
+    for (var w = 0; w <= curW; w++) {
+      var wl = weekLit(ms, w);
+      if (wl.all) run++; else if (w < curW) run = 0;
+      if (run > best) best = run;
+      runs.push(run);
+    }
+    var now = weekLit(ms, curW).all ? runs[curW] : (curW > 0 ? runs[curW - 1] : 0);
+    return { now: now || 0, best: best };
+  }
+  // the front of the body, small, for a week's pill: not a .tr-hm-svg, so it is not the map
+  function miniFig(cls) {
+    return anatMapSVG(cls).front.replace('tr-hm-svg', 'tr-hm-mini');
+  }
+  function litRing(n, of) {
+    var r = 31, C = 2 * Math.PI * r, f = of ? n / of : 0;
+    return '<svg class="tr-lit-ring" viewBox="0 0 74 74" width="74" height="74" aria-hidden="true">' +
+      '<circle cx="37" cy="37" r="' + r + '" class="tr-lit-track"/>' +
+      (n ? '<circle cx="37" cy="37" r="' + r + '" class="tr-lit-fill" stroke-dasharray="' + (f * C).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 37 37)"/>' : '') +
+      '<text x="37" y="38" text-anchor="middle" dominant-baseline="middle">' + n + '/' + of + '</text></svg>';
+  }
   function muscleMapCard(r) {
     var ms = active();
     var small = r.keep || r.base || r.str;
@@ -8253,6 +8486,19 @@
     var curW = ms ? (nx ? nx.w : Math.max(0, W - 1)) : 0;
     var selCell = ms ? selOf(ms, nx) : null;
     var defW = selCell ? selCell.w : curW;
+    /* A week just finished stays on the map for two days. Without this the
+       last workout of a week moved the next slot into the week after, and
+       the map went straight from the whole body lit to an empty one: the
+       moment the card exists for was over the instant it happened. */
+    if (ms && nx && !S.sel && defW === nx.w && nx.w > 0) {
+      var lastPrev = 0, startedNext = false;
+      ix().list.forEach(function (wo) {
+        if (wo.ms !== ms.id) return;
+        if (wo.w === nx.w - 1 && wo.st > lastPrev) lastPrev = wo.st;
+        if (wo.w === nx.w) startedNext = true;
+      });
+      if (!startedNext && lastPrev && Date.now() - lastPrev < 2 * DAY_MS) defW = nx.w - 1;
+    }
     var selW = ms ? (fin(S.revWk) && S.revWk >= 0 && S.revWk < W ? S.revWk : defW) : 0;
     var planBy = {}, logBy = {};
     if (ms) {
@@ -8270,17 +8516,27 @@
       return { k: m.k, n: m.n, lg: lg, pl: pl, cls: hmCls(lg, pl), pct: pl ? lg / pl : (lg ? 1 : 0) };
     }).sort(function (a, b) { return (b.pct - a.pct) || (b.pl - a.pl); });
 
+    /* Recovery instead of sets: the same map, coloured by how rested each
+       muscle is. Green is ready here, so the two read the same way — green
+       is good — and the toggle says which question the colours answer. */
+    var recMode = S.hmMode === 'rec', rec = recMode ? recOf() : null;
+    if (recMode) {
+      mList.forEach(function (x) { x.rc = rec[x.k]; x.cls = recCls(rec[x.k]); });
+      mList.sort(function (a, b) { return b.rc.frac - a.rc.frac; });
+    }
     var clsMap = {};
     mList.forEach(function (x) { clsMap[x.k] = x.cls; });
-    var figs = anatMapSVG(clsMap);
+    // each muscle on the figure is a way into its own sheet (the rows below are the buttons)
+    var figs = anatMapSVG(clsMap), tapG = function (svg) { return svg.replace(/<g data-mus="([a-z]+)"/g, '<g data-mus="$1" data-t="musopen" data-v="$1"'); };
+    figs = { front: tapG(figs.front), back: tapG(figs.back) };
 
     var wkTitle = ms ? (selW >= acc && !steady(ms) ? 'Deload week muscle coverage' : 'Week ' + (selW + 1) + ' muscle coverage')
       : (r.n ? r.n + ' workout' + (r.n === 1 ? '' : 's') + ' this week' : 'This week\u2019s muscle coverage');
-    var vkeyText = r.keep ? 'Heat-mapped to your weekly plan (3 or more hard sets, enough to keep strength).'
-      : r.base ? 'Heat-mapped to your weekly plan (3 or more hard sets, plenty while you are new).'
-      : r.str ? (r.cond ? 'Heat-mapped to your weekly plan (3 or more hard sets beside the circuits).' : 'Heat-mapped to your weekly plan (3 or more hard sets around the main lifts).')
-      : ms ? 'Heat-mapped to your ' + (selW >= acc && !steady(ms) ? 'Deload' : 'Week ' + (selW + 1)) + ' planned sets (volume climbs week over week, then drops on Deload).'
-      : 'Heat-mapped to your weekly target sets (10\u201320 sets, where the evidence is strongest).';
+    var vkeyText = r.keep ? 'Each muscle lights up green when it gets its sets (3 or more hard sets, enough to keep strength).'
+      : r.base ? 'Each muscle lights up green when it gets its sets (3 or more hard sets, plenty while you are new).'
+      : r.str ? (r.cond ? 'Each muscle lights up green when it gets its sets (3 or more hard sets beside the circuits).' : 'Each muscle lights up green when it gets its sets (3 or more hard sets around the main lifts).')
+      : ms ? 'Each muscle lights up green when it gets its ' + (selW >= acc && !steady(ms) ? 'Deload' : 'Week ' + (selW + 1)) + ' planned hard sets (volume climbs week over week, then drops on Deload).'
+      : 'Each muscle lights up green at its weekly target (10\u201320 hard sets, where the evidence is strongest).';
 
     var pills = '';
     if (ms) {
@@ -8293,34 +8549,77 @@
         }
         var isDl = w >= acc && !steady(ms);
         var pLbl = (isDl ? 'Deload' : 'Wk ' + (w + 1)) + (wd >= dpw ? ' ✓' : w === curW ? ' (Now)' : '');
+        /* Each week a small figure of itself, lit as that week was: the
+           weeks behind you read as a row of bodies going green, which is the
+           thing Blake asked to see. Weeks not reached yet stay a plain pill. */
+        var wl = w <= curW ? weekLit(ms, w) : null;
         ps.push('<button type="button" class="tr-hm-pill' + (w === selW ? ' active' : '') + (wd >= dpw ? ' done' : '') +
-          '" data-t="revwk" data-w="' + w + '" aria-pressed="' + (w === selW) + '">' + pLbl + '</button>');
+          (wl ? ' has-fig' + (wl.all ? ' all-lit' : '') : '') + '" data-t="revwk" data-w="' + w + '" aria-pressed="' + (w === selW) + '"' +
+          (wl ? ' aria-label="' + esc(pLbl) + ', ' + wl.hit + ' of ' + wl.n + ' muscles lit"' : '') + '>' +
+          (wl ? miniFig(wl.cls) + '<span>' + (w === curW ? 'Now' : isDl ? 'DL' : 'W' + (w + 1)) + (wd >= dpw ? ' ✓' : '') + '</span>' : '<span>' + pLbl + '</span>') + '</button>');
       }
       pills = '<div class="tr-hm-pills" role="group" aria-label="Select block week">' + ps.join('') + '</div>';
     }
 
-    return '<div class="tr-card tr-hm-card">' +
-      '<div class="tr-eyebrow">Weekly muscle volume · sets logged vs. planned</div>' +
-      '<div class="tr-title">' + esc(wkTitle) + '</div>' +
+    /* ---- light it up ----
+     * Blake, 2026-11-01: "One of the main graphics that motivates me is
+     * seeing the body map. I want to see the whole body light up green!" So
+     * the map is the hero of the review: how many of the week's muscles are
+     * lit, the ring that fills as they go, which ones are left and by how
+     * many sets, and how many weeks running the whole body lit. Lit means
+     * the planned hard sets were done — the habit, not a claim of growth;
+     * whether a muscle is growing is the longer view's Muscles card. */
+    var nLit = mList.filter(function (m) { return m.cls === 'hm-hit'; }).length, nAll = mList.length;
+    var modeSeg = '<div class="seg tr-hm-mode" role="group" aria-label="Colour the map by">' +
+      '<button data-t="hmmode" data-v="sets" aria-pressed="' + !recMode + '">Sets this week</button>' +
+      '<button data-t="hmmode" data-v="rec" aria-pressed="' + recMode + '">Recovery</button></div>';
+    var allLit = !recMode && nAll > 0 && nLit === nAll;
+    var left = recMode ? [] : mList.filter(function (m) { return m.cls !== 'hm-hit' && m.pl > 0; })
+      .sort(function (a, b) { return (a.pl - a.lg) - (b.pl - b.lg); }).slice(0, 4);
+    var streak = ms ? litStreak(ms, Math.max(selW, Math.min(curW, defW))) : null;
+    var head = recMode ? '<div class="tr-lit-top">' + litRing(nLit, nAll) +
+        '<div class="tr-lit-h"><b>' + nLit + ' of ' + nAll + ' ready to train</b><span>Green is rested. Paler is still recovering from its last hard sets.</span></div></div>'
+      : nAll ? '<div class="tr-lit-top">' + litRing(nLit, nAll) +
+        '<div class="tr-lit-h"><b>' + (allLit ? 'Whole body lit' : nLit + ' of ' + nAll + ' muscles lit') + '</b>' +
+        '<span>' + (allLit ? 'Every muscle in the plan got its sets. 🎉' : 'A muscle turns green when it gets its planned hard sets.') + '</span></div></div>' +
+      (left.length ? '<div class="tr-lit-next" aria-label="Still to light up">' + left.map(function (m) {
+        var need = Math.max(1, Math.round(m.pl - m.lg));
+        return '<span>' + esc(m.n) + ' · <b>' + need + ' more set' + (need === 1 ? '' : 's') + '</b></span>';
+      }).join('') + '</div>' : '') : '';
+    var streakSay = streak && streak.best ? '<p class="tr-lit-streak">' + (streak.now ? '🔥 <b>' + streak.now + ' week' + (streak.now === 1 ? '' : 's') + '</b> fully lit in a row.' : 'No fully lit week running yet.') +
+      (streak.best > streak.now ? ' Your best is ' + streak.best + '.' : streak.now > 1 ? ' Your best yet.' : '') + '</p>' : '';
+
+    return '<div class="tr-card tr-hm-card' + (allLit ? ' all-lit' : '') + '">' +
+      '<div class="tr-eyebrow">Light it up · this week\u2019s muscles</div>' +
+      modeSeg + head +
+      // the week's title, key and weeks belong to the sets; recovery is about now
+      (recMode ? '' : '<div class="tr-title">' + esc(wkTitle) + '</div>' +
       '<div class="tr-note tr-vkey">' + esc(vkeyText) + '</div>' +
-      pills +
+      pills) +
       '<div class="tr-hm-box" role="img" aria-label="Front and back muscle progress map">' +
         '<div class="tr-hm-col"><div class="tr-hm-lbl">Front</div>' + figs.front + '</div>' +
         '<div class="tr-hm-col"><div class="tr-hm-lbl">Back</div>' + figs.back + '</div>' +
       '</div>' +
-      '<div class="tr-hm-legend" aria-hidden="true">' +
-        '<span><i class="tr-hm-sw hm-0"></i> 0%</span>' +
-        '<span><i class="tr-hm-sw hm-low"></i> 1\u201349%</span>' +
-        '<span><i class="tr-hm-sw hm-mid"></i> 50\u201399%</span>' +
-        '<span><i class="tr-hm-sw hm-hit"></i> Plan hit ✓</span>' +
-      '</div>' +
-      (mList.length ? '<div class="tr-mus-grid" role="table" aria-label="Sets logged versus planned per muscle">' +
+      (recMode ? '<div class="tr-hm-legend" aria-hidden="true">' +
+        '<span><i class="tr-hm-sw hm-low"></i> Just trained</span>' +
+        '<span><i class="tr-hm-sw hm-mid"></i> Recovering</span>' +
+        '<span><i class="tr-hm-sw hm-hit"></i> Ready</span></div>'
+      : '<div class="tr-hm-legend" aria-hidden="true">' +
+        '<span><i class="tr-hm-sw hm-0"></i> Not yet</span>' +
+        '<span><i class="tr-hm-sw hm-low"></i> Started</span>' +
+        '<span><i class="tr-hm-sw hm-mid"></i> Halfway</span>' +
+        '<span><i class="tr-hm-sw hm-hit"></i> Lit ✓</span>' +
+      '</div>' + streakSay) +
+      (mList.length ? '<div class="tr-mus-grid" role="group" aria-label="' + (recMode ? 'How rested each muscle is' : 'Sets logged versus planned per muscle') + '">' +
         mList.map(function (m) {
           var hit = m.cls === 'hm-hit';
-          return '<div class="tr-mus-row" role="row">' +
-            '<span class="tr-mus-name" role="rowheader"><i class="tr-mus-dot ' + m.cls + '"></i>' + esc(m.n) + '</span>' +
-            '<span class="tr-mus-sets' + (hit ? ' hit' : '') + '" role="cell"><b>' + m.lg + '</b> / ' + m.pl + (hit ? ' ✓' : '') + '</span>' +
-          '</div>';
+          // a button, so a tap opens the muscle: its sets by week, its strength, its rest
+          return '<button type="button" class="tr-mus-row" data-t="musopen" data-v="' + m.k + '">' +
+            '<span class="tr-mus-name"><i class="tr-mus-dot ' + m.cls + '"></i>' + esc(m.n) + '</span>' +
+            (recMode
+              ? '<span class="tr-mus-sets' + (hit ? ' hit' : '') + '">' + (hit ? 'ready ✓' : 'in ' + m.rc.left + ' h') + '</span>'
+              : '<span class="tr-mus-sets' + (hit ? ' hit' : '') + '"><b>' + m.lg + '</b> / ' + m.pl + (hit ? ' ✓' : '') + '</span>') +
+          '</button>';
         }).join('') + '</div>' : '') +
       (r.n ? '' : '<div class="tr-acts">' + goBtn() + '</div>') +
     '</div>';
@@ -8883,6 +9182,68 @@
     return '<div class="tr-card tr-hc-card"><div class="tr-eyebrow">' + spanLbl + '</div>' + body + '</div>';
   }
 
+  /* ---- helping or hurting ----
+   * Blake, 2026-11-01: "all the metrics showing me how my health metrics and
+   * nutrition are all helping or hurting my health and progress". One bar a
+   * habit: how much stronger the next workouts were after days with it than
+   * after days without, in percentage points of the estimated max. Green to
+   * the right helps, orange to the left hurts. The dots are how sure: the
+   * gap against its own noise (Welch's t), three when it is twice its error,
+   * one when it is under once. Never a bar with fewer than three workouts on
+   * either side, and never a claim that one caused the other — the card says
+   * "went with", and the dots say how much to trust even that. */
+  var LEVERS = [
+    ['Protein at target', 'the day before', function (D, s) { var b = pgBefore(D, s.k); return b && b.tp > 0 ? b.p >= 0.9 * b.tp : null; }],
+    ['Carbs at target', 'the day before', function (D, s) { var b = pgBefore(D, s.k); return b && b.tc > 0 ? b.c >= 0.9 * b.tc : null; }],
+    ['Calories at target', 'the day before', function (D, s) { var b = pgBefore(D, s.k); return b && b.tk > 0 ? b.kc >= 0.9 * b.tk : null; }],
+    ['7+ hours of sleep', 'the night before', function (D, s) { var d = D.byK[s.k]; return d && fin(d.sl) ? d.sl >= 7 : null; }],
+    ['8,000+ steps', 'the day before', function (D, s) { var b = pgBefore(D, s.k); return b && fin(b.sy) ? b.sy >= 8000 : null; }],
+    ['Creatine', 'that morning', function (D, s) { var d = D.byK[s.k]; return d && (d.cr === 0 || d.cr === 1) ? d.cr === 1 : null; }],
+    ['100 mg+ caffeine', 'that day', function (D, s) { var d = D.byK[s.k]; return d && fin(d.mg) ? d.mg >= 100 : null; }],
+    ['Recovered (heart rate, HRV)', 'that morning', function (D, s) {
+      var hd = window.HealthData, d = D.byK[s.k], rc = null;
+      try { rc = hd && hd.recovery ? hd.recovery(s.k, d && fin(d.sl) ? d.sl : 0) : null; } catch (e) { rc = null; }
+      return rc && rc.level ? rc.level !== 'low' : null;
+    }]
+  ];
+  function pgLevers(D) {
+    var rows = [];
+    LEVERS.forEach(function (lv) {
+      var a = [], b = [];
+      D.sess.forEach(function (s) { var t = lv[2](D, s); if (t === true) a.push(s.ch); else if (t === false) b.push(s.ch); });
+      if (a.length < PG_MIN || b.length < PG_MIN) return;
+      var ma = pgMean(a), mb = pgMean(b);
+      var va = pgMean(a.map(function (v) { return (v - ma) * (v - ma); })) * a.length / Math.max(1, a.length - 1);
+      var vb = pgMean(b.map(function (v) { return (v - mb) * (v - mb); })) * b.length / Math.max(1, b.length - 1);
+      var se = Math.sqrt(va / a.length + vb / b.length), diff = ma - mb, tt = se > 0 ? Math.abs(diff) / se : 0;
+      rows.push({ n: lv[0], when: lv[1], d: diff, t: tt, na: a.length, nb: b.length, sure: tt >= 2 ? 3 : tt >= 1 ? 2 : 1 });
+    });
+    if (!rows.length) return pgCard('Helping or hurting', pgWait('Once you have logged food, the morning check-in and a few weeks of workouts, this shows which habits went with stronger workouts and which with weaker ones.'));
+    rows.sort(function (x, y) { return y.d - x.d; });
+    var max = Math.max(0.01, Math.max.apply(null, rows.map(function (r) { return Math.abs(r.d); })));
+    var bars = rows.map(function (r) {
+      // at most a third of the bar's width each way, so the figure beside the longest one still fits
+      var w = Math.min(1, Math.abs(r.d) / max) * 32, up = r.d >= 0;
+      var dots = '\u25cf\u25cf\u25cf'.slice(0, r.sure) + '\u25cb\u25cb\u25cb'.slice(0, 3 - r.sure);
+      return '<div class="tr-lev-n">' + esc(r.n) + '<small>' + esc(r.when) + ' \u00b7 sure <span class="tr-lev-sure" aria-label="' + r.sure + ' of 3">' + dots + '</span></small></div>' +
+        '<div class="tr-lev-bar" role="img" aria-label="' + esc(r.n) + ': next workout ' + pgPct(r.d) + ' on average"><i class="' + (up ? 'h' : 'x') + '" style="width:' + w.toFixed(1) + '%"></i>' +
+          '<em class="' + (up ? 'h' : 'x') + '" style="' + (up ? 'left' : 'right') + ':calc(50% + ' + w.toFixed(1) + '% + 4px)">' + pgPct(r.d) + '</em></div>';
+    }).join('');
+    /* The sentence names only what it is fairly sure of (two dots or more):
+       a top bar of one dot is as likely the noise as the habit. */
+    var helps = rows.filter(function (r) { return r.d > 0.002 && r.sure >= 2; });
+    var hurts = rows.filter(function (r) { return r.d < -0.002 && r.sure >= 2; });
+    var kid = (helps.length ? 'Your stronger workouts came after <b>' + esc(helps[0].n.toLowerCase()) + '</b>.' : '') +
+      (hurts.length ? (helps.length ? ' ' : '') + 'Weaker ones came after days with <b>' + esc(hurts[hurts.length - 1].n.toLowerCase()) + '</b>.' : '');
+    if (!kid) kid = 'Nothing stands out yet: every gap is small next to how much workouts vary.';
+    var math = rows.map(function (r) { return [r.n, pgSigned(r.d * 100, 1) + ' points', 'n = ' + r.na + ' vs ' + r.nb + ', t = ' + r.t.toFixed(1)]; });
+    return pgCard('Helping or hurting',
+      '<p class="tr-pg-say" style="margin-top:0">How much stronger your next workout was, on average, after each kind of day than after the other kind. <b class="tr-up">Green</b> went with stronger, <b class="tr-lev-xw">orange</b> with weaker.</p>' +
+      '<div class="tr-lev">' + bars + '</div><div class="tr-lev-axis"><span>weaker</span><span>stronger</span></div>' +
+      (kid ? pgSay(kid) : '') +
+      '<p class="tr-pg-wait">This is what went together, not proof of cause. More dots, more sure.</p>', math);
+  }
+
   function progressHTML(span) {
     var D = pgData(span);
     var head = D.span === 'block'
@@ -8894,7 +9255,7 @@
       '<p class="tr-pg-head">' + head + '</p>' +
       pgReadinessHTML(D) +
       hcBiometricsHubHTML(D) +
-      pgPace(D) + pgMuscle(D) + pgMuscles(D) + pgFood(D) + pgRest(D);
+      pgPace(D) + pgMuscle(D) + pgMuscles(D) + pgLevers(D) + pgFood(D) + pgRest(D);
   }
 
   function snapshotAndHubHTML(ms, nx) {
@@ -9040,6 +9401,7 @@
     else if (sh.k === 'strong') body = strongHTML();
     else if (sh.k === 'immap') body = imMapHTML();
     else if (sh.k === 'impaste') body = imPasteHTML();
+    else if (sh.k === 'mus') body = musSheetHTML(sh);
     root.innerHTML = '<div class="scrim no-print" data-t="close">' +
       '<div class="sheet tr-sheet" role="dialog" aria-modal="true" aria-label="' + esc(sh.title || 'Strengthen') + '">' +
         '<div class="sheet-top"><div class="sheet-eyebrow">' + esc(sh.eyebrow || '') + '</div>' +
@@ -12202,6 +12564,10 @@
     if (t === 'planopen') { S.planOpen = !S.planOpen; draw(); return; }
     if (t === 'peeknext') { S.peekNext = !S.peekNext; if (!S.peekNext) S.planOpen = false; draw(); return; }
     if (t === 'revwk') { S.revWk = num('data-w'); draw(); return; }
+    // the map by sets this week, or by recovery
+    if (t === 'hmmode') { S.hmMode = v === 'rec' ? 'rec' : 'sets'; draw(); return; }
+    // a muscle tapped, on the figure or in the list
+    if (t === 'musopen' && MUS[v]) { openSheet({ k: 'mus', m: v, title: MUS[v].n, eyebrow: MUS[v].n }); return; }
     // Review's span (This week, This block, All time) and how much of the math it shows
     if (t === 'rvspan') { S.rvSpan = v === 'block' || v === 'all' ? v : 'week'; try { localStorage.setItem('bsc.trainSpan', S.rvSpan); } catch (e) { /* this session only */ } draw(); return; }
     if (t === 'rvdeep') { S.rvDeep = v === '1'; draw(); return; }
@@ -13424,6 +13790,19 @@
       }
       if (!ms) return out;
       var nx = nextSlot(ms);
+      /* This week's map, small, for Today's workout card: the same lit week
+         the review shows, a just-finished week kept for two days. */
+      try {
+        var lw = nx ? nx.w : weeksOf(ms) - 1, prevLast = 0, nextStarted = false;
+        ix().list.forEach(function (wo) {
+          if (wo.ms !== ms.id) return;
+          if (wo.w === lw - 1 && wo.st > prevLast) prevLast = wo.st;
+          if (wo.w === lw) nextStarted = true;
+        });
+        if (nx && lw > 0 && !nextStarted && prevLast && Date.now() - prevLast < 2 * DAY_MS) lw--;
+        var wl = weekLit(ms, lw), figs = anatMapSVG(wl.cls);
+        if (wl.n) out.lit = { n: wl.hit, of: wl.n, front: figs.front.replace('tr-hm-svg', 'tr-hm-mini'), back: figs.back.replace('tr-hm-svg', 'tr-hm-mini') };
+      } catch (e) { /* no map: the card is as it was */ }
       if (!nx) { out.finished = true; return out; }
       out.week = wkName(ms, nx.w);
       if (isEz(ms, nx.d)) { out.easy = true; return out; }

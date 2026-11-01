@@ -4146,13 +4146,112 @@
 
   /* The week, at the top of the Review: 2x2 KPI cards + block progress strip.
      Nourish's This week lands here too. */
+  /* ---- sparklines: a week in a line or seven bars, under a number ----
+   * Blake, 2026-11-01: "Add mini charts or spark lines in some of the data
+   * boxes". A number says where the week ended up; the line under it says
+   * how it got there, which is the half a single number hides. */
+  function spkLine(vals, o) {
+    o = o || {};
+    var pts = [];
+    vals.forEach(function (v, i) { if (fin(v)) pts.push([i, v]); });
+    if (pts.length < 2) return '';
+    var W = 120, H = o.h || 26, ys = pts.map(function (q) { return q[1]; });
+    var lo = Math.min.apply(null, ys), hi = Math.max.apply(null, ys);
+    if (fin(o.t)) { lo = Math.min(lo, o.t); hi = Math.max(hi, o.t); }
+    if (hi - lo < 1e-9) { hi += 1; lo -= 1; }
+    var x = function (i) { return 2 + i * (W - 4) / Math.max(1, vals.length - 1); }, y = function (v) { return 3 + (hi - v) / (hi - lo) * (H - 6); };
+    var d = pts.map(function (q, i) { return (i ? 'L' : 'M') + x(q[0]).toFixed(1) + ' ' + y(q[1]).toFixed(1); }).join(' ');
+    var last = pts[pts.length - 1], cls = 'tr-spk' + (o.c ? ' ' + o.c : '');
+    return '<svg class="' + cls + '" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
+      (fin(o.t) ? '<line x1="0" x2="' + W + '" y1="' + y(o.t).toFixed(1) + '" y2="' + y(o.t).toFixed(1) + '" class="tr-spk-t"/>' : '') +
+      '<path d="' + d + ' L' + x(last[0]).toFixed(1) + ' ' + H + ' L' + x(pts[0][0]).toFixed(1) + ' ' + H + ' Z" class="tr-spk-a"/>' +
+      '<path d="' + d + '" class="tr-spk-l"/>' +
+      '<circle cx="' + x(last[0]).toFixed(1) + '" cy="' + y(last[1]).toFixed(1) + '" r="2.6" class="tr-spk-d"/></svg>';
+  }
+  // bars, one a day; with a target each is green within a tenth of it, ochre off it
+  function spkBars(vals, t, o) {
+    o = o || {};
+    if (!vals.some(function (v) { return v > 0; })) return '';
+    var W = 120, H = o.h || 26, n = vals.length, bw = (W - 2) / n;
+    var hi = Math.max.apply(null, vals.concat([fin(t) ? t : 0])) * 1.08 || 1, s = '';
+    vals.forEach(function (v, i) {
+      if (!(v > 0)) { s += '<rect x="' + (1 + i * bw + 1.5).toFixed(1) + '" y="' + (H - 1.5) + '" width="' + (bw - 3).toFixed(1) + '" height="1.5" class="tr-spk-z"/>'; return; }
+      var bh = Math.max(2, v / hi * (H - 2)), ok = !fin(t) || Math.abs(v / t - 1) <= 0.1 || (o.atLeast && v >= t);
+      s += '<rect x="' + (1 + i * bw + 1.5).toFixed(1) + '" y="' + (H - bh).toFixed(1) + '" width="' + (bw - 3).toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="1.5" class="' + (o.plain ? 'tr-spk-b' : ok ? 'tr-spk-ok' : 'tr-spk-off') + '"/>';
+    });
+    var ty = fin(t) && t > 0 ? (H - t / hi * (H - 2)).toFixed(1) : null;
+    return '<svg class="tr-spk" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' + s +
+      (ty ? '<line x1="0" x2="' + W + '" y1="' + ty + '" y2="' + ty + '" class="tr-spk-t"/>' : '') + '</svg>';
+  }
+  /* The seven days the week card covers, as Nourish saw them, and the hard
+     sets of each from the log. */
+  function wkDays(from, to) {
+    var h = hive(), nd = null, out = [], by = {};
+    try { nd = h && h.progress ? h.progress(from, to) : null; } catch (e) { nd = null; }
+    (nd ? nd.days : []).forEach(function (d) { by[d.k] = d; });
+    var sets = {};
+    ix().list.forEach(function (wo) {
+      var k = wo.dk || dayKey(new Date(wo.st));
+      if (k < from || k > to) return;
+      sets[k] = (sets[k] || 0) + wo.x.reduce(function (a, x) { return a + x.s.filter(counts).length; }, 0);
+    });
+    for (var d = new Date(from + 'T12:00:00'), g = 0; dayKey(d) <= to && g < 40; d.setDate(d.getDate() + 1), g++) {
+      var k = dayKey(d);
+      out.push(Object.assign({ k: k, sets: sets[k] || 0 }, by[k] || {}));
+    }
+    return out;
+  }
+  /* A strength line over four weeks: each session the mean change of its
+     lifts against the last time each was done, chained, starting at 100. */
+  function strLine(now) {
+    var from = now - 28 * DAY_MS, last = {}, v = 100, out = [];
+    ix().list.filter(function (wo) { return !wo.dl; }).slice().sort(function (a, b) { return a.st - b.st; }).forEach(function (wo) {
+      var ch = [];
+      wo.x.forEach(function (x) {
+        if (!x.s.length) return;
+        var e1 = liftE1(x, wo);
+        if (!(e1 > 0)) return;
+        if (wo.st >= from && last[x.e] > 0) ch.push(e1 / last[x.e]);
+        last[x.e] = e1;
+      });
+      if (wo.st >= from && wo.st <= now && ch.length) { v *= ch.reduce(function (a, b) { return a + b; }, 0) / ch.length; out.push(v); }
+    });
+    return out;
+  }
   function weekCard() {
     var c = checkin(), nw = c.nw, w = nw && nw.w, p = c.prog, ms = active();
     var md = function (k) { var d = new Date(k + 'T12:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
+    var days = wkDays(c.from, c.to);
+    var wFrom = new Date(c.from + 'T12:00:00'); wFrom.setDate(wFrom.getDate() - 7);
+    var wDays = wkDays(dayKey(wFrom), c.to);
+    /* ---- on track ----
+     * The plan, four ways, said once at the top: is the weight coming off at
+     * the plan's pace, were the workouts done, was protein hit, were the
+     * calories near the target. Only what can be judged is counted — a week
+     * with no weigh-ins says nothing about pace — and the first one off is
+     * named, because "3 of 4" is only useful when it says which one. */
+    var planDays = ms ? ms.days.filter(function (dd) { return !dd.ez; }).length : (Array.isArray(T.pr.ld) ? T.pr.ld.length : 0);
+    var wkOk = (function () {
+      if (!(w && w.now > 0 && w.was > 0) || !(nw && fin(nw.plan))) return null;
+      return Math.abs(-(w.now - w.was) / w.was - nw.plan) <= 0.0025;
+    })();
+    var checks = [
+      ['Weight pace', wkOk],
+      ['Workouts', planDays ? c.n >= planDays : null],
+      ['Protein', nw && nw.pDays >= 3 ? nw.hit >= nw.pDays - 1 : null],
+      ['Calories', nw && nw.days >= 3 && nw.target ? Math.abs(nw.kcal / nw.target - 1) <= 0.1 : null]
+    ].filter(function (q) { return q[1] !== null; });
+    var nOk = checks.filter(function (q) { return q[1]; }).length, firstOff = checks.filter(function (q) { return !q[1]; })[0];
+    var verdict = checks.length ? '<div class="tr-ontrack" aria-label="On track with your plan">' +
+      '<p><b class="' + (nOk === checks.length ? 'tr-up' : '') + '">' + (nOk === checks.length ? 'On track' : 'On track on ' + nOk + ' of ' + checks.length) + '</b>' +
+        (firstOff ? ' · ' + esc(firstOff[0]) + ' is the one to fix.' : ' with your plan.') + '</p>' +
+      '<div class="tr-ot-chips">' + checks.map(function (q) {
+        return '<span class="' + (q[1] ? 'ok' : 'off') + '">' + (q[1] ? '\u2713 ' : '\u2715 ') + esc(q[0]) + '</span>';
+      }).join('') + '</div></div>' : '';
     var html = '<div class="tr-card tr-week" aria-label="This week">' +
       '<div class="tr-eyebrow">This week · ' + esc(md(c.from)) + '–' + esc(md(c.to)) +
         '<span class="tr-chk-conf is-' + c.conf.level + '" aria-label="Check-in data confidence: ' + c.conf.score + '% (' + c.conf.days + ' of 7 food days, ' + c.conf.weighs + ' of 7 weigh-ins)">● ' + c.conf.score + '%</span>' +
-      '</div>' +
+      '</div>' + verdict +
       '<div class="tr-kpi-grid">';
 
     // 1. Weight KPI
@@ -4165,7 +4264,7 @@
         '<div class="tr-kpi-sub tr-wkx">' +
           (d === null ? '' : '<span class="tr-wka' + ok + '">' + (d <= 0 ? '▼' : '▲') + fmtN(Math.abs(d)) + '</span>') +
           (pl !== null && Math.abs(pl) >= 0.001 ? '<span class="tr-wkm">plan ' + (pl > 0 ? '▼' : '▲') + pctSay(pl) + '/wk</span>' : '') +
-        '</div></div>';
+        '</div>' + spkLine(wDays.map(function (x) { return x.w; })) + '</div>';
     } else {
       html += '<div class="tr-kpi-card tr-wkr tr-wkr-w">' +
         '<div class="tr-kpi-top"><span class="tr-wkl">Weight</span><span class="tr-kpi-tag">7d avg</span></div>' +
@@ -4187,6 +4286,7 @@
             (dots ? '<span class="tr-wkdots" role="img" aria-label="' + nw.hit + ' of ' + nw.pDays + ' days at target">' + dots + '</span>' : '') +
             '<span class="tr-wkm">' + nw.p + 'g</span></div>'
         : '') +
+      (nw && nw.days ? spkBars(days.map(function (x) { return x.kc || 0; }), tg || null) : '') +
     '</div>';
 
     // 3. Training KPI
@@ -4194,6 +4294,7 @@
       '<div class="tr-kpi-top"><span class="tr-wkl">Training</span><span class="tr-kpi-tag">7 days</span></div>' +
       '<div class="tr-kpi-val tr-wkv"><b>' + c.n + '</b> <small>session' + (c.n === 1 ? '' : 's') + '</small></div>' +
       '<div class="tr-kpi-sub tr-wkx"><span class="tr-wkm">' + c.sets + ' hard sets</span></div>' +
+      spkBars(days.map(function (x) { return x.sets; }), null, { plain: true }) +
     '</div>';
 
     // 4. Lifts KPI
@@ -4203,6 +4304,7 @@
         ? '<div class="tr-kpi-val"><span class="tr-up">▲ ' + p.up + '</span> <small>up</small></div>' +
           '<div class="tr-kpi-sub tr-wkv"><span class="tr-up">▲' + p.up + '</span> <span class="tr-lv">●' + p.flat + '</span> <span class="tr-dn">▼' + p.down + '</span></div>'
         : '<div class="tr-kpi-val tr-wkv"><span class="tr-wkm">not enough yet</span></div>') +
+      (p.n ? spkLine(strLine(Date.now()), { c: 'tr-spk-g', t: 100 }) : '') +
     '</div>';
 
     html += '</div>' +

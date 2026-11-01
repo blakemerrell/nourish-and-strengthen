@@ -9310,3 +9310,22 @@ button.mhyd-head { cursor: pointer; }
 .tr-hm-mini .b-line, .tr-hm-mini .seam, .tr-hm-mini .fiber { display: none; }
 .tr-hm-mini .hm-0 .belly { fill: color-mix(in oklab, var(--ink) 20%, var(--paper)); }
 .tr-hm-mini .hm-hit .belly { fill: var(--green); }
+
+/* Sparklines under the week card's numbers (train.js, spkLine/spkBars) and
+   the On track line above them. */
+.tr-spk { display: block; width: 100%; height: 26px; margin-top: 6px; overflow: visible; }
+.tr-spk-l { fill: none; stroke: var(--ochre); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.tr-spk-a { fill: var(--ochre); opacity: 0.14; }
+.tr-spk-d { fill: var(--ochre); }
+.tr-spk-g .tr-spk-l { stroke: var(--green); } .tr-spk-g .tr-spk-a, .tr-spk-g .tr-spk-d { fill: var(--green); }
+.tr-spk-t { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.45; vector-effect: non-scaling-stroke; }
+.tr-spk-ok { fill: var(--green); opacity: 0.85; }
+.tr-spk-off { fill: var(--ochre); opacity: 0.85; }
+.tr-spk-b { fill: var(--ink); opacity: 0.55; }
+.tr-spk-z { fill: var(--line-firm); }
+.tr-ontrack { margin: 6px 0 10px; }
+.tr-ontrack p { margin: 0 0 6px; font-size: 0.9375rem; color: var(--ink); }
+.tr-ot-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tr-ot-chips span { font-size: 0.8125rem; border-radius: 999px; padding: 4px 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+.tr-ot-chips span.ok { border-color: color-mix(in oklab, var(--green) 55%, var(--line)); color: var(--green); }
+.tr-ot-chips span.off { border-color: color-mix(in oklab, var(--ochre) 60%, var(--line)); color: var(--ochre-text); }

@@ -9345,3 +9345,24 @@ button.mhyd-head { cursor: pointer; }
 .tr-lev-bar em { position: absolute; top: 3px; font-style: normal; font-size: 0.8125rem; font-weight: 700; color: var(--ink); white-space: nowrap; }
 .tr-lev-axis { display: flex; justify-content: space-between; font-size: 0.8125rem; color: var(--muted); margin: 6px 0 0 auto; width: 44%; min-width: 120px; }
 .tr-lev-xw { color: var(--pg-down); }
+
+/* The muscles under the map are buttons now: each opens its own sheet. */
+button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px solid var(--line-soft); background: none; font: inherit; font-size: 0.8125rem; color: var(--ink); text-align: left; cursor: pointer; padding: 0 2px; }
+.tr-hm-svg g[data-t="musopen"] { cursor: pointer; }
+.tr-hm-mode { margin: 6px 0 4px; }
+.tr-mus-sheet { padding: 0 2px 8px; }
+.tr-mus-rec { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 0.9375rem; color: var(--ink); }
+.tr-mus-sheet .tr-mus-dot.hm-low { background: color-mix(in oklab, var(--green) 26%, var(--card)); }
+.tr-mus-sheet .tr-mus-dot.hm-mid { background: color-mix(in oklab, var(--green) 58%, var(--card)); }
+.tr-mus-sets-svg { display: block; width: 100%; height: auto; margin-top: 6px; }
+.tr-mus-sets-svg .tr-mus-ax { font-size: 13px; fill: var(--muted); }
+.tr-mus-sheet .tr-spk { height: 50px; }
+.tr-mus-lifts { list-style: none; margin: 10px 0 0; padding: 0; }
+.tr-mus-lifts li { display: flex; justify-content: space-between; gap: 10px; min-height: 36px; align-items: center; border-top: 1px solid var(--line-soft); font-size: 0.875rem; }
+/* A record set: the banner that names it (the app's own confetti and chime
+   already mark the moment). */
+.tr-pr-party { margin: 0 0 8px; padding: 12px 14px; border-radius: 12px;
+  background: color-mix(in oklab, var(--ochre) 16%, var(--card)); border: 1px solid color-mix(in oklab, var(--ochre) 45%, var(--line)); color: var(--ink); }
+.tr-pr-party b { font-size: 1.0625rem; }
+.tr-pr-party ul { margin: 4px 0 0; padding: 0 0 0 18px; font-size: 0.875rem; }
+.tr-mus-sheet .tr-spk-d { display: none; }

@@ -5735,8 +5735,15 @@
   function savedHTML() {
     var wo = S.justSaved && T.wo[S.justSaved];
     if (!wo) return '';
-    var prs = prsIn(wo).length;
-    return '<div class="tr-saved" role="status"><span>Saved \u00b7 ' + esc(wo.n) + ' \u00b7 ' + setsOf(wo) + ' sets' +
+    var prList = prsIn(wo), prs = prList.length;
+    /* A record is a moment: Blake asked for it to feel like one. The app's
+       own confetti and chime already mark it (celebrate); this says what it
+       was for, each lift by name with what it beat, above the line that was
+       already here. */
+    var party = prs ? '<div class="tr-pr-party" role="status" aria-label="' + prs + ' new record' + (prs === 1 ? '' : 's') + '">' +
+        '<b>\ud83c\udfc6 New record' + (prs === 1 ? '' : 's') + '!</b>' +
+        '<ul>' + prList.slice(0, 4).map(function (r) { return '<li>' + esc(lib(r.e).n) + ' \u00b7 ' + esc(r.what) + '</li>'; }).join('') + '</ul></div>' : '';
+    return party + '<div class="tr-saved" role="status"><span>Saved \u00b7 ' + esc(wo.n) + ' \u00b7 ' + setsOf(wo) + ' sets' +
       (prs ? ' \u00b7 <span class="tr-pr">\ud83e\udd47 ' + prs + ' record' + (prs === 1 ? '' : 's') + '</span>' : '') + '</span>' +
       '<span class="tr-saved-a"><button class="tr-lnk" data-t="wocopy" data-id="' + esc(wo.id) + '">Copy</button>' +
       '<button class="tr-lnk" data-t="wosheet" data-id="' + esc(wo.id) + '">See it</button></span></div>';
@@ -8349,6 +8356,93 @@
       '</div>' +
     '</div>';
   }
+  /* ---- recovery ----
+   * How rested each muscle is: hours since its last hard set against how long
+   * a muscle that size usually takes, about two days for the small ones and
+   * three for the big ones — and a day longer when you said, at the session
+   * after, that it was still sore. A guide to what is ready, not a rule:
+   * Blake asked to see what is ready to train, and the map is where he looks. */
+  var REC_BIG = { chest: 1, back: 1, quads: 1, hams: 1, glutes: 1 };
+  function recOf(now) {
+    now = now || Date.now();
+    var last = {}, sore = {};
+    ix().list.forEach(function (wo) {
+      wo.x.forEach(function (x) {
+        if (!x.s.some(counts)) return;
+        var m = musOf(x.e);
+        if (!last[m] || wo.st > last[m].st) last[m] = wo;
+      });
+    });
+    var out = {};
+    MUSCLES.forEach(function (m) {
+      var wo = last[m.k];
+      if (!wo) { out[m.k] = { frac: 1, h: null, need: 0 }; return; }
+      var need = (REC_BIG[m.k] ? 72 : 48) + (soreAfter(wo, m.k) === -1 ? 24 : 0);
+      var h = Math.max(0, (now - (wo.en || wo.st)) / 3600e3);
+      out[m.k] = { frac: Math.min(1, h / need), h: h, need: need, left: Math.max(0, Math.ceil(need - h)) };
+    });
+    return out;
+  }
+  function recCls(r) { return r.frac >= 1 ? 'hm-hit' : r.frac >= 0.5 ? 'hm-mid' : 'hm-low'; }
+
+  /* ---- a muscle, tapped ----
+   * Its sets week by week against the plan, its strength line from its own
+   * lifts, and how rested it is. */
+  function musSheetHTML(sh) {
+    var m = sh.m, ms = active(), rows = '', bars = [], plan = [];
+    if (ms) {
+      var nx = nextSlot(ms), curW = nx ? nx.w : Math.max(0, weeksOf(ms) - 1);
+      for (var w = 0; w <= curW && w < weeksOf(ms); w++) {
+        bars.push(weekLoggedSets(ms, w).byMus[m] || 0);
+        plan.push(weekPlanSets(ms, w).byMus[m] || 0);
+      }
+    } else {
+      for (var i = 7; i >= 0; i--) {
+        var to = Date.now() - i * 7 * DAY_MS, fr = to - 7 * DAY_MS, n = 0;
+        ix().list.forEach(function (wo) { if (wo.st > fr && wo.st <= to) wo.x.forEach(function (x) { if (musOf(x.e) === m) n += x.s.filter(counts).length; }); });
+        bars.push(n);
+      }
+    }
+    var setsSvg = (function () {
+      if (!bars.some(function (v) { return v > 0; })) return '';
+      var W = 300, H = 70, n = bars.length, bw = W / n, hi = Math.max.apply(null, bars.concat(plan).concat([1])) * 1.1, out = '';
+      bars.forEach(function (v, j) {
+        var pl = plan[j] || 0, hit = pl ? v >= pl : v > 0, bh = Math.max(2, v / hi * (H - 14));
+        out += '<rect x="' + (j * bw + 4).toFixed(1) + '" y="' + (H - 14 - bh).toFixed(1) + '" width="' + (bw - 8).toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="3" class="' + (hit ? 'tr-spk-ok' : 'tr-spk-off') + '"/>';
+        if (pl) out += '<line x1="' + (j * bw + 2).toFixed(1) + '" x2="' + (j * bw + bw - 2).toFixed(1) + '" y1="' + (H - 14 - pl / hi * (H - 14)).toFixed(1) + '" y2="' + (H - 14 - pl / hi * (H - 14)).toFixed(1) + '" class="tr-spk-t"/>';
+        out += '<text x="' + (j * bw + bw / 2).toFixed(1) + '" y="' + (H - 1) + '" text-anchor="middle" class="tr-mus-ax">' + (ms ? 'W' + (j + 1) : (j === n - 1 ? 'now' : '')) + '</text>';
+      });
+      return '<svg class="tr-mus-sets-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Hard sets a week' + (ms ? ', against the plan' : '') + '">' + out + '</svg>';
+    })();
+    // its lifts: the best estimated max each session, chained into one line
+    var last = {}, v = 100, line = [], lifts = {};
+    ix().list.filter(function (wo) { return !wo.dl; }).slice().sort(function (a, b) { return a.st - b.st; }).forEach(function (wo) {
+      var ch = [];
+      wo.x.forEach(function (x) {
+        if (musOf(x.e) !== m || !x.s.length) return;
+        var e1 = liftE1(x, wo);
+        if (!(e1 > 0)) return;
+        if (last[x.e] > 0) ch.push(e1 / last[x.e]);
+        last[x.e] = e1;
+        lifts[x.e] = lifts[x.e] || { first: e1 };
+        lifts[x.e].now = e1;
+      });
+      if (ch.length) { v *= ch.reduce(function (a, b) { return a + b; }, 0) / ch.length; line.push(v); }
+    });
+    Object.keys(lifts).forEach(function (e) {
+      var l = lifts[e], ch = l.now / l.first - 1;
+      rows += '<li><span>' + esc(lib(e).n) + '</span><b class="' + (ch > 0.01 ? 'tr-up' : ch < -0.01 ? 'tr-dn' : '') + '">' + (ch >= 0 ? '+' : '\u2212') + fmtN(Math.round(Math.abs(ch) * 1000) / 10) + '%</b></li>';
+    });
+    var rc = recOf()[m];
+    var recSay = rc.h === null ? 'Not trained lately: ready.' : rc.frac >= 1 ? 'Rested and ready to train.' : 'Resting: ready in about ' + rc.left + ' hour' + (rc.left === 1 ? '' : 's') + '.';
+    return '<div class="tr-mus-sheet">' +
+      '<p class="tr-mus-rec ' + recCls(rc) + '"><i class="tr-mus-dot ' + recCls(rc) + '"></i>' + esc(recSay) + '</p>' +
+      '<div class="tr-eyebrow">Hard sets a week' + (ms ? ' \u00b7 the line is the plan' : '') + '</div>' + (setsSvg || '<p class="tr-pg-wait">No sets for it yet.</p>') +
+      '<div class="tr-eyebrow" style="margin-top:12px">Strength, all its lifts</div>' +
+      (line.length >= 2 ? spkLine(line, { c: 'tr-spk-g', t: 100, h: 50 }) : '<p class="tr-pg-wait">Do one of its lifts twice and its line starts.</p>') +
+      (rows ? '<ul class="tr-mus-lifts">' + rows + '</ul>' : '') + '</div>';
+  }
+
   /* One block week's muscles, each lit or not as the map draws them. */
   function weekLit(ms, w) {
     var pw = weekPlanSets(ms, w), lw = weekLoggedSets(ms, w), cls = {}, n = 0, hit = 0;
@@ -8422,9 +8516,19 @@
       return { k: m.k, n: m.n, lg: lg, pl: pl, cls: hmCls(lg, pl), pct: pl ? lg / pl : (lg ? 1 : 0) };
     }).sort(function (a, b) { return (b.pct - a.pct) || (b.pl - a.pl); });
 
+    /* Recovery instead of sets: the same map, coloured by how rested each
+       muscle is. Green is ready here, so the two read the same way — green
+       is good — and the toggle says which question the colours answer. */
+    var recMode = S.hmMode === 'rec', rec = recMode ? recOf() : null;
+    if (recMode) {
+      mList.forEach(function (x) { x.rc = rec[x.k]; x.cls = recCls(rec[x.k]); });
+      mList.sort(function (a, b) { return b.rc.frac - a.rc.frac; });
+    }
     var clsMap = {};
     mList.forEach(function (x) { clsMap[x.k] = x.cls; });
-    var figs = anatMapSVG(clsMap);
+    // each muscle on the figure is a way into its own sheet (the rows below are the buttons)
+    var figs = anatMapSVG(clsMap), tapG = function (svg) { return svg.replace(/<g data-mus="([a-z]+)"/g, '<g data-mus="$1" data-t="musopen" data-v="$1"'); };
+    figs = { front: tapG(figs.front), back: tapG(figs.back) };
 
     var wkTitle = ms ? (selW >= acc && !steady(ms) ? 'Deload week muscle coverage' : 'Week ' + (selW + 1) + ' muscle coverage')
       : (r.n ? r.n + ' workout' + (r.n === 1 ? '' : 's') + ' this week' : 'This week\u2019s muscle coverage');
@@ -8466,11 +8570,16 @@
      * the planned hard sets were done — the habit, not a claim of growth;
      * whether a muscle is growing is the longer view's Muscles card. */
     var nLit = mList.filter(function (m) { return m.cls === 'hm-hit'; }).length, nAll = mList.length;
-    var allLit = nAll > 0 && nLit === nAll;
-    var left = mList.filter(function (m) { return m.cls !== 'hm-hit' && m.pl > 0; })
+    var modeSeg = '<div class="seg tr-hm-mode" role="group" aria-label="Colour the map by">' +
+      '<button data-t="hmmode" data-v="sets" aria-pressed="' + !recMode + '">Sets this week</button>' +
+      '<button data-t="hmmode" data-v="rec" aria-pressed="' + recMode + '">Recovery</button></div>';
+    var allLit = !recMode && nAll > 0 && nLit === nAll;
+    var left = recMode ? [] : mList.filter(function (m) { return m.cls !== 'hm-hit' && m.pl > 0; })
       .sort(function (a, b) { return (a.pl - a.lg) - (b.pl - b.lg); }).slice(0, 4);
     var streak = ms ? litStreak(ms, Math.max(selW, Math.min(curW, defW))) : null;
-    var head = nAll ? '<div class="tr-lit-top">' + litRing(nLit, nAll) +
+    var head = recMode ? '<div class="tr-lit-top">' + litRing(nLit, nAll) +
+        '<div class="tr-lit-h"><b>' + nLit + ' of ' + nAll + ' ready to train</b><span>Green is rested. Paler is still recovering from its last hard sets.</span></div></div>'
+      : nAll ? '<div class="tr-lit-top">' + litRing(nLit, nAll) +
         '<div class="tr-lit-h"><b>' + (allLit ? 'Whole body lit' : nLit + ' of ' + nAll + ' muscles lit') + '</b>' +
         '<span>' + (allLit ? 'Every muscle in the plan got its sets. 🎉' : 'A muscle turns green when it gets its planned hard sets.') + '</span></div></div>' +
       (left.length ? '<div class="tr-lit-next" aria-label="Still to light up">' + left.map(function (m) {
@@ -8482,28 +8591,35 @@
 
     return '<div class="tr-card tr-hm-card' + (allLit ? ' all-lit' : '') + '">' +
       '<div class="tr-eyebrow">Light it up · this week\u2019s muscles</div>' +
-      head +
-      '<div class="tr-title">' + esc(wkTitle) + '</div>' +
+      modeSeg + head +
+      // the week's title, key and weeks belong to the sets; recovery is about now
+      (recMode ? '' : '<div class="tr-title">' + esc(wkTitle) + '</div>' +
       '<div class="tr-note tr-vkey">' + esc(vkeyText) + '</div>' +
-      pills +
+      pills) +
       '<div class="tr-hm-box" role="img" aria-label="Front and back muscle progress map">' +
         '<div class="tr-hm-col"><div class="tr-hm-lbl">Front</div>' + figs.front + '</div>' +
         '<div class="tr-hm-col"><div class="tr-hm-lbl">Back</div>' + figs.back + '</div>' +
       '</div>' +
-      '<div class="tr-hm-legend" aria-hidden="true">' +
+      (recMode ? '<div class="tr-hm-legend" aria-hidden="true">' +
+        '<span><i class="tr-hm-sw hm-low"></i> Just trained</span>' +
+        '<span><i class="tr-hm-sw hm-mid"></i> Recovering</span>' +
+        '<span><i class="tr-hm-sw hm-hit"></i> Ready</span></div>'
+      : '<div class="tr-hm-legend" aria-hidden="true">' +
         '<span><i class="tr-hm-sw hm-0"></i> Not yet</span>' +
         '<span><i class="tr-hm-sw hm-low"></i> Started</span>' +
         '<span><i class="tr-hm-sw hm-mid"></i> Halfway</span>' +
         '<span><i class="tr-hm-sw hm-hit"></i> Lit ✓</span>' +
-      '</div>' +
-      streakSay +
-      (mList.length ? '<div class="tr-mus-grid" role="table" aria-label="Sets logged versus planned per muscle">' +
+      '</div>' + streakSay) +
+      (mList.length ? '<div class="tr-mus-grid" role="group" aria-label="' + (recMode ? 'How rested each muscle is' : 'Sets logged versus planned per muscle') + '">' +
         mList.map(function (m) {
           var hit = m.cls === 'hm-hit';
-          return '<div class="tr-mus-row" role="row">' +
-            '<span class="tr-mus-name" role="rowheader"><i class="tr-mus-dot ' + m.cls + '"></i>' + esc(m.n) + '</span>' +
-            '<span class="tr-mus-sets' + (hit ? ' hit' : '') + '" role="cell"><b>' + m.lg + '</b> / ' + m.pl + (hit ? ' ✓' : '') + '</span>' +
-          '</div>';
+          // a button, so a tap opens the muscle: its sets by week, its strength, its rest
+          return '<button type="button" class="tr-mus-row" data-t="musopen" data-v="' + m.k + '">' +
+            '<span class="tr-mus-name"><i class="tr-mus-dot ' + m.cls + '"></i>' + esc(m.n) + '</span>' +
+            (recMode
+              ? '<span class="tr-mus-sets' + (hit ? ' hit' : '') + '">' + (hit ? 'ready ✓' : 'in ' + m.rc.left + ' h') + '</span>'
+              : '<span class="tr-mus-sets' + (hit ? ' hit' : '') + '"><b>' + m.lg + '</b> / ' + m.pl + (hit ? ' ✓' : '') + '</span>') +
+          '</button>';
         }).join('') + '</div>' : '') +
       (r.n ? '' : '<div class="tr-acts">' + goBtn() + '</div>') +
     '</div>';
@@ -9285,6 +9401,7 @@
     else if (sh.k === 'strong') body = strongHTML();
     else if (sh.k === 'immap') body = imMapHTML();
     else if (sh.k === 'impaste') body = imPasteHTML();
+    else if (sh.k === 'mus') body = musSheetHTML(sh);
     root.innerHTML = '<div class="scrim no-print" data-t="close">' +
       '<div class="sheet tr-sheet" role="dialog" aria-modal="true" aria-label="' + esc(sh.title || 'Strengthen') + '">' +
         '<div class="sheet-top"><div class="sheet-eyebrow">' + esc(sh.eyebrow || '') + '</div>' +
@@ -12447,6 +12564,10 @@
     if (t === 'planopen') { S.planOpen = !S.planOpen; draw(); return; }
     if (t === 'peeknext') { S.peekNext = !S.peekNext; if (!S.peekNext) S.planOpen = false; draw(); return; }
     if (t === 'revwk') { S.revWk = num('data-w'); draw(); return; }
+    // the map by sets this week, or by recovery
+    if (t === 'hmmode') { S.hmMode = v === 'rec' ? 'rec' : 'sets'; draw(); return; }
+    // a muscle tapped, on the figure or in the list
+    if (t === 'musopen' && MUS[v]) { openSheet({ k: 'mus', m: v, title: MUS[v].n, eyebrow: MUS[v].n }); return; }
     // Review's span (This week, This block, All time) and how much of the math it shows
     if (t === 'rvspan') { S.rvSpan = v === 'block' || v === 'all' ? v : 'week'; try { localStorage.setItem('bsc.trainSpan', S.rvSpan); } catch (e) { /* this session only */ } draw(); return; }
     if (t === 'rvdeep') { S.rvDeep = v === '1'; draw(); return; }

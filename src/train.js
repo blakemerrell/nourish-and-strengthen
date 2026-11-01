@@ -751,6 +751,20 @@
       'Hard intervals raised aerobic fitness at least as much as longer steady cardio, in less time.'],
     klimek18: ['Klimek et al. (2018)', 'Are injuries more common with CrossFit training than other forms of exercise? Journal of Sport Rehabilitation.',
       'Injury rates in CrossFit were about those of other strength and fitness training \u2014 not zero, and highest where fatigue and form part company.'],
+    wendler17: ['Wendler, 5/3/1 Forever (2017)', 'Jim Wendler LLC.',
+      'Submaximal three-week waves (fives, threes, 5/3/1) off a ninety-per-cent training max, paired with lighter First Set Last volume so bar speed stays fast and joints stay fresh.'],
+    tb17: ['Black, Tactical Barbell (2017)', 'Tactical Barbell.',
+      'Frequent submaximal compound lifting held well short of failure, leaving the legs and nervous system fresh for running, rucking, sport or physical work.'],
+    contreras19: ['Contreras & Cordoza, Glute Lab (2019)', 'Victory Belt Publishing.',
+      'Hip thrusts, hinges, squats and abductions trained across horizontal, vertical and lateral vectors, balanced with posture and upper-body work.'],
+    sims22: ['Sims & Yeager, Next Level (2022)', 'Rodale Books.',
+      'For women in their forties and beyond: heavy, low-rep resistance training to counter estrogen-related losses in bone density, power and lean mass without cortisol burnout.'],
+    attia23: ['Attia, Outlive: The Science and Art of Longevity (2023)', 'Harmony Books.',
+      'The Centenarian Decathlon: training single-leg control, hinges, pulling strength, carries and stability to move well in the last decade of life.'],
+    faigenbaum09: ['Faigenbaum et al. (2009)', 'Youth resistance training: updated position statement paper from the National Strength and Conditioning Association. Journal of Strength and Conditioning Research.',
+      'Supervised, technique-first resistance training is safe and effective for children and adolescents, improving motor control, bone health and injury resilience.'],
+    lloyd12: ['Lloyd & Oliver (2012)', 'The Youth Physical Development model: a new approach to long-term athletic development. Strength and Conditioning Journal.',
+      'Before puberty, fundamental movement skills, coordination, speed and bodyweight mastery come first; heavier hypertrophy and strength work scale up after the growth spurt.'],
     epley: ['Epley (1985)', 'Poundage chart. Boyd Epley Workout.',
       'Estimated one-rep max = weight × (1 + reps ÷ 30). Least trustworthy past about twelve reps.']
   };
@@ -834,7 +848,7 @@
       jt: typeof p.jt === 'string' ? p.jt.replace(/[^NSEWHKA]/g, '').slice(0, 7) : '',
       // how your days go: at a desk, on your feet, physical work, very active
       day: ['desk', 'feet', 'labor', 'active'].indexOf(p.day) >= 0 ? p.day : '',
-      age: ['u40', '40', '60'].indexOf(p.age) >= 0 ? p.age : '',
+      age: ['u13', 'teen', 'u40', '40', '60'].indexOf(p.age) >= 0 ? p.age : '',
       // what you do outside the gym
       hab: Array.isArray(p.hab) ? p.hab.filter(function (h) { return !!HABITS[h]; }) : [],
       // exercises you never want suggested again
@@ -1871,13 +1885,14 @@
     var n = accOf(ms);
     if (w >= n) return null;
     if (isKeep(ms)) return 2;
+    if (ms.prog === 'youth') return 3;
     if (ms.goal === 'base') return w < Math.ceil(n / 2) ? 3 : 2;
     // strength waves: the main lifts go by their percentages; the rest is steady
     if (ms.goal === 'str' || ms.goal === 'cond') return 2;
     if (n <= 1) return 2;
     var r = Math.round(3 * (1 - w / (n - 1)));
     var c = capAt(ms, w);
-    return c && c <= 0.7 ? Math.max(1, r) : r;
+    return (c && c <= 0.7) || ms.ceil ? Math.max(1, r) : r;
   }
   function exRir(ex, rir, keep) {
     if (rir === null) return null;
@@ -2188,7 +2203,7 @@
     return phBegun(ms, w) ? null : phaseNow();
   }
   // the ceiling for week W as a share of MRV, 0 for none: the program's own, lowered by what you eat
-  function capOwn(ms) { return fin(ms.cap) && ms.cap > 0 && ms.cap < 1 ? ms.cap : 1; }
+  function capOwn(ms) { return fin(ms.cap) && ms.cap > 0 && ms.cap < 1 ? ms.cap : fin(ms.ceil) && ms.ceil > 0 && ms.ceil < 1 ? ms.ceil : 1; }
   function capAt(ms, w) {
     var ph = phaseAt(ms, w), c = Math.min(capOwn(ms), ph ? ph.c : 1);
     return c < 1 ? c : 0;
@@ -2268,6 +2283,7 @@
             dl = Math.max(0, roof - tot[m]);
             extra += !cap ? ' Capped at ' + roof + ' sets a week, RP\u2019s MRV for ' + MUS[m].n.toLowerCase() + '.'
               : phLow ? ' Capped at ' + roof + ' sets a week \u2014 below RP\u2019s MRV while you eat about ' + fmtBig(ph.k) + ' kcal a day under maintenance.'
+              : ms.ceil ? ' Capped at ' + roof + ' sets a week \u2014 Heavy & lithe keeps accessory volume moderate so the heavy lifts stay fresh.'
               : ' Capped at ' + roof + ' sets a week \u2014 below RP\u2019s MRV, because recovery is slower while you eat less.';
           }
           /* And never past the minutes you said a session could take: a set
@@ -2318,7 +2334,7 @@
         // a deload is no week to try the harder version
         var e = dl ? s.e : rung(s.e);
         var ex = lib(e);
-        var rq = exRir(ex, rir, steady(ms) || ms.goal === 'str');
+        var rq = exRir(ex, rir, (steady(ms) || ms.goal === 'str') && ms.prog !== 'youth');
         var t = target(ex, ms, w, d, dl, rq);
         return { e: e, sets: sf.sets[d][i], rr: ex.rr, rest: restFor(ex), rir: rq,
           tw: t.tw, tr: t.tr, prev: t.prev, why: sf.why[d][i], p: s.p || 0,
@@ -2371,10 +2387,16 @@
     var tm = tmOf(ms, e), step = inc(lib(e));
     var at = function (p) { return tm ? roundTo(tm * p, step) : null; };
     if (dl) return [[5, 0.4], [5, 0.5], [5, 0.6]].map(function (a) { return { tw: at(a[1]), tr: a[0], pct: a[1] }; });
+    var out = [], i;
+    if (ms && ms.prog === 'w531') {
+      var w3 = W531[Math.min(w, 2)], fsl = w3[0][1];
+      w3.forEach(function (a) { out.push({ tw: at(a[1]), tr: a[0], pct: a[1], am: a[2] ? 1 : 0 }); });
+      for (i = 0; i < 3; i++) out.push({ tw: at(fsl), tr: 5, pct: fsl });
+      return out;
+    }
     var row = (WAVES[ms.wave] || WAVES[10])[Math.min(w, 2)];
-    var out = [];
     if (w >= 2) out.push({ tw: at(row[2] - 0.2), tr: 5, pct: row[2] - 0.2, wu: 1 }, { tw: at(row[2] - 0.1), tr: 3, pct: row[2] - 0.1, wu: 1 });
-    for (var i = 0; i < row[0]; i++) out.push({ tw: at(row[2]), tr: row[1], pct: row[2], am: w >= 2 && i === row[0] - 1 ? 1 : 0 });
+    for (i = 0; i < row[0]; i++) out.push({ tw: at(row[2]), tr: row[1], pct: row[2], am: w >= 2 && i === row[0] - 1 ? 1 : 0 });
     return out;
   }
 
@@ -2407,14 +2429,19 @@
         var tm = tmOf(ms, s.e);
         if (!tm) return;
         var ex = lib(s.e), step = inc(ex) * (MAINS[s.m] && MAINS[s.m].lower ? 1 : 0.5);
-        var am = null;
+        var am = null, w531Fail = false;
         ix().list.forEach(function (wo) {
           if (wo.ms !== ms.id) return;
           var x = exIn(wo, s.e);
           if (!x) return;
-          x.s.forEach(function (q) { if (q.am && fin(q.tr)) am = { r: q.r, tr: q.tr }; });
+          x.s.forEach(function (q) {
+            if (q.am && fin(q.tr) && fin(q.r)) {
+              am = { r: q.r, tr: q.tr };
+              if (q.r < q.tr) w531Fail = true;
+            }
+          });
         });
-        var moved = am ? Math.max(-5, Math.min(5, am.r - am.tr)) : 0;
+        var moved = am ? (ms && ms.prog === 'w531' ? (!w531Fail && am.r >= am.tr ? 2 : -2) : Math.max(-5, Math.min(5, am.r - am.tr))) : 0;
         out[s.e] = Math.max(step, roundTo(tm + moved * step, T.pr.u === 'kg' ? 0.5 : 2.5));
       });
     });
@@ -2731,6 +2758,93 @@
     3: [[7, 3, 0.75], [5, 3, 0.825], [1, 3, 0.90]]
   };
   var NEXT_WAVE = { 10: 8, 8: 5, 5: 3, 3: 10 };
+  /* 5/3/1's three-week cycle: fives, threes, and 5/3/1, each ending in a
+     rep-out set (+), followed by First Set Last (3x5 at the week's opening
+     percentage) for fast, crisp volume. */
+  var W531 = [
+    [[5, 0.65], [5, 0.75], [5, 0.85, 1]],
+    [[3, 0.70], [3, 0.80], [3, 0.90, 1]],
+    [[5, 0.75], [3, 0.85], [1, 0.95, 1]]
+  ];
+  var TAC_SPLITS = {
+    2: { n: 'Tactical & endurance', days: [
+      ['Operator A', ['quads/c/squat+', 'back/c/vert', 'chest/c/flat+', 'hams/c/hinge', 'abs/i']],
+      ['Operator B', ['quads/c/single+', 'back/c/horiz', 'front/c/press+', 'glutes/c/thrust', 'abs/i']]
+    ] },
+    3: { n: 'Tactical & endurance', days: [
+      ['Operator A', ['quads/c/squat+', 'back/c/vert', 'chest/c/flat+', 'hams/i/curl', 'abs/i']],
+      ['Operator B', ['hams/c/hinge+', 'front/c/press', 'back/c/horiz+', 'quads/c/single', 'abs/i']],
+      ['Operator C', ['quads/c/squat+', 'chest/c/incline', 'back/c/vert+', 'glutes/c/thrust', 'abs/i']]
+    ] },
+    4: { n: 'Tactical & endurance', days: [
+      ['Fighter Upper A', ['chest/c/flat+', 'back/c/vert', 'front/c/press+', 'back/c/horiz', 'triceps/i']],
+      ['Fighter Lower A', ['quads/c/squat+', 'hams/i/curl', 'glutes/c/thrust+', 'calves/i', 'abs/i']],
+      ['Fighter Upper B', ['front/c/press+', 'back/c/horiz', 'chest/c/incline+', 'rear/i', 'biceps/i']],
+      ['Fighter Lower B', ['hams/c/hinge+', 'quads/c/single', 'glutes/c/thrust+', 'calves/i', 'abs/i']]
+    ] }
+  };
+  var GLUTE_SPLITS = {
+    2: { n: 'Glutes & lower-body sculpt', days: [
+      ['Glutes & Sculpt A', ['glutes/c/thrust', 'quads/c/squat', 'hams/i/curl', 'back/c/vert', 'side/i', 'abs/i']],
+      ['Glutes & Sculpt B', ['hams/c/hinge', 'quads/c/single', 'glutes/c/thrust', 'back/c/horiz', 'rear/i', 'abs/i']]
+    ] },
+    3: { n: 'Glutes & lower-body sculpt', days: [
+      ['Glutes & Quads', ['glutes/c/thrust', 'quads/c/squat', 'hams/i/curl', 'back/c/vert', 'side/i', 'abs/i']],
+      ['Hinge & Posture', ['hams/c/hinge', 'glutes/c/thrust', 'back/c/horiz', 'chest/c/incline', 'rear/i', 'biceps/i']],
+      ['Single-Leg & Sculpt', ['glutes/c/thrust', 'quads/c/single', 'hams/i/curl', 'back/c/vert', 'side/i', 'triceps/i']]
+    ] },
+    4: { n: 'Glutes & lower-body sculpt', days: [
+      ['Lower A (Thrust)', ['glutes/c/thrust', 'quads/c/squat', 'hams/i/curl', 'glutes/i', 'calves/i', 'abs/i']],
+      ['Upper A (Posture)', ['back/c/vert', 'chest/c/incline', 'back/c/horiz', 'side/i', 'rear/i', 'triceps/i']],
+      ['Lower B (Hinge)', ['hams/c/hinge', 'quads/c/single', 'glutes/c/thrust', 'hams/i/curl', 'calves/i', 'abs/i']],
+      ['Upper B (Sculpt)', ['back/c/horiz', 'front/c/press', 'back/c/vert', 'side/i', 'rear/i', 'biceps/i']]
+    ] }
+  };
+  var LIFTMOR_SPLITS = {
+    2: { n: 'Heavy & lithe', days: [
+      ['Heavy Lower & Push', ['*squat', 'glutes/c/thrust', 'back/c/horiz', 'chest/c/incline', 'side/i', 'abs/i']],
+      ['Heavy Hinge & Pull', ['*dead', 'front/c/press', 'back/c/vert', 'quads/c/single', 'rear/i', 'abs/i']]
+    ] },
+    3: { n: 'Heavy & lithe', days: [
+      ['Squat & Posture', ['*squat', 'back/c/horiz', 'glutes/c/thrust', 'hams/i/curl', 'side/i', 'abs/i']],
+      ['Press & Pull', ['*bench', 'back/c/vert', 'quads/c/single', 'rear/i', 'triceps/i', 'abs/i']],
+      ['Hinge & Overhead', ['*dead', 'front/c/press', 'back/c/horiz', 'glutes/c/thrust', 'calves/i', 'abs/i']]
+    ] },
+    4: { n: 'Heavy & lithe', days: [
+      ['Heavy Squat', ['*squat', 'glutes/c/thrust', 'hams/i/curl', 'quads/c/single', 'calves/i', 'abs/i']],
+      ['Heavy Press', ['*bench', 'back/c/vert', 'chest/c/incline', 'side/i', 'rear/i', 'triceps/i']],
+      ['Heavy Hinge', ['*dead', 'quads/c/single', 'glutes/c/thrust', 'hams/i/curl', 'calves/i', 'abs/i']],
+      ['Heavy Overhead', ['*press', 'back/c/horiz', 'chest/c/incline', 'side/i', 'rear/i', 'biceps/i']]
+    ] }
+  };
+  var LONG_SPLITS = {
+    2: { n: 'Centenarian decathlon', days: [
+      ['Longevity A', ['quads/c/single+', 'back/c/vert', 'hams/c/hinge+', 'front/c/press', 'glutes/c/thrust+', 'abs/i']],
+      ['Longevity B', ['quads/c/squat+', 'back/c/horiz', 'chest/c/flat+', 'hams/i/curl', 'side/i+', 'abs/i']]
+    ] },
+    3: { n: 'Centenarian decathlon', days: [
+      ['Step & Pull', ['quads/c/single+', 'back/c/vert', 'chest/c/flat+', 'hams/i/curl', 'calves/i+', 'abs/i']],
+      ['Hinge & Press', ['hams/c/hinge+', 'back/c/horiz', 'front/c/press+', 'glutes/c/thrust', 'rear/i+', 'abs/i']],
+      ['Squat & Stability', ['quads/c/squat+', 'back/c/vert', 'chest/c/incline+', 'quads/c/single', 'side/i+', 'abs/i']]
+    ] },
+    4: { n: 'Centenarian decathlon', days: [
+      ['Lower A (Step & Squat)', ['quads/c/single+', 'hams/i/curl', 'quads/c/squat+', 'calves/i', 'abs/i']],
+      ['Upper A (Pull & Press)', ['back/c/vert+', 'chest/c/flat', 'back/c/horiz+', 'side/i', 'triceps/i']],
+      ['Lower B (Hinge & Hip)', ['hams/c/hinge+', 'glutes/c/thrust', 'quads/c/single+', 'calves/i', 'abs/i']],
+      ['Upper B (Overhead & Back)', ['front/c/press+', 'back/c/horiz', 'chest/c/incline+', 'rear/i', 'biceps/i']]
+    ] }
+  };
+  var YOUTH_SPLITS = {
+    2: { n: 'Youth athletic foundations', days: [
+      ['Athletic A', ['quads/c/squat', 'chest/c/flat', 'back/c/vert', 'glutes/c/thrust', 'hams/i/curl', 'abs/i']],
+      ['Athletic B', ['quads/c/single', 'back/c/horiz', 'front/c/press', 'hams/c/hinge', 'side/i', 'abs/i']]
+    ] },
+    3: { n: 'Youth athletic foundations', days: [
+      ['Speed & Squat', ['quads/c/squat', 'chest/c/flat', 'back/c/vert', 'hams/i/curl', 'calves/i', 'abs/i']],
+      ['Hinge & Press', ['hams/c/hinge', 'back/c/horiz', 'front/c/press', 'quads/c/single', 'rear/i', 'abs/i']],
+      ['Jump & Pull', ['glutes/c/thrust', 'chest/c/incline', 'back/c/vert', 'quads/c/single', 'side/i', 'abs/i']]
+    ] }
+  };
 
   /* -------------------------------------------------------------- circuits
    *
@@ -2865,6 +2979,11 @@
   // the same weeks, said plainly, under the day's name
   var PHASE_SAY = ['More sets at a moderate weight on the main lift', 'Fewer sets, heavier, on the main lift',
     'On the main lift, work up to one set of as many good reps as you can'];
+  var PHASE_531 = ['5s week: 65%, 75%, 85%+ and First Set Last', '3s week: 70%, 80%, 90%+ and First Set Last',
+    '5/3/1 week: 75%, 85%, 95%+ and First Set Last'];
+  var PHASE_531_SAY = ['5s week on the main lift (65%, 75%, 85%+), then 3\u00d75 at 65%',
+    '3s week on the main lift (70%, 80%, 90%+), then 3\u00d75 at 70%',
+    '5/3/1 week on the main lift (75%\u00d75, 85%\u00d73, 95%\u00d71+), then 3\u00d75 at 75%'];
 
   /* ---------------------------------------------------------- the programs
    *
@@ -2893,6 +3012,10 @@
       dpw: [2, 3, 4, 5, 6], acc: [3, 4, 5], dAcc: 4, refs: ['simao12', 'rp21'],
       s: 'One area trained first and hardest, climbing every week; everything else held at a dose that keeps it.',
       who: 'A chest, back, shoulders, arms, glutes or legs that lag behind the rest.' },
+    glute: { n: 'Glutes & lower-body sculpt', sty: 'In the style of Strong Curves & Glute Lab', mode: 'grow',
+      dpw: [2, 3, 4], acc: [3, 4, 5], dAcc: 4, refs: ['contreras19', 'simao12', 'rp21'],
+      s: 'Every session opens with a hip thrust, bridge or hinge, paired with single-leg work, upper-back posture and shoulder shaping that climb on your feedback.',
+      who: 'Wanting lower-body shape, glute strength and balanced posture.' },
     lean: { n: 'Lean & strong', sty: 'Lifting through a fat-loss phase', mode: 'grow', cap: 0.7,
       dpw: [2, 3, 4, 5], acc: [3, 4, 5], dAcc: 4, refs: ['murphy22', 'schumann22'],
       s: 'Heavy enough to give your body a reason to keep its muscle, modest enough in volume to recover from while you eat less.',
@@ -2901,14 +3024,30 @@
       dpw: [2, 3, 4], acc: [3], dAcc: 3, refs: ['jm', 'williams17', 'load17'],
       s: 'Four-week waves on the squat, bench, deadlift and press \u2014 tens, then eights, fives and threes \u2014 each ending in one set for as many reps as you can, which sets the weights for the next wave.',
       who: 'A year or more in, and wanting a bigger squat, bench, deadlift and press.' },
+    w531: { n: 'Submaximal 5/3/1', sty: 'In the style of Wendler 5/3/1 Forever', mode: 'str', w531: 1, kits: ['gym', 'bar'],
+      dpw: [2, 3, 4], acc: [3], dAcc: 3, refs: ['wendler17', 'williams17', 'load17'],
+      s: 'Three-week waves of fives, threes and 5/3/1 off a ninety-per-cent training max, each backed by 3\u00d75 First Set Last work and a fourth-week deload.',
+      who: 'Wanting heavy barbell work every month with fast bar speed and fresh joints.' },
     power: { n: 'Powerbuilding', sty: 'Heavy top sets, then bodybuilding', mode: 'grow', pb: 1, kits: ['gym', 'bar'],
       dpw: [3, 4], acc: [3, 4, 5], dAcc: 4, refs: ['pb14', 'rp21'],
       s: 'Each session opens with one heavy top set of a big lift and three lighter back-off sets, then RP-style accessory work that climbs week to week.',
       who: 'Wanting to be both stronger and bigger, a year or more in.' },
+    liftmor: { n: 'Heavy & lithe', sty: 'In the style of LIFTMOR & Next Level (40+)', mode: 'grow', pb: 1, ceil: 0.85, kits: ['gym', 'bar', 'db'],
+      dpw: [2, 3, 4], acc: [3, 4, 5], dAcc: 4, refs: ['watson18', 'sims22', 'pb14'],
+      s: 'Opens with heavy four-to-six-rep compound sets to drive bone density and fast-twitch strength, then moderate glute, posture and core work that stops short of burnout.',
+      who: 'In your forties or beyond, wanting bone strength, lean muscle and power without exhaustion.' },
     cond: { n: 'Strength & conditioning', sty: 'In the style of CrossFit', mode: 'cond',
       dpw: [2, 3, 4, 5], acc: [4, 6, 8], dAcc: 6, refs: ['claudino18', 'milanovic15', 'klimek18'],
       s: 'A few strength sets, then a short, hard circuit \u2014 as many rounds as you can, every minute on the minute, or rounds for time \u2014 from movements that suit your kit and your joints. Each circuit comes back the next week, so there is a score to beat.',
       who: 'Wanting fitness as much as muscle: harder breathing, less time.' },
+    tactical: { n: 'Tactical & endurance', sty: 'In the style of Tactical Barbell', mode: 'keep', kits: ['gym', 'bar', 'db'],
+      dpw: [2, 3, 4], acc: [6, 8, 10], dAcc: 6, refs: ['tb17', 'schumann22', 'spiering21'],
+      s: 'Frequent, paired compound lifting held two reps short of failure, so strength climbs steadily while leaving your legs and nervous system fresh for running, hiking, golf or sport.',
+      who: 'Training for a sport, running, rucking or a physical job alongside the weights.' },
+    longevity: { n: 'Centenarian decathlon', sty: 'In the style of Outlive longevity training', mode: 'keep',
+      dpw: [2, 3, 4], acc: [6, 8, 10], dAcc: 8, refs: ['attia23', 'bickel11', 'who20'],
+      s: 'Single-leg step-ups and split squats for balance and braking strength, hip hinges, vertical and horizontal pulls for grip and posture, and trunk stability, paired for short sessions.',
+      who: 'Training to move well, carry heavy things and stay strong for the decades ahead.' },
     keep: { n: 'Keep strength', sty: 'A maintenance block', mode: 'keep',
       dpw: [2, 3], acc: [6, 8, 10], dAcc: 8, refs: ['bickel11', 'spiering21', 'iversen21'],
       s: 'Full body, two or three days, a few hard sets of each movement, paired to fit short sessions. The same every week: no climb, no deload.',
@@ -2916,9 +3055,13 @@
     home: { n: 'Home & bodyweight', sty: 'Progressions instead of plates', mode: 'grow', kits: ['bw', 'db'],
       dpw: [2, 3, 4], acc: [3, 4, 5], dAcc: 4, refs: ['kotarsky18', 'load17'],
       s: 'Full body with what you have at home. When an exercise gets easy it moves you up to a harder version, which is how bodyweight keeps working.',
-      who: 'Training at home, with a pair of dumbbells or with nothing.' }
+      who: 'Training at home, with a pair of dumbbells or with nothing.' },
+    youth: { n: 'Youth athletic foundations', sty: 'In the style of LTAD & NSCA Youth', mode: 'base', youth: 1,
+      dpw: [2, 3], acc: [4, 6, 8], dAcc: 6, refs: ['faigenbaum09', 'lloyd12', 'acsm09'],
+      s: 'Two or three short full-body sessions built around movement mastery, coordination, bodyweight and dumbbell control, stopping every set three reps short of failure while form is crisp.',
+      who: 'Youth and teen athletes learning the movements and building athletic coordination.' }
   };
-  var PROG_ORDER = ['start', 'grow', 'focus', 'waves', 'power', 'cond', 'lean', 'keep', 'home'];
+  var PROG_ORDER = ['start', 'grow', 'focus', 'glute', 'waves', 'w531', 'power', 'liftmor', 'cond', 'tactical', 'longevity', 'lean', 'keep', 'home', 'youth'];
   /* The days a program runs on, given the days you have: the nearest it
      offers, never more than you have unless it cannot run on fewer. */
   function fitDpw(P, dpw) {
@@ -3040,10 +3183,14 @@
        templates are written around them, so building or leaning out at home
        uses those where the days allow. */
     var homeDays = HOME_SPLITS[dpw] && (pid === 'home' || (atHome(eq) && (pid === 'grow' || pid === 'lean')));
-    var split = keep ? KEEP_SPLITS[dpw] : base ? START_SPLITS[dpw] : str ? STR_SPLITS[dpw] : P.pb ? PB_SPLITS[dpw]
+    var split = pid === 'tactical' ? TAC_SPLITS[dpw] : pid === 'longevity' ? LONG_SPLITS[dpw]
+      : pid === 'youth' ? YOUTH_SPLITS[dpw] : pid === 'glute' ? GLUTE_SPLITS[dpw] : pid === 'liftmor' ? LIFTMOR_SPLITS[dpw]
+      : keep ? KEEP_SPLITS[dpw] : base ? START_SPLITS[dpw] : str ? STR_SPLITS[dpw] : P.pb ? PB_SPLITS[dpw]
       : cond ? COND_SPLITS[dpw]
       : homeDays ? HOME_SPLITS[dpw] : SPLITS[dpw];
-    var pf = { bk: o.bk || '', jt: o.jt || '', avoid: o.avoid || [], lvl: o.lvl };
+    var youthAvoid = pid === 'youth' ? ['bb-squat', 'bb-front', 'sm-squat', 'bb-dl', 'sumo-dl', 'trap-dl', 'bb-rdl', 'bb-sldl', 'good-am', 'bb-row', 'pendlay', 'bb-ohp', 'bb-shrug', 'bb-calf', 'skull'] : [];
+    var pf = { bk: o.bk || '', jt: o.jt || '', avoid: (o.avoid || []).concat(youthAvoid), lvl: pid === 'youth' ? 0 : o.lvl };
+    var pri = pid === 'glute' && (!o.pri || !o.pri.length) ? ['glutes', 'hams', 'side'] : (o.pri || []);
     var used = {}, downs = [];
     var isFx = function (tok) { return !!fx && fx.m.indexOf(tok.split('/')[0]) >= 0; };
     var days = split.days.map(function (row, di) {
@@ -3061,7 +3208,7 @@
       toks.forEach(function (tok) {
         if (tok.charAt(0) === '*') {
           var mx = pickMain(tok.slice(1), eq, pf, used);
-          if (mx) { used[mx.id] = 1; today[mx.id] = 1; s.push({ e: mx.id, n: str ? wave === 3 ? 7 : 5 : 4, m: tok.slice(1) }); }
+          if (mx) { used[mx.id] = 1; today[mx.id] = 1; s.push({ e: mx.id, n: str ? (P.w531 ? 6 : wave === 3 ? 7 : 5) : 4, m: tok.slice(1) }); }
           return;
         }
         var join = tok.charAt(tok.length - 1) === '+';
@@ -3125,7 +3272,8 @@
       var trimmed = false;
       Object.keys(by).forEach(function (m) {
         var mu = MUS[m], list = by[m], n = list.length;
-        var roof = P.cap ? Math.round(mu.mrv * P.cap) : mu.mrv;
+        var capVal = P.cap || P.ceil;
+        var roof = capVal ? Math.round(mu.mrv * capVal) : mu.mrv;
         var inFx = !!fx && fx.m.indexOf(m) >= 0;
         var want;
         if (fx && !inFx) {
@@ -3149,7 +3297,7 @@
           var cut = trim[m] && !inFx && mu.mev + lvl - 2 >= n * 2 ? 2 : 0;
           if (cut) trimmed = true;
           // a focus starts from at least four, so one with an MEV of zero still gets its extra work
-          want = (inFx ? Math.max(mu.mev, 4) + 4 : mu.mev + ((o.pri || []).indexOf(m) >= 0 ? 2 : 0)) + lvl - cut;
+          want = (inFx ? Math.max(mu.mev, 4) + 4 : mu.mev + (pri.indexOf(m) >= 0 ? 2 : 0)) + lvl - cut;
           want = Math.min(want, roof - (acc - 1));
           want = Math.max(want, n * 2);
         }
@@ -3164,7 +3312,9 @@
       }
       if (fx) notes.push(fx.n + ' goes first and gets the most sets; everything else is held at a dose that keeps it.');
       if (P.cap) notes.push('The weekly climb stops lower than it would on a building block, and reps stay a rep short of failure: recovery is slower while you eat less.');
+      if (P.ceil) notes.push('Heavy four-to-six-rep main sets drive bone and strength gains; accessory volume stays moderate and stops a rep short of failure so you recover well.');
     }
+    if (pid === 'youth') notes.push('Movement mastery and speed come first: every set stops with three reps in reserve, the moment form changes, and heavy spinal barbell loading is left out while growing.');
     downs = uniq(downs);
     if (downs.length) notes.push(names(downs.map(function (n) { return { n: n }; })) + (downs.length > 1 ? ' are the easier versions' : ' is the easier version') + ' to start on; the plan moves you up as each gets easy.');
     if (pf.bk) notes.push('Leaves out lifts that load your back the way you said, and cues the ones that load it a little.');
@@ -3172,8 +3322,8 @@
       ' hard, and cues the ones that load ' + (pf.jt.length > 1 ? 'them' : 'it') + ' a little.');
 
     var min = [30, 40, 45, 60, 75].indexOf(o.min) >= 0 ? o.min : 0;
-    days.forEach(function (day) { fitDay(day, min, fx ? fx.m : o.pri); });
-    var label = pid === 'grow' && !homeDays ? split.n : fx ? fx.n + ' focus' : str ? P.n + ' \u00b7 ' + wave + 's' : P.n;
+    days.forEach(function (day) { fitDay(day, min, fx ? fx.m : pri); });
+    var label = pid === 'grow' && !homeDays ? split.n : fx ? fx.n + ' focus' : str && !P.w531 ? P.n + ' \u00b7 ' + wave + 's' : P.n;
     /* The easy day goes in last, so nothing that shapes the lifting days
        sees it. It asks for no sets, so the volume and the minutes are the
        lifting days' alone. */
@@ -3185,12 +3335,14 @@
       id: newId(), n: label + ' · ' + dpw + ' days' + (o.ez ? ' + easy' : '') + (min ? ' · ' + min + ' min' : ''),
       at: Date.now(), goal: mode, prog: pid, min: min,
       acc: acc, lvl: [0, 1, 2].indexOf(o.lvl) >= 0 ? o.lvl : 1, kit: kit, dpw: dpw,
-      pri: mode === 'grow' && !fx ? (o.pri || []).slice(0, 3) : [],
+      pri: mode === 'grow' && !fx ? pri.slice(0, 3) : [],
       seed: o.seed || 0, days: days, sk: [], nt: notes
     };
     if (fx) { ms.fx = fx.m.slice(); ms.fk = FOCUS[o.fx] ? o.fx : 'chest'; }
     if (P.cap) ms.cap = P.cap;
+    if (P.ceil) ms.ceil = P.ceil;
     if (P.pb) ms.pb = 1;
+    if (P.w531) ms.w531 = 1;
     if (str) {
       ms.wave = wave;
       /* Training maxes: those handed over (from the last wave, or typed in),
@@ -4194,8 +4346,8 @@
          swap for the rest of the block has to find: today's may be a harder
          version the plan moved you up to, or one swapped in for today. */
       x: p.x.map(function (s) { var x = liveEx(s.e, s.sets, s); x.sl = s.up || s.e; return x; }),
-      sr: {}, fb: {}, rs: null, keep: steady(ms) || ms.goal === 'str' ? 1 : 0,
-      ph: ms.goal === 'str' && !p.deload ? PHASE_SAY[Math.min(w, 2)] + '; the rest about 2 reps short of failure.'
+      sr: {}, fb: {}, rs: null, keep: (steady(ms) || ms.goal === 'str') && ms.prog !== 'youth' ? 1 : 0,
+      ph: ms.goal === 'str' && !p.deload ? (ms.w531 ? PHASE_531_SAY : PHASE_SAY)[Math.min(w, 2)] + '; the rest about 2 reps short of failure.'
         : ms.pb && !p.deload ? 'Top set about two reps short of failure, back-offs lighter; then ' + rirSay(p.rir) + '.' : '',
       fx: Array.isArray(ms.fx) ? ms.fx.slice() : [],
       mc: p.mc ? Object.assign(clean(p.mc), { st: 0, en: 0, rm: 0, r: '', x: '', done: '', sec: '' }) : null
@@ -4275,6 +4427,15 @@
   function readyName(row) { return row[3] || SPLITS[row[1]].days[row[2]][0]; }
   function readyDay(id, xp, ef) {
     if (id === 'circ') return circuitDay(xp, ef);
+    if (id === 'play') {
+      var pp = T.pr, ppf = { bk: pp.bk, jt: pp.jt, avoid: pp.avoid, lvl: 0 };
+      var pList = ['bw-squat', 'glute-bridge', 'inc-pushup', 'bird-dog', 'dead-bug', 'split-squat', 'calf-bw', 'prone-y']
+        .filter(function (x) { return LIB[x] && !barred(LIB[x], ppf); }).slice(0, 5);
+      return {
+        n: 'Little movers play (ages 2\u20135)' + (xp ? XP : ''), rir: 3,
+        s: (pList.length ? pList : ['glute-bridge', 'bird-dog', 'dead-bug']).map(function (x) { return { e: x, n: 2 }; })
+      };
+    }
     var E = EFF[ef] || EFF[1];
     if (T.rt[id]) {
       var rt = T.rt[id];
@@ -4426,7 +4587,8 @@
       READY.map(function (g) {
         return '<div class="tr-rdg">' + esc(g.g) + '</div>' + g.d.map(function (d) { return row(d[0]); }).join('');
       }).join('') +
-      '<div class="tr-hint">Exercises are picked for your equipment and your back and joints, as a block\u2019s are. Weights come from what you last lifted. To keep a workout of your own, open it after you finish and tap Save as routine.</div>';
+      '<div class="tr-hint">Exercises are picked for your equipment and your back and joints, as a block\u2019s are. Weights come from what you last lifted. To keep a workout of your own, open it after you finish and tap Save as routine.</div>' +
+      '<div class="tr-acts"><button class="tr-lnk" data-t="rdgo" data-v="play" data-e="1">Start Little movers play (ages 2\u20135)</button></div>';
   }
   function rtNewHTML(sh) {
     var wo = T.wo[sh.id];
@@ -5763,7 +5925,7 @@
       '<div class="tr-title">' + esc(ms.n) + '</div>';
     if (nx) {
       html += '<div class="tr-sub">' + wk + ' · ' +
-        (rir === null ? 'deload week' : ms.goal === 'str' ? (ms.wave || 10) + 's wave, ' + PHASE[Math.min(nx.w, 2)] : rirSay(rir)) + '</div>';
+        (rir === null ? 'deload week' : ms.goal === 'str' ? (ms.w531 ? PHASE_531[Math.min(nx.w, 2)] : (ms.wave || 10) + 's wave, ' + PHASE[Math.min(nx.w, 2)]) : rirSay(rir)) + '</div>';
     } else {
       html += '<div class="tr-sub">Every session of this block is done.</div>';
     }
@@ -6106,7 +6268,7 @@
   var TRIG = [['f', 'Bending forward or sitting'], ['c', 'Weight on my spine'], ['x', 'Arching back']];
   var DAYS = { desk: ['Mostly sitting', 'A desk, a car, a screen'], feet: ['On my feet', 'Standing and walking most of the day'],
     labor: ['Physical work', 'Lifting, carrying, building'], active: ['Very active', 'Training or sport most days'] };
-  var AGES = [['u40', 'Under 40'], ['40', '40–59'], ['60', '60 or over'], ['', 'Rather not say']];
+  var AGES = [['u13', 'Under 13'], ['teen', '13\u201317'], ['u40', '18\u201339'], ['40', '40\u201359'], ['60', '60 or over'], ['', 'Rather not say']];
   var KIT_S = { gym: 'Machines, cables, barbells and dumbbells', bar: 'A barbell and rack, and dumbbells',
     db: 'A pair or a set of dumbbells', bw: 'The floor — a pull-up bar helps' };
   var MINS = [[30, '30 min'], [40, '40 min'], [45, '45 min'], [60, '60 min'], [0, 'No limit']];
@@ -6246,40 +6408,58 @@
    * a model: each reason below is one rule, said back to you, and the ones
    * that count against a program are shown too. */
   var FIT = {
-    muscle: { grow: 10, focus: 7, power: 6, start: 5, home: 5, lean: 3, cond: 3, keep: 2, waves: 2 },
-    strength: { waves: 10, power: 8, grow: 6, start: 6, keep: 5, home: 4, focus: 3, lean: 3, cond: 3 },
-    both: { power: 10, grow: 9, waves: 7, focus: 6, start: 5, home: 5, keep: 4, cond: 4, lean: 3 },
-    keep: { keep: 10, cond: 6, start: 4, home: 4, grow: 3, lean: 3, waves: 3, power: 3, focus: 2 },
-    lean: { lean: 10, cond: 8, keep: 5, start: 5, home: 5, grow: 4, waves: 3, power: 3, focus: 2 },
-    health: { cond: 9, start: 8, keep: 8, home: 6, grow: 4, lean: 4, focus: 1, waves: 1, power: 1 }
+    muscle: { grow: 10, glute: 8, focus: 7, power: 6, start: 5, home: 5, youth: 5, tactical: 4, liftmor: 4, longevity: 3, lean: 3, cond: 3, keep: 2, waves: 2, w531: 2 },
+    strength: { waves: 10, w531: 9, power: 8, liftmor: 8, tactical: 7, grow: 6, start: 6, youth: 6, keep: 5, longevity: 5, glute: 5, home: 4, focus: 3, lean: 3, cond: 3 },
+    both: { power: 10, grow: 9, glute: 8, waves: 7, w531: 7, tactical: 7, liftmor: 7, focus: 6, start: 5, home: 5, youth: 5, longevity: 5, keep: 4, cond: 4, lean: 3 },
+    keep: { keep: 10, longevity: 8, tactical: 7, cond: 6, liftmor: 5, start: 4, home: 4, youth: 4, grow: 3, glute: 3, lean: 3, waves: 3, w531: 3, power: 3, focus: 2 },
+    lean: { lean: 10, cond: 8, glute: 6, tactical: 6, longevity: 5, keep: 5, start: 5, home: 5, liftmor: 4, grow: 4, youth: 3, waves: 3, w531: 3, power: 3, focus: 2 },
+    health: { cond: 9, longevity: 8, start: 8, keep: 8, liftmor: 7, tactical: 6, home: 6, youth: 6, grow: 4, glute: 4, lean: 4, focus: 1, waves: 1, w531: 1, power: 1 }
   };
   var FIT_WHY = {
     'muscle:grow': 'Built for exactly what you asked for: more muscle.',
+    'muscle:glute': 'Hip-hinge and glute emphasis first in every lower session, with balanced upper-body work.',
     'muscle:focus': 'More muscle, where you want it most.',
     'strength:grow': 'Builds the muscle that strength is built on.',
     'strength:waves': 'Built for exactly what you asked for: a bigger squat, bench, deadlift and press.',
+    'strength:w531': 'Three progressive barbell waves (fives, threes, 5/3/1) with First Set Last back-offs for steady, year-round strength.',
     'strength:power': 'Heavy work for strength, then volume for the muscle behind it.',
+    'strength:liftmor': 'Heavy compound sets of 4\u20136 reps with a controlled volume ceiling for dense bone and joint strength.',
+    'strength:tactical': 'Submaximal compound strength that leaves your legs fresh for running, rucking, or sport.',
     'both:power': 'Built for both: a heavy top set for strength, then the volume that builds muscle.',
+    'both:grow': 'Builds muscle, and strength comes up with it.',
+    'both:glute': 'Heavy hip-dominant top sets for lower-body strength, plus hypertrophy volume for the glutes and hamstrings.',
     'both:waves': 'Strength first; the waves of tens and eights build some muscle too.',
+    'both:w531': '5/3/1 top sets drive strength while 3\u00d75 First Set Last and accessories build the muscle.',
+    'both:tactical': 'Builds strength without draining the tank for your sport or active week.',
+    'both:liftmor': 'Heavy top sets of 4\u20136 reps paired with controlled muscle-building volume.',
     'muscle:power': 'Muscle-building volume, with the heavy lifts kept in.',
     'strength:start': 'The first year is when strength climbs fastest, on simple full-body training.',
     'strength:keep': 'Keeps the big lifts heavy in very little time.',
-    'both:grow': 'Builds muscle, and strength comes up with it.',
     'both:focus': 'Muscle and strength, with one area brought up.',
     'keep:keep': 'Built for keeping what you have, in less time.',
-    'lean:lean': 'Built for losing fat while keeping your muscle. Nourish’s targets do the losing; this does the keeping.',
+    'keep:longevity': 'Covers grip, single-leg balance, loaded carries, and full-body strength in steady sessions.',
+    'keep:tactical': 'Holds your main lifts strong with zero soreness for the rest of your week.',
+    'lean:lean': 'Built for losing fat while keeping your muscle. Nourish\u2019s targets do the losing; this does the keeping.',
     'lean:keep': 'A steady dose that keeps your strength while you eat less.',
+    'lean:glute': 'Keeps lower-body and glute volume high while you lean out.',
     'health:start': 'Two or three full-body sessions a week covers the strength half of the health guidelines.',
     'health:keep': 'Short, steady sessions that cover the strength half of the health guidelines.',
     'health:home': 'Covers the strength half of the health guidelines without a gym.',
     'health:cond': 'Strength and hard breathing in one short session: both halves of the health guidelines.',
+    'health:longevity': 'Built around the four pillars of lifelong capability: hinge/squat strength, carries, single-leg stability, and pulls.',
+    'health:liftmor': 'Heavy, low-rep resistance training \u2014 the gold-standard stimulus for bone mineral density and lean mass.',
     'lean:cond': 'Short, hard circuits add to what you burn and keep you strong; the eating still does most of the losing.',
-    'keep:cond': 'Keeps your strength, and adds the fitness side, in short sessions.'
+    'keep:cond': 'Keeps your strength, and adds the fitness side, in short sessions.',
+    'muscle:youth': 'Movement mastery, body control, and balanced athletic strength for growing athletes.',
+    'strength:youth': 'Builds real athletic strength with technique-first effort and zero spinal max-outs.',
+    'both:youth': 'Full-body movement skill, speed, and strength calibrated for growing athletes.',
+    'health:youth': 'Fun, short full-body athletic sessions that build coordination and lifelong movement habits.'
   };
   function recommend(pr) {
     // the seventh day is the easy one: what a program is fitted to is six
     var lvl = pr.lvl, kit = pr.kit, dpw = Math.min(6, pr.dpw);
     var home = kit === 'bw' || kit === 'db';
+    var isYouth = pr.age === 'u13' || pr.age === 'teen';
     var legSport = pr.hab.filter(function (h) { return HABITS[h] && HABITS[h].legs === 2; });
     return PROG_ORDER.map(function (id, order) {
       var P = PROGS[id], sc = FIT[pr.goal][id] || 0, why = [];
@@ -6287,21 +6467,35 @@
       if (FIT_WHY[pr.goal + ':' + id]) why.push({ t: FIT_WHY[pr.goal + ':' + id] });
       else if (sc >= 7) why.push({ t: 'Fits what you are training for.' });
 
-      if (lvl === 0) {
+      if (isYouth) {
+        if (id === 'youth') add(12, pr.age === 'u13'
+          ? 'Written for under-13 athletes: movement quality, body control, and 3 reps in reserve on every set.'
+          : 'Written for teen athletes: progressive goblet, dumbbell, and bodyweight strength with safe technique buffers.');
+        else if (id === 'waves' || id === 'w531' || id === 'power' || id === 'liftmor') {
+          add(-8, 'Heavy barbell peaking and near-max axial loading wait until skeletal maturity and technique are established.', true);
+        } else if (id === 'grow' || id === 'focus' || id === 'glute') {
+          add(-5, 'High-volume bodybuilding splits are more than a young athlete needs.', true);
+        }
+      } else if (id === 'youth') {
+        add(-8, 'Written specifically for children and teens under 18.', true);
+      }
+
+      if (lvl === 0 && !isYouth) {
         if (id === 'start') add(6, 'New to lifting: a little goes a long way, and learning the movements comes first.');
-        else if (id === 'grow' || id === 'focus') add(-5, 'Better after a year or so of lifting \u2014 a beginner grows on much less.', true);
-        else if (id === 'waves') add(-6, 'Percentages of a max work once you know your max and your form holds near it \u2014 after a year or so.', true);
-        else if (id === 'power') add(-4, 'Better after a year or so: heavy top sets need well-practised form.', true);
+        else if (id === 'grow' || id === 'focus' || id === 'glute') add(-5, 'Better after a year or so of lifting \u2014 a beginner grows on much less.', true);
+        else if (id === 'waves' || id === 'w531') add(-6, 'Percentages of a max work once you know your max and your form holds near it \u2014 after a year or so.', true);
+        else if (id === 'power' || id === 'liftmor') add(-4, 'Better after a year or so: heavy top sets need well-practised form.', true);
         else if (id === 'keep') add(-3, 'There is not much to keep yet; building comes first.', true);
+        else if (id === 'tactical' || id === 'longevity') add(-3, 'Learn the core lifts on a simple beginner block first.', true);
         else if (id === 'home' && home) add(1, 'Starts the bodyweight moves on their easier versions.');
-      } else if (id === 'start') {
+      } else if (!isYouth && id === 'start') {
         add(lvl === 2 ? -6 : -3, 'Right after a long break; otherwise likely too easy for you.', true);
-      } else if (lvl === 2 && (id === 'grow' || id === 'focus' || id === 'power')) {
-        add(1, 'Years in, progress takes the climbing volume this is built on.');
+      } else if (!isYouth && lvl === 2 && (id === 'grow' || id === 'focus' || id === 'power' || id === 'glute' || id === 'w531')) {
+        add(1, 'Years in, progress takes the structured progression this is built on.');
       }
 
       if (P.kits && P.kits.indexOf(kit) < 0 && id !== 'home') {
-        add(-10, 'Needs a barbell.', true);
+        add(-10, P.kits.indexOf('db') >= 0 ? 'Needs weights or a gym.' : 'Needs a barbell.', true);
       } else if (home) {
         if (id === 'home') add(5, kit === 'bw' ? 'Written for training with no weights at all.' : 'Written for dumbbells at home.');
         else if (P.mode === 'grow') {
@@ -6318,10 +6512,17 @@
 
       if (pr.min && pr.min <= 40) {
         if (id === 'keep') add(2, 'Paired sets fit the whole body into ' + pr.min + ' minutes.');
-        else if (id === 'start') add(1, 'A few sets of each fits in ' + pr.min + ' minutes.');
+        else if (id === 'start' || id === 'youth' || id === 'tactical') add(1, 'A few sets of each fits in ' + pr.min + ' minutes.');
         else if (P.mode === 'grow' && dpw <= 3) add(-1, pr.min + '-minute sessions on ' + dpw + ' days leave the sets little room to climb.', true);
       }
+      if (pr.age === '40' || pr.age === '60') {
+        if (id === 'liftmor') add(2, 'Heavy sets of 4\u20136 with capped fatigue are ideal for bone density and joint strength after forty.');
+        if (id === 'longevity') add(2, 'Built around grip, carries, single-leg balance, and hinge strength for the decades ahead.');
+      }
       if (pr.age === '60' && (id === 'start' || id === 'keep')) add(1, 'Lifting heavy stays safe and useful past sixty \u2014 for your bones too.');
+      if (id === 'tactical' && (legSport.length || pr.day === 'labor' || pr.day === 'active')) {
+        add(2, 'Submaximal sets build strength while leaving your legs fresh for the rest of your week.');
+      }
       if (id === 'cond') {
         var hard = pr.hab.filter(function (h) { return HABITS[h] && HABITS[h].lv === 'v'; });
         if (hard.length) {
@@ -6332,8 +6533,8 @@
         if (/[KA]/.test(pr.jt)) add(-1, 'Jumping is left out for your ' + (pr.jt.indexOf('K') >= 0 ? 'knees' : 'feet') + ', which narrows the circuits.', true);
         if (lvl === 0) add(-2, 'Circuits reward knowing the movements; the basics first.', true);
       }
-      if ((id === 'waves' || id === 'power') && /[fc]/.test(pr.bk)) {
-        add(id === 'waves' ? -2 : -1, 'With your back, the squat and deadlift give way to lifts that spare it \u2014 fine, but this is built around them.', true);
+      if ((id === 'waves' || id === 'w531' || id === 'power') && /[fc]/.test(pr.bk)) {
+        add(id === 'waves' || id === 'w531' ? -2 : -1, 'With your back, the squat and deadlift give way to lifts that spare it \u2014 fine, but this is built around them.', true);
       }
       if (pr.day === 'labor') {
         if (P.mode !== 'grow') add(1, 'Your job is training too; steady sessions leave room for it.');
@@ -6363,9 +6564,10 @@
     var w = P.acc.map(function (a) { return P.mode === 'grow' || P.mode === 'str' ? a + 1 : a; });
     return w[0] === w[w.length - 1] ? w[0] + ' weeks' : w[0] + '–' + w[w.length - 1] + ' weeks';
   }
-  // what a program needs: a barbell for the waves and powerbuilding, the floor for home
+  // what a program needs: a barbell for the waves and powerbuilding, weights for glute/liftmor, the floor for home
   function kitSay(P) {
     if (!P.kits) return 'any kit';
+    if (P.kits.indexOf('db') >= 0 && P.kits.indexOf('gym') >= 0) return 'weights or gym';
     return P.kits.indexOf('gym') >= 0 || P.kits.indexOf('bar') >= 0 ? 'needs a barbell' : 'home kit';
   }
   function progCard(r, badge) {
@@ -6427,8 +6629,13 @@
     var P = PROGS[o.prog];
     if (o.prog === 'keep') return o.dpw >= 3 ? 'Three shorter full-body sessions.' : 'Two full-body sessions.';
     if (o.prog === 'start') return 'Full body every time.';
+    if (o.prog === 'youth') return 'Short, balanced full-body athletic sessions every time.';
+    if (o.prog === 'tactical') return 'Compact full-body compound clusters leaving plenty in the tank.';
+    if (o.prog === 'longevity') return o.dpw >= 4 ? 'Upper / lower with carries and single-leg stability.' : 'Full-body strength, carries, and balance.';
+    if (o.prog === 'liftmor') return o.dpw >= 4 ? 'Upper / lower, each opening with a heavy 4\u20136 rep bone- & strength-builder.' : 'Full body, each day opening with a heavy 4\u20136 rep compound lift.';
+    if (o.prog === 'glute') return o.dpw >= 4 ? 'Glute & hamstring lower days paired with sculpted upper days.' : 'Three glute-first sessions with upper-body maintenance.';
     if (o.prog === 'home') return HOME_SPLITS[o.dpw] && o.dpw >= 4 ? 'Upper / lower, twice.' : 'Full body every time.';
-    if (o.prog === 'waves') return o.dpw >= 4 ? 'One main lift a day: squat, bench, deadlift, press.'
+    if (o.prog === 'waves' || o.prog === 'w531') return o.dpw >= 4 ? 'One main lift a day: squat, bench, deadlift, press.'
       : o.dpw === 3 ? 'Squat, bench and deadlift days; the press as accessory work.' : 'Two main lifts a day.';
     if (o.prog === 'power') return o.dpw >= 4 ? 'Upper / lower, each opening with a main lift.' : 'Full body, each day opening with a main lift.';
     if (o.prog === 'cond') return 'Three strength lifts, then a circuit, every day.';
@@ -6449,7 +6656,9 @@
           : 'A day with no lifting that still gets you moving. For anyone who likes to do something every day.') +
       q('Time per session', chips('o-min', o.min, MINS), o.min ? 'Warm-up included. Exercises are paired and sets trimmed to fit.' : '') +
       q('Where', chips('o-kit', o.kit, kits.map(function (k) { return [k, KITS[k].n]; }))) +
-      (P.mode === 'str' ? q('Wave', chips('o-wave', o.wave, [[10, 'Tens'], [8, 'Eights'], [5, 'Fives'], [3, 'Threes']]),
+      (P.w531 ? q('Cycle', chips('o-acc', o.acc, [[3, '4 weeks (5s \u00b7 3s \u00b7 5/3/1 + deload)']]),
+          'Week 1 is 5s (65/75/85%+), week 2 is 3s (70/80/90%+), week 3 is 5/3/1 (75/85/95%+), plus 3\u00d75 First Set Last back-offs, then a deload.')
+        : P.mode === 'str' ? q('Wave', chips('o-wave', o.wave, [[10, 'Tens'], [8, 'Eights'], [5, 'Fives'], [3, 'Threes']]),
           'Four weeks, the last a deload. Start at tens unless you have just finished a wave; each finished wave hands its maxes to the next.')
         : q('Length', chips('o-acc', o.acc, P.acc.map(function (a) { return [a, (grow ? a + 1 : a) + ' weeks']; })),
         grow ? 'Including a lighter deload week at the end.' : 'No deload week at this dose; then build the next one.')) +
@@ -6468,6 +6677,11 @@
     var hab = T.pr.hab;
     var out = '<details class="tr-how"><summary>How ' + esc(P.n.toLowerCase()) + ' works</summary>';
     if (mode === 'keep') {
+      if (o.prog === 'tactical') {
+        out += '<p><b>Submaximal clusters.</b> Paired compound lifts held two reps short of failure so you build dense neuromuscular strength without the soreness that ruins a run, ruck, or match the next day.</p>';
+      } else if (o.prog === 'longevity') {
+        out += '<p><b>The four pillars.</b> Every week trains single-leg balance and braking strength (step-ups and split squats), hip hinges, vertical and horizontal pulls for grip and posture, and trunk stability — the physical capacities that preserve independence and metabolic health across decades.</p>';
+      }
       out += '<p><b>Sets.</b> Three per exercise on two days a week, two on three — about six hard sets a muscle a week. Strength that has been built takes far less to keep than it took to build: one study held it for eight months on one session a week and a fraction of the sets. Older lifters need a little more, which is why this is two sessions, not one.</p>' +
         '<p><b>Effort.</b> About two reps short of failure on the big lifts, one on the small ones. Heavy is the part that keeps strength; failure is not.</p>' +
         '<p><b>Pairs.</b> One muscle rests while another works — a leg movement beside a row, a press beside a leg curl — with a minute between the halves, which leaves each muscle nearly three minutes between its own sets. That is how a whole body fits in forty minutes.</p>' +
@@ -6475,8 +6689,11 @@
         '<p><b>When it changes.</b> A session that was too much, or hurt, takes a set away next week. Strength sliding two weeks running puts one back. Otherwise it holds.</p>';
     } else if (mode === 'str') {
       out += '<p><b>The main lifts.</b> A squat, a bench press, a deadlift and an overhead press \u2014 or the nearest your kit, back and joints allow \u2014 each worked from a <i>training max</i>, about nine-tenths of the most you could lift once. Your log fills it in where it can; you can type your own on the draft.</p>' +
-        '<p><b>The wave.</b> Four weeks. Week one, accumulation: many sets at a moderate share of the max. Week two, intensification: fewer, heavier. Week three, realization: two ramp sets, then one set for as many good reps as you can. Week four, a deload. The waves go tens, eights, fives, threes: more reps and more sets early, heavier and fewer later.</p>' +
-        '<p><b>The all-out set.</b> Every rep past its target adds a step to that lift\u2019s max for the next wave \u2014 the smallest jump on a press, twice that on a squat or deadlift \u2014 and every rep short takes one off, five steps at most either way. Stop the set when a rep slows to a grind; the method wants hard, not ugly.</p>' +
+        (P.w531
+          ? '<p><b>The 5/3/1 cycle.</b> Four weeks. Week one is fives (65%, 75%, 85%+ of your training max), week two is threes (70%, 80%, 90%+), and week three is 5/3/1 (75% for 5, 85% for 3, 95% for 1+), followed by 3\u00d75 First Set Last back-offs at the day\u2019s opening weight. Week four is a deload.</p>' +
+            '<p><b>Slow, steady maxes.</b> Beat the top set\u2019s target and the next cycle adds the smallest barbell jump on upper-body lifts and twice that on squat and deadlift; fall short and it steps back cleanly.</p>'
+          : '<p><b>The wave.</b> Four weeks. Week one, accumulation: many sets at a moderate share of the max. Week two, intensification: fewer, heavier. Week three, realization: two ramp sets, then one set for as many good reps as you can. Week four, a deload. The waves go tens, eights, fives, threes: more reps and more sets early, heavier and fewer later.</p>' +
+            '<p><b>The all-out set.</b> Every rep past its target adds a step to that lift\u2019s max for the next wave \u2014 the smallest jump on a press, twice that on a squat or deadlift \u2014 and every rep short takes one off, five steps at most either way. Stop the set when a rep slows to a grind; the method wants hard, not ugly.</p>') +
         '<p><b>Everything else.</b> Three steady sets of each accessory, about two reps short of failure, to keep the muscle behind the lifts. Changing the load on a plan like this built more strength than doing the same thing every week.</p>';
     } else if (mode === 'cond') {
       out += '<p><b>Strength first.</b> A squat or hinge, a press and a pull, three steady sets each about two reps short of failure, moved by double progression. That is the part that keeps and builds strength.</p>' +
@@ -6484,25 +6701,36 @@
         '<p><b>The score to beat.</b> Each day\u2019s circuit comes back the next week, so the progression is plain: a round more, a minute more done, or a faster time. The review reads it back, and the minutes count as vigorous activity toward the WHO\u2019s 150.</p>' +
         '<p><b>Safety.</b> Injury rates in CrossFit-style training look like other strength and fitness training, and they rise where fatigue and form part company \u2014 so a rep done badly because you are out of breath is the one to leave out. Movements that load what you protect are left out; jumping goes if your knees or feet are on the list.</p>';
     } else if (mode === 'base') {
-      out += '<p><b>Sets.</b> Two or three of each exercise, the same every week. A beginner grows and gets stronger on far less than a trained lifter needs, so the time goes into doing each rep well rather than doing more of them.</p>' +
-        '<p><b>Effort.</b> Three reps short of failure for the first half, while the movements are new, then two. Close enough to count, far enough to keep the form.</p>' +
-        '<p><b>Weights.</b> Reach the top of the rep range on your best set and the weight goes up by the smallest step; otherwise one more rep next time. Expect it to go up most weeks for a while — that is the fun part of starting.</p>' +
-        '<p><b>When it changes.</b> A session that was too much, or hurt, takes a set away. After a block or two, when the weights stop going up every week, one of the building programs is the next step.</p>';
+      if (o.prog === 'youth') {
+        out += '<p><b>Technique first.</b> Every set stops with about three good reps in reserve, and heavy axial spinal loading is left out in favor of goblet squats, split squats, push-ups, rows, and carries. In the youth resistance-training consensus, injury rates are vanishingly low when supervision and movement quality come before load.</p>' +
+          '<p><b>Progression.</b> Master the top of the rep range with clean control on every set before adding a small step of weight or moving up a bodyweight rung.</p>';
+      } else {
+        out += '<p><b>Sets.</b> Two or three of each exercise, the same every week. A beginner grows and gets stronger on far less than a trained lifter needs, so the time goes into doing each rep well rather than doing more of them.</p>' +
+          '<p><b>Effort.</b> Three reps short of failure for the first half, while the movements are new, then two. Close enough to count, far enough to keep the form.</p>' +
+          '<p><b>Weights.</b> Reach the top of the rep range on your best set and the weight goes up by the smallest step; otherwise one more rep next time. Expect it to go up most weeks for a while — that is the fun part of starting.</p>' +
+          '<p><b>When it changes.</b> A session that was too much, or hurt, takes a set away. After a block or two, when the weights stop going up every week, one of the building programs is the next step.</p>';
+      }
     } else {
-      out += '<p><b>Sets.</b> Week one starts each muscle near RP’s MEV — the least that reliably grows it. After each session you rate the pump and the workload, and next time you train that muscle you say how well it healed. Those answers add up to next week’s change: usually one more set, two if the muscle is plainly asking for more, none or one fewer if you are not recovering. It never goes past RP’s MRV, or past your minutes.</p>' +
+      out += '<p><b>Sets.</b> Week one starts each muscle near RP\u2019s MEV — the least that reliably grows it. After each session you rate the pump and the workload, and next time you train that muscle you say how well it healed. Those answers add up to next week\u2019s change: usually one more set, two if the muscle is plainly asking for more, none or one fewer if you are not recovering. It never goes past RP\u2019s MRV, or past your minutes.</p>' +
         '<p><b>Why ask about soreness at all?</b> It is a rough signal — it follows how new an exercise is more than how much it grew — which is why it is one vote of three, and why getting weaker overrules all of them.</p>' +
-        '<p><b>Effort.</b> Sets end 3 reps short of failure in week one and step down to ' + (P.cap ? '1' : '0') + ' by the last hard week. Heavy barbell lifts stop at 1.</p>' +
+        '<p><b>Effort.</b> Sets end 3 reps short of failure in week one and step down to ' + (P.cap || P.ceil ? '1' : '0') + ' by the last hard week. Heavy barbell lifts stop at 1.</p>' +
         '<p><b>Weights.</b> Hit the top of the rep range and the weight goes up by the smallest jump; otherwise aim for one more rep at the same weight.</p>' +
-        '<p><b>Deload.</b> The last week is half the sets at week one’s weights. It is there to let fatigue drain, not to grow — one trial found a week off changed growth not at all.</p>';
+        '<p><b>Deload.</b> The last week is half the sets at week one\u2019s weights. It is there to let fatigue drain, not to grow — one trial found a week off changed growth not at all.</p>';
       if (P.pb) {
         out += '<p><b>The main lift.</b> Each session opens with one: a top set of four to six about two reps short of failure, then three back-off sets of eight at eighty-five per cent of it. The top set moves by double progression \u2014 six reps and it goes up \u2014 and its sets never climb; the feedback moves the accessories. Heavy sets built more strength than moderate ones in the research, and the two grew muscle about the same, which is why this does both.</p>';
       }
+      if (o.prog === 'liftmor') {
+        out += '<p><b>Heavy for bone and muscle.</b> Inspired by the LIFTMOR bone-density trials and Stacy Sims\u2019s heavy-resistance protocol: each session opens with a 4\u20136 rep compound lift, while accessory volume is capped at 85% of RP\u2019s ceiling so central fatigue stays low and recovery stays crisp.</p>';
+      }
+      if (o.prog === 'glute') {
+        out += '<p><b>Glutes &amp; posterior chain first.</b> Hip thrusts, Romanian deadlifts, split squats, and abduction open the lower-body sessions while you are freshest, with glutes, hamstrings, and shoulders given priority volume and upper-body work kept balanced.</p>';
+      }
       if (o.prog === 'focus') {
         out += '<p><b>The focus.</b> ' + (o.fx ? esc(names(FOCUS[o.fx].m.map(function (m) { return { n: mname(m) }; }))) : 'The area you pick') +
-          ' goes first in every session that trains it — what comes first gets the most out of you — gets an extra exercise on those days, starts four sets higher and climbs on the feedback. Everything else is held near RP’s maintenance volume, about three-fifths of MEV, and only moves if a session was too much. A block or two like this, then back to an even split.</p>';
+          ' goes first in every session that trains it — what comes first gets the most out of you — gets an extra exercise on those days, starts four sets higher and climbs on the feedback. Everything else is held near RP\u2019s maintenance volume, about three-fifths of MEV, and only moves if a session was too much. A block or two like this, then back to an even split.</p>';
       }
       if (P.cap) {
-        out += '<p><b>While you eat less.</b> Losing weight is the kitchen’s job — Nourish’s targets do it. The training’s job is to give your body a reason to keep its muscle: loads stay heavy, sets end a rep short of failure, and the weekly climb is one set at a time to a roof about a third below RP’s MRV, because recovery is slower on less food. In the research, lifting in a deficit still built strength; muscle gains shrank as the deficit grew.</p>';
+        out += '<p><b>While you eat less.</b> Losing weight is the kitchen\u2019s job — Nourish\u2019s targets do it. The training\u2019s job is to give your body a reason to keep its muscle: loads stay heavy, sets end a rep short of failure, and the weekly climb is one set at a time to a roof about a third below RP\u2019s MRV, because recovery is slower on less food. In the research, lifting in a deficit still built strength; muscle gains shrank as the deficit grew.</p>';
       }
       if (o.prog === 'home') {
         out += '<p><b>No plates to add.</b> Bodyweight gets harder by becoming a harder exercise. Reach the top of the rep range on every set and the next session moves you up a rung — incline push-up to push-up to deficit push-up to archer, negative pull-up to pull-up, bodyweight squat to split squat to Bulgarian. Too big a jump is a swap away from the rung below. Push-ups made harder this way built chest muscle much as the bench press did, and in the research load matters little to growth when sets go close to failure.</p>' +

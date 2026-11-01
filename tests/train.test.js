@@ -90,7 +90,7 @@ module.exports = {
     t.ok('and each pick says why it fits', r0.why >= 1, r0.why);
     await p.click('[data-t="lib"]');
     r0 = await p.evaluate(() => document.querySelectorAll('.tr-prog').length);
-    t.ok('the library shows every program', r0 === 9, r0);
+    t.ok('the library shows every program', r0 === 15, r0);
     await p.click('[data-t="unlib"]');
     await p.click('[data-t="prog"][data-v="grow"]');
     await p.click('[data-t="o-pri"][data-v="side"]');
@@ -5190,6 +5190,112 @@ module.exports = {
       hcHubCheck.cells === 6 &&
       hcHubCheck.exChips >= 2,
       JSON.stringify(hcHubCheck));
+
+    // ---- 6 world-class evidence-based programs & family routing (5/3/1, Tactical, Glute, LIFTMOR, Longevity, Youth, Play) ----
+    const familyProgs = await p.evaluate(() => {
+      const _ = window.Train._;
+      const st = _.state();
+      // 1. Submaximal 5/3/1 (w531)
+      const w531Ms = _.build({ prog: 'w531', dpw: 4, kit: 'gym', min: 60, lvl: 1, tm: { 'bb-squat': 300, 'bb-bench': 200, 'bb-dl': 350, 'bb-ohp': 135 } });
+      const w531W0 = _.plan(w531Ms, 0, 0).x[0];
+      const w531W2 = _.plan(w531Ms, 2, 0).x[0];
+      const w531W3 = _.plan(w531Ms, 3, 0).x[0];
+      // Verify nextTm for w531 when week 1 and week 3 AMRAP sets meet target vs miss target
+      w531Ms.id = 'm531';
+      st.T.ms.m531 = w531Ms;
+      st.T.wo.w531a = { id: 'w531a', st: Date.now() - 864e5 * 14, u: 'lb', ms: 'm531', w: 0, d: 0, x: [{ e: w531W0.e, s: [{ w: 195, r: 5 }, { w: 225, r: 5 }, { w: 255, r: 7, tr: 5, am: 1 }] }] };
+      st.T.wo.w531b = { id: 'w531b', st: Date.now() - 864e5 * 2, u: 'lb', ms: 'm531', w: 2, d: 0, x: [{ e: w531W2.e, s: [{ w: 225, r: 5 }, { w: 255, r: 3 }, { w: 285, r: 3, tr: 1, am: 1 }] }] };
+      localStorage.setItem('bsc.train', JSON.stringify(st.T));
+      _.reload();
+      const tmUp = _.nextTm(_.state().T.ms.m531)[w531W0.e];
+      _.state().T.wo.w531b.x[0].s[2].r = 0;
+      localStorage.setItem('bsc.train', JSON.stringify(_.state().T));
+      _.reload();
+      const tmDown = _.nextTm(_.state().T.ms.m531)[w531W0.e];
+      delete _.state().T.ms.m531;
+      delete _.state().T.wo.w531a;
+      delete _.state().T.wo.w531b;
+      localStorage.setItem('bsc.train', JSON.stringify(_.state().T));
+      _.reload();
+
+      // 2. Tactical & endurance (tactical)
+      const tacMs = _.build({ prog: 'tactical', dpw: 3, kit: 'gym', min: 40, lvl: 1 });
+      const tacRir = [0, 3, 7].map((w) => _.rirFor(tacMs, w));
+
+      // 3. Glutes & lower-body sculpt (glute)
+      const gluteMs = _.build({ prog: 'glute', dpw: 3, kit: 'gym', min: 60, lvl: 1 });
+      const gluteFirstMoves = gluteMs.days.map((d) => _.lib(d.s[0].e).m);
+
+      // 4. Heavy & lithe / LIFTMOR & Sims 40+ (liftmor)
+      const liftmorMs = _.build({ prog: 'liftmor', dpw: 3, kit: 'gym', min: 60, lvl: 1 });
+      const liftmorRir = [0, 1, 2, 3].map((w) => _.rirFor(liftmorMs, w));
+
+      // 5. Centenarian decathlon (longevity)
+      const longMs = _.build({ prog: 'longevity', dpw: 3, kit: 'db', min: 40, lvl: 1 });
+
+      // 6. Youth athletic foundations (youth) — safety filter & locked 3 RIR across compounds and isolations
+      const youthMs = _.build({ prog: 'youth', dpw: 3, kit: 'gym', min: 40, lvl: 0, age: 'u13' });
+      const youthRir = [0, 2, 4, 5].map((w) => _.rirFor(youthMs, w));
+      const youthPlanAll3 = _.plan(youthMs, 0, 0).x.every((x) => x.rir === 3);
+      const youthExIds = youthMs.days.flatMap((d) => d.s.map((s) => s.e));
+      const youthAvoidIds = ['bb-squat', 'bb-front', 'sm-squat', 'bb-dl', 'sumo-dl', 'trap-dl', 'bb-rdl', 'bb-sldl', 'good-am', 'bb-row', 'pendlay', 'bb-ohp', 'bb-shrug', 'bb-calf', 'skull'];
+      const noSpinalMax = youthExIds.every((id) => youthAvoidIds.indexOf(id) < 0);
+
+      // 7. Recommendations across family profiles
+      const base = _.defaultsPr({});
+      const recYouth = _.recommend(Object.assign({}, base, { goal: 'health', lvl: 0, dpw: 2, min: 40, kit: 'bw', age: 'u13' })).map((p) => p.id);
+      const recTeen = _.recommend(Object.assign({}, base, { goal: 'strength', lvl: 0, dpw: 3, min: 40, kit: 'gym', age: 'teen' })).map((p) => p.id);
+      const rec40Strong = _.recommend(Object.assign({}, base, { goal: 'strength', lvl: 1, dpw: 3, min: 60, kit: 'gym', age: '40' })).map((p) => p.id);
+      const rec60Move = _.recommend(Object.assign({}, base, { goal: 'health', lvl: 1, dpw: 3, min: 40, kit: 'db', age: '60' })).map((p) => p.id);
+
+      // 8. Toddler / young kids play ready session (with back/joint filter check)
+      _.state().T.pr.bk = 'f';
+      _.state().T.pr.jt = 'K';
+      const playDay = _.readyDay('play', false, 1);
+      const playSafe = playDay && playDay.s.every((s) => !_.barred(_.lib(s.e), { bk: 'f', jt: 'K', avoid: [] }));
+
+      return {
+        w531SetsW0: w531W0.sets,
+        w531FslW0: w531W0.st.slice(3).every((s) => s.tr === 5 && s.tw === w531W0.st[0].tw),
+        w531TopW2: w531W2.st[2].tr === 1 && w531W2.st[2].am === 1,
+        w531DeloadSets: w531W3.sets === 3 && w531W3.st.every((s) => !s.am),
+        tmUpOk: tmUp > 300,
+        tmDownOk: tmDown < 300,
+        tacWeeks: _.weeksOf(tacMs),
+        tacRir: tacRir.join(','),
+        glutePri: gluteMs.pri.join(','),
+        gluteFirstAllGlute: gluteFirstMoves.every((m) => m === 'glutes' || m === 'hams'),
+        liftmorCeil: liftmorMs.ceil,
+        liftmorRir: liftmorRir.join(','),
+        liftmorMain: liftmorMs.days.every((d) => d.s[0] && !!d.s[0].m),
+        longMode: longMs.goal,
+        youthRir: youthRir.join(','),
+        youthPlanAll3,
+        noSpinalMax,
+        recYouthTop: recYouth[0],
+        recTeenHasYouth: recTeen.indexOf('youth') >= 0,
+        rec40HasLiftmor: rec40Strong.indexOf('liftmor') >= 0,
+        rec60HasLong: rec60Move.indexOf('longevity') >= 0,
+        playCount: playDay ? playDay.s.length : 0,
+        playRir: playDay ? playDay.rir : -1,
+        playSafe: !!playSafe
+      };
+    });
+    t.ok('Submaximal 5/3/1 (w531) builds 3 wave sets + 3×5 FSL back-off sets, 1+ top set in week 3, 3 deload sets in week 4, and steps TM up/down from AMRAP sets',
+      familyProgs.w531SetsW0 === 6 && familyProgs.w531FslW0 && familyProgs.w531TopW2 && familyProgs.w531DeloadSets && familyProgs.tmUpOk && familyProgs.tmDownOk,
+      JSON.stringify(familyProgs));
+    t.ok('Tactical, Glute, LIFTMOR, and Longevity programs honor their physiological rules (submaximal 2 RIR, glute-first lower days, 0.85 ceiling + 1 RIR floor with heavy main lift)',
+      familyProgs.tacWeeks === 8 && familyProgs.tacRir === '2,2,2' &&
+      familyProgs.glutePri === 'glutes,hams,side' && familyProgs.gluteFirstAllGlute &&
+      familyProgs.liftmorCeil === 0.85 && familyProgs.liftmorRir === '3,2,1,1' && familyProgs.liftmorMain &&
+      familyProgs.longMode === 'keep',
+      JSON.stringify(familyProgs));
+    t.ok('Youth athletic foundations locks effort at 3 RIR across compounds and isolations, filters out axial spinal max lifts, routes u13/teen/40+/60+ profiles accurately, and serves a Little movers play session',
+      familyProgs.youthRir === '3,3,3,3' && familyProgs.youthPlanAll3 && familyProgs.noSpinalMax &&
+      familyProgs.recYouthTop === 'youth' && familyProgs.recTeenHasYouth &&
+      familyProgs.rec40HasLiftmor && familyProgs.rec60HasLong &&
+      familyProgs.playCount === 5 && familyProgs.playRir === 3 && familyProgs.playSafe,
+      JSON.stringify(familyProgs));
 
     await p.close();
     }

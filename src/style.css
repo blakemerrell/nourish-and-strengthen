@@ -9268,3 +9268,45 @@ button.mhyd-head { cursor: pointer; }
   font-size: 0.8125rem; padding: 3px 9px; border-radius: 999px;
   background: var(--paper-soft); border: 1px solid var(--line-soft); color: var(--ink-2);
 }
+
+/* Light it up (train.js, muscleMapCard): on the review the map is shades of
+   green, not ochre into green — a muscle going green is the whole point, so
+   the steps toward it are green too, paler. A lit muscle glows a little, and
+   a whole body lit glows more. The exercise pages keep their own colours:
+   all of this is scoped to the review's card. */
+.tr-hm-card { --lit1: color-mix(in oklab, var(--green) 26%, var(--card)); --lit2: color-mix(in oklab, var(--green) 58%, var(--card)); }
+.tr-hm-card .tr-hm-svg .hm-low .belly, .tr-hm-mini .hm-low .belly { fill: var(--lit1); }
+.tr-hm-card .tr-hm-svg .hm-mid .belly, .tr-hm-mini .hm-mid .belly { fill: var(--lit2); }
+.tr-hm-card .tr-hm-svg .hm-low .seam, .tr-hm-card .tr-hm-svg .hm-mid .seam { stroke: color-mix(in oklab, var(--green) 45%, var(--card)); }
+.tr-hm-card .tr-hm-svg .hm-low .fiber, .tr-hm-card .tr-hm-svg .hm-mid .fiber { stroke: color-mix(in oklab, var(--green) 40%, var(--card)); }
+.tr-hm-card .tr-hm-svg .hm-hit { filter: drop-shadow(0 0 2px color-mix(in oklab, var(--green) 65%, transparent)); }
+.tr-hm-card.all-lit .tr-hm-svg .hm-hit { filter: drop-shadow(0 0 5px color-mix(in oklab, var(--green) 85%, transparent)); }
+.tr-hm-card .tr-hm-sw.hm-low, .tr-hm-card .tr-mus-dot.hm-low { background: var(--lit1); }
+.tr-hm-card .tr-hm-sw.hm-mid, .tr-hm-card .tr-mus-dot.hm-mid { background: var(--lit2); }
+.tr-lit-top { display: flex; align-items: center; gap: 14px; margin: 6px 0 4px; }
+.tr-lit-ring { flex: none; }
+.tr-lit-track { fill: none; stroke: var(--line); stroke-width: 7; }
+.tr-lit-fill { fill: none; stroke: var(--green); stroke-width: 7; stroke-linecap: round; }
+.tr-lit-ring text { font-size: 16px; font-weight: 700; fill: var(--ink); }
+.tr-lit-h { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.tr-lit-h b { font-family: var(--serif); font-size: 1.5rem; font-weight: 600; line-height: 1.15; color: var(--ink); }
+.tr-lit-h span { font-size: 0.875rem; color: var(--muted); line-height: 1.3; }
+.tr-hm-card.all-lit .tr-lit-h b { color: var(--green); }
+.tr-lit-next { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.tr-lit-next span { font-size: 0.8125rem; border-radius: 999px; padding: 6px 10px; border: 1px dashed var(--green); color: var(--ink); background: var(--card); }
+.tr-lit-next b { color: var(--green); }
+.tr-lit-streak { margin: 4px 0 8px; font-size: 0.9375rem; color: var(--ink); text-align: center; }
+/* each block week's pill carries a small figure of that week */
+.tr-hm-pills:has(.has-fig) { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 4px; }
+.tr-hm-pills:has(.has-fig) .tr-hm-pill:not(.has-fig) { border-radius: 10px; padding: 4px 2px; min-width: 0; font-size: 0.8125rem; }
+.tr-hm-pill.has-fig { border-radius: 10px; padding: 4px 2px 3px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.tr-hm-pill.has-fig span { font-size: 0.8125rem; line-height: 1.1; white-space: nowrap; }
+.tr-hm-pill.all-lit:not(.active) { border-color: var(--green); }
+.tr-hm-mini { width: 100%; max-width: 34px; height: auto; aspect-ratio: 1 / 2; display: block; }
+.tr-hm-mini[data-sex="f"] { aspect-ratio: 648 / 1452; }
+.tr-hm-mini .b-shell { fill: color-mix(in oklab, var(--ink) 20%, var(--paper)); }
+.tr-hm-mini .b-hair { fill: color-mix(in oklab, var(--ink) 82%, var(--paper)); }
+.tr-hm-mini .b-tendon { fill: var(--card); stroke: none; }
+.tr-hm-mini .b-line, .tr-hm-mini .seam, .tr-hm-mini .fiber { display: none; }
+.tr-hm-mini .hm-0 .belly { fill: color-mix(in oklab, var(--ink) 20%, var(--paper)); }
+.tr-hm-mini .hm-hit .belly { fill: var(--green); }

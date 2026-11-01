@@ -8246,6 +8246,42 @@
       '</div>' +
     '</div>';
   }
+  /* One block week's muscles, each lit or not as the map draws them. */
+  function weekLit(ms, w) {
+    var pw = weekPlanSets(ms, w), lw = weekLoggedSets(ms, w), cls = {}, n = 0, hit = 0;
+    MUSCLES.forEach(function (m) {
+      var pl = pw.byMus[m.k] || 0, lg = lw.byMus[m.k] || 0;
+      if (!pl && !lg) return;
+      n++;
+      cls[m.k] = hmCls(lg, pl || lg);
+      if (cls[m.k] === 'hm-hit') hit++;
+    });
+    return { cls: cls, n: n, hit: hit, all: n > 0 && hit === n };
+  }
+  /* Weeks running with the whole body lit, back from the newest one that is
+     over (and this one, once it is lit), and the best run in the block. */
+  function litStreak(ms, curW) {
+    var runs = [], run = 0, best = 0;
+    for (var w = 0; w <= curW; w++) {
+      var wl = weekLit(ms, w);
+      if (wl.all) run++; else if (w < curW) run = 0;
+      if (run > best) best = run;
+      runs.push(run);
+    }
+    var now = weekLit(ms, curW).all ? runs[curW] : (curW > 0 ? runs[curW - 1] : 0);
+    return { now: now || 0, best: best };
+  }
+  // the front of the body, small, for a week's pill: not a .tr-hm-svg, so it is not the map
+  function miniFig(cls) {
+    return anatMapSVG(cls).front.replace('tr-hm-svg', 'tr-hm-mini');
+  }
+  function litRing(n, of) {
+    var r = 31, C = 2 * Math.PI * r, f = of ? n / of : 0;
+    return '<svg class="tr-lit-ring" viewBox="0 0 74 74" width="74" height="74" aria-hidden="true">' +
+      '<circle cx="37" cy="37" r="' + r + '" class="tr-lit-track"/>' +
+      (n ? '<circle cx="37" cy="37" r="' + r + '" class="tr-lit-fill" stroke-dasharray="' + (f * C).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 37 37)"/>' : '') +
+      '<text x="37" y="38" text-anchor="middle" dominant-baseline="middle">' + n + '/' + of + '</text></svg>';
+  }
   function muscleMapCard(r) {
     var ms = active();
     var small = r.keep || r.base || r.str;
@@ -8253,6 +8289,19 @@
     var curW = ms ? (nx ? nx.w : Math.max(0, W - 1)) : 0;
     var selCell = ms ? selOf(ms, nx) : null;
     var defW = selCell ? selCell.w : curW;
+    /* A week just finished stays on the map for two days. Without this the
+       last workout of a week moved the next slot into the week after, and
+       the map went straight from the whole body lit to an empty one: the
+       moment the card exists for was over the instant it happened. */
+    if (ms && nx && !S.sel && defW === nx.w && nx.w > 0) {
+      var lastPrev = 0, startedNext = false;
+      ix().list.forEach(function (wo) {
+        if (wo.ms !== ms.id) return;
+        if (wo.w === nx.w - 1 && wo.st > lastPrev) lastPrev = wo.st;
+        if (wo.w === nx.w) startedNext = true;
+      });
+      if (!startedNext && lastPrev && Date.now() - lastPrev < 2 * DAY_MS) defW = nx.w - 1;
+    }
     var selW = ms ? (fin(S.revWk) && S.revWk >= 0 && S.revWk < W ? S.revWk : defW) : 0;
     var planBy = {}, logBy = {};
     if (ms) {
@@ -8276,11 +8325,11 @@
 
     var wkTitle = ms ? (selW >= acc && !steady(ms) ? 'Deload week muscle coverage' : 'Week ' + (selW + 1) + ' muscle coverage')
       : (r.n ? r.n + ' workout' + (r.n === 1 ? '' : 's') + ' this week' : 'This week\u2019s muscle coverage');
-    var vkeyText = r.keep ? 'Heat-mapped to your weekly plan (3 or more hard sets, enough to keep strength).'
-      : r.base ? 'Heat-mapped to your weekly plan (3 or more hard sets, plenty while you are new).'
-      : r.str ? (r.cond ? 'Heat-mapped to your weekly plan (3 or more hard sets beside the circuits).' : 'Heat-mapped to your weekly plan (3 or more hard sets around the main lifts).')
-      : ms ? 'Heat-mapped to your ' + (selW >= acc && !steady(ms) ? 'Deload' : 'Week ' + (selW + 1)) + ' planned sets (volume climbs week over week, then drops on Deload).'
-      : 'Heat-mapped to your weekly target sets (10\u201320 sets, where the evidence is strongest).';
+    var vkeyText = r.keep ? 'Each muscle lights up green when it gets its sets (3 or more hard sets, enough to keep strength).'
+      : r.base ? 'Each muscle lights up green when it gets its sets (3 or more hard sets, plenty while you are new).'
+      : r.str ? (r.cond ? 'Each muscle lights up green when it gets its sets (3 or more hard sets beside the circuits).' : 'Each muscle lights up green when it gets its sets (3 or more hard sets around the main lifts).')
+      : ms ? 'Each muscle lights up green when it gets its ' + (selW >= acc && !steady(ms) ? 'Deload' : 'Week ' + (selW + 1)) + ' planned hard sets (volume climbs week over week, then drops on Deload).'
+      : 'Each muscle lights up green at its weekly target (10\u201320 hard sets, where the evidence is strongest).';
 
     var pills = '';
     if (ms) {
@@ -8293,14 +8342,44 @@
         }
         var isDl = w >= acc && !steady(ms);
         var pLbl = (isDl ? 'Deload' : 'Wk ' + (w + 1)) + (wd >= dpw ? ' ✓' : w === curW ? ' (Now)' : '');
+        /* Each week a small figure of itself, lit as that week was: the
+           weeks behind you read as a row of bodies going green, which is the
+           thing Blake asked to see. Weeks not reached yet stay a plain pill. */
+        var wl = w <= curW ? weekLit(ms, w) : null;
         ps.push('<button type="button" class="tr-hm-pill' + (w === selW ? ' active' : '') + (wd >= dpw ? ' done' : '') +
-          '" data-t="revwk" data-w="' + w + '" aria-pressed="' + (w === selW) + '">' + pLbl + '</button>');
+          (wl ? ' has-fig' + (wl.all ? ' all-lit' : '') : '') + '" data-t="revwk" data-w="' + w + '" aria-pressed="' + (w === selW) + '"' +
+          (wl ? ' aria-label="' + esc(pLbl) + ', ' + wl.hit + ' of ' + wl.n + ' muscles lit"' : '') + '>' +
+          (wl ? miniFig(wl.cls) + '<span>' + (w === curW ? 'Now' : isDl ? 'DL' : 'W' + (w + 1)) + (wd >= dpw ? ' ✓' : '') + '</span>' : '<span>' + pLbl + '</span>') + '</button>');
       }
       pills = '<div class="tr-hm-pills" role="group" aria-label="Select block week">' + ps.join('') + '</div>';
     }
 
-    return '<div class="tr-card tr-hm-card">' +
-      '<div class="tr-eyebrow">Weekly muscle volume · sets logged vs. planned</div>' +
+    /* ---- light it up ----
+     * Blake, 2026-11-01: "One of the main graphics that motivates me is
+     * seeing the body map. I want to see the whole body light up green!" So
+     * the map is the hero of the review: how many of the week's muscles are
+     * lit, the ring that fills as they go, which ones are left and by how
+     * many sets, and how many weeks running the whole body lit. Lit means
+     * the planned hard sets were done — the habit, not a claim of growth;
+     * whether a muscle is growing is the longer view's Muscles card. */
+    var nLit = mList.filter(function (m) { return m.cls === 'hm-hit'; }).length, nAll = mList.length;
+    var allLit = nAll > 0 && nLit === nAll;
+    var left = mList.filter(function (m) { return m.cls !== 'hm-hit' && m.pl > 0; })
+      .sort(function (a, b) { return (a.pl - a.lg) - (b.pl - b.lg); }).slice(0, 4);
+    var streak = ms ? litStreak(ms, Math.max(selW, Math.min(curW, defW))) : null;
+    var head = nAll ? '<div class="tr-lit-top">' + litRing(nLit, nAll) +
+        '<div class="tr-lit-h"><b>' + (allLit ? 'Whole body lit' : nLit + ' of ' + nAll + ' muscles lit') + '</b>' +
+        '<span>' + (allLit ? 'Every muscle in the plan got its sets. 🎉' : 'A muscle turns green when it gets its planned hard sets.') + '</span></div></div>' +
+      (left.length ? '<div class="tr-lit-next" aria-label="Still to light up">' + left.map(function (m) {
+        var need = Math.max(1, Math.round(m.pl - m.lg));
+        return '<span>' + esc(m.n) + ' · <b>' + need + ' more set' + (need === 1 ? '' : 's') + '</b></span>';
+      }).join('') + '</div>' : '') : '';
+    var streakSay = streak && streak.best ? '<p class="tr-lit-streak">' + (streak.now ? '🔥 <b>' + streak.now + ' week' + (streak.now === 1 ? '' : 's') + '</b> fully lit in a row.' : 'No fully lit week running yet.') +
+      (streak.best > streak.now ? ' Your best is ' + streak.best + '.' : streak.now > 1 ? ' Your best yet.' : '') + '</p>' : '';
+
+    return '<div class="tr-card tr-hm-card' + (allLit ? ' all-lit' : '') + '">' +
+      '<div class="tr-eyebrow">Light it up · this week\u2019s muscles</div>' +
+      head +
       '<div class="tr-title">' + esc(wkTitle) + '</div>' +
       '<div class="tr-note tr-vkey">' + esc(vkeyText) + '</div>' +
       pills +
@@ -8309,11 +8388,12 @@
         '<div class="tr-hm-col"><div class="tr-hm-lbl">Back</div>' + figs.back + '</div>' +
       '</div>' +
       '<div class="tr-hm-legend" aria-hidden="true">' +
-        '<span><i class="tr-hm-sw hm-0"></i> 0%</span>' +
-        '<span><i class="tr-hm-sw hm-low"></i> 1\u201349%</span>' +
-        '<span><i class="tr-hm-sw hm-mid"></i> 50\u201399%</span>' +
-        '<span><i class="tr-hm-sw hm-hit"></i> Plan hit ✓</span>' +
+        '<span><i class="tr-hm-sw hm-0"></i> Not yet</span>' +
+        '<span><i class="tr-hm-sw hm-low"></i> Started</span>' +
+        '<span><i class="tr-hm-sw hm-mid"></i> Halfway</span>' +
+        '<span><i class="tr-hm-sw hm-hit"></i> Lit ✓</span>' +
       '</div>' +
+      streakSay +
       (mList.length ? '<div class="tr-mus-grid" role="table" aria-label="Sets logged versus planned per muscle">' +
         mList.map(function (m) {
           var hit = m.cls === 'hm-hit';

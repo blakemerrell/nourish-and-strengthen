@@ -9251,6 +9251,9 @@ button.mhyd-head { cursor: pointer; }
 
 /* ---- Strengthen Unified Block Snapshot & 120d Biometrics Hub ------------- */
 .tr-snapshot-card { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+/* On its own Progress tab it sits right under the header row, whose own rule
+   already divides it: the two lines 16 px apart read as a doubled border. */
+#trBody > .tr-snapshot-card:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
 .tr-snap-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .tr-hc-hub { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
 .tr-hc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -9274,7 +9277,10 @@ button.mhyd-head { cursor: pointer; }
    the steps toward it are green too, paler. A lit muscle glows a little, and
    a whole body lit glows more. The exercise pages keep their own colours:
    all of this is scoped to the review's card. */
-.tr-hm-card { --lit1: color-mix(in oklab, var(--green) 26%, var(--card)); --lit2: color-mix(in oklab, var(--green) 58%, var(--card)); }
+/* the small figures on Today and the Workout tab use the same paler greens
+   for a muscle partway to its sets; defined only on the Progress card, they
+   came out unset there, and a half-trained week looked untouched */
+.tr-hm-card, .td-lit, .tr-litstrip { --lit1: color-mix(in oklab, var(--green) 26%, var(--card)); --lit2: color-mix(in oklab, var(--green) 58%, var(--card)); }
 .tr-hm-card .tr-hm-svg .hm-low .belly, .tr-hm-mini .hm-low .belly { fill: var(--lit1); }
 .tr-hm-card .tr-hm-svg .hm-mid .belly, .tr-hm-mini .hm-mid .belly { fill: var(--lit2); }
 .tr-hm-card .tr-hm-svg .hm-low .seam, .tr-hm-card .tr-hm-svg .hm-mid .seam { stroke: color-mix(in oklab, var(--green) 45%, var(--card)); }

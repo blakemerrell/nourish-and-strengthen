@@ -6977,6 +6977,13 @@
       /* Trends, moved here from the head row (2026-10-30). Every meal's view
          (#macroViews) has its own handler and leaves the menu open, so the
          pips can be seen to step. */
+      // the week in charts under the strip: shown or folded away
+      if (e.target.closest('[data-mwtiles]')) {
+        mMenu(false);
+        mWeekTilesToggle();
+        renderMacros();
+        return;
+      }
       if (e.target.closest('[data-mchartopen]')) {
         mMenu(false);
         rememberOpener();

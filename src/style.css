@@ -9367,10 +9367,8 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
 .tr-pr-party ul { margin: 4px 0 0; padding: 0 0 0 18px; font-size: 0.875rem; }
 .tr-mus-sheet .tr-spk-d { display: none; }
 
-/* My Day's week in charts (src/weektiles.js): one button under the week
-   strip, and when it is open six tiles, each a number with the week under it. */
-.mwt-btn { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; margin: 4px 0 2px; padding: 0 4px;
-  border: 0; border-top: 1px solid var(--line-soft); background: none; font: inherit; font-size: 0.875rem; font-weight: 600; color: var(--ochre-text); cursor: pointer; }
+/* My Day's week in charts (src/weektiles.js): turned on from the menu, six
+   tiles under the strip, each a number with the week under it. */
 .mwt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 4px 0 10px; }
 .mwt-tile { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px 8px; min-width: 0; }
 .mwt-k { font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
@@ -9400,3 +9398,6 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
 .td-lit-say b { font-size: 0.9375rem; color: var(--ink); }
 .td-lit.all-lit { background: color-mix(in oklab, var(--green) 14%, var(--card)); }
 .td-lit.all-lit .td-lit-say b { color: var(--green); }
+.mwt-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0 0; font-size: 0.875rem; font-weight: 600; color: var(--ochre-text); }
+.mwt-h .nut-ask { min-height: 44px; }
+#macroWeekTiles:empty { display: none; }

@@ -127,7 +127,7 @@ module.exports = {
       pr && /New record/.test(pr.head) && pr.items.length >= 1 && pr.items.every((x) => / · (heaviest|best est\. max|most reps)/.test(x)), JSON.stringify(pr));
     await p.context().close();
 
-    /* ---- Nourish: the week in charts, behind its button ---- */
+    /* ---- Nourish: the week in charts, from the menu ---- */
     const q = await t.fresh({ viewport: { width: 320, height: 700 } });
     await q.clock.setFixedTime(new Date(2026, 9, 25, 20, 0, 0));
     await q.reload();
@@ -148,9 +148,10 @@ module.exports = {
     await q.waitForTimeout(600);
     await q.click('.tab[data-view="macros"]');
     await q.waitForTimeout(400);
-    t.ok('My Day starts with the charts folded: one button under the week strip',
-      await q.evaluate(() => !!document.querySelector('#macroWeekTiles [data-mwtiles][aria-expanded="false"]') && !document.querySelector('.mwt-tile')));
-    await q.click('[data-mwtiles]');
+    t.ok('My Day starts with the charts away, taking no room at all',
+      await q.evaluate(() => !document.querySelector('.mwt-tile') && document.getElementById('macroWeekTiles').getBoundingClientRect().height === 0));
+    await q.click('#macroMore');
+    await q.click('#macroMenu [data-mwtiles]');
     await q.waitForTimeout(300);
     const tl = await q.evaluate(() => [...document.querySelectorAll('.mwt-tile')].map((x) => ({ k: x.querySelector('.mwt-k').textContent, chart: !!x.querySelector('svg.mwt-sp'), s: x.querySelector('.mwt-s').textContent })));
     t.ok('open, six tiles: weight, calories, protein, sleep, steps, water', tl.map((x) => x.k).join() === 'Weight,Calories,Protein,Sleep,Steps,Water', JSON.stringify(tl));
@@ -162,5 +163,8 @@ module.exports = {
     await q.click('.tab[data-view="macros"]');
     await q.waitForTimeout(300);
     t.ok('and it stays open on this phone until folded again', await q.evaluate(() => document.querySelectorAll('.mwt-tile').length === 6));
+    await q.click('#macroWeekTiles [data-mwtiles]');
+    await q.waitForTimeout(200);
+    t.ok('and its own Hide puts it away', await q.evaluate(() => !document.querySelector('.mwt-tile')));
   }
 };

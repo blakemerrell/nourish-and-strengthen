@@ -25,7 +25,10 @@
 
   /* Blake, 2026-11-01: "Add mini charts or spark lines in some of the data
      boxes in Nourish", and, asked where: only in the week view, so My Day is
-     not made longer to scroll past on the way to breakfast. */
+     not made longer to scroll past on the way to breakfast. Turned on from
+     the menu (Week in charts) and off from the panel's own Hide: folded, it
+     takes no room at all. It was a button under the strip first, and that
+     row alone was enough to push a phone's first meal off the screen. */
   var OPEN_KEY = 'bsc.weekTiles';
   function isOpen() { try { return localStorage.getItem(OPEN_KEY) === '1'; } catch (e) { return false; } }
   function setOpen(on) { try { localStorage.setItem(OPEN_KEY, on ? '1' : '0'); } catch (e) { /* this session only */ } }
@@ -69,10 +72,8 @@
   }
 
   function mWeekTilesHTML(k) {
-    var open = isOpen();
-    var btn = '<button class="mwt-btn no-print" data-mwtiles="1" aria-expanded="' + open + '">' +
-      '<span>Your week in charts</span><span aria-hidden="true">' + (open ? '▾' : '▸') + '</span></button>';
-    if (!open) return btn;
+    if (!isOpen()) return '';
+    var btn = '<div class="mwt-h"><span>Your week in charts</span><button class="nut-ask no-print" data-mwtiles="1">Hide</button></div>';
     // the strip's week: Monday to Sunday around the day on screen, nothing past today
     var cur = keyDate(k), mon = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate());
     mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));

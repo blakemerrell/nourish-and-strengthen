@@ -4481,6 +4481,31 @@ module.exports = {
       r.join() === 'Sat*,Tue*,Thu*,Fri*', r.join());
     await p.close();
 
+    /* A block week runs across the calendar's. On Sunday 1 November, with
+       Upper A done Monday and Lower A Wednesday, the two still to come slid to
+       Monday and Tuesday: the headings read "Mon, Wed, Mon, Tue", two columns
+       saying Mon. The one still to come carries its date. */
+    p = await t.fresh({ viewport: { width: 390, height: 844 } });
+    await p.clock.setFixedTime(new Date(2026, 10, 1, 10, 0));
+    await p.evaluate(() => {
+      const _ = window.Train._, ms = _.build({ goal: 'grow', dpw: 4, kit: 'gym', lvl: 1, acc: 4, pri: [] });
+      ms.id = 'b'; ms.n = 'Across weeks'; ms.at = new Date(2026, 9, 26).getTime();
+      const wo = {};
+      [[0, new Date(2026, 9, 26, 18).getTime()], [1, new Date(2026, 9, 28, 18).getTime()]].forEach(([d, st]) => {
+        const pl = _.plan(ms, 0, d);
+        wo['w' + d] = { id: 'w' + d, st, en: st + 30 * 60e3, u: 'lb', ms: 'b', w: 0, d, n: pl.n,
+          x: pl.x.map((x) => ({ e: x.e, s: [{ w: 80, r: 8, t: st + 60e3 }] })), sr: {}, fb: {} };
+      });
+      localStorage.setItem('bsc.train', JSON.stringify({ pr: { u: 'lb', qz: 1, lvl: 1, ld: [0, 1, 3, 4] }, act: 'b', ms: { b: ms }, cx: {}, ax: {}, wo }));
+      localStorage.removeItem('bsc.trainStamps'); _.reload();
+    });
+    await p.click('.tab[data-view="train"]');
+    await p.click('[data-t="sub"][data-v="block"]');
+    r = await p.evaluate(() => [...document.querySelectorAll('.tr-ghd')].map((e) => e.textContent + (e.classList.contains('moved') ? '*' : '')));
+    t.ok('when a slid session lands on a weekday another column already says, it carries its date, so no two headings read the same',
+      r.join() === 'Mon,Wed*,Mon 2*,Tue*', r.join());
+    await p.close();
+
     // ---- History by block: the mesocycles, named, kept, looked back on, run again ----
     p = await t.fresh({ viewport: { width: 390, height: 844 } });
     await p.evaluate(() => {

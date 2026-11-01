@@ -6136,10 +6136,22 @@
       if (woFor(ms, nx.w, cols[c])) continue;     // done early: not still to come, and takes no day
       while (o < 21 && ld.indexOf((ti + o) % 7) < 0) o++;
       var wd = (ti + o) % 7;
-      out[cols[c]] = { wd: wd, moved: wd !== ld[c] };
+      out[cols[c]] = { wd: wd, moved: wd !== ld[c], at: o };
       o++;
     }
     return out;
+  }
+  /* A column's day as its heading says it. A block week runs across the
+     calendar's, so once sessions slid along, the headings could read "Mon,
+     Wed, Mon, Tue" — the second Monday next week's — and two columns saying
+     Mon looked like a mistake (seen 2026-11-01, a Sunday). A session still to
+     come whose weekday another column already says carries its date too:
+     "Mon 2". Otherwise the weekday alone, as before. */
+  function colLbl(c, cd) {
+    var same = Object.keys(cd).some(function (k) { return cd[k] !== c && cd[k].wd === c.wd; });
+    if (!same || c.at === undefined) return LD_S[c.wd];
+    var n = new Date();   // by calendar day, not 24 h steps, so a clock change can't shift it
+    return LD_S[c.wd] + ' ' + new Date(n.getFullYear(), n.getMonth(), n.getDate() + c.at).getDate();
   }
   function ldHTML(ms, nx) {
     /* A block of nothing but easy days has no sessions to give days to, and
@@ -6189,7 +6201,7 @@
           var c = cd[i];
           // "day" is the one word a narrow column can spare
           return '<span class="tr-gh" role="columnheader">' + esc(d.ez ? 'Easy' : dayName(d).replace(/ day$/, '')) +
-            (c ? '<i class="tr-ghd' + (c.moved ? ' moved' : '') + '">' + LD_S[c.wd] + '</i>' : '') + '</span>';
+            (c ? '<i class="tr-ghd' + (c.moved ? ' moved' : '') + '">' + colLbl(c, cd) + '</i>' : '') + '</span>';
         }).join('');
       })() + '</div>';
     for (var w = 0; w < weeksOf(ms); w++) {
@@ -8462,15 +8474,16 @@
 
   /* One block week's muscles, each lit or not as the map draws them. */
   function weekLit(ms, w) {
-    var pw = weekPlanSets(ms, w), lw = weekLoggedSets(ms, w), cls = {}, n = 0, hit = 0;
+    var pw = weekPlanSets(ms, w), lw = weekLoggedSets(ms, w), cls = {}, n = 0, hit = 0, part = 0;
     MUSCLES.forEach(function (m) {
       var pl = pw.byMus[m.k] || 0, lg = lw.byMus[m.k] || 0;
       if (!pl && !lg) return;
       n++;
       cls[m.k] = hmCls(lg, pl || lg);
       if (cls[m.k] === 'hm-hit') hit++;
+      else if (lg > 0) part++;
     });
-    return { cls: cls, n: n, hit: hit, all: n > 0 && hit === n };
+    return { cls: cls, n: n, hit: hit, part: part, all: n > 0 && hit === n };
   }
   /* Weeks running with the whole body lit, back from the newest one that is
      over (and this one, once it is lit), and the best run in the block. */
@@ -8587,6 +8600,7 @@
      * the planned hard sets were done — the habit, not a claim of growth;
      * whether a muscle is growing is the longer view's Muscles card. */
     var nLit = mList.filter(function (m) { return m.cls === 'hm-hit'; }).length, nAll = mList.length;
+    var nPart = mList.filter(function (m) { return m.cls === 'hm-low' || m.cls === 'hm-mid'; }).length;
     var modeSeg = '<div class="seg tr-hm-mode" role="group" aria-label="Colour the map by">' +
       '<button data-t="hmmode" data-v="sets" aria-pressed="' + !recMode + '">Sets this week</button>' +
       '<button data-t="hmmode" data-v="rec" aria-pressed="' + recMode + '">Recovery</button></div>';
@@ -8598,7 +8612,7 @@
         '<div class="tr-lit-h"><b>' + nLit + ' of ' + nAll + ' ready to train</b><span>Green is rested. Paler is still recovering from its last hard sets.</span></div></div>'
       : nAll ? '<div class="tr-lit-top">' + litRing(nLit, nAll) +
         '<div class="tr-lit-h"><b>' + (allLit ? 'Whole body lit' : nLit + ' of ' + nAll + ' muscles lit') + '</b>' +
-        '<span>' + (allLit ? 'Every muscle in the plan got its sets. 🎉' : 'A muscle turns green when it gets its planned hard sets.') + '</span></div></div>' +
+        '<span>' + (allLit ? 'Every muscle in the plan got its sets. 🎉' : (nPart ? nPart + ' more under way, in the paler greens. ' : '') + 'A muscle turns green when it gets its planned hard sets.') + '</span></div></div>' +
       (left.length ? '<div class="tr-lit-next" aria-label="Still to light up">' + left.map(function (m) {
         var need = Math.max(1, Math.round(m.pl - m.lg));
         return '<span>' + esc(m.n) + ' · <b>' + need + ' more set' + (need === 1 ? '' : 's') + '</b></span>';
@@ -9289,11 +9303,23 @@
     var wl = weekLit(ms, w);
     if (!wl.n) return '';
     var figs = anatMapSVG(wl.cls), st = litStreak(ms, w);
-    return '<button class="tr-card tr-litstrip' + (wl.all ? ' all-lit' : '') + '" data-t="sub" data-v="progress" aria-label="' + wl.hit + ' of ' + wl.n + ' muscles lit this week. See your progress">' +
+    return '<button class="tr-card tr-litstrip' + (wl.all ? ' all-lit' : '') + '" data-t="sub" data-v="progress" aria-label="' + wl.hit + ' of ' + wl.n + ' muscles lit this week' + (!wl.all && wl.part ? ', ' + wl.part + ' more under way' : '') + '. See your progress">' +
       '<span class="tr-litstrip-f" aria-hidden="true">' + figs.front.replace('tr-hm-svg', 'tr-hm-mini') + figs.back.replace('tr-hm-svg', 'tr-hm-mini') + '</span>' +
       '<span class="tr-litstrip-t"><b>' + (wl.all ? 'Whole body lit' : wl.hit + ' of ' + wl.n + ' muscles lit') + '</b>' +
-      '<span>' + (st.now ? '\ud83d\udd25 ' + st.now + ' week' + (st.now === 1 ? '' : 's') + ' fully lit in a row' : 'this week, from your hard sets') + '</span></span>' +
+      '<span>' + litSub(wl, st.now) + '</span></span>' +
       '<span class="tr-litstrip-go" aria-hidden="true">Progress \u203a</span></button>';
+  }
+  /* The line under "N of M muscles lit". Lit means a muscle got all its
+     planned sets for the week, and most are trained twice a week, so after a
+     couple of hard workouts the count could still read 0 of 11 while half the
+     week's sets were done (Blake, 2026-11-01: it read like nothing counted).
+     The muscles partway there are named as a number, the paler greens on the
+     figure, so the work shows from the first set. */
+  function litSub(wl, streak) {
+    var bits = [];
+    if (!wl.all && wl.part) bits.push(wl.part + ' more under way');
+    if (streak) bits.push('\ud83d\udd25 ' + streak + ' week' + (streak === 1 ? '' : 's') + ' fully lit in a row');
+    return bits.length ? bits.join(' \u00b7 ') : 'this week, from your hard sets';
   }
   function snapshotAndHubHTML(ms, nx) {
     return '<section class="tr-snapshot-card" id="trSnapshotCard" aria-label="Block review and biometrics">' +
@@ -13840,7 +13866,7 @@
         });
         if (nx && lw > 0 && !nextStarted && prevLast && Date.now() - prevLast < 2 * DAY_MS) lw--;
         var wl = weekLit(ms, lw), figs = anatMapSVG(wl.cls);
-        if (wl.n) out.lit = { n: wl.hit, of: wl.n, front: figs.front.replace('tr-hm-svg', 'tr-hm-mini'), back: figs.back.replace('tr-hm-svg', 'tr-hm-mini') };
+        if (wl.n) out.lit = { n: wl.hit, of: wl.n, part: wl.part, front: figs.front.replace('tr-hm-svg', 'tr-hm-mini'), back: figs.back.replace('tr-hm-svg', 'tr-hm-mini') };
       } catch (e) { /* no map: the card is as it was */ }
       if (!nx) { out.finished = true; return out; }
       out.week = wkName(ms, nx.w);

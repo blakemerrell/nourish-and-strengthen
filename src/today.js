@@ -418,10 +418,12 @@
     var l = w && w.lit;
     if (!l || !l.of) return '';
     var all = l.n === l.of;
-    return '<div class="td-lit' + (all ? ' all-lit' : '') + '" role="img" aria-label="' + l.n + ' of ' + l.of + ' muscles lit this week">' +
+    // partway muscles counted too: after two hard days "0 of 11 lit" read as nothing done
+    var part = !all && l.part ? l.part + ' more under way' : '';
+    return '<div class="td-lit' + (all ? ' all-lit' : '') + '" role="img" aria-label="' + l.n + ' of ' + l.of + ' muscles lit this week' + (part ? ', ' + part : '') + '">' +
       '<span class="td-lit-figs" aria-hidden="true">' + l.front + l.back + '</span>' +
       '<span class="td-lit-say"><b>' + (all ? 'Whole body lit' : l.n + ' of ' + l.of + ' muscles lit') + '</b>' +
-      (all ? 'Every muscle got its sets this week.' : 'this week, from your hard sets') + '</span></div>';
+      (all ? 'Every muscle got its sets this week.' : part ? part + ' this week' : 'this week, from your hard sets') + '</span></div>';
   }
   function workoutCard(w, main) {
     if (!w) return '';

@@ -96,6 +96,30 @@ module.exports = {
       td && td.figs === 2 && /\d+ of \d+ muscles lit/.test(td.say) && /muscles lit this week/.test(td.label), JSON.stringify(td));
     await p.context().close();
 
+    /* ---- two hard days in: lit is a whole week's sets, so the count can sit
+       at 0 while half the week is done; the muscles partway there are said ---- */
+    p = await open(t, [FULL, FULL, FULL, [[0, 1], [1, 1]]]);
+    const part = await p.evaluate(() => {
+      const c2 = document.querySelector('.tr-hm-card');
+      return { say: c2.querySelector('.tr-lit-h span').textContent,
+        paler: c2.querySelectorAll('.tr-hm-svg .hm-low, .tr-hm-svg .hm-mid').length,
+        fill: (() => { const b = c2.querySelector('.tr-hm-svg .hm-mid .belly, .tr-hm-svg .hm-low .belly'); return b ? getComputedStyle(b).fill : ''; })() };
+    });
+    t.ok('muscles partway to their sets are counted in words on the map', part.paler > 0 && /^\d+ more under way, in the paler greens/.test(part.say), JSON.stringify(part));
+    await p.click('[data-t="sub"][data-v="block"]');
+    await p.waitForTimeout(200);
+    const strip = await p.evaluate(() => {
+      const s = document.querySelector('.tr-litstrip');
+      const b = s && s.querySelector('.tr-hm-mini .hm-mid .belly, .tr-hm-mini .hm-low .belly');
+      return s && { say: s.textContent, fill: b ? getComputedStyle(b).fill : '' };
+    });
+    t.ok('the Workout tab’s strip says them too', strip && /\d+ more under way/.test(strip.say), JSON.stringify(strip));
+    t.ok('and draws them in the paler green, not unset', strip && /^(rgb|oklab|color)/.test(strip.fill) && !/^rgb\(0, 0, 0\)$/.test(strip.fill), JSON.stringify(strip));
+    await p.click('.tab[data-view="today"]');
+    await p.waitForTimeout(300);
+    t.ok('and so does Today', /\d+ more under way this week/.test(await p.evaluate(() => (document.querySelector('.td-lit') || {}).textContent || '')));
+    await p.context().close();
+
     /* ---- a week just finished: the whole body, for two days ---- */
     p = await open(t, [FULL, FULL, FULL, [[0, 2], [1, 2], [2, 2], [3, 2]]], 'dark');
     c = await card(p);

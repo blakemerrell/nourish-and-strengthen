@@ -1044,7 +1044,11 @@ module.exports = nourish({
         const W0 = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         let lands = -1;
         for (let o = 0; lands < 0 && o < 14; o++) if (two.indexOf((todayIx + o) % 7) >= 0) lands = (todayIx + o) % 7;
-        const exp = [{ d: W0[two[0]], g: false }, { d: W0[lands], g: lands !== two[1] }];
+        // landing on the weekday the skipped one still says, it carries its date too
+        const on = await sp.evaluate(() => new Date().getTime());
+        let off = 0; for (let o = 0; o < 14; o++) if (two.indexOf((todayIx + o) % 7) >= 0) { off = o; break; }
+        const dt = new Date(on); dt.setDate(dt.getDate() + off);
+        const exp = [{ d: W0[two[0]], g: false }, { d: W0[lands] + (lands === two[0] ? ' ' + dt.getDate() : ''), g: lands !== two[1] }];
         t.ok('a skipped session moves the next one along, marked when it is off its usual day',
           JSON.stringify(slid) === JSON.stringify(exp), JSON.stringify({ slid, exp }));
       }

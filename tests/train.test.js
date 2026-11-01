@@ -538,11 +538,11 @@ module.exports = {
     // at the top of the Review, a row each with a picture; Nourish's This week lands there
     await reads(W({ kcal: 1900, pd: [1, 1, 0, 1, 1, 1, 1], hit: 6, pDays: 7, w: { now: 199, n: 7, was: 200, m: 7 } }), null, held);
     await c.click('.tab[data-view="train"]');
-    await c.click('[data-t="sub"][data-v="review"]');
+    await c.evaluate(() => { const st = window.Train._.state(); st.S.browse = false; st.S.qz = null; st.S.sub = 'block'; window.Train._.draw(); });
     r = await c.evaluate(() => {
       const card = document.querySelector('#view-train .tr-card.tr-week');
-      const first = document.querySelector('#view-train .tr-card');
-      return { top: card === first, rows: [...(card ? card.querySelectorAll('.tr-wkl') : [])].map((e) => e.textContent).join(),
+      const snapFirst = document.querySelector('#trSnapshotCard .tr-card');
+      return { top: card === snapFirst, rows: [...(card ? card.querySelectorAll('.tr-wkl') : [])].map((e) => e.textContent).join(),
         dots: card ? [...card.querySelectorAll('.tr-wkdots i')].map((i) => (i.classList.contains('on') ? 1 : 0)).join('') : '',
         bar: card ? (card.querySelector('.tr-wkbar i') || {}).style.width : '', arrow: card ? (card.querySelector('.tr-wka') || {}).textContent : '',
         lifts: card ? card.querySelector('.tr-wkr-s .tr-wkv').textContent : '', reads: card ? card.querySelectorAll('.tr-chk-r li').length : 0,
@@ -584,7 +584,7 @@ module.exports = {
     await c.click('#macroWeekBtn');
     r = await c.evaluate(() => ({ shown: !document.getElementById('view-train').classList.contains('hide'), sub: window.Train._.state().S.sub,
       card: !!document.querySelector('#view-train .tr-week'), sheet: !!document.querySelector('#trainRoot .sheet') }));
-    t.ok('Nourish’s This week goes to the same place: the week at the top of Strengthen’s Review', r.shown && r.sub === 'review' && r.card && !r.sheet, JSON.stringify(r));
+    t.ok('Nourish’s This week goes to the same place: the week at the top of Strengthen’s Review', r.shown && r.sub === 'block' && r.card && !r.sheet, JSON.stringify(r));
     await c.close();
 
     // Nourish's half, read from its own logs
@@ -713,7 +713,7 @@ module.exports = {
     r = await p.evaluate(() => (window.Train._.review().checks.find((c) => /going up/.test(c.t)) || {}).b || '');
     t.ok('and it says a rise inside a block is partly effort, not all new strength', /reps to spare coming down/.test(r), r);
     await p.click('.tab[data-view="train"]');
-    await p.click('[data-t="sub"][data-v="review"]');
+    await p.click('[data-t="sub"][data-v="block"]');
     await p.waitForTimeout(100);
     // the checks are headlines; their sources are inside, a tap away
     await p.click('.tr-check:has([data-t="ckopen"]) [data-t="ckopen"] >> nth=0');
@@ -1126,7 +1126,7 @@ module.exports = {
     t.ok('and the block shows the week’s minutes outside the gym', /4 h/.test(r.strip), r.strip);
     await openWorkouts(p);
     t.ok('it is in History beside the workouts', await p.isVisible('.tr-hax'));
-    await p.click('[data-t="sub"][data-v="review"]');
+    await p.click('[data-t="sub"][data-v="block"]');
     await p.waitForTimeout(100);
     r = await p.evaluate(() => {
       const rv = window.Train._.review();
@@ -4295,7 +4295,7 @@ module.exports = {
     await p.evaluate(() => { const b = document.querySelector('#trainRoot [data-t="s-gyon"][data-v="0"]'); if (b) b.click(); });
     await p.waitForTimeout(150);
     await p.click('.sheet-x');
-    await p.click('[data-t="sub"][data-v="review"]');
+    await p.click('[data-t="sub"][data-v="block"]');
     r = await p.evaluate(() => ({ cards: document.querySelectorAll('.tr-check').length, bodies: document.querySelectorAll('.tr-check .tr-ck-b').length }));
     t.ok('Review: each check a one-line headline', r.cards >= 3 && r.bodies === 0, JSON.stringify(r));
     await p.click('.tr-check [data-t="ckopen"] >> nth=0');
@@ -4324,7 +4324,7 @@ module.exports = {
     p = await t.fresh({ viewport: { width: 390, height: 844 } });
     await seed(p, { pr: { qz: 1, u: 'lb' }, act: '', ms: {}, cx: {}, ax: {}, wo: {} });
     await p.click('.tab[data-view="train"]');
-    await p.click('[data-t="sub"][data-v="review"]');
+    await p.click('[data-t="sub"][data-v="block"]');
     r = await p.evaluate(() => ({ over: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       card: (document.querySelector('.tr-check.tr-info') || { getBoundingClientRect: () => ({ width: 0 }) }).getBoundingClientRect().width }));
     t.ok('an empty Review is a card across the page, not a stray box that scrolls it sideways', r.over <= 0 && r.card > 300, JSON.stringify(r));
@@ -4338,7 +4338,7 @@ module.exports = {
       await seed(p, { pr: { qz: 1, u: 'lb' }, act: 'fx', ms: { fx: b }, cx: {}, ax: {}, wo: wos });
     }
     await p.click('.tab[data-view="train"]');
-    await p.click('[data-t="sub"][data-v="review"]');
+    await p.click('[data-t="sub"][data-v="block"]');
     const fx1 = await p.evaluate(() => { const b = document.querySelector('[data-t="fixset"]'); return b ? { d: b.dataset.d, i: b.dataset.i, say: b.textContent } : null; });
     if (fx1) {
       const n0 = await p.evaluate((f) => window.Train._.state().T.ms.fx.days[f.d].s[f.i].n, fx1);
@@ -4794,8 +4794,8 @@ module.exports = {
     r = await p.evaluate(() => !!document.querySelector('#trSesh.is-open'));
     t.ok('tapping Hide preview collapses the card back down', !r);
 
-    // Switch to Review tab and verify 2x2 KPI grid, 5-week block strip, and Front/Back Muscle Heatmap
-    await p.click('[data-t="sub"][data-v="review"]');
+    // Switch to Block tab and verify 2x2 KPI grid, 5-week block strip, and Front/Back Muscle Heatmap
+    await p.click('[data-t="sub"][data-v="block"]');
     await p.waitForTimeout(100);
     r = await p.evaluate(() => ({
       kpiCards: document.querySelectorAll('.tr-week .tr-kpi-card').length,
@@ -5083,6 +5083,113 @@ module.exports = {
     });
     t.ok('experienced lifter cards omit warm-up tutorial blurbs and 10+ week cuts surface a maintenance break reminder',
       simp.noWuBlurb && simp.cutRead, JSON.stringify(simp));
+
+    // ---- Phase 5: Consolidated 3-Tab Strengthen & 120-Day Health Connect Biometrics Hub ----
+    const hcHubCheck = await p.evaluate(() => {
+      localStorage.removeItem('sh.trainLive');
+      window.Train._.reload();
+
+      const hd = window.HealthData;
+      const todayKey = new Date().toLocaleDateString('sv-SE');
+      const daysMap = {};
+      for (let i = 0; i < 45; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const k = d.toLocaleDateString('sv-SE');
+        daysMap[k] = {
+          steps: 8500 + (i * 50),
+          sleepHours: +(7.1234 + (i % 3) * 0.2).toFixed(4),
+          rhr: 53 + (i % 4),
+          hrv: 64 - (i % 5),
+          spo2: 97.5,
+          resp: 14.2,
+          vo2: 47.8,
+          bodyFat: 15.6,
+          leanLb: 161.0,
+          actKcal: 620,
+          totKcal: 2650,
+          sleepStages: { deep: 92, rem: 108, light: 225, awake: 15 }
+        };
+      }
+      hd.take({
+        syncedAt: Date.now(),
+        source: 'com.google.android.apps.fitness',
+        days: daysMap,
+        ex: [
+          { d: todayKey, st: Date.now() - 7200000, en: Date.now() - 5000000, type: 'Running', title: 'Morning Run', min: 38, kcal: 410, hrAvg: 148, distM: 6400 },
+          { d: todayKey, st: Date.now() - 3600000, en: Date.now() - 500000, type: 'Strength', title: 'Heavy Lift', min: 52, kcal: 330, hrAvg: 124 }
+        ]
+      });
+
+      const dCopy = hd.day(todayKey);
+      dCopy.rhr = 999;
+      dCopy.sleepStages.deep = 999;
+      const dFresh = hd.day(todayKey);
+      const cloneSafe = dFresh.rhr !== 999 && dFresh.sleepStages.deep !== 999;
+
+      hd.take({ syncedAt: Date.now() + 1000, days: { [todayKey]: { sleepHours: 6.5, sleepStages: null } } });
+      const clearedStage = !hd.day(todayKey).sleepStages;
+      hd.take({ syncedAt: Date.now() + 2000, days: { [todayKey]: { sleepHours: 7.456, sleepStages: { deep: 92, rem: 108, light: 225, awake: 15 } } } });
+
+      const rec = hd.recovery(todayKey, 7.456789);
+      const roundedNote = !!(rec && Array.isArray(rec.why) && /7\.5 h sleep/.test(rec.why.join(' ')));
+
+      const fromD = new Date();
+      fromD.setDate(fromD.getDate() - 30);
+      const fromKey = fromD.toLocaleDateString('sv-SE');
+      const rhrSeries = hd.series('rhr', fromKey, todayKey);
+      const lastPt = rhrSeries[rhrSeries.length - 1];
+      const hasNormAndMedian = !!(lastPt && lastPt.m > 0 && lastPt.norm === lastPt.m && lastPt.base === lastPt.m);
+      lastPt.v = 9999;
+      const rhrSeriesAgain = hd.series('rhr', fromKey, todayKey);
+      const seriesCacheSafe = rhrSeriesAgain[rhrSeriesAgain.length - 1].v !== 9999;
+      const exList = hd.sessionsBetween(fromKey, todayKey);
+      const span = hd.spanInfo();
+
+      window.Train.openHub();
+      const subBtns = Array.from(document.querySelectorAll('#trBody [data-t="sub"]')).map((b) => b.dataset.v);
+      const snapCard = document.getElementById('trSnapshotCard');
+      const hubEl = document.querySelector('#trSnapshotCard [data-hc-hub="1"]');
+      const hubHead = snapCard ? (snapCard.querySelector('.tr-hc-card .tr-eyebrow') || {}).textContent || '' : '';
+      const svgChart = hubEl ? hubEl.querySelector('svg.tr-hc-chart') : null;
+      const cells = hubEl ? hubEl.querySelectorAll('.tr-hc-cell').length : 0;
+      const exChips = hubEl ? hubEl.querySelectorAll('.tr-hc-exchip').length : 0;
+
+      return {
+        subBtns: subBtns.join(','),
+        cloneSafe,
+        seriesCacheSafe,
+        clearedStage,
+        roundedNote,
+        seriesLen: rhrSeries.length,
+        hasMedian: hasNormAndMedian,
+        exCount: exList.length,
+        spanDays: span.days,
+        hasSnapCard: !!snapCard,
+        hasHub: !!hubEl,
+        hubHeadOk: /Health Connect Biometrics · since /.test(hubHead),
+        hasSvgChart: !!svgChart,
+        cells,
+        exChips
+      };
+    });
+    t.ok('Strengthen consolidates to 3 sub-tabs (Block, History, Lifts) and embeds the 120-Day Health Connect Biometrics Hub with defensive HealthData helpers',
+      hcHubCheck.subBtns === 'block,history,lifts' &&
+      hcHubCheck.cloneSafe &&
+      hcHubCheck.seriesCacheSafe &&
+      hcHubCheck.clearedStage &&
+      hcHubCheck.roundedNote &&
+      hcHubCheck.seriesLen >= 30 &&
+      hcHubCheck.hasMedian &&
+      hcHubCheck.exCount >= 2 &&
+      hcHubCheck.spanDays >= 45 &&
+      hcHubCheck.hasSnapCard &&
+      hcHubCheck.hasHub &&
+      hcHubCheck.hubHeadOk &&
+      hcHubCheck.hasSvgChart &&
+      hcHubCheck.cells === 6 &&
+      hcHubCheck.exChips >= 2,
+      JSON.stringify(hcHubCheck));
 
     // ---- 6 world-class evidence-based programs & family routing (5/3/1, Tactical, Glute, LIFTMOR, Longevity, Youth, Play) ----
     const familyProgs = await p.evaluate(() => {

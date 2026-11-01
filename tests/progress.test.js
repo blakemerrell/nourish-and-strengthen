@@ -21,10 +21,10 @@ module.exports = {
     await p.evaluate(SEED);
     await p.reload();
     await p.waitForTimeout(900);
-    // Open Strengthen -> Review directly (cold boot without visiting Nourish first)
+    // Open Strengthen -> Block (which embeds unified Review & Biometrics Hub) directly
     await p.click('.tab[data-view="train"]');
     await p.waitForTimeout(500);
-    await p.click('.tr-seg [data-v="review"]');
+    await p.click('.tr-seg [data-v="block"]');
     await p.waitForTimeout(400);
 
     const segs = await p.evaluate(() => [...document.querySelectorAll('[data-t="rvspan"]')].map((b) => b.textContent + ':' + b.getAttribute('aria-pressed')));
@@ -85,7 +85,7 @@ module.exports = {
     await q.waitForTimeout(700);
     await q.click('.tab[data-view="train"]');
     await q.waitForTimeout(400);
-    await q.click('.tr-seg [data-v="review"]').catch(() => {});
+    await q.click('.tr-seg [data-v="block"]').catch(() => {});
     await q.waitForTimeout(300);
     const empty = await q.evaluate(() => [...document.querySelectorAll('.tr-pg')].map((c) => !!c.querySelector('.tr-pg-wait')));
     t.ok('with nothing logged, each card says what it needs instead of drawing nothing', empty.length === 5 && empty.every(Boolean), JSON.stringify(empty));

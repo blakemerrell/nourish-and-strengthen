@@ -4107,7 +4107,9 @@
     if (!ms) return '';
     var W = weeksOf(ms), acc = accOf(ms), nx = nextSlot(ms);
     var curW = nx ? nx.w : Math.max(0, W - 1);
-    var selW = fin(S.revWk) && S.revWk >= 0 && S.revWk < W ? S.revWk : curW;
+    var selCell = selOf(ms, nx);
+    var defW = selCell ? selCell.w : curW;
+    var selW = fin(S.revWk) && S.revWk >= 0 && S.revWk < W ? S.revWk : defW;
     var sk = Array.isArray(ms.sk) ? ms.sk : [];
     var lCols = liftCols(ms), dpw = lCols.length || ms.days.length;
     var totSesh = W * dpw, doneSesh = 0;
@@ -4313,7 +4315,7 @@
     sub: (function () {
       try {
         var v = localStorage.getItem(LS_SUB);
-        return ['block', 'history', 'lifts', 'review'].indexOf(v) >= 0 ? v : 'block';
+        return ['block', 'history', 'lifts'].indexOf(v) >= 0 ? v : 'block';
       } catch (e) { return 'block'; }
     })(),
     qz: null,             // the quiz, while it is being answered; see quiz()
@@ -5574,8 +5576,7 @@
     }
     if (S.sub === 'block') html += LIVE ? liveHTML() : blockHTML();
     else if (S.sub === 'history') html += historyHTML();
-    else if (S.sub === 'lifts') html += liftsHTML();
-    else html += reviewHTML();
+    else html += liftsHTML();
     root.innerHTML = html;
     S.flash = '';
     drawRest();
@@ -5586,7 +5587,7 @@
   }
 
   function segHTML() {
-    var tabs = [['block', LIVE ? 'Workout' : 'Block'], ['history', 'History'], ['lifts', 'Lifts'], ['review', 'Review']];
+    var tabs = [['block', LIVE ? 'Workout' : 'Block'], ['history', 'History'], ['lifts', 'Lifts']];
     return '<div class="seg tr-seg" role="group" aria-label="Strengthen">' + tabs.map(function (t) {
       return '<button data-t="sub" data-v="' + t[0] + '" aria-pressed="' + (S.sub === t[0]) + '">' + t[1] + '</button>';
     }).join('') + '</div>';
@@ -5654,12 +5655,13 @@
   function blockHTML() {
     var ms = active();
     if (S.draft) return draftHTML();
-    if (S.qz) return savedHTML() + quizHTML();
+    if (S.qz) return savedHTML() + quizHTML() + (!S.browse && !S.lib ? snapshotAndHubHTML(null, null) : '');
     if (S.opt) return optHTML();
-    if (!ms && !T.pr.qz) return savedHTML() + quizHTML();
+    if (!ms && !T.pr.qz) return savedHTML() + quizHTML() + (!S.browse && !S.lib ? snapshotAndHubHTML(null, null) : '');
     if (!ms || S.browse) {
       return savedHTML() + (ms ? '<button class="tr-back" data-t="unbrowse">Your block · <span>' + esc(ms.n) +
-        '</span> — back to it</button>' : actStrip()) + (S.lib ? libHTML() : picksHTML());
+        '</span> — back to it</button>' : actStrip()) + (S.lib ? libHTML() : picksHTML()) +
+        (!ms && !S.browse && !S.lib ? snapshotAndHubHTML(null, null) : '');
     }
     var nx = nextSlot(ms);
     var acc = accOf(ms);
@@ -5673,6 +5675,7 @@
     var sel = selOf(ms, nx);
     var html = savedHTML() + blockCard(ms, nx, sel) + seshHTML(ms, nx, sel);
     html += actStrip();
+    html += snapshotAndHubHTML(ms, nx);
     /* One thing to do on this screen, and it is Start. The other ways in are
        a quiet list below it, and ending the block, which can't be taken
        back, stands apart in red. */
@@ -6910,6 +6913,7 @@
       html += '<button class="tr-addset tr-addex" data-t="addex">+ Add an exercise</button>';
     }
     html += '<div class="tr-acts tr-foot"><button class="tr-lnk tr-lnk-rm" data-t="discard">Discard workout</button></div>';
+    if (S.minim) html += snapshotAndHubHTML(ms, L);
     return html;
   }
 
@@ -8247,7 +8251,9 @@
     var small = r.keep || r.base || r.str;
     var W = ms ? weeksOf(ms) : 0, acc = ms ? accOf(ms) : 0, nx = ms ? nextSlot(ms) : null;
     var curW = ms ? (nx ? nx.w : Math.max(0, W - 1)) : 0;
-    var selW = ms ? (fin(S.revWk) && S.revWk >= 0 && S.revWk < W ? S.revWk : curW) : 0;
+    var selCell = ms ? selOf(ms, nx) : null;
+    var defW = selCell ? selCell.w : curW;
+    var selW = ms ? (fin(S.revWk) && S.revWk >= 0 && S.revWk < W ? S.revWk : defW) : 0;
     var planBy = {}, logBy = {};
     if (ms) {
       var pw = weekPlanSets(ms, selW), lw = weekLoggedSets(ms, selW);
@@ -8777,6 +8783,106 @@
       (say ? pgSay(say) : ''), math);
   }
 
+  function hcBiometricsHubHTML(D) {
+    var hd = typeof window !== 'undefined' && window.HealthData;
+    if (!hd || !hd.series) return '';
+    var info = hd.spanInfo ? hd.spanInfo() : { days: 0 };
+    if (!info.days) return '';
+
+    var fromK = D && D.span === 'all' ? D.from : null, toK = D ? D.to : null;
+    var rhrPts = hd.series('rhr', fromK, toK);
+    var hrvPts = hd.series('hrv', fromK, toK);
+    var bfPts = hd.series('bodyFat', fromK, toK);
+    var leanPts = hd.series('leanLb', fromK, toK);
+    var vo2Pts = hd.series('vo2', fromK, toK);
+    var spo2Pts = hd.series('spo2', fromK, toK);
+    var respPts = hd.series('resp', fromK, toK);
+    var exList = hd.sessionsBetween ? hd.sessionsBetween(fromK, toK) : [];
+
+    if (!rhrPts.length && !hrvPts.length && !bfPts.length && !leanPts.length && !vo2Pts.length && !spo2Pts.length && !respPts.length && !exList.length) {
+      return '';
+    }
+
+    var u = T.pr.u || 'lb';
+    var toU = function (lb) {
+      return u === 'kg' ? Math.round(lb * 0.45359237 * 10) / 10 : Math.round(lb * 10) / 10;
+    };
+
+    var body = '<div class="tr-hc-hub" data-hc-hub="1">';
+    if (rhrPts.length >= 2 || hrvPts.length >= 2) {
+      var pts = hrvPts.length >= 2 ? hrvPts : rhrPts;
+      var isHrv = hrvPts.length >= 2;
+      var vals = pts.map(function (p) { return p.v; }).concat(pts.map(function (p) { return p.m !== null ? p.m : p.v; }));
+      var lo = Math.min.apply(null, vals) - 1, hi = Math.max.apply(null, vals) + 1;
+      var px = function (i) { return 18 + i * 294 / Math.max(1, pts.length - 1); };
+      var py = function (v) { return 14 + (hi - v) / Math.max(1, hi - lo) * 48; };
+      var vPath = pts.map(function (p, i) { return (i ? 'L' : 'M') + px(i).toFixed(1) + ' ' + py(p.v).toFixed(1); }).join(' ');
+      var mPath = '', mOn = false;
+      pts.forEach(function (p, i) {
+        if (p.m === null || p.m === undefined) { mOn = false; return; }
+        mPath += (mOn ? 'L' : 'M') + px(i).toFixed(1) + ' ' + py(p.m).toFixed(1) + ' ';
+        mOn = true;
+      });
+      mPath = mPath.trim();
+      var lastP = pts[pts.length - 1];
+      var lbl = isHrv ? 'HRV ' + Math.round(lastP.v) + ' ms' : 'RHR ' + Math.round(lastP.v) + ' bpm';
+      body += '<svg class="tr-pg-svg tr-hc-chart" viewBox="0 0 330 78" role="img" aria-label="' + esc(lbl) + ' vs 30-day median">' +
+        (mPath ? '<path d="' + mPath + '" class="tr-pg-grid z"/>' : '') +
+        '<path d="' + vPath + '" class="tr-pg-wtrend"/>' +
+        '<text x="18" y="72" class="tr-pg-t">' + esc(lbl) + (lastP.m !== null ? ' · 30d median ' + Math.round(lastP.m) : '') + '</text>' +
+      '</svg>';
+    }
+
+    var cards = [];
+    if (rhrPts.length) {
+      var rLast = rhrPts[rhrPts.length - 1];
+      cards.push('<div class="tr-hc-cell"><small>Resting HR</small><b>' + Math.round(rLast.v) + ' bpm</b>' +
+        '<span>' + (rLast.m !== null ? '30d med ' + Math.round(rLast.m) + ' bpm' : 'Building 7d baseline') + '</span></div>');
+    }
+    if (hrvPts.length) {
+      var hLast = hrvPts[hrvPts.length - 1];
+      cards.push('<div class="tr-hc-cell"><small>HRV (RMSSD)</small><b>' + Math.round(hLast.v) + ' ms</b>' +
+        '<span>' + (hLast.m !== null ? '30d med ' + Math.round(hLast.m) + ' ms' : 'Building 7d baseline') + '</span></div>');
+    }
+    if (bfPts.length) {
+      var bFirst = bfPts[0], bLast = bfPts[bfPts.length - 1];
+      var bDiff = Math.round((bLast.v - bFirst.v) * 10) / 10;
+      cards.push('<div class="tr-hc-cell"><small>Body Fat</small><b>' + (Math.round(bLast.v * 10) / 10) + '%</b>' +
+        '<span>' + (bfPts.length > 1 ? (bDiff > 0 ? '+' : '') + bDiff + '% since ' + esc(pgDate(bFirst.k)) : 'Latest scan') + '</span></div>');
+    }
+    if (leanPts.length) {
+      var lFirst = leanPts[0], lLast = leanPts[leanPts.length - 1];
+      var lNow = toU(lLast.v), lStart = toU(lFirst.v);
+      var lDiff = Math.round((lNow - lStart) * 10) / 10;
+      cards.push('<div class="tr-hc-cell"><small>Lean Mass</small><b>' + fmtN(lNow) + ' ' + esc(u) + '</b>' +
+        '<span>' + (leanPts.length > 1 ? (lDiff > 0 ? '+' : '') + fmtN(lDiff) + ' ' + esc(u) + ' change' : 'Latest scan') + '</span></div>');
+    }
+    if (vo2Pts.length) {
+      var vLast = vo2Pts[vo2Pts.length - 1];
+      cards.push('<div class="tr-hc-cell"><small>VO\u2082Max</small><b>' + (Math.round(vLast.v * 10) / 10) + '</b><span>mL/kg/min</span></div>');
+    }
+    if (spo2Pts.length || respPts.length) {
+      var spStr = spo2Pts.length ? Math.round(spo2Pts[spo2Pts.length - 1].v) + '% SpO\u2082' : '';
+      var rpStr = respPts.length ? (Math.round(respPts[respPts.length - 1].v * 10) / 10) + ' br/m' : '';
+      cards.push('<div class="tr-hc-cell"><small>Overnight Vitals</small><b>' + esc(spStr || rpStr) + '</b>' +
+        (spStr && rpStr ? '<span>' + esc(rpStr) + '</span>' : '') + '</div>');
+    }
+    if (cards.length) body += '<div class="tr-hc-grid">' + cards.join('') + '</div>';
+
+    if (exList.length) {
+      var totMin = exList.reduce(function (s, x) { return s + (x.min || 0); }, 0);
+      var recEx = exList.slice(-4).reverse().map(function (x) {
+        return '<span class="tr-hc-exchip">' + esc(x.title || x.type || x.name || 'Workout') + ' \u00b7 ' + (x.min || 0) + 'm' +
+          (x.kcal ? ' \u00b7 ' + Math.round(x.kcal) + ' cal' : '') + '</span>';
+      }).join('');
+      body += '<div class="tr-hc-ex"><small>Watch Workouts (' + exList.length + ' sessions \u00b7 ' + totMin + ' min total)</small>' +
+        '<div class="tr-hc-exlist">' + recEx + '</div></div>';
+    }
+    body += '</div>';
+    var spanLbl = info.minKey ? 'Health Connect Biometrics · since ' + esc(pgDate(info.minKey)) + ' (' + info.days + 'd)' : '120-Day Health Connect Biometrics';
+    return '<div class="tr-card tr-hc-card"><div class="tr-eyebrow">' + spanLbl + '</div>' + body + '</div>';
+  }
+
   function progressHTML(span) {
     var D = pgData(span);
     var head = D.span === 'block'
@@ -8787,7 +8893,15 @@
         '<button data-t="rvdeep" data-v="1" aria-pressed="' + !!S.rvDeep + '">The math</button></div>' +
       '<p class="tr-pg-head">' + head + '</p>' +
       pgReadinessHTML(D) +
+      hcBiometricsHubHTML(D) +
       pgPace(D) + pgMuscle(D) + pgMuscles(D) + pgFood(D) + pgRest(D);
+  }
+
+  function snapshotAndHubHTML(ms, nx) {
+    return '<section class="tr-snapshot-card" id="trSnapshotCard" aria-label="Block review and biometrics">' +
+      '<div class="tr-snap-head"><span class="tr-eyebrow">Progress &amp; Biometrics</span></div>' +
+      reviewHTML() +
+    '</section>';
   }
 
   function reviewHTML() {
@@ -10907,13 +11021,34 @@
      leave it, at its top. */
   function showReview() {
     var v = $('view-train'), tab = document.querySelector('.tab[data-view="train"]');
-    // opened as "This week" (Nourish's card, the check-in): the week, whatever span was left on
-    S.rvSpan = 'week';
-    setSub('review');
     if (v && v.classList.contains('hide') && tab) tab.click();
-    scrollTop();
+    S.rvSpan = 'week';
+    S.browse = false;
+    S.qz = null;
+    S.sub = 'block';
+    if (LIVE) S.minim = 1;
+    try { localStorage.setItem(LS_SUB, 'block'); } catch (e) { /* private mode */ }
+    draw();
+    var el = $('trSnapshotCard');
+    if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else scrollTop();
+  }
+  function openHub() {
+    var v = $('view-train'), tab = document.querySelector('.tab[data-view="train"]');
+    if (v && v.classList.contains('hide') && tab) tab.click();
+    S.rvSpan = 'block';
+    S.browse = false;
+    S.qz = null;
+    S.sub = 'block';
+    if (LIVE) S.minim = 1;
+    try { localStorage.setItem(LS_SUB, 'block'); } catch (e) { /* private mode */ }
+    draw();
+    var el = $('trSnapshotCard');
+    if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else scrollTop();
   }
   function setSub(v) {
+    if (v === 'review') v = 'block';
     S.sub = v;
     // back to the workout is back to it full screen
     if (v === 'block') S.minim = 0;
@@ -13098,6 +13233,7 @@
     render: render,
     // the weekly check-in, for Nourish's morning card
     openCheckin: openCheckin,
+    openHub: openHub,
     dayText: dayText,
     /* The workouts saved on a day, by name — Nourish ticks "Trained today"
        off this, so a session logged here moves the day's carbohydrate there. */

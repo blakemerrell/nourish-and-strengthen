@@ -350,6 +350,97 @@ module.exports = {
     t.ok('but not from under a sheet left open', v3 === 'macros' && still, JSON.stringify({ v3, still }));
     await p.context().close();
 
+    /* ---- Unified Health OS: Vitals strip, Dual-Ring eating card, +24oz water & 120d Hub jump ---- */
+    p = await at(t, MORNING, () => {
+      localStorage.setItem('bsc.macroProfile', JSON.stringify({ sex: 'm', age: 43, ft: 5, inch: 11, lb: 190, act: 1.55, goal: 'cut1' }));
+      localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 190, f: 70, c: 230 }));
+      localStorage.setItem('bsc.macroDays', JSON.stringify({ '2026-10-01': { b: [{ id: 1, x: 1, eaten: 1 }] } }));
+      localStorage.setItem('bsc.macroAM', JSON.stringify({ '2026-10-01': { sl: 7.8, sy: 9420 } }));
+      localStorage.setItem('bsc.health', JSON.stringify({
+        d: {
+          '2026-09-29': { rhr: 54, hrv: 60 },
+          '2026-09-30': { rhr: 53, hrv: 62 },
+          '2026-10-01': {
+            bodyFat: 15.2, leanLb: 160.6, actKcal: 520, totKcal: 2650,
+            sleepStages: { deep: 95, rem: 110, light: 245, awake: 18 },
+            rhr: 51, hrv: 68, vo2: 49.5, spo2: 98, resp: 14.2
+          }
+        },
+        ex: [{ d: '2026-10-01', st: Date.now() - 3600000, min: 45, type: 'Running', title: 'Morning Run', kcal: 410 }]
+      }));
+    });
+    p.on('pageerror', (e) => errs.push(e.message));
+    const vitals0 = await p.evaluate(() => ({
+      hasStrip: !!document.querySelector('#todayRoot .td-vitals'),
+      hasRing: !!document.querySelector('#todayRoot .td-dual-ring'),
+      mpills: document.querySelectorAll('#todayRoot .td-mpill').length,
+      has24oz: !!document.querySelector('#todayRoot [data-td="water"][data-oz="24"]'),
+      trayOpen: !!document.querySelector('#todayRoot .td-vitals-tray')
+    }));
+    t.ok('Today renders Health Connect vitals strip, concentric Cal+Protein ring, P/C/F pills, and +24 oz button',
+      vitals0.hasStrip && vitals0.hasRing && vitals0.mpills === 3 && vitals0.has24oz && !vitals0.trayOpen, JSON.stringify(vitals0));
+
+    await p.click('#todayRoot [data-td="vitals"]');
+    const vitals1 = await p.evaluate(() => ({
+      trayOpen: !!document.querySelector('#todayRoot .td-vitals-tray'),
+      hasStages: !!document.querySelector('#todayRoot .td-stage-bar'),
+      cells: document.querySelectorAll('#todayRoot .td-vt-cell').length,
+      exTxt: (document.querySelector('#todayRoot .td-vt-ex') || {}).textContent || ''
+    }));
+    t.ok('tapping Vitals strip expands sleep stages, biometric cells, and watch workout summary',
+      vitals1.trayOpen && vitals1.hasStages && vitals1.cells >= 5 && /Morning Run|Running/.test(vitals1.exTxt), JSON.stringify(vitals1));
+
+    await p.click('#todayRoot [data-td="eatenfold"]');
+    const foldOpen = await p.evaluate(() => !!document.querySelector('#todayRoot .td-eaten-list'));
+    t.ok('tapping Eaten so far toggles inline eaten meal list without leaving Today', foldOpen);
+
+    await p.click('#todayRoot [data-td="hub"]');
+    await p.waitForTimeout(200);
+    const hubJump = await p.evaluate(() => ({
+      view: document.querySelector('.tab[aria-selected="true"]').dataset.view,
+      sub: window.Train._.state().S.sub,
+      rvSpan: window.Train._.state().S.rvSpan,
+      hasHub: !!document.querySelector('#trSnapshotCard [data-hc-hub="1"]')
+    }));
+    t.ok('120d Hub jump navigates to Strengthen Block snapshot card on This block span with 120d Biometrics Hub rendered',
+      hubJump.view === 'train' && hubJump.sub === 'block' && hubJump.rvSpan === 'block' && hubJump.hasHub, JSON.stringify(hubJump));
+
+    const edgeChecks = await p.evaluate(() => {
+      // 1) Yesterday fallback + todaySteps priority
+      localStorage.setItem('bsc.macroAM', JSON.stringify({ '2026-09-30': { sl: 7.5, sy: 6100 }, '2026-10-01': {} }));
+      window.HealthData.wipe();
+      window.Health.onData({
+        status: 'granted',
+        syncedAt: Date.now(),
+        days: {
+          '2026-09-30': { rhr: 52, hrv: 64, sleepHours: 7.5, steps: 6100 },
+          '2026-10-01': { steps: 11250 }
+        },
+        ex: []
+      });
+      window.Hive.go('today');
+      window.Today.render();
+      const inlineYesterday = (document.querySelector('#todayRoot .td-vitals-inline') || {}).textContent || '';
+
+      // 2) Sleep-only recovery badge ("Recovered (from sleep)")
+      window.HealthData.wipe();
+      window.Health.onData({
+        status: 'granted',
+        syncedAt: Date.now(),
+        days: { '2026-10-01': { sleepHours: 8.0, actKcal: 300 } },
+        ex: []
+      });
+      window.Today.render();
+      const recBadge = (document.querySelector('#todayRoot .td-rec-pill') || {}).textContent || '';
+
+      return { inlineYesterday, recBadge };
+    });
+    t.ok('Vitals strip labels yesterday fallback clearly, prioritizes todaySteps, and shows "(from sleep)" when recovery is sleep-only',
+      /Yesterday/.test(edgeChecks.inlineYesterday) && /11\.3k steps/.test(edgeChecks.inlineYesterday) && /from sleep/.test(edgeChecks.recBadge),
+      JSON.stringify(edgeChecks));
+    await p.context().close();
+
     t.ok('no page errors', errs.length === 0, errs.join(' | '));
   },
 };
+

@@ -8739,8 +8739,13 @@
     list.forEach(function (wo) {
       var k = wo.dk || dayKey(new Date(wo.st));
       if (k < from || k > today || !(wo.bw > 0)) return;
-      if (!byK[k]) { byK[k] = { k: k, w: wo.bw }; days.push(byK[k]); }
-      else if (!(byK[k].w > 0)) byK[k].w = wo.bw;
+      /* Nourish keeps weigh-ins in pounds; a workout keeps the bodyweight it
+         used in the workout's own unit. Taken as it was, a kilogram figure sat
+         among pounds: Keeping muscle drew Blake's weight up 137.8% (85.6 to
+         203.5) the week a weigh-in landed, and On pace bent with it. */
+      var bwLb = wo.u === 'kg' ? wo.bw * 2.20462 : wo.bw;
+      if (!byK[k]) { byK[k] = { k: k, w: bwLb }; days.push(byK[k]); }
+      else if (!(byK[k].w > 0)) byK[k].w = bwLb;
     });
     days.sort(function (a, b) { return a.k < b.k ? -1 : a.k > b.k ? 1 : 0; });
     var wos = list.filter(function (wo) { var k = wo.dk || dayKey(new Date(wo.st)); return k >= from && k <= today; })
@@ -8825,28 +8830,6 @@
   }
   function pgSay(t) { return '<p class="tr-pg-say">' + t + '</p>'; }
   function pgWait(t) { return '<p class="tr-pg-wait">' + esc(t) + '</p>'; }
-  function pgDots(on, n, say) {
-    var s = '';
-    for (var i = 0; i < n; i++) s += '<i class="' + (i < on ? 'on' : '') + '"></i>';
-    return '<span class="tr-pg-dots" role="img" aria-label="' + esc(say) + '">' + s + '</span>';
-  }
-  /* Sessions split by a kind of day, each half a row of dots and a horizontal
-     percentage bar so you can see at a glance what moves your lifts. */
-  function pgSplit(sess, test, yes, no) {
-    var a = sess.filter(function (s) { return test(s) === true; }), b = sess.filter(function (s) { return test(s) === false; });
-    var up = function (l) { return l.filter(function (s) { return s.up; }).length; };
-    var grp = function (label, l, tone) {
-      var u = up(l), pct = l.length ? Math.round(u / l.length * 100) : 0;
-      var say = u + ' of ' + l.length + ' workouts were stronger';
-      return '<div class="tr-pg-grp"><div class="tr-pg-glab"><span>' + esc(label) + '</span><b>' + pct + '%</b></div>' +
-        '<div class="tr-pg-cbar" aria-hidden="true"><i class="' + tone + '" style="width:' + pct + '%"></i></div>' +
-        '<div class="tr-pg-gfoot">' + pgDots(u, l.length, say) + '<small>' + esc(say) + '</small></div></div>';
-    };
-    var hasA = a.length >= PG_MIN, hasB = b.length >= PG_MIN;
-    return { a: a, b: b, ok: hasA && hasB, any: hasA || hasB,
-      html: (hasA ? grp(yes, a, 'yes') : '') + (hasB ? grp(no, b, 'no') : '') };
-  }
-
   // ---- on pace
   function pgPace(D) {
     var ws = D.days.filter(function (d) { return d.w > 0; });
@@ -8916,10 +8899,15 @@
       var base = D.per[e][0].v;
       D.per[e].forEach(function (p) { var i = pgWeek(p.k, D.from); (sBy[i] = sBy[i] || []).push(p.v / base - 1); });
     });
-    var w0 = null, W = [], Sx = [];
+    /* Two small charts a week to a point, not one chart a workout to a point.
+       Blake, 2026-11-01, of the old one: "Too much going on and I can't read
+       what it means" — strength drawn workout by workout jumped up and down,
+       and weight as a percent beside it read as nonsense. Now weight in your
+       unit on top, strength as percent over the start below, and a headline
+       that says both in words. */
+    var W = [], Sx = [];
     for (var i = 0; i < nW; i++) {
-      if (wBy[i] && w0 === null) w0 = pgMean(wBy[i]);
-      W.push(wBy[i] && w0 ? pgMean(wBy[i]) / w0 - 1 : null);
+      W.push(wBy[i] ? pgMean(wBy[i]) : null);
       Sx.push(sBy[i] ? pgMean(sBy[i]) : null);
     }
     var wl = W.filter(fin), sl = Sx.filter(fin);
@@ -8929,31 +8917,39 @@
       var sLatest = pgMean(lifts.map(function (e) { var p = D.per[e]; return p[p.length - 1].v / p[0].v - 1; }));
       W = []; Sx = [];
       for (var k = 0; k < nW; k++) { W.push(null); Sx.push(null); }
-      W[0] = 0; W[nW - 1] = wLatest / wInit - 1;
+      W[0] = wInit; W[nW - 1] = wLatest;
       Sx[0] = 0; Sx[nW - 1] = sLatest;
       wl = W.filter(fin); sl = Sx.filter(fin);
     }
-    var wNow = wl[wl.length - 1], sNow = sl[sl.length - 1];
-    var all = wl.concat(sl), lo = Math.min.apply(null, all.concat([0])) - 0.005, hi = Math.max.apply(null, all.concat([0])) + 0.005;
-    var x = function (j) { return 30 + j * 276 / Math.max(1, nW - 1); }, y = function (v) { return 14 + (hi - v) / (hi - lo) * 130; };
-    var path = function (a) { var s = '', on = false; a.forEach(function (v, j) { if (!fin(v)) return; s += (on ? 'L' : 'M') + x(j).toFixed(1) + ' ' + y(v).toFixed(1) + ' '; on = true; }); return s; };
-    var firstX = function (a) { for (var j = 0; j < a.length; j++) if (fin(a[j])) return x(j); return x(0); };
-    var lastX = function (a) { for (var j = a.length - 1; j >= 0; j--) if (fin(a[j])) return x(j); return x(0); };
-    var grid = [hi - 0.005, 0, lo + 0.005].map(function (g) {
-      return '<line x1="30" x2="306" y1="' + y(g).toFixed(1) + '" y2="' + y(g).toFixed(1) + '" class="tr-pg-grid' + (Math.abs(g) < 1e-9 ? ' z' : '') + '"/>' +
-        '<text x="0" y="' + (y(g) + 4).toFixed(1) + '" class="tr-pg-t">' + (Math.abs(g) < 1e-9 ? '0%' : pgPct(g, 0)) + '</text>';
-    }).join('');
-    var sArea = path(Sx) + 'L' + lastX(Sx).toFixed(1) + ' ' + y(0).toFixed(1) + ' L' + firstX(Sx).toFixed(1) + ' ' + y(0).toFixed(1) + ' Z';
-    var svg = '<svg class="tr-pg-svg" viewBox="0 0 330 160" role="img" aria-label="Weight ' + pgPct(wNow) + ', strength ' + pgPct(sNow) + ' since ' + esc(pgDate(D.from)) + '">' + grid +
-      '<path d="' + sArea + '" class="tr-pg-s-fill"/>' +
-      '<path d="' + path(W) + '" class="tr-pg-w"/><path d="' + path(Sx) + '" class="tr-pg-s"/>' +
-      '<circle cx="' + lastX(Sx).toFixed(1) + '" cy="' + y(sNow).toFixed(1) + '" r="3.5" class="tr-pg-sdot"/>' +
-      '<circle cx="' + lastX(W).toFixed(1) + '" cy="' + y(wNow).toFixed(1) + '" r="3.5" class="tr-pg-wdot-end"/>' +
-      '<text x="' + lastX(Sx).toFixed(1) + '" y="' + (y(sNow) - 8).toFixed(1) + '" class="tr-pg-lab s" text-anchor="end">Strength ' + pgPct(sNow) + '</text>' +
-      '<text x="' + lastX(W).toFixed(1) + '" y="' + (y(wNow) + 16).toFixed(1) + '" class="tr-pg-lab w" text-anchor="end">Weight ' + pgPct(wNow) + '</text></svg>';
+    var u = T.pr.u === 'kg' ? 'kg' : 'lb', inU = function (lb) { return u === 'kg' ? lb / 2.20462 : lb; };
+    var wNow = wl[wl.length - 1] / wl[0] - 1, sNow = sl[sl.length - 1];
+    var dW = inU(wl[wl.length - 1] - wl[0]), dWs = Math.abs(dW) < 0.5 ? null : fmtN(Math.round(Math.abs(dW) * 10) / 10) + '\u00a0' + u;
+    var head = (Math.abs(sNow) < 0.005 ? 'Strength holding' : 'Strength ' + (sNow > 0 ? 'up ' : 'down ') + pgPct(Math.abs(sNow), 0).replace(/^\+/, '')) +
+      (dWs ? (dW > 0 ? ' while you gained ' : ' while you lost ') + dWs : ' while your weight held');
+    var weekLbl = function (j) { return j === nW - 1 ? 'this week' : (nW - 1 - j) + ' wk ago'; };
+    var lineSVG = function (a, cls, fmt, say, zero) {
+      var vals = a.filter(fin), lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+      if (zero) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+      if (hi - lo < 1e-6) { hi += 1; lo -= 1; }
+      var x = function (j) { return 44 + j * 270 / Math.max(1, nW - 1); }, y = function (v) { return 10 + (hi - v) / (hi - lo) * 56; };
+      var pts = [], d = '';
+      a.forEach(function (v, j) { if (!fin(v)) return; pts.push([x(j), y(v)]); d += (d ? 'L' : 'M') + x(j).toFixed(1) + ' ' + y(v).toFixed(1) + ' '; });
+      return '<svg class="tr-pg-svg tr-pg-mini" viewBox="0 0 330 78" role="img" aria-label="' + esc(say) + '">' +
+        '<line x1="44" x2="322" y1="10" y2="10" class="tr-pg-grid"/><line x1="44" x2="322" y1="66" y2="66" class="tr-pg-grid' + (zero && lo === 0 ? ' z' : '') + '"/>' +
+        '<text x="0" y="14" class="tr-pg-t">' + fmt(hi) + '</text><text x="0" y="70" class="tr-pg-t">' + fmt(lo) + '</text>' +
+        '<path d="' + d + '" class="' + cls + '"/>' +
+        pts.map(function (q, n) { return '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="' + (n === pts.length - 1 ? 5 : 3.5) + '" class="' + cls + '-dot"/>'; }).join('') + '</svg>';
+    };
+    var wFmt = function (v) { return fmtN(Math.round(inU(v))); };
+    var svg = '<p class="tr-pg-head2">' + esc(head) + '</p>' +
+      '<div class="tr-pg-mlbl"><span>Weight, weekly average</span><b>' + fmtN(Math.round(inU(wl[wl.length - 1]) * 10) / 10) + ' ' + u + '</b></div>' +
+      lineSVG(W, 'tr-pg-w', wFmt, 'Weight from ' + wFmt(wl[0]) + ' to ' + wFmt(wl[wl.length - 1]) + ' ' + u) +
+      '<div class="tr-pg-mlbl"><span>Strength vs. when you started</span><b>' + pgPct(sNow, 0) + '</b></div>' +
+      lineSVG(Sx, 'tr-pg-s', function (v) { return Math.abs(v) < 1e-9 ? '0%' : pgPct(v, 0); }, 'Strength ' + pgPct(sNow) + ' since ' + pgDate(D.from), true) +
+      '<div class="tr-pg-mx"><span>' + esc(weekLbl(0)) + '</span><span>this week</span></div>';
     var kid = wNow < -0.003 && sNow >= -0.005 ? 'Weight is going <b>down</b> and strength is ' + (sNow > 0.005 ? 'going <b>up</b>' : '<b>holding</b>') + '. That means you’re losing fat, not muscle.'
       : wNow < -0.003 ? 'Weight and strength are both going <b>down</b>. Some of what’s coming off may be muscle: eat a little more, or slow the cut.'
-      : sNow > 0.005 ? 'Strength is going <b>up</b> while your weight ' + (wNow > 0.003 ? 'climbs' : 'holds') + '.'
+      : sNow > 0.005 ? 'Strength is going <b>up</b> while your weight ' + (wNow > 0.003 ? 'climbs: that’s muscle, not just weight.' : 'holds.')
       : 'Strength and weight are both about where they started.';
     var up = 0, flat = 0, dn = 0, rows = [];
     lifts.forEach(function (e) {
@@ -9002,116 +8998,16 @@
       '<div class="tr-hm-box" role="img" aria-label="Front and back: muscles coloured by how their lifts moved">' +
         '<div class="tr-hm-col"><div class="tr-hm-lbl">Front</div>' + figs.front + '</div>' +
         '<div class="tr-hm-col"><div class="tr-hm-lbl">Back</div>' + figs.back + '</div></div>' +
-      '<div class="tr-pg-chips">' + chips + '</div>' + pgSay(say), math);
+      /* The list folds away (Blake, 2026-11-01: "Tuck and hide this... I like
+         it but I mostly am driven by the chart"): the map and one sentence
+         show; every muscle's figure is a tap away. */
+      pgSay(say) +
+      '<details class="tr-pg-more"><summary>See all ' + list.length + ' muscles</summary>' +
+      '<div class="tr-pg-chips">' + chips + '</div></details>', math);
   }
 
   // the day before a session, as Nourish saw it
   function pgBefore(D, k) { var d = new Date(k + 'T12:00:00'); d.setDate(d.getDate() - 1); return D.byK[dayKey(d)] || null; }
-
-  // 14-day Fuel & Protein bar chart for Food -> lifts
-  function pgFoodChartSVG(days) {
-    var fDays = days.filter(function (d) { return d.kc > 0 || d.tp > 0; }).slice(-14);
-    if (fDays.length < 2) return '';
-    var maxK = Math.max.apply(null, fDays.map(function (d) { return Math.max(d.kc || 0, d.tk || 2000); }).concat([2200])) * 1.1;
-    var avgTk = pgMean(fDays.map(function (d) { return d.tk || 2000; }));
-    var ty = 64 - Math.round((avgTk / maxK) * 52);
-    var bw = Math.min(18, Math.floor(280 / fDays.length) - 3);
-    var step = 296 / Math.max(1, fDays.length);
-    var bars = fDays.map(function (d, i) {
-      var kc = d.kc || (d.p ? d.p * 10 : 1600);
-      var h = Math.max(6, Math.round((kc / maxK) * 52));
-      var bx = Math.round(18 + i * step);
-      var by = 64 - h;
-      var pHit = d.tp > 0 && d.p >= 0.9 * d.tp;
-      return '<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + h + '" rx="3" class="tr-pg-fbar ' + (pHit ? 'hit' : 'miss') + '"/>';
-    }).join('');
-    return '<svg class="tr-pg-svg tr-pg-fchart" viewBox="0 0 330 82" aria-hidden="true">' +
-      '<line x1="14" x2="316" y1="' + ty + '" y2="' + ty + '" class="tr-pg-grid z"/>' +
-      bars +
-      '<text x="14" y="77" class="tr-pg-t">Last ' + fDays.length + ' logged days · Green = Protein hit ✓ · Dashed = Cal goal</text>' +
-    '</svg>';
-  }
-
-  // ---- food -> lifts: protein and carbohydrate the day before
-  function pgFood(D) {
-    var sess = D.sess;
-    var pro = pgSplit(sess, function (s) { var b = pgBefore(D, s.k); return b && b.tp > 0 ? b.p >= 0.9 * b.tp : null; },
-      'After you ate your protein', 'After a short protein day');
-    var carb = pgSplit(sess, function (s) { var b = pgBefore(D, s.k); return b && b.tc > 0 ? b.c >= 0.9 * b.tc : null; },
-      'After a day at your carbs', 'After a low-carb day');
-    var hit = D.days.filter(function (d) { return d.tp > 0; }), hitN = hit.filter(function (d) { return d.p >= 0.9 * d.tp; }).length;
-    if (!pro.any && !carb.any && !hit.length) return pgCard('Food → lifts', pgWait('Log your food and lift for a few more weeks: this needs at least ' + PG_MIN + ' workouts after each kind of day.'));
-    var pairs = sess.map(function (s) { var b = pgBefore(D, s.k); return b && b.tp > 0 ? [b.p / b.tp, s.ch] : null; }).filter(Boolean);
-    var cp = sess.map(function (s) { var b = pgBefore(D, s.k); return b && b.tc > 0 ? [b.c / b.tc, s.ch] : null; }).filter(Boolean);
-    var fitP = pgFit(pairs.map(function (q) { return q[0]; }), pairs.map(function (q) { return q[1]; }));
-    var fitC = pgFit(cp.map(function (q) { return q[0]; }), cp.map(function (q) { return q[1]; }));
-    var math = [];
-    if (fitP && pairs.length >= 10) math.push(['Protein vs next lift', 'r = ' + fitP.r.toFixed(2), 'n = ' + fitP.n + ', p = ' + pgP(fitP.r, fitP.n).toFixed(2)]);
-    if (fitC && cp.length >= 10) math.push(['Carbs vs next lift', 'r = ' + fitC.r.toFixed(2), 'n = ' + fitC.n + ', p = ' + pgP(fitC.r, fitC.n).toFixed(2)]);
-    if (hit.length) math.push(['Days you hit protein', hitN + ' of ' + hit.length, Math.round(hitN / hit.length * 100) + '%']);
-    var summary = (!pro.any && !carb.any && hit.length)
-      ? pgSay('Protein target hit on <b>' + hitN + ' of ' + hit.length + '</b> logged days (' + Math.round(hitN / hit.length * 100) + '%).') : '';
-    return pgCard('Food → lifts', pgFoodChartSVG(D.days) + (pro.any ? pro.html : '') + (carb.any ? carb.html : '') + summary +
-      (!pro.ok || !carb.ok ? pgWait((pro.ok ? 'Carbs' : 'Protein') + ' needs ' + PG_MIN + ' or more workouts after each kind of day first.') : ''), math);
-  }
-
-  // 14-day Sleep & Steps sparkline/bar chart for Sleep & steps -> lifts
-  function pgRestChartSVG(slDays, stDays) {
-    var recSl = slDays.slice(-14), recSt = stDays.slice(-14);
-    if (recSl.length < 2 && recSt.length < 2) return '';
-    var svg = '';
-    if (recSl.length >= 2) {
-      var bw = Math.min(18, Math.floor(280 / recSl.length) - 3);
-      var step = 296 / Math.max(1, recSl.length);
-      var y7 = 58 - Math.round((7 / 10) * 46);
-      var bars = recSl.map(function (d, i) {
-        var h = Math.max(6, Math.min(48, Math.round((d.sl / 10) * 46)));
-        var bx = Math.round(18 + i * step);
-        var by = 58 - h;
-        return '<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + h + '" rx="3" class="tr-pg-fbar ' + (d.sl >= 7 ? 'hit' : 'miss') + '"/>';
-      }).join('');
-      svg += '<svg class="tr-pg-svg tr-pg-schart" viewBox="0 0 330 76" aria-hidden="true">' +
-        '<line x1="14" x2="316" y1="' + y7 + '" y2="' + y7 + '" class="tr-pg-grid z"/>' +
-        bars +
-        '<text x="14" y="72" class="tr-pg-t">Sleep last ' + recSl.length + ' nights · Green = 7h+ recovery goal</text></svg>';
-    }
-    return svg;
-  }
-
-  // ---- sleep and steps -> lifts, from the morning check-in
-  function pgRest(D) {
-    var sess = D.sess;
-    var slp = pgSplit(sess, function (s) { var d = D.byK[s.k]; return d && fin(d.sl) ? d.sl >= 7 : null; },
-      'After 7 or more hours of sleep', 'After under 7 hours');
-    var st = D.days.filter(function (d) { return fin(d.sy); }), cr = D.days.filter(function (d) { return d.cr !== undefined; });
-    var slDays = D.days.filter(function (d) { return fin(d.sl); });
-    var wtDays = D.days.filter(function (d) { return fin(d.wt) && d.wt > 0; });
-    if (!slp.any && !st.length && !cr.length && !slDays.length && !wtDays.length) {
-      return pgCard('Sleep &amp; steps → lifts', pgWait('Fill in the morning check-in (Today › Weighed in) for about three weeks and this shows whether sleep and steps help your lifts.'));
-    }
-    var last7 = st.slice(-7), prev7 = st.slice(-14, -7), say = '';
-    if (!slp.any && slDays.length) say += 'Sleep: <b>' + pgMean(slDays.map(function (d) { return d.sl; })).toFixed(1) + ' hr</b> average across ' + slDays.length + ' mornings. ';
-    if (last7.length) say += 'Steps: <b>' + fmtBig(pgMean(last7.map(function (d) { return d.sy; }))) + '</b> a day lately' +
-      (prev7.length >= 3 ? ', from ' + fmtBig(pgMean(prev7.map(function (d) { return d.sy; }))) + ' the week before' : '') + '. ';
-    if (cr.length) say += 'Creatine: ' + cr.filter(function (d) { return d.cr === 1; }).length + ' of ' + cr.length + ' mornings.';
-    if (wtDays.length) say += (say ? ' ' : '') + 'Water: <b>' + Math.round(pgMean(wtDays.map(function (d) { return d.wt; }))) + ' oz</b>/day avg.';
-    var pairs = sess.map(function (s) { var d = D.byK[s.k]; return d && fin(d.sl) ? [d.sl, s.ch] : null; }).filter(Boolean);
-    var fit = pgFit(pairs.map(function (q) { return q[0]; }), pairs.map(function (q) { return q[1]; }));
-    var math = [];
-    if (fit && pairs.length >= 10) {
-      var p = pgP(fit.r, fit.n);
-      math.push(['Sleep vs next lift', 'r = ' + fit.r.toFixed(2), 'n = ' + fit.n + ', p = ' + p.toFixed(2) + (p > 0.05 ? ', not yet sure' : '')]);
-    }
-    var lk = {};
-    sess.forEach(function (s) { lk[s.k] = 1; });
-    var on = D.days.filter(function (d) { return fin(d.mg) && lk[d.k]; }), off = D.days.filter(function (d) { return fin(d.mg) && !lk[d.k]; });
-    if (on.length >= PG_MIN && off.length >= PG_MIN) math.push(['Caffeine on lift days', Math.round(pgMean(on.map(function (d) { return d.mg; }))) + ' mg avg', 'vs ' + Math.round(pgMean(off.map(function (d) { return d.mg; }))) + ' mg other days']);
-    if (wtDays.length) math.push(['Water intake', Math.round(pgMean(wtDays.map(function (d) { return d.wt; }))) + ' oz/day', wtDays.length + ' days logged']);
-    if (!math.length && slDays.length) math.push(['Average sleep', pgMean(slDays.map(function (d) { return d.sl; })).toFixed(1) + ' hr', slDays.length + ' mornings']);
-    return pgCard('Sleep &amp; steps → lifts', pgRestChartSVG(slDays, st) + (slp.any ? slp.html : '') +
-      (!slp.ok ? pgWait('Sleep needs ' + PG_MIN + ' or more workouts after each kind of night first.') : '') +
-      (say ? pgSay(say) : ''), math);
-  }
 
   function hcBiometricsHubHTML(D) {
     var hd = typeof window !== 'undefined' && window.HealthData;
@@ -9155,24 +9051,37 @@
       });
       mPath = mPath.trim();
       var lastP = pts[pts.length - 1];
-      var lbl = isHrv ? 'HRV ' + Math.round(lastP.v) + ' ms' : 'RHR ' + Math.round(lastP.v) + ' bpm';
-      body += '<svg class="tr-pg-svg tr-hc-chart" viewBox="0 0 330 78" role="img" aria-label="' + esc(lbl) + ' vs 30-day median">' +
-        (mPath ? '<path d="' + mPath + '" class="tr-pg-grid z"/>' : '') +
+      /* Said in words first (Blake, 2026-11-01: "What is HRV.... I need plain
+         English"). HRV is how much the gap between heartbeats varies: higher
+         than your own normal means rested, lower means worn out. A resting
+         heart rate reads the other way round. The word compares today with
+         your 30-day middle; the number stays, small, under the chart. */
+      var lbl = isHrv ? 'HRV ' + Math.round(lastP.v) + ' ms' : 'Resting heart rate ' + Math.round(lastP.v) + ' bpm';
+      var hasM = lastP.m !== null && lastP.m !== undefined && lastP.m > 0;
+      var q = hasM ? (isHrv ? lastP.v / lastP.m : lastP.m / lastP.v) : 1;
+      var rw = !hasM ? ['Learning your normal', 'A week or so of nights and this says how rested you are against your own normal.']
+        : q >= 1.08 ? ['More rested than usual', 'Your body has bounced back well. A good day to push.']
+        : q <= 0.9 ? ['More tired than usual', 'Your body is more worn out than normal. Go a little easier today and sleep well tonight.']
+        : ['About your normal', 'Recovery looks normal. Train as planned.'];
+      body += '<div class="tr-hc-word">' + esc(rw[0]) + '</div><p class="tr-hc-wsay">' + esc(rw[1]) + '</p>' +
+        '<svg class="tr-pg-svg tr-hc-chart" viewBox="0 0 330 78" role="img" aria-label="' + esc(lbl) + ' against your normal">' +
+        (mPath ? '<path d="' + mPath + '" class="tr-hc-norm"/>' : '') +
         '<path d="' + vPath + '" class="tr-pg-wtrend"/>' +
-        '<text x="18" y="72" class="tr-pg-t">' + esc(lbl) + (lastP.m !== null ? ' · 30d median ' + Math.round(lastP.m) : '') + '</text>' +
+        (mPath ? '<text x="18" y="12" class="tr-pg-t tr-hc-normt">your normal</text>' : '') +
+        '<text x="18" y="74" class="tr-pg-t">' + esc(lbl) + (hasM ? ' · your normal ' + Math.round(lastP.m) : '') + '</text>' +
       '</svg>';
     }
 
     var cards = [];
     if (rhrPts.length) {
       var rLast = rhrPts[rhrPts.length - 1];
-      cards.push('<div class="tr-hc-cell"><small>Resting HR</small><b>' + Math.round(rLast.v) + ' bpm</b>' +
-        '<span>' + (rLast.m !== null ? '30d med ' + Math.round(rLast.m) + ' bpm' : 'Building 7d baseline') + '</span></div>');
+      cards.push('<div class="tr-hc-cell"><small>Resting heart rate</small><b>' + Math.round(rLast.v) + ' bpm</b>' +
+        '<span>' + (rLast.m !== null ? 'your normal ' + Math.round(rLast.m) + ' · lower = more rested' : 'Learning your normal') + '</span></div>');
     }
     if (hrvPts.length) {
       var hLast = hrvPts[hrvPts.length - 1];
-      cards.push('<div class="tr-hc-cell"><small>HRV (RMSSD)</small><b>' + Math.round(hLast.v) + ' ms</b>' +
-        '<span>' + (hLast.m !== null ? '30d med ' + Math.round(hLast.m) + ' ms' : 'Building 7d baseline') + '</span></div>');
+      cards.push('<div class="tr-hc-cell"><small>HRV (heartbeat rhythm)</small><b>' + Math.round(hLast.v) + ' ms</b>' +
+        '<span>' + (hLast.m !== null ? 'your normal ' + Math.round(hLast.m) + ' · higher = more rested' : 'Learning your normal') + '</span></div>');
     }
     if (bfPts.length) {
       var bFirst = bfPts[0], bLast = bfPts[bfPts.length - 1];
@@ -9205,11 +9114,11 @@
         return '<span class="tr-hc-exchip">' + esc(x.title || x.type || x.name || 'Workout') + ' \u00b7 ' + (x.min || 0) + 'm' +
           (x.kcal ? ' \u00b7 ' + Math.round(x.kcal) + ' cal' : '') + '</span>';
       }).join('');
-      body += '<div class="tr-hc-ex"><small>Watch Workouts (' + exList.length + ' sessions \u00b7 ' + totMin + ' min total)</small>' +
+      body += '<div class="tr-hc-ex"><small>Workouts on your watch (' + exList.length + ' sessions \u00b7 ' + totMin + ' min total)</small>' +
         '<div class="tr-hc-exlist">' + recEx + '</div></div>';
     }
     body += '</div>';
-    var spanLbl = info.minKey ? 'Health Connect Biometrics · since ' + esc(pgDate(info.minKey)) + ' (' + info.days + 'd)' : '120-Day Health Connect Biometrics';
+    var spanLbl = info.minKey ? 'Recovery &amp; body · from your watch, since ' + esc(pgDate(info.minKey)) : 'Recovery &amp; body · from your watch';
     return '<div class="tr-card tr-hc-card"><div class="tr-eyebrow">' + spanLbl + '</div>' + body + '</div>';
   }
 
@@ -9231,48 +9140,76 @@
     ['8,000+ steps', 'the day before', function (D, s) { var b = pgBefore(D, s.k); return b && fin(b.sy) ? b.sy >= 8000 : null; }],
     ['Creatine', 'that morning', function (D, s) { var d = D.byK[s.k]; return d && (d.cr === 0 || d.cr === 1) ? d.cr === 1 : null; }],
     ['100 mg+ caffeine', 'that day', function (D, s) { var d = D.byK[s.k]; return d && fin(d.mg) ? d.mg >= 100 : null; }],
-    ['Recovered (heart rate, HRV)', 'that morning', function (D, s) {
+    ['Well rested (watch)', 'that morning', function (D, s) {
       var hd = window.HealthData, d = D.byK[s.k], rc = null;
       try { rc = hd && hd.recovery ? hd.recovery(s.k, d && fin(d.sl) ? d.sl : 0) : null; } catch (e) { rc = null; }
       return rc && rc.level ? rc.level !== 'low' : null;
     }]
   ];
-  function pgLevers(D) {
-    var rows = [];
+  /* What helps your lifts (Blake, 2026-11-01, of the dots and the three
+     cards that asked this one question three ways: "Redo this with better
+     charts so I don't get confused by all the dots", "Simplify helping or
+     hurting"). One card, a row a habit: how often the next workout was
+     stronger after days with it and after days without, as two bars, and a
+     word for what that means. The word comes from the gap in how much
+     stronger (Welch's t on the change): Helps or Went with weaker only when
+     the gap is twice its noise and the bars lean the same way; No real
+     difference under once; Too early to tell between, or with fewer than
+     PG_MIN workouts on a side. */
+  var LEV_SIDES = {
+    'Protein at target': ['Hit it', 'Missed it'], 'Carbs at target': ['Hit it', 'Missed it'],
+    'Calories at target': ['Hit it', 'Missed it'], '7+ hours of sleep': ['Got it', 'Short'],
+    '8,000+ steps': ['Got them', 'Fewer'], 'Creatine': ['Took it', 'Skipped'],
+    '100 mg+ caffeine': ['Had it', 'Less'], 'Well rested (watch)': ['Rested', 'Tired']
+  };
+  function pgHelps(D) {
+    var rows = [], used = {};
     LEVERS.forEach(function (lv) {
       var a = [], b = [];
-      D.sess.forEach(function (s) { var t = lv[2](D, s); if (t === true) a.push(s.ch); else if (t === false) b.push(s.ch); });
-      if (a.length < PG_MIN || b.length < PG_MIN) return;
-      var ma = pgMean(a), mb = pgMean(b);
-      var va = pgMean(a.map(function (v) { return (v - ma) * (v - ma); })) * a.length / Math.max(1, a.length - 1);
-      var vb = pgMean(b.map(function (v) { return (v - mb) * (v - mb); })) * b.length / Math.max(1, b.length - 1);
-      var se = Math.sqrt(va / a.length + vb / b.length), diff = ma - mb, tt = se > 0 ? Math.abs(diff) / se : 0;
-      rows.push({ n: lv[0], when: lv[1], d: diff, t: tt, na: a.length, nb: b.length, sure: tt >= 2 ? 3 : tt >= 1 ? 2 : 1 });
+      D.sess.forEach(function (s) { var t = lv[2](D, s); if (t === true) a.push(s); else if (t === false) b.push(s); });
+      // a habit always or never kept has nothing to compare: no row for it
+      if (!a.length || !b.length) return;
+      a.concat(b).forEach(function (s) { used[s.k + (s.id || '')] = 1; });
+      var ca = a.map(function (s) { return s.ch; }), cb = b.map(function (s) { return s.ch; });
+      var rate = function (l) { return l.length ? l.filter(function (s) { return s.up; }).length / l.length : 0; };
+      var r = { n: lv[0], when: lv[1], na: a.length, nb: b.length, ra: rate(a), rb: rate(b), d: 0, t: 0 };
+      if (a.length >= PG_MIN && b.length >= PG_MIN) {
+        var ma = pgMean(ca), mb = pgMean(cb);
+        var va = pgMean(ca.map(function (v) { return (v - ma) * (v - ma); })) * a.length / Math.max(1, a.length - 1);
+        var vb = pgMean(cb.map(function (v) { return (v - mb) * (v - mb); })) * b.length / Math.max(1, b.length - 1);
+        var se = Math.sqrt(va / a.length + vb / b.length);
+        r.d = ma - mb; r.t = se > 0 ? Math.abs(r.d) / se : 0;
+        r.v = r.t >= 2 && r.d > 0 && r.ra >= r.rb ? 'help' : r.t >= 2 && r.d < 0 && r.ra <= r.rb ? 'hurt' : r.t < 1 ? 'same' : 'early';
+      } else r.v = 'early';
+      rows.push(r);
     });
-    if (!rows.length) return pgCard('Helping or hurting', pgWait('Once you have logged food, the morning check-in and a few weeks of workouts, this shows which habits went with stronger workouts and which with weaker ones.'));
-    rows.sort(function (x, y) { return y.d - x.d; });
-    var max = Math.max(0.01, Math.max.apply(null, rows.map(function (r) { return Math.abs(r.d); })));
-    var bars = rows.map(function (r) {
-      // at most a third of the bar's width each way, so the figure beside the longest one still fits
-      var w = Math.min(1, Math.abs(r.d) / max) * 32, up = r.d >= 0;
-      var dots = '\u25cf\u25cf\u25cf'.slice(0, r.sure) + '\u25cb\u25cb\u25cb'.slice(0, 3 - r.sure);
-      return '<div class="tr-lev-n">' + esc(r.n) + '<small>' + esc(r.when) + ' \u00b7 sure <span class="tr-lev-sure" aria-label="' + r.sure + ' of 3">' + dots + '</span></small></div>' +
-        '<div class="tr-lev-bar" role="img" aria-label="' + esc(r.n) + ': next workout ' + pgPct(r.d) + ' on average"><i class="' + (up ? 'h' : 'x') + '" style="width:' + w.toFixed(1) + '%"></i>' +
-          '<em class="' + (up ? 'h' : 'x') + '" style="' + (up ? 'left' : 'right') + ':calc(50% + ' + w.toFixed(1) + '% + 4px)">' + pgPct(r.d) + '</em></div>';
+    if (!rows.length) return pgCard('What helps your lifts', pgWait('Once you have logged food, the morning check-in and a few weeks of workouts, this shows which habits went with stronger workouts and which with weaker ones.'));
+    var rank = { help: 0, hurt: 1, same: 2, early: 3 };
+    rows.sort(function (x, y) { return rank[x.v] - rank[y.v] || (y.na + y.nb) - (x.na + x.nb); });
+    var TAG = { help: ['Helps', 'g'], hurt: ['Went with weaker', 'o'], same: ['No real difference', 'n'], early: ['Too early to tell', 'n'] };
+    var bar = function (lbl, rt, n, tone) {
+      var pct = Math.round(rt * 100);
+      return '<div class="tr-hl-bar"><span>' + esc(lbl) + '</span><i aria-hidden="true"><b class="' + tone + '" style="width:' + pct + '%"></b></i>' +
+        '<span>' + (n ? pct + '%' : '—') + '</span></div>';
+    };
+    var html = rows.map(function (r) {
+      var sides = LEV_SIDES[r.n] || ['Yes', 'No'], tg = TAG[r.v];
+      return '<div class="tr-hl-row" role="group" aria-label="' + esc(r.n + ': ' + tg[0] + '. Stronger next workout ' + Math.round(r.ra * 100) + '% of ' + r.na + ' after ' + sides[0].toLowerCase() + ', ' + Math.round(r.rb * 100) + '% of ' + r.nb + ' after ' + sides[1].toLowerCase()) + '">' +
+        '<div class="tr-hl-h"><span>' + esc(r.n) + '</span><em class="tr-hl-tag ' + tg[1] + '">' + tg[0] + '</em></div>' +
+        bar(sides[0], r.ra, r.na, 'y') + bar(sides[1], r.rb, r.nb, 'x') + '</div>';
     }).join('');
-    /* The sentence names only what it is fairly sure of (two dots or more):
-       a top bar of one dot is as likely the noise as the habit. */
-    var helps = rows.filter(function (r) { return r.d > 0.002 && r.sure >= 2; });
-    var hurts = rows.filter(function (r) { return r.d < -0.002 && r.sure >= 2; });
+    var helps = rows.filter(function (r) { return r.v === 'help'; }), hurts = rows.filter(function (r) { return r.v === 'hurt'; });
     var kid = (helps.length ? 'Your stronger workouts came after <b>' + esc(helps[0].n.toLowerCase()) + '</b>.' : '') +
-      (hurts.length ? (helps.length ? ' ' : '') + 'Weaker ones came after days with <b>' + esc(hurts[hurts.length - 1].n.toLowerCase()) + '</b>.' : '');
+      (hurts.length ? (helps.length ? ' ' : '') + 'Weaker ones came after days with <b>' + esc(hurts[0].n.toLowerCase()) + '</b>.' : '');
     if (!kid) kid = 'Nothing stands out yet: every gap is small next to how much workouts vary.';
-    var math = rows.map(function (r) { return [r.n, pgSigned(r.d * 100, 1) + ' points', 'n = ' + r.na + ' vs ' + r.nb + ', t = ' + r.t.toFixed(1)]; });
-    return pgCard('Helping or hurting',
-      '<p class="tr-pg-say" style="margin-top:0">How much stronger your next workout was, on average, after each kind of day than after the other kind. <b class="tr-up">Green</b> went with stronger, <b class="tr-lev-xw">orange</b> with weaker.</p>' +
-      '<div class="tr-lev">' + bars + '</div><div class="tr-lev-axis"><span>weaker</span><span>stronger</span></div>' +
-      (kid ? pgSay(kid) : '') +
-      '<p class="tr-pg-wait">This is what went together, not proof of cause. More dots, more sure.</p>', math);
+    var nUsed = Object.keys(used).length;
+    var math = rows.filter(function (r) { return r.na >= PG_MIN && r.nb >= PG_MIN; })
+      .map(function (r) { return [r.n, pgSigned(r.d * 100, 1) + ' points', 'n = ' + r.na + ' vs ' + r.nb + ', t = ' + r.t.toFixed(1)]; });
+    if (!math.length) math.push(['Workouts so far', String(nUsed), 'needs ' + PG_MIN + ' on each side of a habit']);
+    return pgCard('What helps your lifts',
+      '<p class="tr-pg-say" style="margin-top:0">How often your next workout was stronger after each kind of day.</p>' +
+      '<div class="tr-hl">' + html + '</div>' + pgSay(kid) +
+      '<p class="tr-pg-wait">From ' + nUsed + ' workout' + (nUsed === 1 ? '' : 's') + '. “Too early” means fewer than ' + PG_MIN + ' workouts on one side, or a gap still small next to how much workouts vary. These went together; they don’t prove cause.</p>', math);
   }
 
   function progressHTML(span) {
@@ -9286,7 +9223,7 @@
       '<p class="tr-pg-head">' + head + '</p>' +
       pgReadinessHTML(D) +
       hcBiometricsHubHTML(D) +
-      pgPace(D) + pgMuscle(D) + pgMuscles(D) + pgLevers(D) + pgFood(D) + pgRest(D);
+      pgPace(D) + pgMuscle(D) + pgMuscles(D) + pgHelps(D);
   }
 
   /* The week's lit body, small, on the Workout tab: the motivator stays in

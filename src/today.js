@@ -248,10 +248,11 @@
         }
       }
       var cells = [];
-      if (v.rhr !== null) cells.push('<div class="td-vt-cell"><small>Resting HR</small><b>' + v.rhr + ' bpm</b>' +
-        '<span>' + (v.rhrNorm !== null ? '30d norm: ' + v.rhrNorm + ' bpm' : 'Building 7d baseline') + '</span></div>');
-      if (v.hrv !== null) cells.push('<div class="td-vt-cell"><small>HRV (RMSSD)</small><b>' + v.hrv + ' ms</b>' +
-        '<span>' + (v.hrvNorm !== null ? '30d norm: ' + v.hrvNorm + ' ms' : 'Building 7d baseline') + '</span></div>');
+      if (v.rhr !== null) cells.push('<div class="td-vt-cell"><small>Resting heart rate</small><b>' + v.rhr + ' bpm</b>' +
+        '<span>' + (v.rhrNorm !== null ? 'your normal ' + v.rhrNorm + ' · lower = more rested' : 'Learning your normal') + '</span></div>');
+      if (v.hrv !== null) cells.push('<div class="td-vt-cell"><small>HRV (heartbeat rhythm)</small><b>' + v.hrv + ' ms</b>' +
+        // plain words (Blake, 2026-11-01: "What is HRV.... I need plain English")
+        '<span>' + (v.hrvNorm !== null ? 'your normal ' + v.hrvNorm + ' · higher = more rested' : 'Learning your normal') + '</span></div>');
       if (v.actKcal !== null || v.totKcal !== null) {
         cells.push('<div class="td-vt-cell"><small>Watch Burn</small><b>' + (v.actKcal !== null ? fmt(v.actKcal) + ' act' : fmt(v.totKcal) + ' tot') + '</b>' +
           (v.totKcal !== null && v.actKcal !== null ? '<span>' + fmt(v.totKcal) + ' kcal total</span>' : '') + '</div>');

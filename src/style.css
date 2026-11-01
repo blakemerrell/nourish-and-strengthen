@@ -9472,3 +9472,36 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
 .td-morning .td-vitals-toggle { flex: 1 1 auto; display: flex; align-items: center; gap: 8px; min-height: 44px; }
 .td-vitals-more { font-size: 0.875rem; font-weight: 600; color: var(--ochre-text); }
 .td-morning .td-vitals-hub { flex: none; min-height: 44px; border: 0; background: none; font-size: 0.875rem; font-weight: 600; color: var(--muted); padding: 0 4px; }
+
+/* ---- Progress, simpler (2026-11-01): two weekly charts for Keeping muscle,
+   one "What helps your lifts" card in place of three dotted ones, the muscle
+   list folded, and the watch's recovery said in words ---- */
+.tr-pg-head2 { margin: 2px 0 6px; font-family: var(--serif, Georgia, serif); font-size: 1.25rem; line-height: 1.25; font-weight: 600; color: var(--ink); }
+.tr-pg-mlbl { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 10px 0 0; font-size: 0.875rem; color: var(--muted); }
+.tr-pg-mlbl b { color: var(--ink); font-size: 0.9375rem; }
+.tr-pg-mini { display: block; width: 100%; height: auto; }
+.tr-pg-w-dot { fill: var(--ochre); }
+.tr-pg-s-dot { fill: var(--pg-up); }
+.tr-pg-mx { display: flex; justify-content: space-between; font-size: 0.8125rem; color: var(--muted); margin: -2px 0 0 13%; }
+.tr-pg-more { margin: 10px 0 0; }
+.tr-pg-more > summary { min-height: 44px; display: flex; align-items: center; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px;
+  font-weight: 600; cursor: pointer; list-style: none; }
+.tr-pg-more > summary::-webkit-details-marker { display: none; }
+.tr-pg-more > summary::after { content: '\25be'; margin-left: 6px; }
+.tr-pg-more[open] > summary::after { content: '\25b4'; }
+.tr-hl { display: grid; gap: 14px; margin: 10px 0 0; }
+.tr-hl-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 600; }
+.tr-hl-tag { font-style: normal; font-size: 0.8125rem; font-weight: 700; padding: 2px 9px; border-radius: 99px; white-space: nowrap; }
+.tr-hl-tag.g { color: var(--green); background: color-mix(in oklab, var(--green) 18%, transparent); }
+.tr-hl-tag.o { color: var(--ochre-text); background: color-mix(in oklab, var(--ochre) 20%, transparent); }
+.tr-hl-tag.n { color: var(--muted); background: color-mix(in oklab, var(--muted) 16%, transparent); }
+.tr-hl-bar { display: grid; grid-template-columns: 5.6em 1fr 2.8em; align-items: center; gap: 8px; margin: 5px 0 0; font-size: 0.8125rem; color: var(--muted); }
+.tr-hl-bar > i { position: relative; height: 12px; border-radius: 6px; background: var(--line-soft); overflow: hidden; }
+.tr-hl-bar > i > b { position: absolute; inset: 0 auto 0 0; border-radius: 6px; }
+.tr-hl-bar > i > b.y { background: var(--green); }
+.tr-hl-bar > i > b.x { background: var(--muted); }
+.tr-hl-bar > span:last-child { text-align: right; color: var(--ink); font-weight: 600; }
+.tr-hc-word { font-family: var(--serif, Georgia, serif); font-size: 1.25rem; font-weight: 600; color: var(--ochre-text); margin: 4px 0 0; }
+.tr-hc-wsay { margin: 4px 0 6px; font-size: 0.9375rem; line-height: 1.4; color: var(--ink); }
+.tr-hc-norm { fill: none; stroke: color-mix(in oklab, var(--green) 45%, transparent); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+.tr-hc-normt { fill: var(--green); }

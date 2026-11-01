@@ -5196,7 +5196,7 @@ module.exports = {
         spanDays: span.days,
         hasSnapCard: !!snapCard,
         hasHub: !!hubEl,
-        hubHeadOk: /Health Connect Biometrics · since /.test(hubHead),
+        hubHeadOk: /Recovery & body · from your watch, since /.test(hubHead),
         hasSvgChart: !!svgChart,
         cells,
         exChips

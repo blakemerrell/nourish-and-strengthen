@@ -68,6 +68,9 @@ streak) and caffeine counted by the drink. Only the drinks you use are on it; *A
 has the usual ones (Crio Bru at 10 mg: its caffeine, not its theobromine) and your own, at
 milligrams you can change. Today's weighed-in line carries what you said, and it syncs per
 morning like the weigh-ins.
+Under the week strip, *Your week in charts* (folded until you open it, and remembered)
+shows six tiles for the week on screen: weight, calories, protein, sleep, steps and water,
+each a number with the week drawn under it against its target.
 The day's head says the day as a date; tap it for the phone's calendar, any day from the
 first you ever logged (or 120 days back, if that is further) to a week ahead. Nothing is
 let go of: every day and every weigh-in stays, on the phone and in your account. ‹ and › step a week, and so does a swipe
@@ -216,10 +219,20 @@ three ideas in one tab:
   there is one (the 10th workout, a block finished). A chime and confetti mark every
   workout, more of both for a record; none of the confetti for a phone set to reduce
   motion, and Options can turn both off. Finishing a workout ticks "trained today" on
-  Nourish.
-- *The review* is *This week*, *This block* or *All time*. The longer two are five cards —
-  on pace (the trend to your goal weight and when you get there), keeping muscle (weight
-  against strength), the body map coloured by how each muscle's lifts moved, and your
+  Nourish. A workout that set records names them, lift by lift, under the confetti; and
+  Today's workout card shows this week's body map, small, lit the same way.
+- *The review* is *This week*, *This block* or *All time*. This week opens with *Light it
+  up*: the body map, each muscle going green as it gets the week's planned hard sets, a
+  ring and a count of the muscles lit, the ones left and by how many sets, a small figure
+  of every block week, and how many weeks running the whole body lit (a week just
+  finished stays on the map for two days). *Recovery* colours the same map by how rested
+  each muscle is; any muscle opens its own sheet of sets by week and strength. The week
+  card says which parts of the plan are on track (pace, workouts, protein, calories) and
+  draws each box's week under its number. The longer two are six cards — on pace (the
+  trend to your goal weight and when you get there), keeping muscle (weight against
+  strength), the body map coloured by how each muscle's lifts moved, *helping or hurting*
+  (a bar a habit — protein, carbs, calories, sleep, steps, creatine, caffeine, recovery —
+  for how much stronger the next workouts were after days with it, with how sure), and your
   workouts after protein, carb and sleep days of each kind — each a sentence and a picture,
   with *The math* under it: rates with their 95% intervals, r with its n and p, and nothing
   said until each kind of day has three workouts behind it.

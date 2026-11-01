@@ -61,6 +61,7 @@
   var mSnapTargets = app.mSnapTargets;
   var mViewKey = app.mViewKey;
   var mWeekHTML = app.mWeekHTML;
+  var mWeekTilesHTML = app.mWeekTilesHTML;
   var mWhyChip = app.mWhyChip;
   var mWhyStrip = app.mWhyStrip;
   var macroFootHTML = app.macroFootHTML;
@@ -668,6 +669,7 @@
     if ($('macroPrev')) $('macroPrev').disabled = k <= mEarliestKey();
     if ($('macroNext')) $('macroNext').disabled = k >= mEarliestKey();
     $('macroWeek').innerHTML = mWeekHTML(k, todayK);
+    if ($('macroWeekTiles')) $('macroWeekTiles').innerHTML = mWeekTilesHTML(k);
     /* A day you are planning rather than living looks identical otherwise,
        and quietly ticking Thursday's breakfast off on Tuesday is exactly the
        mistake that would cost. */

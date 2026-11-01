@@ -620,6 +620,7 @@ src/scale.js          what the scale says against the plan: the average, the spa
 src/morning.js        the morning card and the day's lines, with their "i" and "why?" notes
 src/weighcard.js      the weigh-in card on My Day: the box, the average, the plan's line, today's training
 src/checkin.js        the morning check-in under it: sleep, steps, creatine, caffeine by the drink
+src/weektiles.js      My Day's week in charts: weight, calories, protein, sleep, steps, water as sparklines
 src/budget.js         the day's budget: totals, whether the day is done, each meal's share of it
 src/follow.js         targets follow the scale: the weekly re-plan, and the notice that says so
 src/daystore.js       My Day's store: the days, meal slots and sections, never and batch weights, Fill's why-chips

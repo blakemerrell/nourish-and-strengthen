@@ -9366,3 +9366,37 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
 .tr-pr-party b { font-size: 1.0625rem; }
 .tr-pr-party ul { margin: 4px 0 0; padding: 0 0 0 18px; font-size: 0.875rem; }
 .tr-mus-sheet .tr-spk-d { display: none; }
+
+/* My Day's week in charts (src/weektiles.js): one button under the week
+   strip, and when it is open six tiles, each a number with the week under it. */
+.mwt-btn { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; margin: 4px 0 2px; padding: 0 4px;
+  border: 0; border-top: 1px solid var(--line-soft); background: none; font: inherit; font-size: 0.875rem; font-weight: 600; color: var(--ochre-text); cursor: pointer; }
+.mwt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 4px 0 10px; }
+.mwt-tile { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px 8px; min-width: 0; }
+.mwt-k { font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.mwt-v { font-family: var(--serif); font-size: 1.375rem; font-weight: 600; color: var(--ink); margin-top: 2px; }
+.mwt-v small { font-family: var(--sans); font-size: 0.8125rem; font-weight: 400; color: var(--muted); }
+.mwt-s { font-size: 0.8125rem; color: var(--muted); line-height: 1.3; }
+.mwt-sp { display: block; width: 100%; height: 30px; margin: 4px 0; overflow: visible; }
+.mwt-none { font-size: 0.8125rem; color: var(--muted); margin: 8px 0; min-height: 22px; }
+.mwt-l { fill: none; stroke: var(--ochre); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mwt-a { fill: var(--ochre); opacity: 0.14; }
+.mwt-d { fill: var(--ochre); }
+.mwt-g .mwt-l { stroke: var(--green); } .mwt-g .mwt-a, .mwt-g .mwt-d { fill: var(--green); }
+.mwt-t { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.45; }
+.mwt-ok { fill: var(--green); opacity: 0.85; }
+.mwt-off { fill: var(--ochre); opacity: 0.85; }
+.mwt-z { fill: var(--line-firm); }
+.mwt-sleep .mwt-ok { fill: #3f7cb0; } .mwt-water .mwt-ok { fill: #3b82c4; }
+[data-theme="dark"] .mwt-sleep .mwt-ok { fill: #7fb3dc; } [data-theme="dark"] .mwt-water .mwt-ok { fill: #8cc0ea; }
+
+/* Today's workout card: this week's body map, small (today.js, litStrip). */
+.td-lit { display: flex; align-items: center; gap: 12px; margin: 10px 0 4px; padding: 8px 10px; border-radius: 10px; background: var(--paper-soft); }
+.td-lit-figs { display: flex; gap: 2px; flex: none; }
+.td-lit .tr-hm-mini { width: 40px; max-width: 40px; }
+.td-lit .tr-hm-mini .hm-low .belly { fill: color-mix(in oklab, var(--green) 26%, var(--card)); }
+.td-lit .tr-hm-mini .hm-mid .belly { fill: color-mix(in oklab, var(--green) 58%, var(--card)); }
+.td-lit-say { display: flex; flex-direction: column; font-size: 0.8125rem; color: var(--muted); line-height: 1.3; }
+.td-lit-say b { font-size: 0.9375rem; color: var(--ink); }
+.td-lit.all-lit { background: color-mix(in oklab, var(--green) 14%, var(--card)); }
+.td-lit.all-lit .td-lit-say b { color: var(--green); }

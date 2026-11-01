@@ -326,6 +326,18 @@
   }
 
   // ---------------------------------------------------------------- workout
+  /* This week's body map, small, under the workout: Blake's motivator,
+     "I want to see the whole body light up green", where he looks first
+     each morning. A tap anywhere on the card opens Strengthen, as before. */
+  function litStrip(w) {
+    var l = w && w.lit;
+    if (!l || !l.of) return '';
+    var all = l.n === l.of;
+    return '<div class="td-lit' + (all ? ' all-lit' : '') + '" role="img" aria-label="' + l.n + ' of ' + l.of + ' muscles lit this week">' +
+      '<span class="td-lit-figs" aria-hidden="true">' + l.front + l.back + '</span>' +
+      '<span class="td-lit-say"><b>' + (all ? 'Whole body lit' : l.n + ' of ' + l.of + ' muscles lit') + '</b>' +
+      (all ? 'Every muscle got its sets this week.' : 'this week, from your hard sets') + '</span></div>';
+  }
   function workoutCard(w, main) {
     if (!w) return '';
     if (w.live) {
@@ -339,7 +351,7 @@
     }
     if (w.doneToday) {
       return card('workout', 'Workout done', '<p class="td-doneline">' + esc([w.doneName || 'Your workout', w.doneMins ? w.doneMins + ' min' : '',
-          w.doneRecs ? '\ud83c\udfc5 ' + (w.doneRecs === 1 ? 'a new record' : w.doneRecs + ' new records') : ''].filter(Boolean).join(' \u00b7 ')) + '</p>',
+          w.doneRecs ? '\ud83c\udfc5 ' + (w.doneRecs === 1 ? 'a new record' : w.doneRecs + ' new records') : ''].filter(Boolean).join(' \u00b7 ')) + '</p>' + litStrip(w),
         '', 'train', true);
     }
     if (w.finished) {
@@ -367,7 +379,7 @@
         }).join('') + '</div>' +
         acts(quiet('actnew', 'Something else')) +
         bar('Active minutes this week', r.mins, r.goal, '', 'td-act-bar') +
-        '<p class="td-next">Next lift: ' + esc(w.name) + ', ' + esc(w.dueSay) + '</p>', '', 'train');
+        '<p class="td-next">Next lift: ' + esc(w.name) + ', ' + esc(w.dueSay) + '</p>' + litStrip(w), '', 'train');
     }
     var lifts = (w.lifts || []).slice(0, 5).map(function (l) {
       return '<li><span>' + esc(l.name) + '</span><span>' + esc(l.say) + '</span></li>';
@@ -375,7 +387,7 @@
     var more = (w.lifts || []).length > 5 ? '<li class="td-more"><span>+' + (w.lifts.length - 5) + ' more</span></li>' : '';
     return card('workout', 'Workout', title(esc(w.name)) +
       facts([w.week || '', w.mins ? 'About ' + w.mins + ' min' : '', (w.lifts || []).length + ' exercises']) +
-      (lifts ? '<ol class="td-lifts">' + lifts + more + '</ol>' : '') +
+      (lifts ? '<ol class="td-lifts">' + lifts + more + '</ol>' : '') + litStrip(w) +
       acts(btn(main, 'start', 'Start')), '', 'train');
   }
 

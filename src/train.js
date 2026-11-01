@@ -13790,6 +13790,19 @@
       }
       if (!ms) return out;
       var nx = nextSlot(ms);
+      /* This week's map, small, for Today's workout card: the same lit week
+         the review shows, a just-finished week kept for two days. */
+      try {
+        var lw = nx ? nx.w : weeksOf(ms) - 1, prevLast = 0, nextStarted = false;
+        ix().list.forEach(function (wo) {
+          if (wo.ms !== ms.id) return;
+          if (wo.w === lw - 1 && wo.st > prevLast) prevLast = wo.st;
+          if (wo.w === lw) nextStarted = true;
+        });
+        if (nx && lw > 0 && !nextStarted && prevLast && Date.now() - prevLast < 2 * DAY_MS) lw--;
+        var wl = weekLit(ms, lw), figs = anatMapSVG(wl.cls);
+        if (wl.n) out.lit = { n: wl.hit, of: wl.n, front: figs.front.replace('tr-hm-svg', 'tr-hm-mini'), back: figs.back.replace('tr-hm-svg', 'tr-hm-mini') };
+      } catch (e) { /* no map: the card is as it was */ }
       if (!nx) { out.finished = true; return out; }
       out.week = wkName(ms, nx.w);
       if (isEz(ms, nx.d)) { out.easy = true; return out; }

@@ -19,7 +19,7 @@ async function open(t, weeks, theme) {
   const p = await t.fresh({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, colorScheme: theme || 'light' });
   await p.evaluate(BLOCK, { weeks });
   await p.click('.tab[data-view="train"]');
-  await p.click('[data-t="sub"][data-v="block"]');
+  await p.click('[data-t="sub"][data-v="progress"]');
   await p.waitForTimeout(200);
   return p;
 }
@@ -109,6 +109,7 @@ module.exports = {
 
     // a saved workout that set records names them
     await p.click('.tab[data-view="train"]');
+    await p.click('[data-t="sub"][data-v="block"]');
     await p.evaluate(() => {
       const T = JSON.parse(localStorage.getItem('bsc.train'));
       const ws = Object.values(T.wo).sort((a, b) => a.st - b.st), a = ws[ws.length - 1];

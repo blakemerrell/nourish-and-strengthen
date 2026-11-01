@@ -9408,3 +9408,13 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
 .week-acts.tr-headrow { flex: 1 1 auto; display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; min-width: 0; }
 .tr-headrow .tr-seg { margin: 0; flex: 1 1 auto; min-width: 0; }
 .tr-headrow .tr-gear, .tr-headrow .tr-plfree { flex: none; width: 44px; min-width: 44px; height: 44px; padding: 0; display: grid; place-items: center; }
+
+/* Workout tab: the week's lit body, small, a door to Progress (train.js, litStripHTML). */
+.tr-litstrip { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; font: inherit; color: var(--ink); cursor: pointer; padding: 10px 14px; }
+.tr-litstrip-f { display: flex; gap: 2px; flex: none; }
+.tr-litstrip .tr-hm-mini { width: 38px; max-width: 38px; }
+.tr-litstrip-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 0.8125rem; color: var(--muted); }
+.tr-litstrip-t b { font-size: 1rem; color: var(--ink); }
+.tr-litstrip.all-lit .tr-litstrip-t b { color: var(--green); }
+.tr-litstrip-go { flex: none; font-size: 0.875rem; font-weight: 600; color: var(--ochre-text); }
+.tr-hseg { margin: 0 0 12px; }

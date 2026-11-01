@@ -402,8 +402,9 @@ module.exports = {
       rvSpan: window.Train._.state().S.rvSpan,
       hasHub: !!document.querySelector('#trSnapshotCard [data-hc-hub="1"]')
     }));
-    t.ok('120d Hub jump navigates to Strengthen Block snapshot card on This block span with 120d Biometrics Hub rendered',
-      hubJump.view === 'train' && hubJump.sub === 'block' && hubJump.rvSpan === 'block' && hubJump.hasHub, JSON.stringify(hubJump));
+    // the review is Strengthen's Progress tab since 2026-11-01 (Workout, Progress, History)
+    t.ok('120d Hub jump navigates to Strengthen Progress on This block span with 120d Biometrics Hub rendered',
+      hubJump.view === 'train' && hubJump.sub === 'progress' && hubJump.rvSpan === 'block' && hubJump.hasHub, JSON.stringify(hubJump));
 
     const edgeChecks = await p.evaluate(() => {
       // 1) Yesterday fallback + todaySteps priority

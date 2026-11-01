@@ -538,7 +538,7 @@ module.exports = {
     // at the top of the Review, a row each with a picture; Nourish's This week lands there
     await reads(W({ kcal: 1900, pd: [1, 1, 0, 1, 1, 1, 1], hit: 6, pDays: 7, w: { now: 199, n: 7, was: 200, m: 7 } }), null, held);
     await c.click('.tab[data-view="train"]');
-    await c.evaluate(() => { const st = window.Train._.state(); st.S.browse = false; st.S.qz = null; st.S.sub = 'block'; window.Train._.draw(); });
+    await c.evaluate(() => { const st = window.Train._.state(); st.S.browse = false; st.S.qz = null; st.S.sub = 'progress'; window.Train._.draw(); });
     r = await c.evaluate(() => {
       const card = document.querySelector('#view-train .tr-card.tr-week');
       const snapFirst = document.querySelector('#trSnapshotCard .tr-card');
@@ -584,7 +584,7 @@ module.exports = {
     await c.click('#macroWeekBtn');
     r = await c.evaluate(() => ({ shown: !document.getElementById('view-train').classList.contains('hide'), sub: window.Train._.state().S.sub,
       card: !!document.querySelector('#view-train .tr-week'), sheet: !!document.querySelector('#trainRoot .sheet') }));
-    t.ok('Nourish’s This week goes to the same place: the week at the top of Strengthen’s Review', r.shown && r.sub === 'block' && r.card && !r.sheet, JSON.stringify(r));
+    t.ok('Nourish’s This week goes to the same place: the week at the top of Strengthen’s Review', r.shown && r.sub === 'progress' && r.card && !r.sheet, JSON.stringify(r));
     await c.close();
 
     // Nourish's half, read from its own logs
@@ -713,7 +713,7 @@ module.exports = {
     r = await p.evaluate(() => (window.Train._.review().checks.find((c) => /going up/.test(c.t)) || {}).b || '');
     t.ok('and it says a rise inside a block is partly effort, not all new strength', /reps to spare coming down/.test(r), r);
     await p.click('.tab[data-view="train"]');
-    await p.click('[data-t="sub"][data-v="block"]');
+    await p.click('[data-t="sub"][data-v="progress"]');
     await p.waitForTimeout(100);
     // the checks are headlines; their sources are inside, a tap away
     await p.click('.tr-check:has([data-t="ckopen"]) [data-t="ckopen"] >> nth=0');
@@ -1126,7 +1126,7 @@ module.exports = {
     t.ok('and the block shows the week’s minutes outside the gym', /4 h/.test(r.strip), r.strip);
     await openWorkouts(p);
     t.ok('it is in History beside the workouts', await p.isVisible('.tr-hax'));
-    await p.click('[data-t="sub"][data-v="block"]');
+    await p.click('[data-t="sub"][data-v="progress"]');
     await p.waitForTimeout(100);
     r = await p.evaluate(() => {
       const rv = window.Train._.review();
@@ -2580,6 +2580,7 @@ module.exports = {
       c: wo('c', '', -1, -1, 200, [{ e: 'bb-bench', s: [{ w: 255, r: 1 }] }]),
       d: wo('d', '', -1, -1, 3, [{ e: 'bb-bench', s: [{ w: 45, r: 14, wu: 1 }, { w: 185, r: 12 }, { w: 185, r: 10 }] }]) } });
     await p.click('.tab[data-view="train"]');
+    await p.click('[data-t="sub"][data-v="history"]');
     await p.click('[data-t="sub"][data-v="lifts"]');
     await p.evaluate(() => { const b = document.querySelector('[data-t="exsheet"][data-e="bb-bench"]'); if (b) b.click(); });
     r = await p.evaluate(() => ({ tabs: [...document.querySelectorAll('[data-t="extab"]')].map((b) => b.textContent + (b.getAttribute('aria-pressed') === 'true' ? '*' : '')).join(','),
@@ -2986,6 +2987,7 @@ module.exports = {
     t.ok('the day’s weight is kept with the workout', r.bw === 190, JSON.stringify(r));
     t.ok('and 190 + 15 for 8 beats 200 for 8: a best estimated max, with its medal', /Pull-Up/.test(r.recs) && /best est\. max/.test(r.recs), r.recs);
     await p.click('.tr-done [data-t="close"]');
+    await p.click('[data-t="sub"][data-v="history"]');
     await p.click('[data-t="sub"][data-v="lifts"]');
     await p.evaluate(() => { const b = document.querySelector('[data-t="exsheet"][data-e="pullup"]'); if (b) b.click(); });
     r = await p.evaluate(() => ({ head: [...document.querySelectorAll('.tr-hs-d')].map((e) => e.textContent).join('|'),
@@ -3006,6 +3008,7 @@ module.exports = {
     r = await p.evaluate(() => { const _ = window.Train._, T = _.state().T; return { rec: _.records('dip').e1, b: _.prsIn(T.wo.b).map((x) => x.what).join() }; });
     t.ok('without a weigh-in a dip is counted in reps, and more reps is still a record', r.rec === 0 && r.b === 'most reps', JSON.stringify(r));
     await p.click('.tab[data-view="train"]');
+    await p.click('[data-t="sub"][data-v="history"]');
     await p.click('[data-t="sub"][data-v="lifts"]');
     await p.evaluate(() => { const b = document.querySelector('[data-t="exsheet"][data-e="dip"]'); if (b) b.click(); });
     await p.click('[data-t="extab"][data-v="records"]');
@@ -4295,7 +4298,7 @@ module.exports = {
     await p.evaluate(() => { const b = document.querySelector('#trainRoot [data-t="s-gyon"][data-v="0"]'); if (b) b.click(); });
     await p.waitForTimeout(150);
     await p.click('.sheet-x');
-    await p.click('[data-t="sub"][data-v="block"]');
+    await p.click('[data-t="sub"][data-v="progress"]');
     r = await p.evaluate(() => ({ cards: document.querySelectorAll('.tr-check').length, bodies: document.querySelectorAll('.tr-check .tr-ck-b').length }));
     t.ok('Review: each check a one-line headline', r.cards >= 3 && r.bodies === 0, JSON.stringify(r));
     await p.click('.tr-check [data-t="ckopen"] >> nth=0');
@@ -4324,7 +4327,7 @@ module.exports = {
     p = await t.fresh({ viewport: { width: 390, height: 844 } });
     await seed(p, { pr: { qz: 1, u: 'lb' }, act: '', ms: {}, cx: {}, ax: {}, wo: {} });
     await p.click('.tab[data-view="train"]');
-    await p.click('[data-t="sub"][data-v="block"]');
+    await p.click('[data-t="sub"][data-v="progress"]');
     r = await p.evaluate(() => ({ over: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       card: (document.querySelector('.tr-check.tr-info') || { getBoundingClientRect: () => ({ width: 0 }) }).getBoundingClientRect().width }));
     t.ok('an empty Review is a card across the page, not a stray box that scrolls it sideways', r.over <= 0 && r.card > 300, JSON.stringify(r));
@@ -4338,7 +4341,7 @@ module.exports = {
       await seed(p, { pr: { qz: 1, u: 'lb' }, act: 'fx', ms: { fx: b }, cx: {}, ax: {}, wo: wos });
     }
     await p.click('.tab[data-view="train"]');
-    await p.click('[data-t="sub"][data-v="block"]');
+    await p.click('[data-t="sub"][data-v="progress"]');
     const fx1 = await p.evaluate(() => { const b = document.querySelector('[data-t="fixset"]'); return b ? { d: b.dataset.d, i: b.dataset.i, say: b.textContent } : null; });
     if (fx1) {
       const n0 = await p.evaluate((f) => window.Train._.state().T.ms.fx.days[f.d].s[f.i].n, fx1);
@@ -4368,6 +4371,7 @@ module.exports = {
       b: wo('b', '', -1, -1, 35, [{ e: 'bb-bench', s: sets(195, [5, 5]) }, { e: 'lat-pd', s: sets(140, [10]) }]),
       c: wo('c', '', -1, -1, 2, [{ e: 'bb-bench', s: sets(205, [5, 5]) }, { e: 'leg-ext', s: sets(110, [12]) }]) } });
     await p.click('.tab[data-view="train"]');
+    await p.click('[data-t="sub"][data-v="history"]');
     await p.click('[data-t="sub"][data-v="lifts"]');
     r = await p.evaluate(() => ({ n: document.querySelectorAll('.tr-lrow').length, spark: !!document.querySelector('.tr-lrow[data-e="bb-bench"] .tr-spark'),
       ch: (document.querySelector('.tr-lrow[data-e="bb-bench"] .tr-l-c') || {}).textContent || '' }));
@@ -4795,7 +4799,7 @@ module.exports = {
     t.ok('tapping Hide preview collapses the card back down', !r);
 
     // Switch to Block tab and verify 2x2 KPI grid, 5-week block strip, and Front/Back Muscle Heatmap
-    await p.click('[data-t="sub"][data-v="block"]');
+    await p.click('[data-t="sub"][data-v="progress"]');
     await p.waitForTimeout(100);
     r = await p.evaluate(() => ({
       kpiCards: document.querySelectorAll('.tr-week .tr-kpi-card').length,
@@ -5173,8 +5177,9 @@ module.exports = {
         exChips
       };
     });
-    t.ok('Strengthen consolidates to 3 sub-tabs (Block, History, Lifts) and embeds the 120-Day Health Connect Biometrics Hub with defensive HealthData helpers',
-      hcHubCheck.subBtns === 'block,history,lifts' &&
+    // Workout, Progress, History since 2026-11-01: Lifts lives inside History
+    t.ok('Strengthen has 3 sub-tabs (Workout, Progress, History) and embeds the 120-Day Health Connect Biometrics Hub with defensive HealthData helpers',
+      hcHubCheck.subBtns === 'block,progress,history' &&
       hcHubCheck.cloneSafe &&
       hcHubCheck.seriesCacheSafe &&
       hcHubCheck.clearedStage &&

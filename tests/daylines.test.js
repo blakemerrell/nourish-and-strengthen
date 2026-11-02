@@ -95,6 +95,14 @@ module.exports = {
     t.ok('opened, it says what it costs, then the bin, the lock, the pin and the star, and the dial',
       /kcal/.test(open.mac) && open.verbs.join() === 'mdel,mlock,mpin,mfav' && open.keys.join() === 'l:0:down,l:0:up' && open.amt === '140 g',
       JSON.stringify(open));
+    /* Blake, 2026-11-02: the dial sat under the keys on his phone. Keys and
+       dial are one line now, with room left for a fifth key (a drink's). */
+    const row = await p.evaluate((sel) => {
+      const l = document.querySelector(sel), ics = l.querySelector('.mfl-ics').getBoundingClientRect(), dial = l.querySelector('.mfl-dial').getBoundingClientRect();
+      const ctl = l.querySelector('.mfl-ctl').getBoundingClientRect(), key = l.querySelector('.mfl-ic').getBoundingClientRect();
+      return { same: Math.abs(ics.top - dial.top) < 4 && Math.abs(ics.bottom - dial.bottom) < 4, spare: Math.round(ctl.width - ics.width - dial.width), kh: key.height, kw: key.width };
+    }, line('l', 0));
+    t.ok('the − amount + dial sits on the keys’ line, not under them, with room for one more key', row.same && row.spare >= row.kw + 6 && row.kh >= 44, JSON.stringify(row));
 
     /* + moves the food, the meal and the day together */
     const meal0 = await textOf(p, card('l') + ' .mtray-caps'), day0 = await textOf(p, '#macroPills');

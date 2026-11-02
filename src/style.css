@@ -7295,6 +7295,14 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .mfl-ic:first-child { border-left: 0; }
 .mfl-ic svg { width: 18px; height: 18px; }
 .mfl-ic[aria-pressed="true"] { color: var(--ochre-text); background: var(--ochre-soft); }
+/* One line on a phone (Blake, 2026-11-02, a screenshot of the − 40 g +
+   dial sitting under five keys: "Help get it so the add/subtract button
+   doesn't shift down"; he chose smaller keys over a ⋯ menu or a dial on a
+   line of its own). Five 44 px keys and the dial are 374 px; the line on a
+   390 px phone is about 337. The keys keep 44 px of height and give up
+   width, 36 px each, and the dial's − and + go to 38: about 314 px, one line.
+   Narrower than that (a 320 px phone) it still drops under, to the right,
+   rather than run off the edge. */
 /* − amount +: the sheet's dial, its circles and its type. On a phone too
    narrow for both in a row it drops under the verbs, to the right. */
 .mfl-dial { margin-left: auto; display: inline-flex; align-items: center; border: 1px solid var(--line-firm); border-radius: 999px; background: var(--card); }
@@ -9505,3 +9513,7 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
 .tr-hc-wsay { margin: 4px 0 6px; font-size: 0.9375rem; line-height: 1.4; color: var(--ink); }
 .tr-hc-norm { fill: none; stroke: color-mix(in oklab, var(--green) 45%, transparent); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
 .tr-hc-normt { fill: var(--green); }
+
+/* (the one-line widths described above .mfl-dial, after the rules they narrow) */
+.mfl-ic { width: 36px; min-width: 36px; }
+.mfl-k { width: 38px; min-width: 38px; }

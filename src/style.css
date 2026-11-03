@@ -9517,3 +9517,13 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
 /* (the one-line widths described above .mfl-dial, after the rules they narrow) */
 .mfl-ic { width: 36px; min-width: 36px; }
 .mfl-k { width: 38px; min-width: 38px; }
+
+/* The reps to spare the plan asks for, shown in an unset box as the other
+   suggestions are: faint until you pick one (2026-11-03). */
+.tr-rqw { position: relative; display: block; min-width: 0; }
+.tr-rqw > .tr-rqs { width: 100%; }
+.tr-rqs.tr-rq-aim { color: transparent; }
+.tr-rqs.tr-rq-aim option { color: var(--ink); }
+.tr-rqw.off::after { content: none; }
+.tr-rqw::after { content: attr(data-aim); position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
+  color: var(--placeholder); font-size: 0.9375rem; font-variant-numeric: tabular-nums; }

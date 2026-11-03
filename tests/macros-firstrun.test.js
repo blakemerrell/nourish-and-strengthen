@@ -321,6 +321,34 @@ module.exports = nourish({
         /skip/i.test(document.querySelector('[data-mtw="done"]').textContent)),
       await wiz.evaluate(() => document.querySelector('[data-mtw="done"]').textContent));
 
+    /* Asking for the rest of a shelf (+ N more) on the wizard's last step has
+       to expand that shelf in place rather than calling renderModal(), which
+       is a no-op while S.macroTargOpen is up. */
+    const wizChips0 = await wiz.evaluate(() => document.querySelectorAll('.fp-chip').length);
+    await wiz.click('[data-fpmore]');
+    await wiz.waitForTimeout(200);
+    const wizChips1 = await wiz.evaluate(() => document.querySelectorAll('.fp-chip').length);
+    t.ok('asking for more on a shelf in the wizard expands it in place',
+      wizChips1 > wizChips0, wizChips0 + ' -> ' + wizChips1);
+    const extraFav = await wiz.evaluate(() => {
+      const shelf = document.querySelector('[data-fpmore]').closest('.fp-shelf');
+      const chips = shelf.querySelectorAll('.fp-chip:not(.on)');
+      const last = chips[chips.length - 1];
+      last.click();
+      return last.dataset.fppick;
+    });
+    await wiz.waitForTimeout(200);
+    await wiz.click('[data-fpmore]');
+    await wiz.waitForTimeout(200);
+    const wizChips2 = await wiz.evaluate(() => document.querySelectorAll('.fp-chip').length);
+    t.ok('and Fewer folds that shelf back down while keeping any newly chosen chip visible',
+      wizChips2 === wizChips0 && await wiz.evaluate((id) => {
+        const b = document.querySelector('[data-fppick="' + id + '"]');
+        return !!b && b.classList.contains('on');
+      }, extraFav), wizChips1 + ' -> ' + wizChips2);
+    await wiz.evaluate((id) => document.querySelector('[data-fppick="' + id + '"]').click(), extraFav);
+    await wiz.waitForTimeout(200);
+
     /* Back to the plan step, because Save lives there and the next assertion
        presses it. */
     await wiz.click('[data-mtw="back"]');

@@ -1,8 +1,8 @@
 /* "What do you actually eat": the favourite star laid out as a grid of
  * chips, shelf by shelf, so a screen of taps improves every suggestion in
  * the app before there is any history to read (mFavPickHTML,
- * mFavPickBodyHTML, mFavChipSync, mFavDoneLabel). The longer account is
- * with the code.
+ * mFavPickBodyHTML, mFavChipSync, mFavMoreSync, mFavDoneLabel). The longer
+ * account is with the code.
  *
  * A part of app.js (Nourish) in a file of its own. app.js calls
  * HiveParts.favpick(app) once, as it starts, and keeps what it gives back
@@ -119,6 +119,54 @@
     return mFavPickInner().blocks;
   }
 
+  function mFavShelfHTML(sh, list) {
+    if (!list.length) return '';
+    var on = [], off = [];
+    list.forEach(function (r) { (mIsFav(r) ? on : off).push(r); });
+    /* Chosen first and always drawn; the rest up to the cap, and the cap
+       lifts for this shelf alone once it is asked to. */
+    var open = S.fpOpen && S.fpOpen[sh[0]];
+    var room = Math.max(0, MFP_SHOWN - on.length);
+    var rest = open ? off : off.slice(0, room);
+    var hidden = off.length - rest.length;
+    var chip = function (r) {
+      return '<button class="fp-chip' + (mIsFav(r) ? ' on' : '') +
+        (r.ext ? ' ext' : '') + '" data-fppick="' + esc(String(r.id)) +
+        '" aria-pressed="' + (mIsFav(r) ? 'true' : 'false') + '">' +
+        esc(r.name) + '</button>';
+    };
+    return '<div class="fp-shelf">' +
+      '<div class="fp-shelf-h"><span class="fp-emo" aria-hidden="true">' + sh[1] +
+        '</span>' + esc(sh[2]) + '<i>' +
+        (on.length ? on.length + ' of ' + list.length : String(list.length)) +
+        '</i></div>' +
+      '<div class="fp-chips">' + on.map(chip).join('') + rest.map(chip).join('') +
+        (hidden > 0
+          ? '<button class="fp-more" data-fpmore="' + esc(sh[0]) + '">+ ' +
+            hidden + ' more</button>'
+          : (open && off.length > MFP_SHOWN
+            ? '<button class="fp-more" data-fpmore="' + esc(sh[0]) + '">Fewer</button>'
+            : '')) +
+      '</div></div>';
+  }
+
+  /* Same bargain for "+ N more" / "Fewer" on the wizard's last step:
+     renderModal() leaves .mt-sheet untouched when S.macroTargOpen is true,
+     so expanding or folding a shelf replaces just that shelf in place. */
+  function mFavMoreSync(btn, key) {
+    var shelf = btn.closest('.fp-shelf');
+    if (!shelf) return;
+    var sh = null;
+    LIVE.MSHELF.forEach(function (s) { if (s[0] === key) sh = s; });
+    if (!sh) return;
+    var by = mFavPickShelves();
+    var list = (by[key] || []).sort(function (a, b) {
+      return ((a.ext ? 1 : 0) - (b.ext ? 1 : 0)) ||
+        String(a.name).localeCompare(String(b.name));
+    });
+    shelf.outerHTML = mFavShelfHTML(sh, list);
+  }
+
   function mFavPickInner() {
     var by = mFavPickShelves(), total = 0;
     var blocks = LIVE.MSHELF.map(function (sh) {
@@ -132,34 +180,8 @@
           String(a.name).localeCompare(String(b.name));
       });
       if (!list.length) return '';
-      var on = [], off = [];
-      list.forEach(function (r) { (mIsFav(r) ? on : off).push(r); });
-      total += on.length;
-      /* Chosen first and always drawn; the rest up to the cap, and the cap
-         lifts for this shelf alone once it is asked to. */
-      var open = S.fpOpen && S.fpOpen[sh[0]];
-      var room = Math.max(0, MFP_SHOWN - on.length);
-      var rest = open ? off : off.slice(0, room);
-      var hidden = off.length - rest.length;
-      var chip = function (r) {
-        return '<button class="fp-chip' + (mIsFav(r) ? ' on' : '') +
-          (r.ext ? ' ext' : '') + '" data-fppick="' + esc(String(r.id)) +
-          '" aria-pressed="' + (mIsFav(r) ? 'true' : 'false') + '">' +
-          esc(r.name) + '</button>';
-      };
-      return '<div class="fp-shelf">' +
-        '<div class="fp-shelf-h"><span class="fp-emo" aria-hidden="true">' + sh[1] +
-          '</span>' + esc(sh[2]) + '<i>' +
-          (on.length ? on.length + ' of ' + list.length : String(list.length)) +
-          '</i></div>' +
-        '<div class="fp-chips">' + on.map(chip).join('') + rest.map(chip).join('') +
-          (hidden > 0
-            ? '<button class="fp-more" data-fpmore="' + esc(sh[0]) + '">+ ' +
-              hidden + ' more</button>'
-            : (open && off.length > MFP_SHOWN
-              ? '<button class="fp-more" data-fpmore="' + esc(sh[0]) + '">Fewer</button>'
-              : '')) +
-        '</div></div>';
+      list.forEach(function (r) { if (mIsFav(r)) total++; });
+      return mFavShelfHTML(sh, list);
     }).join('');
     /* Said, not done quietly. Ticking a food the storehouse does not carry
        turns on Fill-may-shop, because a favourite that can never be drafted
@@ -208,5 +230,5 @@
       '</div></div>';
   }
 
-  return { mFavDoneLabel: mFavDoneLabel, mFavChipSync: mFavChipSync, mFavPickBodyHTML: mFavPickBodyHTML, mFavPickHTML: mFavPickHTML };
+  return { mFavDoneLabel: mFavDoneLabel, mFavChipSync: mFavChipSync, mFavMoreSync: mFavMoreSync, mFavPickBodyHTML: mFavPickBodyHTML, mFavPickHTML: mFavPickHTML };
 };

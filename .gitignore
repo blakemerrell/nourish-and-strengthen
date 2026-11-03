@@ -20,3 +20,6 @@ android/app/src/main/assets/public/
 android/local.properties
 *.keystore
 *.jks
+
+# Agent scratch & team runs
+.agents/

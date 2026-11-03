@@ -1975,10 +1975,54 @@
     if (ex.q === 'bw' && !(top.w > 0)) return { tw: 0, tr: top.r + 1, prev: prev };
     if (top.r >= ex.rr[1]) {
       // on an assisted lift the step is less help
-      if (ASST[ex.id]) return { tw: Math.max(0, roundTo(top.w - step, step)), tr: Math.max(ex.rr[0], top.r - 2), prev: prev };
-      return byEffort(ex, { tw: roundTo(top.w + step, step), tr: Math.max(ex.rr[0], top.r - 2), prev: prev }, top, work, src, pq, step);
+      /* Two fewer reps than last time's best, but never past the top of the
+         range: Blake's row after 120 x 15 was planned at 125 x 13, on an
+         8-12 lift (2026-11-03). */
+      var trUp = Math.min(ex.rr[1], Math.max(ex.rr[0], top.r - 2));
+      if (ASST[ex.id]) return { tw: Math.max(0, roundTo(top.w - step, step)), tr: trUp, prev: prev };
+      return aimAt(ex, byEffort(ex, { tw: roundTo(top.w + step, step), tr: trUp, prev: prev }, top, work, src, pq, step), top, work, src, pq, step);
     }
-    return byEffort(ex, { tw: top.w, tr: Math.min(ex.rr[1], top.r + 1), prev: prev }, top, work, src, pq, step);
+    return aimAt(ex, byEffort(ex, { tw: top.w, tr: Math.min(ex.rr[1], top.r + 1), prev: prev }, top, work, src, pq, step), top, work, src, pq, step);
+  }
+
+  /* Today's weight at today's reps to spare.
+   *
+     Double progression assumes today asks for about what last time did. A
+     new block does not: its first week asks for three to spare, where the
+     last weeks of the one before asked for none or one. Blake, 2026-11-03,
+     week 1 of a new block: his row's last set was 120 x 15 near failure, so
+     the plan said 125 x 13 — about none to spare at 125, where week 1 asks
+     for three. "I don't feel like the workout is suggesting the right weight
+     at the rep target. Today should be RIR 3."
+   *
+     So when today asks for at least one more rep to spare than last time
+     had (what you logged at the top weight, else what its plan asked), the
+     planned weight is checked against the max last time showed (Epley on
+     reps done plus reps to spare, as byEffort counts it): if it is worth
+     fewer reps at today's spare than planned, the reps come down to what it
+     is worth; if that is under the bottom of the range, the reps go to the
+     bottom and the weight comes down to what they are worth, no more than a
+     tenth under last time. Never up: a week asking for less to spare is
+     what double progression's one-more-rep is for. Not for an assisted
+     lift, a lift with no weight on it, or when byEffort has already moved
+     the weight by your logged effort (it reads today's spare too). */
+  function aimAt(ex, t, top, work, src, pq, step) {
+    if (t.ef || ASST[ex.id] || !(top.w > 0) || !(t.tw > 0) || !fin(t.tr) || !fin(pq)) return t;
+    var q = effortAt(work, src.u, top);
+    var had = q !== null ? q : fin(src.pq) ? src.pq : null;
+    if (had === null || pq - had < 1) return t;
+    var e1 = top.w * (1 + (top.r + had) / 30);
+    var worth = Math.floor(30 * (e1 / t.tw - 1) - pq + 1e-9);
+    if (worth >= t.tr) return t;
+    var tw = t.tw, tr = t.tr;
+    if (worth >= ex.rr[0]) tr = worth;
+    else {
+      var room = Math.max(step, Math.floor(top.w * 0.1 / step) * step);
+      tr = ex.rr[0];
+      tw = Math.min(t.tw, Math.max(top.w - room, Math.floor(e1 / (1 + (tr + pq) / 30) / step + 1e-9) * step));
+    }
+    if (tw === t.tw && tr === t.tr) return t;
+    return { tw: tw, tr: tr, prev: t.prev, ef: { k: 'aim', q: had, a: pq, w0: t.tw, r0: t.tr } };
   }
 
   /* How many reps you had to spare at the top weight, when you said: the
@@ -4737,7 +4781,7 @@
        counted in order, so a warm-up put in front does not shift them. */
     if (s.ef) {
       var wk = sets.filter(function (z) { return !z.wu; });
-      out.ef = { q: s.ef.q, a: s.ef.a, on: 1,
+      out.ef = { q: s.ef.q, a: s.ef.a, on: 1, k: s.ef.k === 'aim' ? 'aim' : undefined,
         a1: wk.map(function (z) { return [z.tw, z.tr]; }),
         a0: wk.map(function (z, k) { var v = s.ef.alt ? s.ef.alt[k] || s.ef.alt[s.ef.alt.length - 1] : [s.ef.w0, s.ef.r0]; return [v[0], v[1]]; }) };
     }
@@ -5149,6 +5193,27 @@
     if (at === null) at = w;
     var est = r !== null && fin(rw) && fin(at) && Math.abs(at - rw) > 1e-9 ? estReps(x, si, at) : null;
     if (est !== null) r = est;
+    /* ...and at the same weight, the reps to spare you logged. A set done
+       today was carried forward as it was, whatever it left: Blake's row
+       went 120 x 10 with two to spare on a day asking for three, and the
+       next set still said 10 (2026-11-03). Now each rep you had to spare
+       under the plan's is one fewer rep on the next set, and each over it one
+       more, up to the top of the range (or what you just did, if more). Only
+       for reps carried from a set done today with its spare logged, where
+       the plan asks for reps to spare; a main lift's sets keep their own. */
+    else if (cr !== null && r === cr && !(x.fix || s.wu) && fin(x.rir) && s.ty !== 'd' && s.ty !== 'm') {
+      var lastQ = null;
+      for (var qi = si - 1; qi >= 0; qi--) {
+        var pz = x.s[qi];
+        if (!!pz.wu !== !!s.wu || (pz.ty === 'm' && s.ty !== 'm')) continue;
+        if (numIn(pz.r) !== null) { lastQ = pz.t && !pz.am && pz.ty !== 'f' ? numIn(pz.q) : null; break; }
+      }
+      if (lastQ !== null) {
+        var gap = Math.min(5, lastQ) - x.rir;
+        if (gap <= -1) r = Math.max(1, cr + Math.round(gap));
+        else if (gap >= 1) r = Math.min(cr + Math.round(gap), Math.max(cr, x.rr ? x.rr[1] : cr));
+      }
+    }
     return { w: w, r: r, est: est !== null };
   }
 
@@ -7551,7 +7616,8 @@
         '<input class="tr-in" id="trr-' + i + '-' + j + '" data-in="r" data-x="' + i + '" data-s="' + j + '" ' +
           'inputmode="numeric" autocomplete="off" placeholder="' + esc(rph) + '" value="' + esc(s.r) + '" ' +
           'aria-label="Set ' + (j + 1) + ' reps">' +
-        (rq ? rqSel(s.q, 'data-in="q" data-x="' + i + '" data-s="' + j + '"', 'Set ' + (j + 1) + ' reps to spare') : '') +
+        (rq ? rqSel(s.q, 'data-in="q" data-x="' + i + '" data-s="' + j + '"', 'Set ' + (j + 1) + ' reps to spare',
+          !s.t && !s.wu && !s.am && s.ty !== 'd' && s.ty !== 'm' && fin(x.rir) ? x.rir : null) : '') +
         '<button class="tr-tick" data-t="tick" data-x="' + i + '" data-s="' + j + '" aria-pressed="' + !!s.t + '" ' +
           'aria-label="' + (s.t ? 'Undo set ' : 'Done with set ') + (j + 1) + '">✓</button>' +
       '</div>' +
@@ -7717,7 +7783,9 @@
     }
     var head = n[0] > o[0] ? 'Up ' + fmtN(n[0] - o[0]) + ' ' + u : n[0] < o[0] ? 'Down ' + fmtN(o[0] - n[0]) + ' ' + u
       : 'Same ' + fmtN(n[0]) + ' ' + u + ', ' + n[1] + ' reps';
-    return '<span class="tr-ex-m tr-efn">' + esc(head + ': last time was ' + rqSay(f.q) + ', the plan asked ' + rqSay(f.a) + '.') + ' ' +
+    var said = f.k === 'aim' ? head + ': today asks for ' + rqSay(f.a) + ', last time had ' + rqSay(f.q) + '.'
+      : head + ': last time was ' + rqSay(f.q) + ', the plan asked ' + rqSay(f.a) + '.';
+    return '<span class="tr-ex-m tr-efn">' + esc(said) + ' ' +
       '<button class="tr-lnk" data-t="efset" data-x="' + i + '" aria-label="Undo: back to the usual step, ' + esc(what(o)) + '">Undo</button></span>';
   }
 
@@ -7767,16 +7835,26 @@
   var RQ_RIR = [['', '\u2013'], ['0', '0'], ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4'], ['5', '5+']];
   // RPE by its usual half steps; the value kept is still reps in reserve
   var RQ_RPE = [['', '\u2013'], ['0', '10'], ['0.5', '9.5'], ['1', '9'], ['1.5', '8.5'], ['2', '8'], ['2.5', '7.5'], ['3', '7'], ['4', '6'], ['5', '\u22645']];
-  function rqSel(cur, attrs, label) {
+  /* aim: the reps to spare the plan asks for. Unset, the box showed a dash,
+     and the one number that says how hard the set should be was nowhere
+     on the set (Blake, 2026-11-03, week 1 asking for three). Now an unset
+     box shows the aim, faint like the other suggestions, drawn over it so
+     the list you pick from still reads – 0 1 2 3 (an aim written as the
+     blank's own label put "3" in it twice, and picking 3 could pick the
+     blank). It is not logged unless you pick it. */
+  function rqSel(cur, attrs, label, aim) {
     var c = cur === '' || cur === null || cur === undefined ? '' : String(cur);
     var opts = (rpeOn() ? RQ_RPE : RQ_RIR).slice();
+    var showAim = !c && fin(aim);
+    if (showAim) label += ', aim ' + effSay(aim);
     // a value logged on the other scale is kept, and shown as itself
     if (c && !opts.some(function (o) { return o[0] === c; }) && fin(Number(c))) opts.push([c, rpeOn() ? fmtN(10 - Number(c)) : fmtN(Number(c))]);
     if (rpeOn()) label = label.replace('reps to spare', 'RPE');
-    return '<select class="tr-in tr-rqs" ' + attrs + ' aria-label="' + esc(label) + '">' +
+    var sel = '<select class="tr-in tr-rqs' + (showAim ? ' tr-rq-aim' : '') + '" ' + attrs + ' aria-label="' + esc(label) + '">' +
       opts.map(function (o) {
         return '<option value="' + o[0] + '"' + (c === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
       }).join('') + '</select>';
+    return showAim ? '<span class="tr-rqw" data-aim="' + esc(rpeOn() ? fmtN(10 - aim) : fmtN(aim)) + '">' + sel + '</span>' : sel;
   }
 
   /* Keeping asks two questions, not three: a pump is how RP judges whether a
@@ -13483,6 +13561,11 @@
       if (!s) return;
       s[f] = el.value.replace(/[^0-9.,]/g, '').slice(0, 7);
       saveLive();
+      // the faint aim over the spare box goes when one is picked, and comes back when it is cleared
+      if (f === 'q' && el.parentNode && el.parentNode.classList.contains('tr-rqw')) {
+        el.classList.toggle('tr-rq-aim', !el.value);
+        el.parentNode.classList.toggle('off', !!el.value);
+      }
       if (S.need && S.need.k === el.getAttribute('data-x') + ':' + el.getAttribute('data-s')) {
         S.need = null;
         var nd = $('trneed');

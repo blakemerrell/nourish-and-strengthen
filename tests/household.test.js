@@ -552,6 +552,11 @@ module.exports = {
     const wbox = await W.p.evaluate(() => ({ code: (document.querySelector('.sync-code') || {}).textContent,
       box: !!document.getElementById('joinCode'), btn: !!document.querySelector('[data-sync="join"]') }));
     t.ok('in a pantry of her own, the sheet still has a box for another pantry’s code', wbox.code === OWN && wbox.box && wbox.btn, JSON.stringify(wbox));
+    const copyBtnBefore = await W.p.evaluate(() => (document.querySelector('.sync-copy-btn') || {}).textContent);
+    await W.p.click('.sync-copy-btn');
+    await W.p.waitForTimeout(100);
+    const copyBtnAfter = await W.p.evaluate(() => (document.querySelector('.sync-copy-btn') || {}).textContent);
+    t.ok('the copy button offers a one-tap copy and switches to Copied', copyBtnBefore === 'Copy' && copyBtnAfter === 'Copied', copyBtnBefore + ' -> ' + copyBtnAfter);
     const wsay = () => W.p.evaluate(() => ({ house: window.Store.house, dlg: (document.getElementById('dlgT') || {}).textContent || '',
       warn: [...document.querySelectorAll('.sync-sheet .sync-warn')].map((x) => x.textContent).join(' | '),
       box: (document.getElementById('joinCode') || {}).value }));

@@ -24,6 +24,7 @@ const UNITS = {
   can: 'can', cans: 'can',
   pkg: 'pkg', pkgs: 'pkg', package: 'pkg', packages: 'pkg',
   packet: 'pkg', packets: 'pkg',
+  envelope: 'pkg', envelopes: 'pkg',
   box: 'box', boxes: 'box',
   jar: 'jar', jars: 'jar',
   bottle: 'jar', bottles: 'jar',
@@ -35,6 +36,7 @@ const UNITS = {
   stick: 'each', sticks: 'each',
   link: 'each', links: 'each',
   spear: 'each', spears: 'each',
+  cube: 'each', cubes: 'each',
 };
 
 // containers whose stated "(N oz)" is a gross weight; canned protein and beans

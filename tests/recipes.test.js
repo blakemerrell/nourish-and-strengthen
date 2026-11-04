@@ -163,6 +163,27 @@ module.exports = {
       trim.users.length >= 2 && trim.pantryKeys.length === 0,
       'used by ' + trim.users.join(', ') + '; trim keys: ' + trim.pantryKeys.join(','));
 
+    /* Blake's own Creamy Broccoli Soup (2026-11-04): "1 chicken bouillon
+     * cube" matched the longest name it knew, chicken, and was priced as a
+     * 285 g can of it — 66 g of protein that was never in the pot. A cube is
+     * about 5 g of salty seasoning; granules and the paste in a jar likewise. */
+    const bou = await p.evaluate(() => {
+      const N = window.Nutrition, est = (ing) => N.nutritionFor(ing, 4, null, N.parseLine, N.FOODS, N.SPICE_NAMES);
+      const soup = ['2 medium potatoes', '1 1/2 cups chopped broccoli', '1 medium carrot', '1 chicken bouillon cube',
+        '2/3 cup condensed cream of chicken soup', '1/2 cup sour cream', '1 cup water'];
+      const lines = ['1 chicken bouillon cube', '2 beef bouillon cubes', '1 tsp chicken bouillon granules', '1 tbsp better than bouillon'];
+      const packs = ['1 envelope onion soup mix', '1 packet ranch dressing mix', '1 packet taco seasoning', '1 packet chili seasoning', '1 packet sloppy joe mix', '1 can french onion soup']
+        .map((l) => { const r = N.parseLine(l); return [l, r.key || 'unmatched', Math.round(r.grams || 0)]; });
+      return { per: est(soup).perServing, packs, read: lines.map((l) => { const r = N.parseLine(l); return [l, r.key, Math.round(r.grams * 10) / 10]; }) };
+    });
+    t.ok('a bouillon cube is a few grams of seasoning, never a can of chicken',
+      bou.read.every((x) => /^bouillon/.test(x[1]) && x[2] > 0 && x[2] < 25), JSON.stringify(bou.read));
+    t.ok('so the broccoli soup made with one is about 5 g of protein a bowl, not 21',
+      bou.per.p <= 8 && bou.per.kcal < 220 && bou.per.na > 400, JSON.stringify(bou.per));
+    t.ok('a packet of seasoning or soup mix is the packet, a few dozen grams of dry mix, not a fresh onion or nothing',
+      bou.packs.slice(0, 5).every((x) => /_mix$|_seasoning$/.test(x[1]) && x[2] >= 20 && x[2] <= 50), JSON.stringify(bou.packs));
+    t.ok('and a can of onion soup is still not the dry mix', bou.packs[5][1] !== 'onion_soup_mix', JSON.stringify(bou.packs[5]));
+
     /* --------------------------------------- ingredients you could make
      *
      * The storehouse does not carry breadcrumbs, and the app said it did.

@@ -210,7 +210,7 @@ const FOODS = {
      figures are the salt and the cornstarch: 6 g of salt in 39 g is 6,000 mg
      of sodium per hundred, roughly half what a packet carries. Six recipes
      use it in their method and, until the recipe existed, none listed it. */
-  taco_seasoning:  { kcal: 27, p: 0, c: 6.3, f: 0, na: 6000, fib: 0, g: { tbsp: 8, tsp: 2.7, cup: 128 }, label: 'Taco seasoning', note: 'homemade; the Taco Seasoning recipe on the Copycat Shelf' },
+  taco_seasoning:  { kcal: 27, p: 0, c: 6.3, f: 0, na: 6000, fib: 0, g: { tbsp: 8, tsp: 2.7, cup: 128, pkg: 28 }, label: 'Taco seasoning', note: 'homemade; the Taco Seasoning recipe on the Copycat Shelf' },
   crio_bru:        { eat: 1, kcal: 2,   p: 0.3,  c: 0.3,  f: 0.1, na: 2, fib: 0.3,  g: { cup: 240, oz: 29.6 }, label: 'Crio Bru', note: 'brewed cacao, essentially calorie-free' },
   water:           { kcal: 0,   p: 0,    c: 0,    f: 0, na: 0, fib: 0,    g: { cup: 240, oz: 29.6, tbsp: 15, each: 240 } },
 
@@ -442,6 +442,24 @@ const FOODS = {
      Tater tots are the frozen bag, 9 pieces to 86 g; the book's Homemade
      Tater Tots come out within a few per cent of them. */
   broth:        { kcal: 5, p: 0.4, c: 0.4, f: 0.2, na: 360, fib: 0, g: { cup: 240, can: 411 }, label: 'Broth', note: 'chicken or beef, from a carton or can' },
+  /* Bouillon, 2026-11-04. A recipe of Blake's own, Creamy Broccoli Soup, had
+     "1 chicken bouillon cube", which matched the longest name it knew,
+     chicken, and was priced as a 285 g can of chicken: 371 kcal and 66 g of
+     protein that were never in the pot, four servings each told they had 16 g
+     more protein than they did. A cube is about 5 g of dry seasoning, nearly
+     all salt (USDA, chicken broth or bouillon, dry). The paste in a jar
+     (Better Than Bouillon and the like) is wetter and a little less salty
+     by weight, so it is its own line. */
+  bouillon:      { kcal: 267, p: 16.7, c: 18, f: 13.9, na: 23875, fib: 0, g: { each: 4.8, tsp: 3.5, tbsp: 10.5, pkg: 4.8 }, label: 'Bouillon', note: 'cube or granules, dry; chicken or beef' },
+  /* The packets a recipe of your own is likely to name, 2026-11-04: "1
+     envelope onion soup mix" read as 110 g of fresh onion, and a packet of
+     ranch, chili or sloppy joe mix as nothing at all. Store-bought, the usual
+     packet size; nearly all of what they bring is salt. */
+  onion_soup_mix:  { kcal: 290, p: 7, c: 60, f: 1, na: 7700, fib: 4, g: { pkg: 28, tbsp: 8, tsp: 2.7 }, label: 'Onion soup mix', note: 'dry, the envelope' },
+  ranch_mix:       { kcal: 320, p: 4, c: 62, f: 3, na: 9000, fib: 0, g: { pkg: 28, tbsp: 9, tsp: 3 }, label: 'Ranch seasoning mix', note: 'dry, the packet' },
+  chili_seasoning: { kcal: 300, p: 9, c: 55, f: 6, na: 6000, fib: 12, g: { pkg: 35, tbsp: 8, tsp: 2.7 }, label: 'Chili seasoning', note: 'dry, the packet' },
+  sloppy_joe_mix:  { kcal: 280, p: 6, c: 60, f: 2, na: 5800, fib: 6, g: { pkg: 42, tbsp: 9, tsp: 3 }, label: 'Sloppy joe mix', note: 'dry, the packet' },
+  bouillon_base: { kcal: 167, p: 8, c: 17, f: 8, na: 11333, fib: 0, g: { tsp: 6, tbsp: 18 }, label: 'Bouillon base', note: 'the paste in a jar' },
   /* Dry egg noodles weigh 38 g a cup to macaroni's 105, so "3 cups egg
      noodles" read as pasta would have counted nearly three times the food. */
   egg_noodles:  { kcal: 384, p: 14.2, c: 71.3, f: 4.4, na: 21, fib: 3.3, g: { cup: 38, oz: 28.35, lb: 453.6, pkg: 340 }, label: 'Egg noodles', note: 'dry; the ribbon pasta on the standard order' },
@@ -627,6 +645,15 @@ const ALIASES = {
   'ribbon noodles': 'egg_noodles',
   'chicken broth': 'broth', 'beef broth': 'broth', 'chicken stock': 'broth', 'beef stock': 'broth',
   'broth': 'broth',
+  'bouillon': 'bouillon', 'bouillon cube': 'bouillon', 'bouillon cubes': 'bouillon',
+  'chicken bouillon': 'bouillon', 'beef bouillon': 'bouillon', 'vegetable bouillon': 'bouillon',
+  'chicken bouillon cube': 'bouillon', 'beef bouillon cube': 'bouillon', 'chicken bouillon cubes': 'bouillon', 'beef bouillon cubes': 'bouillon',
+  'bouillon granules': 'bouillon', 'chicken bouillon granules': 'bouillon', 'beef bouillon granules': 'bouillon', 'bouillon powder': 'bouillon',
+  'onion soup mix': 'onion_soup_mix', 'dry onion soup mix': 'onion_soup_mix',
+  'ranch dressing mix': 'ranch_mix', 'ranch seasoning': 'ranch_mix', 'ranch mix': 'ranch_mix', 'ranch seasoning mix': 'ranch_mix',
+  'chili seasoning': 'chili_seasoning', 'chili seasoning mix': 'chili_seasoning',
+  'sloppy joe mix': 'sloppy_joe_mix', 'sloppy joe seasoning': 'sloppy_joe_mix',
+  'better than bouillon': 'bouillon_base', 'bouillon base': 'bouillon_base', 'chicken base': 'bouillon_base', 'beef base': 'bouillon_base',
   'tater tots': 'tater_tots', 'tater tot': 'tater_tots', 'frozen tater tots': 'tater_tots',
   '96/4 ground beef': 'ground_beef_96_4', 'extra lean ground beef': 'ground_beef_96_4',
   'jasmine rice': 'rice_jasmine', 'cooked jasmine rice': 'rice_jasmine',

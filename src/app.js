@@ -5117,6 +5117,7 @@
               : st === 'error' ? 'Sharing stopped' : 'On this device only';
 
     var body;
+    var copyBtnLabel = S.codeCopied ? S.codeCopied : 'Copy';
     if (!configured) {
       body = '<p class="sync-p">No server behind this copy. See <strong>SETUP.md</strong>.</p>';
     } else if (!house) {
@@ -5125,7 +5126,7 @@
           '<span class="sync-code-lbl">Household Code</span>' +
           '<div class="sync-code" id="newCode">' + esc(S.pendingCode) + '</div>' +
         '</div>' +
-        '<button class="ghost sync-copy-btn" data-sync="copycode">' + (S.codeCopied ? 'Copied!' : 'Copy') + '</button>' +
+        '<button class="ghost sync-copy-btn" data-sync="copycode">' + esc(copyBtnLabel) + '</button>' +
       '</div>' +
       '<div class="sync-row sync-action-row">' +
         '<button class="btn-primary" data-sync="use">Use this code</button>' +
@@ -5160,7 +5161,7 @@
           '<span class="sync-code-lbl">Household Code</span>' +
           '<div class="sync-code">' + esc(house) + '</div>' +
         '</div>' +
-        '<button class="ghost sync-copy-btn" data-sync="copycode">' + (S.codeCopied ? 'Copied!' : 'Copy') + '</button>' +
+        '<button class="ghost sync-copy-btn" data-sync="copycode">' + esc(copyBtnLabel) + '</button>' +
       '</div>' +
       invite +
       (window.Store.statusNote ? '<div class="sync-warn">' + esc(window.Store.statusNote) + '</div>' : '') +
@@ -5181,9 +5182,27 @@
       : mInviteGet() && !mAccount()
         ? '<div class="sync-warn">You have been invited to a pantry. Sign in above to join it.</div>' : '';
 
+    var dayPillCls = mAccount() ? 'on' : 'neutral';
+    var dayPillWord = mAccount() ? 'Private' : 'This device';
+    var dayPillDot = mAccount() ? 'dot on' : 'dot';
+
+    var pantryPillCls = !configured ? 'off'
+      : st === 'synced' ? 'on'
+        : st === 'error' ? 'off'
+          : (st === 'sending' || st === 'waiting') ? 'wait' : 'neutral';
+    var pantryPillWord = !configured ? 'Offline'
+      : st === 'synced' ? 'Shared'
+        : st === 'error' ? 'Stopped'
+          : (st === 'sending' || st === 'waiting') ? 'Syncing…' : 'This device';
+    var pantryPillDot = st === 'synced' ? 'dot on' : st === 'error' ? 'dot off'
+      : (st === 'sending' || st === 'waiting') ? 'dot wait' : 'dot';
+
     /* Two things travel and they are not the same promise: the pantry is
        shared with PEOPLE by handing out a code, and My Day is carried between
-       YOUR OWN devices by being you. Grouped into modern cohesive cards (Option 1). */
+       YOUR OWN devices by being you. Merging them into one undifferentiated
+       sheet made the app read as one confusing thing with two kinds of
+       secret. Two cards, split by whose it is, each saying who can see it —
+       and the personal one first, because it is the one with a name on it. */
     return '<div class="scrim no-print" data-close="1">' +
       '<div class="sheet sync-sheet" role="dialog" aria-modal="true" aria-label="Sync and sharing">' +
         '<div class="sheet-top">' +
@@ -5191,11 +5210,23 @@
           '<button class="sheet-x" data-close="1" aria-label="Close">&times;</button>' +
         '</div>' +
 
-        /* Card 1: Your pantry */
+        /* Card 1: Your day */
+        '<div class="sync-card">' +
+          '<div class="sync-card-head">' +
+            '<div class="mt-div"><span class="sync-card-ico" aria-hidden="true">👤</span>Your day</div>' +
+            '<span class="sync-pill ' + dayPillCls + '"><span class="' + dayPillDot + '"></span>' + dayPillWord + '</span>' +
+          '</div>' +
+          '<p class="sync-p">Your plan, meals and weigh-ins. Private to you. Signed in, ' +
+          'your pantry comes with you to every device too.</p>' +
+          mAccountBlockHTML() +
+          healthSyncHTML() +
+        '</div>' +
+
+        /* Card 2: Your pantry */
         '<div class="sync-card">' +
           '<div class="sync-card-head">' +
             '<div class="mt-div"><span class="sync-card-ico" aria-hidden="true">🏡</span>Your pantry</div>' +
-            '<span class="sync-pill ' + (house ? 'on' : 'wait') + '"><span class="' + dotCls + '"></span>' + (house ? 'Shared' : 'On this device') + '</span>' +
+            '<span class="sync-pill ' + pantryPillCls + '"><span class="' + pantryPillDot + '"></span>' + pantryPillWord + '</span>' +
           '</div>' +
           '<p class="sync-p">The shopping list, the week&rsquo;s meals and your favorites &mdash; shared ' +
           'with whoever you invite. Without an account or a code they stay on this device.</p>' +
@@ -5204,20 +5235,9 @@
           syncDinerHTML() +
           '<div class="sync-status"><span class="' + dotCls + '"></span>' + esc(label) +
             '<span class="sync-build">Build ' + esc(BUILD) + '</span></div>' +
+          // said here for as long as it is so, not only in the one toast
           (window.Store.storageFull ? '<p class="sync-warn">This phone’s storage for the app is full, so changes to the plan and recipes aren’t kept on it' +
             (house ? '; they still go to the shared pantry while there’s signal.' : '. Free some space to keep them.') + '</p>' : '') +
-        '</div>' +
-
-        /* Card 2: Your day */
-        '<div class="sync-card">' +
-          '<div class="sync-card-head">' +
-            '<div class="mt-div"><span class="sync-card-ico" aria-hidden="true">👤</span>Your day</div>' +
-            '<span class="sync-pill ' + (mAccount() ? 'on' : 'wait') + '"><span class="dot ' + (mAccount() ? 'on' : '') + '"></span>' + (mAccount() ? 'Private' : 'This device') + '</span>' +
-          '</div>' +
-          '<p class="sync-p">Your plan, meals and weigh-ins. Private to you. Signed in, ' +
-          'your pantry comes with you to every device too.</p>' +
-          mAccountBlockHTML() +
-          healthSyncHTML() +
         '</div>' +
 
         /* Card 3: What you want help with */
@@ -5244,6 +5264,8 @@
         /* Card 5: On your home screen & Appearance */
         '<div class="sync-card">' +
           installHTML() +
+          /* The app's one screen of settings for the whole of it, so the
+             light-or-dark choice lives here. Auto is the phone's own. */
           (window.Theme ? '<div class="mt-div" id="syncThemeH">Appearance</div>' +
             '<div class="sync-theme"><span class="seg" role="group" aria-labelledby="syncThemeH">' +
               [['', 'Auto'], ['light', 'Light'], ['dark', 'Dark']].map(function (o) {
@@ -8678,22 +8700,33 @@
         if (act === 'copycode') {
           var codeToCopy = window.Store.house || S.pendingCode || '';
           if (codeToCopy) {
-            var doneCode = function () {
-              S.codeCopied = true;
+            if (S.codeCopiedTimer) { clearTimeout(S.codeCopiedTimer); S.codeCopiedTimer = null; }
+            var saidCode = function (ok) {
+              S.codeCopied = ok ? 'Copied' : 'Press and hold';
               renderModal();
-              setTimeout(function () {
-                S.codeCopied = false;
+              S.codeCopiedTimer = setTimeout(function () {
+                S.codeCopied = '';
+                S.codeCopiedTimer = null;
                 renderModal();
               }, 2000);
             };
+            var copyViaTextarea = function () {
+              var ta = document.createElement('textarea');
+              ta.value = codeToCopy;
+              ta.setAttribute('readonly', '');
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              var ok = false;
+              try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+              document.body.removeChild(ta);
+              saidCode(ok);
+            };
             if (navigator.clipboard && navigator.clipboard.writeText) {
-              navigator.clipboard.writeText(codeToCopy).then(doneCode, function () {
-                var el = $('newCode'); if (el) { try { document.execCommand('copy'); } catch (er) {} }
-                doneCode();
-              });
+              navigator.clipboard.writeText(codeToCopy).then(function () { saidCode(true); }, copyViaTextarea);
             } else {
-              var el2 = $('newCode'); if (el2) { try { document.execCommand('copy'); } catch (er) {} }
-              doneCode();
+              copyViaTextarea();
             }
           }
           return;

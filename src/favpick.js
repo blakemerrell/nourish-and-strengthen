@@ -150,6 +150,18 @@
       '</div></div>';
   }
 
+  /* What the storehouse carries first, then the rest, then alphabetical.
+     Straight A-Z opened Protein on calamari, catfish and clams — eight
+     chips of the most obscure things in the table, with chicken and eggs
+     below the fold. The order has to put the likely answer in the part
+     you can see. */
+  function mFavShelfSort(list) {
+    return (list || []).slice().sort(function (a, b) {
+      return ((a.ext ? 1 : 0) - (b.ext ? 1 : 0)) ||
+        String(a.name).localeCompare(String(b.name));
+    });
+  }
+
   /* Same bargain for "+ N more" / "Fewer" on the wizard's last step:
      renderModal() leaves .mt-sheet untouched when S.macroTargOpen is true,
      so expanding or folding a shelf replaces just that shelf in place. */
@@ -160,25 +172,17 @@
     LIVE.MSHELF.forEach(function (s) { if (s[0] === key) sh = s; });
     if (!sh) return;
     var by = mFavPickShelves();
-    var list = (by[key] || []).sort(function (a, b) {
-      return ((a.ext ? 1 : 0) - (b.ext ? 1 : 0)) ||
-        String(a.name).localeCompare(String(b.name));
-    });
+    var list = mFavShelfSort(by[key]);
+    var parent = shelf.parentElement;
     shelf.outerHTML = mFavShelfHTML(sh, list);
+    var fresh = parent && parent.querySelector('[data-fpmore="' + esc(key) + '"]');
+    if (fresh) try { fresh.focus(); } catch (e) {}
   }
 
   function mFavPickInner() {
     var by = mFavPickShelves(), total = 0;
     var blocks = LIVE.MSHELF.map(function (sh) {
-      /* What the storehouse carries first, then the rest, then alphabetical.
-         Straight A-Z opened Protein on calamari, catfish and clams — eight
-         chips of the most obscure things in the table, with chicken and eggs
-         below the fold. The order has to put the likely answer in the part
-         you can see. */
-      var list = (by[sh[0]] || []).sort(function (a, b) {
-        return ((a.ext ? 1 : 0) - (b.ext ? 1 : 0)) ||
-          String(a.name).localeCompare(String(b.name));
-      });
+      var list = mFavShelfSort(by[sh[0]]);
       if (!list.length) return '';
       list.forEach(function (r) { if (mIsFav(r)) total++; });
       return mFavShelfHTML(sh, list);

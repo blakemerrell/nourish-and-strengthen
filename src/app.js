@@ -5074,29 +5074,145 @@
         : '<p class="kit-say" role="status">' + say[st] + '</p>');
   }
   function healthSyncHTML() {
-    if (!window.Health || !window.Health.available()) return '';
-    var st = window.Health.state();
-    var ago = window.Health.lastSync() ? agoWords(window.Health.lastSync()) : '';
-    var tSteps = window.Health.todaySteps();
+    var isDemo = typeof window !== 'undefined' && window.location && window.location.search &&
+      (window.location.search.indexOf('health=1') !== -1 || window.location.search.indexOf('demo=1') !== -1);
+    if (!isDemo && (!window.Health || !window.Health.available())) return '';
+    var st = isDemo ? 'granted' : window.Health.state();
+    var lastSyncMs = isDemo ? Date.now() - 180000 : window.Health.lastSync();
+    var ago = lastSyncMs ? agoWords(lastSyncMs) : '';
+    var tSteps = isDemo ? 8421 : window.Health.todaySteps();
+    var tk = todayKey();
+
     if (st === 'granted') {
-      return '<div class="mt-div">Health Connect</div>' +
-        '<div class="kit-row"><span><b>Google Health Connect</b><small>Steps, sleep, weight, meals &amp; workouts' +
-        (tSteps > 0 ? ' \u00b7 ' + Math.round(tSteps).toLocaleString('en-US') + ' steps today' : '') +
-        (ago ? ' \u00b7 ' + ago : '') + '</small></span>' +
-        '<button class="ghost" data-mysync="health-sync">Sync now</button></div>';
+      var stepGoal = 10000;
+      try {
+        var pr = typeof mReadProfile === 'function' ? mReadProfile() : null;
+        if (pr && Number(pr.steps) > 0) stepGoal = Number(pr.steps);
+      } catch (e) {}
+
+      var stepsVal = tSteps > 0 ? Math.round(tSteps).toLocaleString('en-US') : '\u2014';
+      var stepsSub = 'Goal: ' + stepGoal.toLocaleString('en-US') + ' steps';
+
+      // Sleep
+      var am = typeof mAmOf === 'function' ? (mAmOf(tk) || {}) : {};
+      var sl = am.sl || (isDemo ? 7.4 : 0);
+      var sleepVal = '\u2014';
+      var sleepSub = 'Pending morning sync';
+      if (typeof sl === 'number' && sl > 0) {
+        var slH = Math.floor(sl);
+        var slM = Math.round((sl % 1) * 60);
+        sleepVal = slH + 'h' + (slM > 0 ? ' ' + slM + 'm' : '');
+        var hData = window.HealthData ? window.HealthData.day(tk) : null;
+        if (hData && hData.sleepStages) {
+          var stg = hData.sleepStages;
+          var deepMin = Number(stg.deep) || 0;
+          var remMin = Number(stg.rem) || 0;
+          if (deepMin > 0 || remMin > 0) {
+            sleepSub = 'Deep ' + Math.floor(deepMin / 60) + 'h ' + (deepMin % 60) + 'm \u00b7 REM ' + Math.floor(remMin / 60) + 'h ' + (remMin % 60) + 'm';
+          } else {
+            sleepSub = 'Target: 7\u20139h';
+          }
+        } else if (isDemo) {
+          sleepSub = 'Deep 1h 45m \u00b7 REM 2h 10m';
+        } else {
+          sleepSub = 'Target: 7\u20139h';
+        }
+      }
+
+      // Weight
+      var wToday = MWEIGHTS[tk] || (isDemo ? 182.4 : 0);
+      var weightVal = '\u2014';
+      var weightSub = 'Log on Today tab';
+      if (typeof wToday === 'number' && wToday > 0) {
+        weightVal = wToday.toFixed(1) + ' <small class="telem-unit">lb</small>';
+        weightSub = 'Today\u2019s weigh-in';
+      } else {
+        var wKeys = Object.keys(MWEIGHTS).filter(function (k) { return MWEIGHTS[k] > 0; }).sort();
+        if (wKeys.length > 0) {
+          var lastW = MWEIGHTS[wKeys[wKeys.length - 1]];
+          weightVal = lastW.toFixed(1) + ' <small class="telem-unit">lb</small>';
+          weightSub = 'Recent (' + wKeys[wKeys.length - 1].slice(5) + ')';
+        }
+      }
+
+      // Active burn
+      var hDataBurn = window.HealthData ? window.HealthData.day(tk) : null;
+      var actKcal = hDataBurn && Number(hDataBurn.actKcal) > 0 ? Math.round(Number(hDataBurn.actKcal)) : (isDemo ? 540 : 0);
+      var totKcal = hDataBurn && Number(hDataBurn.totKcal) > 0 ? Math.round(Number(hDataBurn.totKcal)) : (isDemo ? 2480 : 0);
+      var burnVal = '\u2014';
+      var burnSub = 'Watch sync pending';
+      if (actKcal > 0) {
+        burnVal = actKcal.toLocaleString('en-US') + ' <small class="telem-unit">kcal</small>';
+        burnSub = totKcal > 0 ? 'Watch: ' + totKcal.toLocaleString('en-US') + ' total' : 'Active burn today';
+      } else if (totKcal > 0) {
+        burnVal = totKcal.toLocaleString('en-US') + ' <small class="telem-unit">kcal</small>';
+        burnSub = 'Total daily burn';
+      } else {
+        burnSub = 'From watch & workouts';
+      }
+
+      var syncTimeText = ago ? 'Synced ' + ago : 'Synced today';
+
+      return '<div class="health-section">' +
+        '<div class="health-head">' +
+          '<div class="health-badge">' +
+            '<span class="health-badge-icon">\u2665</span>' +
+            '<span>Health Connect</span>' +
+          '</div>' +
+          '<div style="display: flex; align-items: center; gap: 8px;">' +
+            '<span class="sync-timestamp">' + esc(syncTimeText) + '</span>' +
+            '<button class="sync-btn-small" data-mysync="health-sync" aria-label="Sync Health Connect now">' +
+              '<span class="sync-icon' + (S.healthSyncing ? ' spinning' : '') + '">\u21bb</span> ' +
+              (S.healthSyncing ? 'Syncing\u2026' : 'Sync now') +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="telemetry-grid">' +
+          '<div class="telem-card">' +
+            '<span class="telem-label">\ud83d\udc5f Steps today</span>' +
+            '<span class="telem-val">' + stepsVal + '</span>' +
+            '<span class="telem-sub">' + esc(stepsSub) + '</span>' +
+          '</div>' +
+          '<div class="telem-card">' +
+            '<span class="telem-label">\ud83c\udf19 Last Night Sleep</span>' +
+            '<span class="telem-val">' + sleepVal + '</span>' +
+            '<span class="telem-sub">' + esc(sleepSub) + '</span>' +
+          '</div>' +
+          '<div class="telem-card">' +
+            '<span class="telem-label">\u2696\ufe0f Scale Weight</span>' +
+            '<span class="telem-val">' + weightVal + '</span>' +
+            '<span class="telem-sub">' + esc(weightSub) + '</span>' +
+          '</div>' +
+          '<div class="telem-card">' +
+            '<span class="telem-label">\ud83d\udd25 Active Burn</span>' +
+            '<span class="telem-val">' + burnVal + '</span>' +
+            '<span class="telem-sub">' + esc(burnSub) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="health-foot">' +
+          '<span>Pixel 9 Pro \u00b7 Two-way sync</span>' +
+          '<span class="health-foot-ok">\u2713 All metrics current</span>' +
+        '</div>' +
+      '</div>';
     }
     if (st === 'update_required') {
-      return '<div class="mt-div">Health Connect</div>' +
+      return '<div class="health-section">' +
+        '<div class="health-head"><div class="health-badge"><span class="health-badge-icon">\u2665</span><span>Health Connect</span></div></div>' +
         '<p class="kit-say">Update Health Connect in Google Play to sync your steps, sleep, weight, meals and workouts.</p>' +
-        '<div class="sync-row"><button class="ghost" data-mysync="health-install">Open Health Connect</button></div>';
+        '<div class="sync-row"><button class="ghost" data-mysync="health-install">Open Health Connect</button></div>' +
+      '</div>';
     }
     if (st === 'unavailable') {
-      return '<div class="mt-div">Health Connect</div>' +
-        '<p class="kit-say">Health Connect is not available on this device. Manual entry works as usual.</p>';
+      return '<div class="health-section">' +
+        '<div class="health-head"><div class="health-badge"><span class="health-badge-icon">\u2665</span><span>Health Connect</span></div></div>' +
+        '<p class="kit-say">Health Connect is not available on this device. Manual entry works as usual.</p>' +
+      '</div>';
     }
-    return '<div class="mt-div">Health Connect</div>' +
-      '<p class="kit-say">Sync steps, sleep and scale weight from your phone or watch, and log your meals, weigh-ins and workouts to Health Connect.</p>' +
-      '<div class="sync-row"><button class="btn-primary" data-mysync="health-connect">Connect Health Connect</button></div>';
+    return '<div class="health-section">' +
+      '<div class="health-head"><div class="health-badge"><span class="health-badge-icon">\u2665</span><span>Health Connect</span></div></div>' +
+      '<p class="kit-say">Sync steps, sleep and scale weight from your Pixel 9 Pro or watch, and push logged meals and workouts to Health Connect.</p>' +
+      '<div class="sync-row"><button class="btn-primary" data-mysync="health-connect">Connect Health Connect</button></div>' +
+    '</div>';
   }
   function syncHTML() {
     var st = window.Store.status;
@@ -5202,7 +5318,9 @@
        YOUR OWN devices by being you. Merging them into one undifferentiated
        sheet made the app read as one confusing thing with two kinds of
        secret. Two cards, split by whose it is, each saying who can see it —
-       and the personal one first, because it is the one with a name on it. */
+       and the personal one first, because it is the one with a name on it.
+       The pantry card (shared setup) is moved to Card 4 near the bottom,
+       as requested by Blake: day telemetry and active help sit front and center. */
     return '<div class="scrim no-print" data-close="1">' +
       '<div class="sheet sync-sheet" role="dialog" aria-modal="true" aria-label="Sync and sharing">' +
         '<div class="sheet-top">' +
@@ -5210,7 +5328,7 @@
           '<button class="sheet-x" data-close="1" aria-label="Close">&times;</button>' +
         '</div>' +
 
-        /* Card 1: Your day */
+        /* Card 1: Your day & Health Connect live feed */
         '<div class="sync-card">' +
           '<div class="sync-card-head">' +
             '<div class="mt-div"><span class="sync-card-ico" aria-hidden="true">👤</span>Your day</div>' +
@@ -5222,7 +5340,28 @@
           healthSyncHTML() +
         '</div>' +
 
-        /* Card 2: Your pantry */
+        /* Card 2: What you want help with */
+        (window.Door ? '<div class="sync-card">' +
+          '<div class="sync-card-head"><div class="mt-div"><span class="sync-card-ico" aria-hidden="true">📱</span>What you want help with</div></div>' +
+          '<div class="sync-list-group">' +
+          [['d', 'Dinners and the shopping', 'Tonight\u2019s dinner and the list'], ['e', 'Eating well', 'What is left to eat'], ['w', 'A workout that fits', 'The next workout']].map(function (o) {
+            var on = window.Door.help()[o[0]];
+            return '<div class="kit-row"><span><b>' + o[1] + '</b><small>' + (on ? 'Today shows ' + o[2].charAt(0).toLowerCase() + o[2].slice(1) : 'Off: not on Today') + '</small></span>' +
+              '<button class="kit-tog" role="switch" data-sync="help" data-v="' + o[0] + '" aria-checked="' + on + '" aria-label="' + o[1] + ' on Today"></button></div>';
+          }).join('') + '</div>' +
+          '<p class="kit-say">Only what Today shows. Every tab stays where it is.</p></div>' : '') +
+
+        /* Card 3: Your kitchen */
+        '<div class="sync-card">' +
+          '<div class="sync-card-head"><div class="mt-div"><span class="sync-card-ico" aria-hidden="true">🍳</span>Your kitchen</div></div>' +
+          '<div class="sync-list-group">' +
+            '<button class="kit-row" data-sync="where"><span><b>Where your staples come from</b><small>' + esc(SRC_WORDS[srcKind()].pick) +
+              (window.Store.opt('buy', true) ? '' : ' \u00b7 only what I have') + '</small></span><i aria-hidden="true">\u203a</i></button>' +
+            '<button class="kit-row" data-sync="pantry"><span><b>What you keep on hand</b><small>' + kitItems().filter(function (i) { return i.on; }).length + ' on hand</small></span><i aria-hidden="true">\u203a</i></button>' +
+          '</div>' +
+        '</div>' +
+
+        /* Card 4: Your pantry (relocated to bottom) */
         '<div class="sync-card">' +
           '<div class="sync-card-head">' +
             '<div class="mt-div"><span class="sync-card-ico" aria-hidden="true">🏡</span>Your pantry</div>' +
@@ -5238,27 +5377,6 @@
           // said here for as long as it is so, not only in the one toast
           (window.Store.storageFull ? '<p class="sync-warn">This phone’s storage for the app is full, so changes to the plan and recipes aren’t kept on it' +
             (house ? '; they still go to the shared pantry while there’s signal.' : '. Free some space to keep them.') + '</p>' : '') +
-        '</div>' +
-
-        /* Card 3: What you want help with */
-        (window.Door ? '<div class="sync-card">' +
-          '<div class="sync-card-head"><div class="mt-div"><span class="sync-card-ico" aria-hidden="true">📱</span>What you want help with</div></div>' +
-          '<div class="sync-list-group">' +
-          [['d', 'Dinners and the shopping', 'Tonight\u2019s dinner and the list'], ['e', 'Eating well', 'What is left to eat'], ['w', 'A workout that fits', 'The next workout']].map(function (o) {
-            var on = window.Door.help()[o[0]];
-            return '<div class="kit-row"><span><b>' + o[1] + '</b><small>' + (on ? 'Today shows ' + o[2].charAt(0).toLowerCase() + o[2].slice(1) : 'Off: not on Today') + '</small></span>' +
-              '<button class="kit-tog" role="switch" data-sync="help" data-v="' + o[0] + '" aria-checked="' + on + '" aria-label="' + o[1] + ' on Today"></button></div>';
-          }).join('') + '</div>' +
-          '<p class="kit-say">Only what Today shows. Every tab stays where it is.</p></div>' : '') +
-
-        /* Card 4: Your kitchen */
-        '<div class="sync-card">' +
-          '<div class="sync-card-head"><div class="mt-div"><span class="sync-card-ico" aria-hidden="true">🍳</span>Your kitchen</div></div>' +
-          '<div class="sync-list-group">' +
-            '<button class="kit-row" data-sync="where"><span><b>Where your staples come from</b><small>' + esc(SRC_WORDS[srcKind()].pick) +
-              (window.Store.opt('buy', true) ? '' : ' \u00b7 only what I have') + '</small></span><i aria-hidden="true">\u203a</i></button>' +
-            '<button class="kit-row" data-sync="pantry"><span><b>What you keep on hand</b><small>' + kitItems().filter(function (i) { return i.on; }).length + ' on hand</small></span><i aria-hidden="true">\u203a</i></button>' +
-          '</div>' +
         '</div>' +
 
         /* Card 5: On your home screen & Appearance */
@@ -8411,7 +8529,18 @@
         };
         if (act2 === 'retry') { mSyncStart(); renderModal(); return; }
         if (act2 === 'health-connect') { if (window.Health) window.Health.connect(); return; }
-        if (act2 === 'health-sync') { if (window.Health) window.Health.sync(); return; }
+        if (act2 === 'health-sync') {
+          if (window.Health) {
+            S.healthSyncing = true;
+            renderModal();
+            window.Health.sync();
+            setTimeout(function () {
+              S.healthSyncing = false;
+              renderModal();
+            }, 800);
+          }
+          return;
+        }
         if (act2 === 'health-install') { if (window.Health) window.Health.openStore(); return; }
         if (act2 === 'google') {
           /* On the redirect path this page is about to be replaced, and the

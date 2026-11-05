@@ -497,7 +497,7 @@
     'seated-curl': ['Pad above your heels, thigh pad snug, knees lined up with the pivot.', 'Curl your heels down and back under the seat.', 'Return slowly to straight legs.'],
     'slide-curl': ['Lie on your back with your heels (or one heel at a time) on a towel or slider on a smooth floor.', 'Slide your heel in toward your glutes, lifting your hips and curling with your hamstrings.', 'Slide back out slowly under control.'],
     'nordic': ['Kneel with your ankles anchored under something solid.', 'Keeping a straight line from knees to head, lower forward as slowly as you can, catching yourself with your hands.', 'Push off lightly and pull back up with your hamstrings.'],
-    'ball-curl': ['Lie on your back, heels on a stability ball, hips lifted.', 'Roll the ball toward you by bending your knees, hips high.', 'Roll it back out slowly.'],
+    'ball-curl': ['Lie on your back with both heels (or one heel for extra challenge) on a stability ball, hips lifted.', 'Roll the ball toward you by bending your knees, keeping your hips high.', 'Roll it back out slowly under control.'],
     'sl-rdl': ['Stand on one leg with a soft knee, bodyweight or holding a light counterweight.', 'Hinge forward, the free leg reaching straight back, until the standing hamstring stretches, hips square.', 'Stand back up. Hold something for balance if you need to.'],
     'hip-thrust': ['Upper back on a bench, a padded bar across your hips, feet flat.', 'Drive through your heels until your thighs are level, chin tucked.', 'Lower with control.'],
     'mc-thrust': ['Pad across your hips, upper back against the pad, feet flat.', 'Drive your hips up until your thighs are level and squeeze.', 'Lower with control.'],

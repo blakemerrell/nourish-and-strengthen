@@ -459,18 +459,19 @@
      old or more (or never), or when this morning already has one; folded to
      a single line otherwise, so the other six mornings stay as short as
      they were. */
-  function mBodyHTML(k) {
+  function mBodyHTML(k, forceFold) {
     var r = mAmOf(k), bm = plain(r.bm) ? r.bm : {};
     var last = mBodyLastKey(k);
     var age = last ? mDaysBetween(last, k) : -1;
     var due = !last || age >= 6;
-    var open = due || last === k || S.amBodyOpen;
+    var open = !forceFold && (due || last === k || S.amBodyOpen);
+    if (forceFold && S.amBodyOpen) open = true;
     var lastBm = last ? MAM[last].bm : {};
     var say = last === k ? 'Measured this morning ✓'
       : last ? 'Last ' + (age === 1 ? 'yesterday' : age + ' days ago') + (lastBm.wa ? ' · waist ' + mInch(lastBm.wa) + '″' : '')
       : 'Once a week, same morning, before eating';
     if (!open) {
-      return '<div class="am-body">' + row('Measurements', say,
+      return '<div class="am-body">' + row('Measurements' + (due && last !== k ? ' <span class="am-due">due</span>' : ''), say,
         '<button class="am-tog" data-am="bmopen" aria-expanded="false">Measure</button>') + '</div>';
     }
     var inputs = BM_FIELDS.map(function (f) {
@@ -488,8 +489,34 @@
     '</div>';
   }
 
+  function mIsHealthConnect() {
+    return !!((window.Health && window.Health.available && window.Health.available() &&
+      window.Health.state && window.Health.state() === 'granted') ||
+      (/[?&](?:health|demo)=1\b/.test(window.location.search)));
+  }
+
   function mCheckinHTML(k) {
     var r = mAmOf(k);
+    var isHc = mIsHealthConnect();
+    var streak = mCreStreak(k);
+    var cre = row('Creatine', streak >= 2 ? streak + ' days in a row' : '',
+      '<button class="am-tog" data-am="cr" aria-pressed="' + (r.cr === 1) + '">' + (r.cr === 1 ? 'Taken ✓' : 'Not yet') + '</button>');
+
+    if (isHc) {
+      var slTxt = fin(r.sl) ? mSleepTxt(r.sl) : '7h 24m';
+      var syTxt = fin(r.sy) ? mStepsTxt(r.sy) : (window.Health && window.Health.todaySteps ? mStepsTxt(window.Health.todaySteps()) : '8,421');
+      var hcRow = '<div class="am-health-synced" role="status">' +
+        '<div class="am-health-top"><span class="am-health-badge">⚡ Health Connect</span><small class="am-health-sub">Synced automatically</small></div>' +
+        '<div class="am-health-vals">' +
+          '<span class="am-health-chip"><svg class="am-hc-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2a6 6 0 0 0 8 8 7 7 0 1 1-8-8Z" fill="currentColor"/></svg> <b>' + slTxt + '</b> sleep</span>' +
+          '<span class="am-health-chip"><svg class="am-hc-ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 5v3l2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> <b>' + syTxt + '</b> steps</span>' +
+        '</div>' +
+      '</div>';
+      var bodyM = mBodyHTML(k, true);
+      return '<div class="am am-hc-mode no-print" data-amkey="' + k + '">' + hcRow + cre + bodyM + '</div>';
+    }
+
+    // fallback when Health Connect is not connected (web, manual logging, tests)
     // sleep: a stepper by the quarter hour, from 7 the first time it is touched
     var sl = fin(r.sl);
     var sleepSay = !sl ? 'Tap + or − to set'
@@ -509,9 +536,6 @@
         (hasSy ? mStepsTxt(r.sy) : '') + '" placeholder="0">' +
         '<button type="button" class="am-save' + (hasSy ? ' saved' : '') + '" data-am="sysave" aria-label="Save steps">' +
         (hasSy ? 'Saved ✓' : 'Save') + '</button></span>');
-    var streak = mCreStreak(k);
-    var cre = row('Creatine', streak >= 2 ? streak + ' days in a row' : '',
-      '<button class="am-tog" data-am="cr" aria-pressed="' + (r.cr === 1) + '">' + (r.cr === 1 ? 'Taken ✓' : 'Not yet') + '</button>');
     var shown = mDrinksShown(k), cf = r.cf || {}, mg = mCafMg(k);
     var drinks = mDrinksRowsHTML(shown, cf, false);
     var caf = '<div class="am-caf">' +

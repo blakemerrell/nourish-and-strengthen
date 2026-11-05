@@ -7152,6 +7152,125 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .am-note { display: block; font-size: 0.8125rem; color: var(--warn); min-height: 0; }
 .am-note:empty { display: none; }
 .td-wt small.td-am { color: var(--ink); opacity: 0.82; }
+
+/* Health Connect synced status row in morning check-in */
+.am-health-synced {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  margin: 8px 0 10px;
+  background: var(--surface-sunken, rgba(52, 168, 83, 0.08));
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+}
+.am-health-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.am-health-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #1e7e34;
+}
+:root[data-theme="dark"] .am-health-badge {
+  color: #81c995;
+}
+.am-health-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.am-health-vals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.am-health-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--card);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: var(--ink);
+}
+.am-health-chip b {
+  font-weight: 700;
+}
+.am-hc-ico {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  opacity: 0.75;
+}
+
+/* Today view Weekly Measurements card */
+.td-bm-bar {
+  background: var(--card);
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin: 10px 0;
+}
+.td-bm-bar.td-bm-open {
+  padding: 14px 16px;
+}
+.td-bm-bar .am-bm-grid {
+  margin-top: 12px;
+}
+.td-bm-bar .am-bm-act {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.td-bmsave-btn {
+  background: var(--ink);
+  color: var(--on-ink);
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.td-bm-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.td-bm-ico {
+  font-size: 1.5rem;
+  flex: none;
+}
+.td-bm-txt {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.td-bm-txt b {
+  font-size: 0.9375rem;
+  color: var(--ink);
+}
+.td-bm-txt small {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.td-bm-btn {
+  flex: none;
+}
+
 #weighWeek { display: flex; flex-direction: column; }
 .wg-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 2px; border: 0; border-top: 1px solid var(--line-soft);
   background: none; font: inherit; color: var(--ink); text-align: left; cursor: pointer; flex-wrap: wrap; }

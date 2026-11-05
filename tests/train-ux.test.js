@@ -65,10 +65,17 @@ module.exports = {
       const expandedAfterClick = !document.querySelector('#view-train .tr-snames.is-collapsed');
       document.querySelector('#view-train [data-t="seshex"]').click();
       const collapsedAgain = !!document.querySelector('#view-train .tr-snames.is-collapsed');
-      return { hasSeshEx, hasMoreTog, hasLitStrip, defaultCollapsed, expandedAfterClick, collapsedAgain };
+      // Verify moretog actually hides and shows .tr-mrow
+      const mrowVisibleBefore = getComputedStyle(document.querySelector('#view-train .tr-more .tr-mrow')).display !== 'none';
+      document.querySelector('#view-train [data-t="moretog"]').click();
+      const mrowHiddenAfterClick = getComputedStyle(document.querySelector('#view-train .tr-more .tr-mrow')).display === 'none';
+      document.querySelector('#view-train [data-t="moretog"]').click();
+      const mrowRestored = getComputedStyle(document.querySelector('#view-train .tr-more .tr-mrow')).display !== 'none';
+      return { hasSeshEx, hasMoreTog, hasLitStrip, defaultCollapsed, expandedAfterClick, collapsedAgain, mrowVisibleBefore, mrowHiddenAfterClick, mrowRestored };
     });
-    t.ok('Pillar 1 (Workout tab): collapsible exercise preview (seshex), litStrip, and Other ways to train toggle (moretog)',
-      p1.hasSeshEx && p1.hasMoreTog && p1.hasLitStrip && p1.defaultCollapsed && p1.expandedAfterClick && p1.collapsedAgain,
+    t.ok('Pillar 1 (Workout tab): collapsible exercise preview (seshex), litStrip, and Other ways to train toggle (moretog) hides/restores .tr-mrow',
+      p1.hasSeshEx && p1.hasMoreTog && p1.hasLitStrip && p1.defaultCollapsed && p1.expandedAfterClick && p1.collapsedAgain &&
+      p1.mrowVisibleBefore && p1.mrowHiddenAfterClick && p1.mrowRestored,
       JSON.stringify(p1));
 
     // Pillar 2: Live Logger
@@ -81,15 +88,46 @@ module.exports = {
       _.draw();
 
       const hasExThumb = !!document.querySelector('#view-train .tr-ex-h .tr-ex-thumb');
-      const hasExPopBtn = !!document.querySelector('#view-train .tr-ex-h [data-t="expop"]');
-      const hasCueBar = !!document.querySelector('#view-train .tr-ex .tr-cue-bar');
+      const exPopBtn = document.querySelector('#view-train .tr-ex-h [data-t="expop"]');
+      const hasExPopBtn = !!exPopBtn;
+      const exPopRect = exPopBtn ? exPopBtn.getBoundingClientRect() : { width: 0, height: 0 };
+      const exPopTapTargetOk = exPopRect.width >= 44 && exPopRect.height >= 44;
+
+      // Single combined .tr-cue-bar (interactive button opening note sheet)
+      const cueBars = document.querySelectorAll('#view-train .tr-ex[data-xi="0"] .tr-cue-bar');
+      const hasSingleInteractiveCueBar = cueBars.length === 1 && cueBars[0].tagName === 'BUTTON' && cueBars[0].getAttribute('data-t') === 'note';
       const hasInlinePlateStack = !!document.querySelector('#trpl-0-0 .tr-stk');
 
-      // Exercise menu popover (#trPop) opens without touching S.sheet
+      // Exercise menu popover (#trPop) opens without touching S.sheet, has >=44px items, and ignores click inside .tr-pop-card
       document.querySelector('#view-train [data-t="expop"][data-x="0"]').click();
       const popOpenNoSheet = !!document.querySelector('#trPop .tr-pop-card') && st.S.sheet === null;
+      const popItemRect = document.querySelector('#trPop .tr-pop-item').getBoundingClientRect();
+      const popItemTapOk = popItemRect.height >= 44;
+      document.querySelector('#trPop .tr-pop-title').click();
+      const popStillOpenAfterCardClick = !!document.querySelector('#trPop .tr-pop-card');
+
+      // Pair / Superset action inside #trPop
+      const hasPairAction = !!document.querySelector('#trPop [data-t="pair"][data-x="0"]');
+      document.querySelector('#trPop [data-t="pair"][data-x="0"]').click();
+      const pairedOk = !!st.LIVE.x[0].p && st.LIVE.x[0].p === st.LIVE.x[1].p;
+
+      // 2-step armed Remove exercise inside #trPop when a set is done
+      st.LIVE.x[0].s[0].t = Date.now();
+      _.draw();
+      document.querySelector('#view-train [data-t="expop"][data-x="0"]').click();
+      document.querySelector('#trPop [data-t="rmex"][data-x="0"]').click();
+      const armedInPop = st.S.arm === 'rm:0' && !!document.querySelector('#trPop .tr-pop-card') &&
+        /Tap again/i.test((document.querySelector('#trPop [data-t="rmex"]') || {}).textContent || '');
+      st.LIVE.x[0].s[0].t = 0;
+      st.S.arm = '';
       document.querySelector('#trPop [data-t="popclose"]').click();
       const popClosed = !document.querySelector('#trPop .tr-pop-card');
+
+      // Edge case: Rest timer running / redrawing while #trPop is open does not wipe #trPop
+      document.querySelector('#view-train [data-t="expop"][data-x="0"]').click();
+      _.draw();
+      const popSurvivesDraw = !!document.querySelector('#trPop .tr-pop-card');
+      document.querySelector('#trPop [data-t="popclose"]').click();
 
       // Set badge sheet has + Add set below (styadd) and Skip set (styskip)
       document.querySelector('#view-train [data-t="sty"][data-x="0"][data-s="0"]').click();
@@ -101,10 +139,16 @@ module.exports = {
       st.S.sheet = null;
       localStorage.removeItem('sh.trainLive');
       _.reload();
-      return { hasExThumb, hasExPopBtn, hasCueBar, hasInlinePlateStack, popOpenNoSheet, popClosed, hasStyAddSkip, addedSet: afterAddSets === beforeSets + 1 };
+      return {
+        hasExThumb, hasExPopBtn, exPopTapTargetOk, hasSingleInteractiveCueBar, hasInlinePlateStack,
+        popOpenNoSheet, popItemTapOk, popStillOpenAfterCardClick, hasPairAction, pairedOk,
+        armedInPop, popClosed, popSurvivesDraw, hasStyAddSkip, addedSet: afterAddSets === beforeSets + 1
+      };
     });
-    t.ok('Pillar 2 (Live Logger): 1-line header with avatar & #trPop menu, gold cue bar, set badge add/skip, and preserved inline plate stack visualizer',
-      p2.hasExThumb && p2.hasExPopBtn && p2.hasCueBar && p2.hasInlinePlateStack && p2.popOpenNoSheet && p2.popClosed && p2.hasStyAddSkip && p2.addedSet,
+    t.ok('Pillar 2 (Live Logger): 1-line header (>=44px tap targets), #trPop menu (scrim guard, Pair superset, 2-step rmex, survives draw), single interactive cue bar, set badge add/skip, and inline plate stack',
+      p2.hasExThumb && p2.hasExPopBtn && p2.exPopTapTargetOk && p2.hasSingleInteractiveCueBar && p2.hasInlinePlateStack &&
+      p2.popOpenNoSheet && p2.popItemTapOk && p2.popStillOpenAfterCardClick && p2.hasPairAction && p2.pairedOk &&
+      p2.armedInPop && p2.popClosed && p2.popSurvivesDraw && p2.hasStyAddSkip && p2.addedSet,
       JSON.stringify(p2));
 
     // Pillar 3: Unified Progress tab
@@ -115,6 +159,7 @@ module.exports = {
       _.draw();
       const mapOnWeek = !!document.querySelector('#view-train .tr-hm-card');
       const phdOnWeek = document.querySelectorAll('#view-train .tr-pg-wk').length === 4;
+      const collapsedWeekHasL0 = document.querySelectorAll('#view-train .tr-pg-wk .tr-pg-l0').length === 4;
 
       st.S.rvSpan = 'block';
       _.draw();
@@ -132,14 +177,15 @@ module.exports = {
 
       const hasPgTog = !!document.querySelector('#view-train [data-t="pgtog"][data-v="on-pace"]');
       document.querySelector('#view-train [data-t="pgtog"][data-v="on-pace"]').click();
-      const paceCollapsed = !!document.querySelector('#view-train [data-pg="on-pace"] .tr-pg-body.is-collapsed');
+      const paceCollapsed = !!document.querySelector('#view-train [data-pg="on-pace"] .tr-pg-body.is-collapsed') &&
+        !!document.querySelector('#view-train [data-pg="on-pace"] .tr-pg-l0');
       document.querySelector('#view-train [data-t="pgexpall"]').click();
       const paceExpandedAll = !document.querySelector('#view-train [data-pg="on-pace"] .tr-pg-body.is-collapsed');
 
-      return { mapOnWeek, phdOnWeek, mapOnBlock, phdOnBlock, mapOnAll, phdOnAll, hasStrModeBtn, strModeActive, hasPgTog, paceCollapsed, paceExpandedAll };
+      return { mapOnWeek, phdOnWeek, collapsedWeekHasL0, mapOnBlock, phdOnBlock, mapOnAll, phdOnAll, hasStrModeBtn, strModeActive, hasPgTog, paceCollapsed, paceExpandedAll };
     });
-    t.ok('Pillar 3 (Unified Progress): Front/Back body map across week/block/all, 3-way coloring mode (sets/rec/str), and collapsible PhD Analytics Lab cards',
-      p3.mapOnWeek && p3.phdOnWeek && p3.mapOnBlock && p3.phdOnBlock && p3.mapOnAll && p3.phdOnAll &&
+    t.ok('Pillar 3 (Unified Progress): Front/Back body map across week/block/all, 3-way coloring mode (sets/rec/str), and collapsible PhD Analytics Lab cards with L0 executive takeaway',
+      p3.mapOnWeek && p3.phdOnWeek && p3.collapsedWeekHasL0 && p3.mapOnBlock && p3.phdOnBlock && p3.mapOnAll && p3.phdOnAll &&
       p3.hasStrModeBtn && p3.strModeActive && p3.hasPgTog && p3.paceCollapsed && p3.paceExpandedAll,
       JSON.stringify(p3));
 
@@ -158,18 +204,23 @@ module.exports = {
       _.draw();
       const liftRows = [...document.querySelectorAll('#view-train .tr-lrow')];
       const liftOrder = liftRows.map((el) => el.getAttribute('data-e')).join(',');
+      const thumbRect = liftRows[0].querySelector('.tr-ex-thumb').getBoundingClientRect();
+      const nameRect = liftRows[0].querySelector('.tr-l-n').getBoundingClientRect();
+      const bestText = liftRows[0].querySelector('.tr-l-b').textContent;
       const liftHasThumbSparkLast = liftRows.length === 2 &&
-        !!liftRows[0].querySelector('.tr-ex-thumb') &&
+        thumbRect.right <= nameRect.left + 2 &&
         !!liftRows[0].querySelector('svg.tr-spark') &&
-        /last best:/i.test(liftRows[0].textContent);
+        / lb last best: /i.test(bestText);
 
       // Open Lift Sheet on bb-squat and switch to About/Summary tab
       liftRows[0].click();
       document.querySelector('.tr-sheet [data-t="extab"][data-v="about"]').click();
       const hasSumKpi = !!document.querySelector('.tr-sheet .tr-ex-sumkpi');
-      const hasPauseBtn = !!document.querySelector('.tr-sheet [data-t="expause"]');
+      const pauseBtnsBefore = document.querySelectorAll('.tr-sheet [data-t="expause"]').length;
       document.querySelector('.tr-sheet [data-t="expause"]').click();
-      const mediaPaused = document.querySelector('.tr-sheet [data-t="expause"]').getAttribute('aria-pressed') === 'true';
+      const pauseBtnsAfter = document.querySelectorAll('.tr-sheet [data-t="expause"]').length;
+      const mediaPaused = pauseBtnsBefore === 1 && pauseBtnsAfter === 1 &&
+        document.querySelector('.tr-sheet [data-t="expause"]').getAttribute('aria-pressed') === 'true';
       const mcOhpFixed = _.MEDIA['mc-ohp'] && _.MEDIA['mc-ohp'].src === 'art/lifts/sm-ohp.gif';
 
       const smallFonts = [...document.querySelectorAll('#view-train *')].filter((el) => {
@@ -177,11 +228,11 @@ module.exports = {
         return cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.fontSize) < 12.9;
       }).map((el) => el.tagName + '.' + el.className + ':' + getComputedStyle(el).fontSize);
 
-      return { hasWoTableAndFoot, hasPerformAgain, liftOrder, liftHasThumbSparkLast, hasSumKpi, hasPauseBtn, mediaPaused, mcOhpFixed, smallFonts };
+      return { hasWoTableAndFoot, hasPerformAgain, liftOrder, liftHasThumbSparkLast, hasSumKpi, mediaPaused, mcOhpFixed, smallFonts };
     });
-    t.ok('Pillar 4 (History & Lifts): Strong-style 2-col workout cards + Perform Again, recency-sorted Lifts with avatar/sparkline/lastBest, Lift Sheet pause toggle, mc-ohp media fix, and >=13px fonts',
+    t.ok('Pillar 4 (History & Lifts): Strong-style 2-col workout cards + Perform Again, 3-col Lifts cards with avatar/sparkline/lastBest, single Lift Sheet pause toggle, mc-ohp media fix, and >=13px fonts',
       p4.hasWoTableAndFoot && p4.hasPerformAgain && p4.liftOrder === 'bb-squat,bb-bench' &&
-      p4.liftHasThumbSparkLast && p4.hasSumKpi && p4.hasPauseBtn && p4.mediaPaused &&
+      p4.liftHasThumbSparkLast && p4.hasSumKpi && p4.mediaPaused &&
       p4.mcOhpFixed && p4.smallFonts.length === 0,
       JSON.stringify(p4));
     t.ok('no page errors through any of it', errs.length === 0, errs.join(' | '));
@@ -189,3 +240,4 @@ module.exports = {
     await p.close();
   }
 };
+

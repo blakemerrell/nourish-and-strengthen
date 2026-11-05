@@ -5841,18 +5841,20 @@
     if (p.k === 'expop' && LIVE && LIVE.x[p.x]) {
       var xi = p.x, x = LIVE.x[xi], ex = lib(x.e), note = noteOf(x.e);
       var armed = S.arm === 'rm:' + xi, nDone = x.s.filter(function (z) { return z.t; }).length;
-      body = '<div class="tr-pop-head"><span class="tr-pop-title">' + esc(ex.n) + '</span>' +
+      var pairedIdx = partner(xi);
+      body = '<div class="tr-pop-h tr-pop-head"><b class="tr-pop-title">' + esc(ex.n) + '</b>' +
         '<button type="button" class="tr-pop-x" data-t="popclose" aria-label="Close menu">&times;</button></div>' +
         '<div class="tr-pop-list" role="menu">' +
-          '<button type="button" class="tr-pop-item" data-t="exsheet" data-e="' + esc(x.e) + '">' + EA_ICO.note + '<span>Lift details, history &amp; records</span></button>' +
-          (ex.k === 'c' && ex.q !== 'bw' ? '<button type="button" class="tr-pop-item" data-t="warm" data-x="' + xi + '">' + EA_ICO.warm + '<span>Warm-up sets</span></button>' : '') +
-          (plateLoaded(ex) ? '<button type="button" class="tr-pop-item" data-t="plates" data-x="' + xi + '">' + EA_ICO.plates + '<span>Plates &amp; bar calculator</span></button>' : '') +
-          '<button type="button" class="tr-pop-item" data-t="swap" data-x="' + xi + '">' + EA_ICO.swap + '<span>Swap exercise</span></button>' +
-          '<button type="button" class="tr-pop-item" data-t="restpick" data-e="' + esc(x.e) + '"><span>\u23f1</span><span>Rest timer (' + clock(x.rest) + ')</span></button>' +
-          '<button type="button" class="tr-pop-item" data-t="fmpop" data-x="' + xi + '"><span>\ud83d\udcca</span><span>Set a Focus Metric</span></button>' +
-          '<button type="button" class="tr-pop-item" data-t="note" data-e="' + esc(x.e) + '">' + EA_ICO.note + '<span>' + (note ? 'Edit sticky note' : 'Add sticky note') + '</span></button>' +
-          (x.s.length > 1 ? '<button type="button" class="tr-pop-item" data-t="dropset" data-x="' + xi + '">' + EA_ICO.minus + '<span>Remove last unlogged set</span></button>' : '') +
-          '<button type="button" class="tr-pop-item tr-pop-danger' + (armed ? ' tr-lnk-arm' : '') + '" data-t="rmex" data-x="' + xi + '">' + EA_ICO.rm +
+          '<button type="button" class="tr-pop-it tr-pop-item" data-t="exsheet" data-e="' + esc(x.e) + '">' + EA_ICO.note + '<span>Lift details, history &amp; records</span></button>' +
+          (ex.k === 'c' && ex.q !== 'bw' ? '<button type="button" class="tr-pop-it tr-pop-item" data-t="warm" data-x="' + xi + '">' + EA_ICO.warm + '<span>Warm-up sets</span></button>' : '') +
+          (plateLoaded(ex) ? '<button type="button" class="tr-pop-it tr-pop-item" data-t="plates" data-x="' + xi + '">' + EA_ICO.plates + '<span>Plates &amp; bar calculator</span></button>' : '') +
+          '<button type="button" class="tr-pop-it tr-pop-item" data-t="swap" data-x="' + xi + '">' + EA_ICO.swap + '<span>Swap exercise</span></button>' +
+          (LIVE.x.length > 1 ? '<button type="button" class="tr-pop-it tr-pop-item" data-t="pair" data-x="' + xi + '">' + EA_ICO.swap + '<span>' + (pairedIdx >= 0 ? 'Unpair superset' : 'Pair / Superset') + '</span></button>' : '') +
+          '<button type="button" class="tr-pop-it tr-pop-item" data-t="restpick" data-e="' + esc(x.e) + '"><span>\u23f1</span><span>Rest timer (' + clock(x.rest) + ')</span></button>' +
+          '<button type="button" class="tr-pop-it tr-pop-item" data-t="fmpop" data-x="' + xi + '"><span>\ud83d\udcca</span><span>Set a Focus Metric</span></button>' +
+          '<button type="button" class="tr-pop-it tr-pop-item" data-t="note" data-e="' + esc(x.e) + '">' + EA_ICO.note + '<span>' + (note ? 'Edit sticky note' : 'Add sticky note') + '</span></button>' +
+          (x.s.length > 1 ? '<button type="button" class="tr-pop-it tr-pop-item" data-t="dropset" data-x="' + xi + '">' + EA_ICO.minus + '<span>Remove last unlogged set</span></button>' : '') +
+          '<button type="button" class="tr-pop-it tr-pop-item danger tr-pop-danger' + (armed ? ' tr-lnk-arm' : '') + '" data-t="rmex" data-x="' + xi + '">' + EA_ICO.rm +
             '<span>' + (armed ? 'Tap again: remove (' + nDone + ' done)' : 'Remove exercise') + '</span></button>' +
         '</div>';
     } else if (p.k === 'fm' && LIVE && LIVE.x[p.x]) {
@@ -5864,11 +5866,11 @@
         ['best', 'Best set (est. 1RM)', 'Highest estimated 1-rep max set today'],
         ['off', 'Off', 'Hide focus metric badge on exercise cards']
       ];
-      body = '<div class="tr-pop-head"><span class="tr-pop-title">Set a Focus Metric \u00b7 ' + esc(fex.n) + '</span>' +
+      body = '<div class="tr-pop-h tr-pop-head"><b class="tr-pop-title">Set a Focus Metric \u00b7 ' + esc(fex.n) + '</b>' +
         '<button type="button" class="tr-pop-x" data-t="popclose" aria-label="Close menu">&times;</button></div>' +
         '<div class="tr-pop-list" role="menu">' + fmOpts.map(function (o) {
           var on = curFm === o[0];
-          return '<button type="button" class="tr-pop-item' + (on ? ' is-on' : '') + '" data-t="fmset" data-x="' + fxi + '" data-v="' + o[0] + '" aria-pressed="' + on + '">' +
+          return '<button type="button" class="tr-pop-it tr-pop-item' + (on ? ' on is-on' : '') + '" data-t="fmset" data-x="' + fxi + '" data-v="' + o[0] + '" aria-pressed="' + on + '">' +
             '<span class="tr-pop-item-main"><b>' + esc(o[1]) + '</b><small>' + esc(o[2]) + '</small></span>' +
             '<span class="tr-pop-chk" aria-hidden="true">' + (on ? '\u2713' : '') + '</span></button>';
         }).join('') + '</div>';
@@ -6028,8 +6030,9 @@
     /* One thing to do on this screen, and it is Start. The other ways in are
        a quiet list below it, and ending the block, which can't be taken
        back, stands apart in red. */
-    html += '<div class="tr-more' + (S.moreOpen ? ' is-open' : '') + '" role="group" aria-label="Other ways to train">' +
-      '<button type="button" class="tr-more-tog" data-t="moretog" aria-expanded="' + !!S.moreOpen + '"><span class="tr-ql">Other ways to train</span><span class="tr-more-arr" aria-hidden="true">' + (S.moreOpen ? '\u25b4' : '\u25be') + '</span></button>' +
+    var moreOpen = S.moreOpen !== false;
+    html += '<div class="tr-more' + (moreOpen ? ' is-open' : ' is-collapsed') + '" role="group" aria-label="Other ways to train">' +
+      '<button type="button" class="tr-more-tog" data-t="moretog" aria-expanded="' + moreOpen + '"><span class="tr-ql">Other ways to train</span><span class="tr-more-arr" aria-hidden="true">' + (moreOpen ? '\u25b4' : '\u25be') + '</span></button>' +
       moreRow('ready', 'Pick a ready workout', 'Full body, upper and lower, machines only') +
       moreRow('empty', 'Log a workout outside the block', 'Start empty and add what you do') +
       (nx && nx.w < acc && !steady(ms) ? moreRow('deloadnow', 'Deload now', 'A light week before the planned one') : '') +
@@ -7750,6 +7753,7 @@
         '<div class="tr-ex-h">' +
           '<button type="button" class="tr-ex-open-b" data-t="exopen" data-x="' + i + '" aria-label="Reopen ' + esc(ex.n) + ' sets">\u2713 Done</button>' +
           (label ? '<span class="tr-pair" aria-label="' + (x.cc ? 'Station ' : 'Pair ') + label + '">' + label + '</span>' : '') +
+          mediaThumb(x.e) +
           '<button class="tr-ex-n" data-t="exopen" data-x="' + i + '">' + esc(ex.n) + '</button>' +
           '<span class="tr-fmw" id="trfm-' + i + '">' + fmHTML(i) + '</span>' +
         '</div>' +
@@ -7845,11 +7849,16 @@
         (ASST[x.e] ? '<span class="tr-ex-m">Type the machine\u2019s help as the weight: less help is progress.</span>' : '') +
         homeNote(x, i) +
         (fresh ? efNote(x, i) : '') +
-        (wy && fresh ? '<span class="tr-ex-m tr-ovl tr-cue-bar tr-ovl-' + wyk + '">' + esc(wy) + '</span>' : '') +
         (first && SAFETY[x.e] ? '<div class="tr-first tr-safe"><b>Safety first.</b> ' + esc(SAFETY[x.e]) + '</div>' : '') +
         (nb ? firstTime(x) : '') +
-        (note ? '<button class="tr-exnt tr-cue-bar" data-t="note" data-e="' + esc(x.e) + '" aria-label="Your note on ' + esc(ex.n) + ': ' + esc(note) + '. Edit">' +
-          '<span class="tr-exnt-l">Note</span> ' + esc(note) + '</button>' : '') +
+        ((wy && fresh) || note ? '<button type="button" class="tr-cue-bar' + (note ? ' tr-exnt' : '') + (wy && fresh ? ' tr-ovl tr-ovl-' + wyk : '') + '" data-t="note" data-e="' + esc(x.e) + '" aria-label="' + esc((note ? 'Your note on ' + ex.n + ': ' + note + '. ' : '') + (wy && fresh ? wy + '. ' : '') + 'Edit') + '">' +
+          '<span class="tr-cue-txt">' +
+            (note ? '<span class="tr-exnt-l">Note</span> ' + esc(note) : '') +
+            (note && wy && fresh ? '<span class="tr-cue-sep">\u00b7</span>' : '') +
+            (wy && fresh ? '<span class="tr-cue-wy">' + esc(wy) + '</span>' : '') +
+          '</span>' +
+          '<span class="tr-cue-ed" aria-hidden="true">' + (note ? 'Edit' : '+ Note') + '</span>' +
+        '</button>' : '') +
       '</div>' +
       healHTML(i) +
       '<div class="tr-set tr-set-h" aria-hidden="true"><span>Set</span><span>' + (nb ? 'Last time' : 'Previous') + '</span><span>' + (bodyOn ? '+' : '') + T.pr.u + '</span><span>Reps</span>' +
@@ -8486,7 +8495,7 @@
         '<span class="tr-l-m">' + esc(mname(ex.m)) + ' \u00b7 ' + p.n + ' session' + (p.n === 1 ? '' : 's') +
           ' \u00b7 last ' + shortDate(p.last) + '</span>' +
         '<span class="tr-l-b"><span class="tr-l-bl">' + (r.e1 > 0 ? 'best est. max' : 'best') + '</span>' + best +
-          (p.lastBest ? '<span class="tr-l-last">last best: ' + esc(p.lastBest) + '</span>' : '') + '</span>' +
+          (p.lastBest ? ' <span class="tr-l-last">last best: ' + esc(p.lastBest) + '</span>' : '') + '</span>' +
         (p.pts.length > 1 ? '<span class="tr-l-t">' + spark(p.pts.slice(-12)) +
           (ch === null ? '' : '<span class="tr-l-c ' + (ch > 0.005 ? 'up' : ch < -0.005 ? 'dn' : 'eq') + '">' +
             (Math.abs(ch) < 0.005 ? 'level' : (ch > 0 ? '+' : '\u2212') + Math.abs(Math.round(ch * 100)) + '%') +
@@ -8830,7 +8839,7 @@
       mList.forEach(function (x) { x.rc = rec[x.k]; x.cls = recCls(rec[x.k]); });
       mList.sort(function (a, b) { return b.rc.frac - a.rc.frac; });
     } else if (strMode) {
-      var strD = pgData('block'), strBy = {};
+      var strD = pgData(S.rvSpan === 'all' ? 'all' : 'block'), strBy = {};
       Object.keys(strD.per || {}).forEach(function (e) {
         var p = strD.per[e];
         if (!p || p.length < 2 || !(p[0].v > 0)) return;
@@ -9134,17 +9143,20 @@
     var badge = /tr-pg-wait/.test(body) ? 'Collecting'
       : /slipped|both going <b>down<\/b>|Weaker ones came/.test(body) ? 'Review' : 'Active';
     var badgeTone = badge === 'Active' ? 'good' : badge === 'Review' ? 'warn' : 'muted';
+    var l0m = body.match(/<p class="tr-pg-(?:say|wait)"[^>]*>([\s\S]*?)<\/p>/);
+    var l0 = !open && l0m ? '<p class="tr-pg-l0">' + l0m[1] + '</p>' : '';
     var stats = S.rvDeep && math ? '<div class="tr-pg-stats">' + math.map(function (m) {
       return '<div><small>' + esc(m[0]) + '</small><b>' + esc(m[1]) + '</b>' + (m[2] ? '<small>' + esc(m[2]) + '</small>' : '') + '</div>';
     }).join('') + '</div>' : '';
     return '<div class="tr-card ' + (isWk ? 'tr-pg-wk' : 'tr-pg') + (open ? ' is-open' : ' is-shut') + '" data-pg="' + esc(key) + '">' +
       '<div class="tr-pg-hbar">' +
         '<div class="tr-eyebrow">' + eye + '</div>' +
-        '<div class="tr-pg-hright">' +
+        '<div class="tr-pg-hacts tr-pg-hright">' +
           '<span class="tr-pg-l0badge ' + badgeTone + '">' + badge + '</span>' +
           '<button type="button" class="tr-pg-tog" data-t="pgtog" data-v="' + esc(key) + '" aria-expanded="' + open + '" aria-label="Toggle ' + esc(eye) + ' chart">' + (open ? '\u25be' : '\u25b8') + '</button>' +
         '</div>' +
       '</div>' +
+      l0 +
       '<div class="tr-pg-body' + (open ? '' : ' is-collapsed') + '">' + body + stats + '</div>' +
     '</div>';
   }
@@ -10541,17 +10553,15 @@
       '<div><small>Heaviest</small><b>' + (r.w > 0 ? fmtN(r.w) + ' ' + T.pr.u : '\u2014') + '</b></div>' +
       '<div><small>Sessions</small><b>' + ss.length + '</b></div>' +
     '</div>' : '';
-    var mediaHTML = m ? (
+    var mediaHTML = (m && !S.exPaused) ? (
       '<div class="tr-media-bar">' +
         '<span class="tr-ex-anim-tag">● ' + esc(mname(ex.m)) + ' · ' + esc(EQUIP[ex.q] || 'Lift') + '</span>' +
-        '<button type="button" class="ghost tr-expause-b" data-t="expause" data-e="' + esc(e) + '" aria-pressed="' + !!S.exPaused + '">' + (S.exPaused ? '\u25b6 Play' : '\u23f8 Pause') + '</button>' +
+        '<button type="button" class="ghost tr-expause-b" data-t="expause" data-e="' + esc(e) + '" aria-pressed="false">\u23f8 Pause</button>' +
       '</div>' +
-      (S.exPaused
-        ? exAnimSVG(e, ex)
-        : (m.kind === 'video'
-            ? '<video class="tr-media" data-e="' + esc(e) + '" src="' + esc(m.src) + '" muted loop playsinline autoplay aria-label="' + esc(ex.n) + '"></video>'
-            : '<img class="tr-media" data-e="' + esc(e) + '" src="' + esc(m.src) + '" alt="' + esc(ex.n) + '">') +
-          (m.credit ? '<div class="tr-sub">' + esc(m.credit) + '</div>' : ''))
+      (m.kind === 'video'
+        ? '<video class="tr-media" data-e="' + esc(e) + '" src="' + esc(m.src) + '" muted loop playsinline autoplay aria-label="' + esc(ex.n) + '"></video>'
+        : '<img class="tr-media" data-e="' + esc(e) + '" src="' + esc(m.src) + '" alt="' + esc(ex.n) + '">') +
+      (m.credit ? '<div class="tr-sub">' + esc(m.credit) + '</div>' : '')
     ) : exAnimSVG(e, ex);
     return sumKPI + mediaHTML +
       (steps ? '<ol class="tr-howto">' + steps.map(function (st) { return '<li>' + esc(st) + '</li>'; }).join('') + '</ol>'
@@ -12935,10 +12945,29 @@
       S.flash2 = 'Added a set: ' + lib(fsl.e).n + ' on ' + dayName(fc.days[fd]) + ' is ' + fsets + ' sets next time, and one more than it would have been for the rest of the block.';
       draw(); return;
     }
-    if (t !== 'expop' && t !== 'fmpop' && t !== 'popclose' && S.pop) { S.pop = null; drawPop(); }
+    var keepPopArm = t === 'rmex' && LIVE && LIVE.x[num('data-x')] && LIVE.x[num('data-x')].s.some(function (z) { return z.t; }) && S.arm !== 'rm:' + num('data-x');
+    if (t !== 'expop' && t !== 'fmpop' && t !== 'popclose' && !keepPopArm && S.pop) { S.pop = null; drawPop(); }
     if (t === 'popclose') { S.pop = null; drawPop(); return; }
     if (t === 'seshex') { S.seshExOpen = !S.seshExOpen; draw(); return; }
-    if (t === 'moretog') { S.moreOpen = !S.moreOpen; draw(); return; }
+    if (t === 'moretog') { S.moreOpen = S.moreOpen === false; draw(); return; }
+    if (t === 'pair' && LIVE) {
+      var prx = num('data-x'), curPartner = partner(prx);
+      if (curPartner >= 0) {
+        delete LIVE.x[curPartner].p;
+        delete LIVE.x[prx].p;
+      } else if (LIVE.x.length > 1) {
+        var mateIdx = prx + 1 < LIVE.x.length && partner(prx + 1) < 0 ? prx + 1
+          : prx - 1 >= 0 && partner(prx - 1) < 0 ? prx - 1
+          : prx + 1 < LIVE.x.length ? prx + 1 : prx - 1;
+        if (mateIdx >= 0 && mateIdx !== prx && LIVE.x[mateIdx]) {
+          if (partner(mateIdx) >= 0) delete LIVE.x[partner(mateIdx)].p;
+          var pid = 'p' + Date.now().toString(36);
+          LIVE.x[prx].p = pid;
+          LIVE.x[mateIdx].p = pid;
+        }
+      }
+      saveLive(); draw(); return;
+    }
     if (t === 'expop' && LIVE) {
       var pxi = num('data-x');
       S.pop = S.pop && S.pop.k === 'expop' && S.pop.x === pxi ? null : { k: 'expop', x: pxi };
@@ -13836,7 +13865,7 @@
       if (!el) return;
       if (!el.closest('#view-train') && !el.closest('#trainRoot')) return;
       // the scrim closes only when it is the scrim itself that was pressed
-      if (el.classList.contains('scrim') && e.target !== el) return;
+      if ((el.classList.contains('scrim') || el.classList.contains('tr-pop-scrim')) && e.target !== el) return;
       e.preventDefault();
       act(el);
     });
@@ -13968,6 +13997,7 @@
     /* Enter in a reps box ticks the set, which is the next thing a hand does
        anyway. */
     document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && S.pop) { S.pop = null; drawPop(); return; }
       if (e.key === 'Escape' && S.sheet) { closeSheet(); return; }
       var el = e.target;
       if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && el && el.classList && el.classList.contains('tr-grip')) {

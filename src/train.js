@@ -917,6 +917,7 @@
       gy: cleanGy(p.gy),
       // the card on how a workout goes, shown to someone new until put away
       hw: p.hw === 1 ? 1 : 0,
+      hideExInfo: p.hideExInfo === 1 ? 1 : 0,
       // never ask your weight on a pull-up day
       nobw: p.nobw === 1 ? 1 : 0,
       // a block's weekly climb follows how far under maintenance Nourish says you eat
@@ -5414,7 +5415,7 @@
        of one. */
     var nextS = x.s[si + 1];
     if (more && nextS && nextS.ty === 'd' && !nextS.t) LIVE.rs = null;
-    else if (more) startRest(restAfter(xi, si));
+    else if (more) startRest(restAfter(xi, si), xi, si);
     saveLive();
     audioPrime();
     draw();
@@ -5464,7 +5465,7 @@
   function restAfter(xi, si) {
     var x = LIVE.x[xi], s = x.s[si];
     if (LIVE.cc && x.cc) { var st = stations(); return xi === st[st.length - 1] ? LIVE.cc.rr : LIVE.cc.sr; }
-    if (partner(xi) >= 0) return T.pr.rp;
+    if (partner(xi) >= 0 && !restSet(x.e)) return T.pr.rp;
     return s && s.wu ? Math.min(60, x.rest) : x.rest;
   }
 
@@ -5473,8 +5474,9 @@
    * Kept as an end time rather than a countdown, so a phone that locks in the
    * middle of it — which is every phone, every set — comes back to the right
    * number instead of the number it had when the screen went dark. */
-  function startRest(sec) {
-    LIVE.rs = { end: Date.now() + sec * 1000, dur: sec, rung: 0 };
+  function startRest(sec, xi, si) {
+    var rx = LIVE && fin(xi) ? LIVE.x[xi] : null;
+    LIVE.rs = { end: Date.now() + sec * 1000, dur: sec, rung: 0, x: xi, s: si, e: rx ? rx.e : '' };
   }
   function restLeft() {
     if (!LIVE || !LIVE.rs) return null;
@@ -5532,6 +5534,29 @@
     var overdue = left !== null && left < 0 && LIVE.rs && !LIVE.rs.rung;
     var resting = left !== null && (left >= -8 || overdue);
     var done = resting && left <= 0;
+    var rx = LIVE.rs && fin(LIVE.rs.x) ? LIVE.x[LIVE.rs.x] : null;
+    if (rx && LIVE.rs.e && rx.e !== LIVE.rs.e) rx = null;
+    var rsCur = rx && fin(LIVE.rs.s) ? rx.s[LIVE.rs.s] : null;
+    var rsNext = rx && fin(LIVE.rs.s) ? rx.s[LIVE.rs.s + 1] : null;
+    var activePillId = rsCur && rsCur.t && rsNext && !rsNext.t && resting && !done ? 'trrdiv-' + LIVE.rs.x + '-' + LIVE.rs.s : '';
+    var oldPills = document.querySelectorAll('#view-train .tr-rdiv-b.is-ticking');
+    for (var pi = 0; pi < oldPills.length; pi++) {
+      if (oldPills[pi].id !== activePillId) {
+        oldPills[pi].classList.remove('is-ticking');
+        var defTxt = oldPills[pi].getAttribute('data-rest-default');
+        if (defTxt) oldPills[pi].textContent = defTxt;
+      }
+    }
+    if (activePillId) {
+      var rpill = $(activePillId);
+      if (rpill) {
+        rpill.classList.add('is-ticking');
+        var pillSay = '\u23f1 ' + clock(left);
+        if (rpill.textContent !== pillSay) rpill.textContent = pillSay;
+      }
+    }
+    var shLeft = $('trRestSheetLeft');
+    if (shLeft && resting && !done) shLeft.textContent = clock(left);
     var pct = resting ? (done ? 100 : Math.max(0, Math.min(100, 100 * (1 - left / LIVE.rs.dur)))) : 0;
     var say = done ? 'Rest\u2019s up' : resting ? 'Rest ' + clock(left) : '';
     var ela = elapsed((Date.now() - LIVE.st) / 1000);
@@ -5848,11 +5873,13 @@
           '<button type="button" class="tr-pop-it tr-pop-item" data-t="exsheet" data-e="' + esc(x.e) + '">' + EA_ICO.note + '<span>Lift details, history &amp; records</span></button>' +
           (ex.k === 'c' && ex.q !== 'bw' ? '<button type="button" class="tr-pop-it tr-pop-item" data-t="warm" data-x="' + xi + '">' + EA_ICO.warm + '<span>Warm-up sets</span></button>' : '') +
           (plateLoaded(ex) ? '<button type="button" class="tr-pop-it tr-pop-item" data-t="plates" data-x="' + xi + '">' + EA_ICO.plates + '<span>Plates &amp; bar calculator</span></button>' : '') +
+          (onBar(ex) ? '<button type="button" class="tr-pop-it tr-pop-item" data-t="barpick" data-e="' + esc(x.e) + '">' + EA_ICO.plates + '<span>' + esc(barName(x.e)) + ' (' + fmtN(barAt(x.e)) + ' ' + T.pr.u + ')</span></button>' : '') +
           '<button type="button" class="tr-pop-it tr-pop-item" data-t="swap" data-x="' + xi + '">' + EA_ICO.swap + '<span>Swap exercise</span></button>' +
           (LIVE.x.length > 1 ? '<button type="button" class="tr-pop-it tr-pop-item" data-t="pair" data-x="' + xi + '">' + EA_ICO.swap + '<span>' + (pairedIdx >= 0 ? 'Unpair superset' : 'Pair / Superset') + '</span></button>' : '') +
           '<button type="button" class="tr-pop-it tr-pop-item" data-t="restpick" data-e="' + esc(x.e) + '"><span>\u23f1</span><span>Rest timer (' + clock(x.rest) + ')</span></button>' +
           '<button type="button" class="tr-pop-it tr-pop-item" data-t="fmpop" data-x="' + xi + '"><span>\ud83d\udcca</span><span>Set a Focus Metric</span></button>' +
           '<button type="button" class="tr-pop-it tr-pop-item" data-t="note" data-e="' + esc(x.e) + '">' + EA_ICO.note + '<span>' + (note ? 'Edit sticky note' : 'Add sticky note') + '</span></button>' +
+          '<button type="button" class="tr-pop-it tr-pop-item" data-t="exinfotog"><span>\u2139</span><span>' + (T.pr.hideExInfo ? 'Show exercise info' : 'Hide exercise info') + '</span></button>' +
           (x.s.length > 1 ? '<button type="button" class="tr-pop-it tr-pop-item" data-t="dropset" data-x="' + xi + '">' + EA_ICO.minus + '<span>Remove last unlogged set</span></button>' : '') +
           '<button type="button" class="tr-pop-it tr-pop-item danger tr-pop-danger' + (armed ? ' tr-lnk-arm' : '') + '" data-t="rmex" data-x="' + xi + '">' + EA_ICO.rm +
             '<span>' + (armed ? 'Tap again: remove (' + nDone + ' done)' : 'Remove exercise') + '</span></button>' +
@@ -7751,11 +7778,11 @@
         (mv ? '<button class="tr-grip" data-x="' + i + '" aria-label="Move ' + esc(ex.n) + (label && !x.cc ? ' and its pair' : '') +
           ': hold and drag, or use the arrow keys">' + EA_ICO.grip + '</button>' : '') +
         '<div class="tr-ex-h">' +
-          '<button type="button" class="tr-ex-open-b" data-t="exopen" data-x="' + i + '" aria-label="Reopen ' + esc(ex.n) + ' sets">\u2713 Done</button>' +
           (label ? '<span class="tr-pair" aria-label="' + (x.cc ? 'Station ' : 'Pair ') + label + '">' + label + '</span>' : '') +
           mediaThumb(x.e) +
           '<button class="tr-ex-n" data-t="exopen" data-x="' + i + '">' + esc(ex.n) + '</button>' +
           '<span class="tr-fmw" id="trfm-' + i + '">' + fmHTML(i) + '</span>' +
+          '<button type="button" class="tr-ex-open-b" data-t="exopen" data-x="' + i + '" aria-label="Reopen ' + esc(ex.n) + ' sets">\u2713 Done</button>' +
         '</div>' +
         exKpiHTML(x, i) +
       '</div>';
@@ -7799,12 +7826,13 @@
       '<div class="tr-lo" id="trlo-' + i + '-' + j + '" aria-live="polite">' + (j === lf.j ? esc(lf.t) : '') + '</div>' +
       /* The rest that follows this set, between it and the next, the way
          Strong draws it — between working sets (or none before a drop set),
-         while warm-ups stay unsplit. A pair says its rest once, under the
-         name. Tap it to change the lift's rest. */
-      // a circuit's next set on this machine is a round away: its rests are said under the name
-      (j < x.s.length - 1 && !x.cc && !s.wu && (x.s[j + 1].ty === 'd' || !mate) ? '<div class="tr-rdiv"><button class="tr-rdiv-b" data-t="restpick" data-e="' + esc(x.e) + '" aria-label="Rest after this set: ' +
-        (x.s[j + 1].ty === 'd' ? 'none, a drop set follows' : clock(restAfter(i, j))) + '. Change the rest for ' + esc(ex.n) + '">' +
-        (x.s[j + 1].ty === 'd' ? 'no rest' : clock(restAfter(i, j))) + '</button></div>' : '');
+         while warm-ups stay unsplit. Tap it to adjust the rest timer. */
+      (j < x.s.length - 1 && !s.wu ? (function () {
+        var rdef = x.s[j + 1].ty === 'd' ? 'no rest' : clock(restAfter(i, j));
+        return '<div class="tr-rdiv"><button type="button" class="tr-rdiv-b" id="trrdiv-' + i + '-' + j + '" data-t="restpick" data-e="' + esc(x.e) + '" data-x="' + i + '" data-s="' + j + '" data-rest-default="' + esc(rdef) + '" aria-label="Rest after this set: ' +
+          (x.s[j + 1].ty === 'd' ? 'none, a drop set follows' : clock(restAfter(i, j))) + '. Change the rest for ' + esc(ex.n) + '">' +
+          rdef + '</button></div>';
+      })() : '');
     }).join('');
     // nothing ticked yet on this lift: the notes for before the first set
     var fresh = !x.s.some(function (s) { return s.t; });
@@ -7825,32 +7853,39 @@
       (mv ? '<button class="tr-grip" data-x="' + i + '" aria-label="Move ' + esc(ex.n) + (label && !x.cc ? ' and its pair' : '') +
         ': hold and drag, or use the arrow keys">' + EA_ICO.grip + '</button>' : '') +
       '<div class="tr-ex-h">' +
-        (nDone > 0 ? '<button type="button" class="tr-ex-done-b' + (allWorkDone ? ' is-ready' : '') + '" data-t="exdone" data-x="' + i + '" aria-label="Mark ' + esc(ex.n) + ' complete and collapse">\u2713 Done</button>' : '') +
         (label ? '<span class="tr-pair" aria-label="' + (x.cc ? 'Station ' : 'Pair ') + label + '">' + label + '</span>' : '') +
         mediaThumb(x.e) +
         // new to lifting, the name opens how it is done
         '<button class="tr-ex-n" data-t="' + (nb ? 'exhow' : 'exsheet') + '" data-e="' + esc(x.e) + '">' + esc(ex.n) + '</button>' +
         '<span class="tr-fmw" id="trfm-' + i + '">' + fmHTML(i) + '</span>' +
+        (nDone > 0 ? '<button type="button" class="tr-ex-done-b' + (allWorkDone ? ' is-ready' : '') + '" data-t="exdone" data-x="' + i + '" aria-label="Mark ' + esc(ex.n) + ' complete and collapse">\u2713 Done</button>' : '') +
         '<button type="button" class="tr-expop-b" data-t="expop" data-x="' + i + '" aria-label="More options for ' + esc(ex.n) + '">\u22ef</button>' +
-        '<span class="tr-ex-m">' + esc(mnameP(ex.m)) + ' \u00b7 ' + (x.fix ? 'main lift, set by set'
-            : (nb ? nWork + ' set' + (nWork === 1 ? '' : 's') + ' of ' : '') + ex.rr[0] + '\u2013' + ex.rr[1] + ' reps') +
-          (rirHere ? ' \u00b7 ' + (nb ? (x.rir ? 'stop with ' + x.rir + ' rep' + (x.rir === 1 ? '' : 's') + ' to spare' : 'to your last good rep') : effSay(x.rir)) : '') +
-          (x.cc && LIVE.cc ? ccSay(i)
-            : mate ? ' \u00b7 alternate with ' + esc(lib(mate.e).n) + ', ' + clock(T.pr.rp) + ' between'
-            : ' \u00b7 <button class="tr-lnk tr-barl" data-t="restpick" data-e="' + esc(x.e) + '" aria-label="Rest ' + clock(x.rest) + ' for ' + esc(ex.n) + '. Change">rest ' + clock(x.rest) + '</button>') +
-          (fin(x.tm) ? ' \u00b7 training max ' + fmtN(x.tm) + ' ' + T.pr.u : '') +
-          (barHere ? ' \u00b7 <button class="tr-lnk tr-barl" data-t="barpick" data-e="' + esc(x.e) + '" aria-label="' + esc(barName(x.e)) + ' for ' + esc(ex.n) + ': ' +
-            fmtN(barAt(x.e)) + ' ' + T.pr.u + '. Change">' + esc(barLabelAt(x.e)) + '</button>' : '') +
-          (nb ? ' \u00b7 <button class="tr-lnk tr-barl" data-t="exhow" data-e="' + esc(x.e) + '">how to</button>' : '') + '</span>' +
-        (x.s.some(function (s) { return s.am; }) ? '<span class="tr-cue">Last set: as many good reps as you can \u2014 stop when one slows to a grind. It sets your next wave\u2019s weights.</span>' : '') +
-        (nb && x.s.some(function (s) { return s.wu; }) ? '<span class="tr-ex-m">W is a warm-up: done, not counted, and a short rest after it.</span>' : '') +
-        (cue ? '<span class="tr-cue">' + esc(cue) + '</span>' : '') +
-        (x.swn ? '<span class="tr-ex-m">' + esc(x.swn) + '</span>' : '') +
-        (ASST[x.e] ? '<span class="tr-ex-m">Type the machine\u2019s help as the weight: less help is progress.</span>' : '') +
-        homeNote(x, i) +
-        (fresh ? efNote(x, i) : '') +
-        (first && SAFETY[x.e] ? '<div class="tr-first tr-safe"><b>Safety first.</b> ' + esc(SAFETY[x.e]) + '</div>' : '') +
-        (nb ? firstTime(x) : '') +
+        '<div class="tr-ex-info' + (T.pr.hideExInfo ? ' is-hidden' : '') + '">' +
+          '<span class="tr-ex-m">' + esc(mnameP(ex.m)) + ' \u00b7 ' + (x.fix ? 'main lift, set by set'
+              : (nb ? nWork + ' set' + (nWork === 1 ? '' : 's') + ' of ' : '') + ex.rr[0] + '\u2013' + ex.rr[1] + ' reps') +
+            (rirHere ? ' \u00b7 ' + (nb ? (x.rir ? 'stop with ' + x.rir + ' rep' + (x.rir === 1 ? '' : 's') + ' to spare' : 'to your last good rep') : effSay(x.rir)) : '') +
+            (x.cc && LIVE.cc ? ccSay(i)
+              : mate ? ' \u00b7 alternate with ' + esc(lib(mate.e).n) + ', ' + clock(T.pr.rp) + ' between'
+              : ' \u00b7 <button class="tr-lnk tr-barl" data-t="restpick" data-e="' + esc(x.e) + '" aria-label="Rest ' + clock(x.rest) + ' for ' + esc(ex.n) + '. Change">rest ' + clock(x.rest) + '</button>') +
+            (fin(x.tm) ? ' \u00b7 training max ' + fmtN(x.tm) + ' ' + T.pr.u : '') +
+            (nb ? ' \u00b7 <button class="tr-lnk tr-barl" data-t="exhow" data-e="' + esc(x.e) + '">how to</button>' : '') +
+            ' \u00b7 <button type="button" class="tr-lnk tr-barl tr-ex-infotog" data-t="exinfotog" aria-label="Hide exercise explanation">Hide info</button>' +
+          '</span>' +
+          (nb && x.s.some(function (s) { return s.wu; }) ? '<span class="tr-ex-m">W is a warm-up: done, not counted, and a short rest after it.</span>' : '') +
+          (cue ? '<span class="tr-cue">' + esc(cue) + '</span>' : '') +
+          (x.swn ? '<span class="tr-ex-m">' + esc(x.swn) + '</span>' : '') +
+          homeNote(x, i) +
+          (fresh ? efNote(x, i) : '') +
+          (nb ? firstTime(x) : '') +
+        '</div>' +
+        (T.pr.hideExInfo ? '<button type="button" class="tr-lnk tr-ex-infoshow" data-t="exinfotog" aria-label="Show exercise explanation">Show info</button>' : '') +
+        (barHere || x.s.some(function (s) { return s.am; }) || ASST[x.e] || (first && SAFETY[x.e]) ? '<div class="tr-ex-safety">' +
+          (barHere ? '<span class="tr-ex-m"><button class="tr-lnk tr-barl" data-t="barpick" data-e="' + esc(x.e) + '" aria-label="' + esc(barName(x.e)) + ' for ' + esc(ex.n) + ': ' +
+            fmtN(barAt(x.e)) + ' ' + T.pr.u + '. Change">' + esc(barLabelAt(x.e)) + '</button></span>' : '') +
+          (x.s.some(function (s) { return s.am; }) ? '<span class="tr-cue">Last set: as many good reps as you can \u2014 stop when one slows to a grind. It sets your next wave\u2019s weights.</span>' : '') +
+          (ASST[x.e] ? '<span class="tr-ex-m">Type the machine\u2019s help as the weight: less help is progress.</span>' : '') +
+          (first && SAFETY[x.e] ? '<div class="tr-first tr-safe"><b>Safety first.</b> ' + esc(SAFETY[x.e]) + '</div>' : '') +
+        '</div>' : '') +
         ((wy && fresh) || note ? '<button type="button" class="tr-cue-bar' + (note ? ' tr-exnt' : '') + (wy && fresh ? ' tr-ovl tr-ovl-' + wyk : '') + '" data-t="note" data-e="' + esc(x.e) + '" aria-label="' + esc((note ? 'Your note on ' + ex.n + ': ' + note + '. ' : '') + (wy && fresh ? wy + '. ' : '') + 'Edit') + '">' +
           '<span class="tr-cue-txt">' +
             (note ? '<span class="tr-exnt-l">Note</span> ' + esc(note) : '') +
@@ -8103,7 +8138,7 @@
         '<span class="tr-fbt-s">' + esc(said.length ? said.join(' \u00b7 ') + (pre ? ' \u00b7 as last time' : '') : 'not rated yet') + '</span>' +
         '<span class="tr-fbt-e">' + (said.length ? (pre ? 'Change' : 'Edit') : 'Rate') + '</span></button>' + (f.j === 2 ? HURT_NOTE : '');
     }
-    return '<div class="tr-card tr-ask tr-fbc tr-fbc-modal"><div class="tr-fbc-h"><span class="tr-ql">' + esc(mname(m)) + ' done \u2014 how was it?</span>' +
+    return '<div class="tr-card tr-ask tr-fbc tr-fbc-modal" role="dialog" aria-label="' + esc(mname(m)) + ' feedback"><div class="tr-fbc-h"><span class="tr-ql">' + esc(mname(m)) + ' done \u2014 how was it?</span>' +
         '<button class="tr-lnk" data-t="fbhide" data-m="' + m + '">Later</button></div>' +
       // the healing, when it still has no answer: the reps moved, or it was never said
       (healNeed(m) ? segQ('Since last time', 'sore', '', SORE.map(function (t, i) { return [i, t]; }), ' data-m="' + m + '"') : '') +
@@ -8408,10 +8443,10 @@
         '<span class="tr-h-hdr" aria-hidden="true"><span>Exercise</span><span>Best set</span></span>' +
         '<span class="tr-h-x">' + wo.x.map(function (x) {
           var work = x.s.filter(counts);
-          var bs = work.length ? (ASST[x.e] ? leastHelp(work, wo.u) : topSet(work, wo.u)) : (x.s[0] || null);
+          var bs = work.length ? (ASST[x.e] ? leastHelp(work, wo.u) : topSet(work, wo.u)) : null;
           var bsTxt = '';
           if (bs) {
-            var bw0 = conv(bs.w, wo.u);
+            var bw0 = bs.w;
             bsTxt = (onBody(x.e) ? (bw0 > 0 ? '+' + fmtN(bw0) + ' ' + T.pr.u : 'BW')
               : ASST[x.e] ? fmtN(bw0) + ' ' + T.pr.u + ' help'
               : bw0 > 0 ? fmtN(bw0) + ' ' + T.pr.u : 'BW') + ' \u00d7 ' + bs.r;
@@ -8464,7 +8499,7 @@
         if (!work.length) return;
         var bs = ASST[x.e] ? leastHelp(work, wo.u) : topSet(work, wo.u);
         if (bs) {
-          var bw0 = conv(bs.w, wo.u);
+          var bw0 = bs.w;
           p.lastBest = (onBody(x.e) ? (bw0 > 0 ? '+' + fmtN(bw0) + ' ' + T.pr.u : 'BW')
             : ASST[x.e] ? fmtN(bw0) + ' ' + T.pr.u + ' help'
             : bw0 > 0 ? fmtN(bw0) + ' ' + T.pr.u : 'BW') + ' \u00d7 ' + bs.r;
@@ -9140,11 +9175,20 @@
     var isWk = D && D.span === 'week';
     var key = String(eye).toLowerCase().replace(/[^a-z0-9]+/g, '-');
     var open = S.pgOpen && S.pgOpen[key] !== undefined ? !!S.pgOpen[key] : !isWk;
-    var badge = /tr-pg-wait/.test(body) ? 'Collecting'
+    var hasViz = /<svg|tr-hl-row|tr-hm-svg/.test(body);
+    var badge = (!hasViz && /tr-pg-wait/.test(body)) ? 'Collecting'
       : /slipped|both going <b>down<\/b>|Weaker ones came/.test(body) ? 'Review' : 'Active';
     var badgeTone = badge === 'Active' ? 'good' : badge === 'Review' ? 'warn' : 'muted';
-    var l0m = body.match(/<p class="tr-pg-(?:say|wait)"[^>]*>([\s\S]*?)<\/p>/);
-    var l0 = !open && l0m ? '<p class="tr-pg-l0">' + l0m[1] + '</p>' : '';
+    var sayMatches = body.match(/<p class="tr-pg-say"[^>]*>([\s\S]*?)<\/p>/g);
+    var l0Inner = '';
+    if (sayMatches && sayMatches.length) {
+      var pickSay = sayMatches[sayMatches.length - 1].match(/<p class="tr-pg-say"[^>]*>([\s\S]*?)<\/p>/);
+      if (pickSay) l0Inner = pickSay[1];
+    } else {
+      var waitMatch = body.match(/<p class="tr-pg-wait"[^>]*>([\s\S]*?)<\/p>/);
+      if (waitMatch) l0Inner = waitMatch[1];
+    }
+    var l0 = !open && l0Inner ? '<p class="tr-pg-l0">' + l0Inner + '</p>' : '';
     var stats = S.rvDeep && math ? '<div class="tr-pg-stats">' + math.map(function (m) {
       return '<div><small>' + esc(m[0]) + '</small><b>' + esc(m[1]) + '</b>' + (m[2] ? '<small>' + esc(m[2]) + '</small>' : '') + '</div>';
     }).join('') + '</div>' : '';
@@ -11227,12 +11271,16 @@
     var typedSay = typed ? '<div class="tr-note tr-warn tr-typed">' + typed + ' set' + (typed === 1 ? ' has' : 's have') + ' numbers typed in but ' +
       (typed === 1 ? 'wasn\u2019t' : 'weren\u2019t') + ' ticked.</div>' : '';
     var prs = prsIn(wo);
+    var sh = S.sheet || {};
     var missing = [];
-    if (LIVE.ms) {
-      uniq(wo.x.map(function (x) { return musOf(x.e); })).forEach(function (m) {
-        var f = fbAll(m).v;
-        if ((!noPump(m) && !fin(f.p)) || !fin(f.k) || healNeed(m)) missing.push(m);
-      });
+    uniq(wo.x.map(function (x) { return musOf(x.e); })).forEach(function (m) {
+      var f = fbAll(m).v;
+      if ((!noPump(m) && !fin(f.p)) || !fin(f.k) || !fin(f.j) || healNeed(m) || (sh.askM && sh.askM.indexOf(m) >= 0)) missing.push(m);
+    });
+    if (sh.k === 'finish' && !sh.askM) {
+      sh.askM = missing.slice();
+      sh.askHeal = {};
+      missing.forEach(function (m) { if (healNeed(m)) sh.askHeal[m] = 1; });
     }
     if (!wo.x.length && !wo.mc) {
       return '<h2 class="sheet-name tr-sn2">Nothing ticked yet</h2>' +
@@ -11241,7 +11289,6 @@
         '<div class="tr-acts"><button class="' + (typed ? 'ghost' : 'btn-primary') + '" data-t="close">Keep going</button>' +
           '<button class="ghost danger" data-t="discardnow">' + (S.arm === 'discard' ? 'Tap again to discard' : 'Discard it') + '</button></div>';
     }
-    var sh = S.sheet || {};
     return '<h2 class="sheet-name tr-sn2">' + esc(LIVE.n) + '</h2>' +
       '<div class="tr-when">' + when(wo.st) + ' \u00b7 ' + hmSpan(wo.st, wo.en) +
         (sh.tm ? '' : ' <button class="tr-lnk" data-t="fintimes">Change times</button>') + '</div>' +
@@ -11260,9 +11307,12 @@
       (missing.length ? '<div class="tr-ask"><div class="tr-ql">Before you go — next week’s sets come from these</div>' +
         missing.map(function (m) {
           var f = fbAll(m).v;
-          return (healNeed(m) ? segQ(esc(mname(m)) + ' since last time', 'sore', '', SORE.map(function (t, i) { return [i, t]; }), ' data-m="' + m + '"') : '') +
+          var jl = esc(mname(m)) + ' ' + (T.pr.bk ? 'back &amp; joints' : 'joints');
+          var showHeal = healNeed(m) || (sh.askHeal && sh.askHeal[m]);
+          return (showHeal ? segQ(esc(mname(m)) + ' since last time', 'sore', fin(LIVE.sr && LIVE.sr[m]) ? LIVE.sr[m] : '', SORE.map(function (t, i) { return [i, t]; }), ' data-m="' + m + '"') : '') +
             (noPump(m) ? '' : segQ(esc(mname(m)) + ' pump', 'fb', fin(f.p) ? f.p : '', PUMP.map(function (t, i) { return [i, t]; }), ' data-m="' + m + '" data-f="p"')) +
-            segQ(esc(mname(m)) + ' workload', 'fb', fin(f.k) ? f.k : '', WORK.map(function (t, i) { return [i, t]; }), ' data-m="' + m + '" data-f="k"');
+            segQ(esc(mname(m)) + ' workload', 'fb', fin(f.k) ? f.k : '', WORK.map(function (t, i) { return [i, t]; }), ' data-m="' + m + '" data-f="k"') +
+            segQ(jl, 'fb', fin(f.j) ? f.j : '', JOINT.map(function (t, i) { return [i, t]; }), ' data-m="' + m + '" data-f="j"');
         }).join('') + '</div>' : '') +
       '<div class="tr-q"><div class="tr-ql">Notes <span class="tr-opt">optional</span></div>' +
         '<textarea class="txt tr-nt" id="trWoNt" maxlength="1000" rows="2" aria-label="Notes on this workout" ' +
@@ -11533,7 +11583,17 @@
   var REST_OPTS = [30, 45, 60, 75, 90, 120, 150, 180, 240, 300];
   function restHTML(sh) {
     var ex = lib(sh.e), cur = restFor(ex), dflt = ex.k === 'c' ? T.pr.rc : T.pr.ri;
+    var rLeft = LIVE && LIVE.rs ? restLeft() : null;
+    var activeRestBar = rLeft !== null && rLeft > 0
+      ? '<div class="tr-q tr-rest-live-box"><div class="tr-ql">Current rest timer \u00b7 <span id="trRestSheetLeft">' + clock(rLeft) + '</span></div>' +
+        '<div class="tr-acts tr-rest-sheet-acts">' +
+          '<button type="button" class="ghost" data-t="rest" data-v="-15" aria-label="Fifteen seconds less">\u221215s</button>' +
+          '<button type="button" class="ghost" data-t="rest" data-v="15" aria-label="Fifteen seconds more">+15s</button>' +
+          '<button type="button" class="ghost danger" data-t="rest" data-v="skip">Skip rest</button>' +
+        '</div></div>'
+      : '';
     return '<h2 class="sheet-name tr-sn2">Rest for ' + esc(ex.n) + '</h2>' +
+      activeRestBar +
       '<div class="tr-sub">After each set of it, from now on. The default for ' + (ex.k === 'c' ? 'compound lifts' : 'isolation work') + ' is ' + clock(dflt) +
         ' (Settings). A warm-up rests a minute at most; paired sets use the pair\u2019s rest, ' + clock(T.pr.rp) + '.</div>' +
       '<div class="tr-q">' + chips('restset', cur, REST_OPTS.map(function (s) { return [s, clock(s)]; }), ' data-e="' + esc(sh.e) + '"') + '</div>' +
@@ -12948,6 +13008,12 @@
     var keepPopArm = t === 'rmex' && LIVE && LIVE.x[num('data-x')] && LIVE.x[num('data-x')].s.some(function (z) { return z.t; }) && S.arm !== 'rm:' + num('data-x');
     if (t !== 'expop' && t !== 'fmpop' && t !== 'popclose' && !keepPopArm && S.pop) { S.pop = null; drawPop(); }
     if (t === 'popclose') { S.pop = null; drawPop(); return; }
+    if (t === 'exinfotog') {
+      T.pr.hideExInfo = T.pr.hideExInfo ? 0 : 1;
+      stamp('pr');
+      draw();
+      return;
+    }
     if (t === 'seshex') { S.seshExOpen = !S.seshExOpen; draw(); return; }
     if (t === 'moretog') { S.moreOpen = S.moreOpen === false; draw(); return; }
     if (t === 'pair' && LIVE) {
@@ -13286,7 +13352,9 @@
       if (!LIVE || !LIVE.rs) return;
       if (v === 'skip') LIVE.rs = null;
       else { LIVE.rs.end += Number(v) * 1000; LIVE.rs.dur = Math.max(1, LIVE.rs.dur + Number(v)); }
-      saveLive(); drawRest(); return;
+      saveLive(); drawRest();
+      if (S.sheet && S.sheet.k === 'rest') drawSheet();
+      return;
     }
     // the weight your effort gave, or the usual step: the sets not yet done take whichever
     if (t === 'efset' && LIVE) {
@@ -13395,7 +13463,9 @@
       if (LIVE.sr[m] === Number(v)) delete LIVE.sr[m]; else LIVE.sr[m] = Number(v);
       if (LIVE.sro && fin(LIVE.sr[m])) delete LIVE.sro[m];
       if (LIVE.fbo && LIVE.fbo[m] && fbDone(m)) delete LIVE.fbo[m];
-      saveLive(); draw(); return;
+      saveLive();
+      if (S.sheet && S.sheet.k === 'finish') drawSheet(); else draw();
+      return;
     }
     if (t === 'fb') {
       var fm = el.getAttribute('data-m'), ff = el.getAttribute('data-f');
@@ -13513,7 +13583,14 @@
     // the rest a lift takes
     if (t === 'restpick') { openSheet({ k: 'rest', e: el.getAttribute('data-e'), eyebrow: 'Rest', title: 'Rest' }); return; }
     if (t === 'restset') {
-      setRest(el.getAttribute('data-e'), v === 'def' ? null : Number(v));
+      var re = el.getAttribute('data-e');
+      setRest(re, v === 'def' ? null : Number(v));
+      if (LIVE && LIVE.rs && fin(LIVE.rs.x) && LIVE.x[LIVE.rs.x] && LIVE.x[LIVE.rs.x].e === re && restLeft() > 0) {
+        var nr = restAfter(LIVE.rs.x, LIVE.rs.s);
+        LIVE.rs.end += (nr - LIVE.rs.dur) * 1000;
+        LIVE.rs.dur = nr;
+        saveLive();
+      }
       closeSheet(); draw(); return;
     }
 

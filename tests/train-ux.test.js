@@ -38,8 +38,8 @@ module.exports = {
         },
         w2: {
           id: 'w2', st: now - 2 * 864e5, en: now - 2 * 864e5 + 3000000, dk: '2026-11-02',
-          n: 'Lower A', u: 'lb', ms: 'uxms', w: 0, d: 1, dl: 0,
-          x: [{ e: 'bb-squat', s: [{ w: 225, r: 6, t: now - 2 * 864e5 + 1000 }, { w: 235, r: 5, t: now - 2 * 864e5 + 2000 }] }],
+          n: 'Lower A', u: 'kg', ms: 'uxms', w: 0, d: 1, dl: 0,
+          x: [{ e: 'bb-squat', s: [{ w: 100, r: 6, t: now - 2 * 864e5 + 1000 }, { w: 100, r: 5, t: now - 2 * 864e5 + 2000 }] }],
           sr: {}, fb: {}
         }
       };
@@ -135,6 +135,78 @@ module.exports = {
       const beforeSets = st.LIVE.x[0].s.length;
       document.querySelector('.tr-sheet [data-t="styadd"]').click();
       const afterAddSets = st.LIVE.x[0].s.length;
+      st.S.sheet = null;
+
+      // 1. Right-pinned ellipsis button even when .tr-fmw is empty (like Cable Pushdown C1)
+      st.LIVE.x[2].e = 'cb-pushdown';
+      st.LIVE.x[2].p = 'C';
+      st.LIVE.x[2].s = [{ w: '', r: '', t: 0 }, { w: '', r: '', t: 0 }];
+      _.draw();
+      const ex2Hdr = document.querySelector('#view-train .tr-ex[data-xi="2"] .tr-ex-h');
+      const ex2Fmw = document.querySelector('#trfm-2');
+      const ex2Pop = document.querySelector('#view-train .tr-ex[data-xi="2"] .tr-expop-b');
+      const fmwEmpty = ex2Fmw && ex2Fmw.innerHTML === '';
+      const popPinnedRight = ex2Hdr && ex2Pop &&
+        Math.abs(ex2Hdr.getBoundingClientRect().right - ex2Pop.getBoundingClientRect().right) <= 2;
+
+      // 2. Inline rest divider + centered pill on paired lift with live countdown & rest sheet controls
+      const wi = st.LIVE.x[0].s.findIndex((s) => !s.wu);
+      st.LIVE.x[0].s[wi].w = 185;
+      st.LIVE.x[0].s[wi].r = 8;
+      _.draw();
+      const rpill0 = document.querySelector('#trrdiv-0-' + wi);
+      const hasPairedRestPill = !!rpill0 && !!document.querySelector('#trrdiv-2-0');
+      const defaultRestTxt = rpill0 ? rpill0.getAttribute('data-rest-default') : '';
+      document.querySelector('#view-train [data-t="tick"][data-x="0"][data-s="' + wi + '"]').click();
+      const rsTracksSet = st.LIVE.rs && st.LIVE.rs.x === 0 && st.LIVE.rs.s === wi;
+      const rpillTicking = document.querySelector('#trrdiv-0-' + wi);
+      const pillShowsCountdown = !!rpillTicking && rpillTicking.classList.contains('is-ticking') &&
+        /\u23f1/.test(rpillTicking.textContent);
+      rpillTicking.click();
+      const restSheetHasLiveBar = !!document.querySelector('.tr-sheet .tr-rest-live-box') &&
+        !!document.querySelector('.tr-sheet [data-t="rest"][data-v="skip"]');
+      document.querySelector('.tr-sheet [data-t="rest"][data-v="skip"]').click();
+      st.S.sheet = null;
+      _.draw();
+      const rpillAfterSkip = document.querySelector('#trrdiv-0-' + wi);
+      const pillRestoredAfterSkip = !!rpillAfterSkip && !rpillAfterSkip.classList.contains('is-ticking') &&
+        rpillAfterSkip.textContent === defaultRestTxt;
+
+      // Verify custom rest on a paired lift (C1) and early next-set tick cleanup
+      document.querySelector('#trrdiv-2-0').click();
+      document.querySelector('.tr-sheet [data-t="restset"][data-v="90"]').click();
+      const pairedRestCustomOk = document.querySelector('#trrdiv-2-0').getAttribute('data-rest-default') === '1:30';
+      st.LIVE.x[2].s[0].w = 50; st.LIVE.x[2].s[0].r = 12;
+      st.LIVE.x[2].s[1].w = 50; st.LIVE.x[2].s[1].r = 12;
+      _.draw();
+      document.querySelector('#view-train [data-t="tick"][data-x="2"][data-s="0"]').click();
+      const c1PillTicking = document.querySelector('#trrdiv-2-0').classList.contains('is-ticking') && st.LIVE.rs.dur === 90;
+      document.querySelector('#view-train [data-t="tick"][data-x="2"][data-s="1"]').click();
+      const c1PillClearedOnNextSet = !document.querySelector('#trrdiv-2-0').classList.contains('is-ticking') &&
+        document.querySelector('#trrdiv-2-0').textContent === '1:30';
+
+      // 3. Hide / Show exercise explanation toggle (exinfotog) preserves .tr-ex-safety (AMRAP/ASST/SAFETY/barHere)
+      st.LIVE.x[0].s[st.LIVE.x[0].s.length - 1].am = 1;
+      _.draw();
+      const hideBtn = document.querySelector('#view-train .tr-ex[data-xi="0"] [data-t="exinfotog"]');
+      hideBtn.click();
+      const safetyEl = document.querySelector('#view-train .tr-ex[data-xi="0"] .tr-ex-safety');
+      const infoHidden = st.T.pr.hideExInfo === 1 &&
+        !!document.querySelector('#view-train .tr-ex[data-xi="0"] .tr-ex-info.is-hidden') &&
+        !!document.querySelector('#view-train .tr-ex[data-xi="0"] .tr-ex-infoshow') &&
+        !!safetyEl && getComputedStyle(safetyEl).display !== 'none';
+      delete st.LIVE.x[0].s[st.LIVE.x[0].s.length - 1].am;
+      document.querySelector('#view-train .tr-ex[data-xi="0"] .tr-ex-infoshow').click();
+      const infoShownAgain = st.T.pr.hideExInfo === 0 &&
+        !document.querySelector('#view-train .tr-ex[data-xi="0"] .tr-ex-info.is-hidden');
+
+      // 4. Finish sheet prompts for unanswered p, k, and j (joints) even on non-block workouts
+      st.LIVE.ms = '';
+      st.LIVE.fb = {};
+      document.querySelector('#view-train [data-t="finish"]').click();
+      const finishPromptsAllThree = !!document.querySelector('.tr-sheet [data-t="fb"][data-m="chest"][data-f="p"]') &&
+        !!document.querySelector('.tr-sheet [data-t="fb"][data-m="chest"][data-f="k"]') &&
+        !!document.querySelector('.tr-sheet [data-t="fb"][data-m="chest"][data-f="j"]');
 
       st.S.sheet = null;
       localStorage.removeItem('sh.trainLive');
@@ -142,13 +214,19 @@ module.exports = {
       return {
         hasExThumb, hasExPopBtn, exPopTapTargetOk, hasSingleInteractiveCueBar, hasInlinePlateStack,
         popOpenNoSheet, popItemTapOk, popStillOpenAfterCardClick, hasPairAction, pairedOk,
-        armedInPop, popClosed, popSurvivesDraw, hasStyAddSkip, addedSet: afterAddSets === beforeSets + 1
+        armedInPop, popClosed, popSurvivesDraw, hasStyAddSkip, addedSet: afterAddSets === beforeSets + 1,
+        fmwEmpty, popPinnedRight, hasPairedRestPill, rsTracksSet, pillShowsCountdown,
+        restSheetHasLiveBar, pillRestoredAfterSkip, pairedRestCustomOk, c1PillTicking,
+        c1PillClearedOnNextSet, infoHidden, infoShownAgain, finishPromptsAllThree
       };
     });
-    t.ok('Pillar 2 (Live Logger): 1-line header (>=44px tap targets), #trPop menu (scrim guard, Pair superset, 2-step rmex, survives draw), single interactive cue bar, set badge add/skip, and inline plate stack',
+    t.ok('Pillar 2 (Live Logger): right-pinned header menu, inline rest pill live countdown, exercise info toggle, #trPop menu, single interactive cue bar, set badge add/skip, and Finish sheet p/k/j feedback prompt',
       p2.hasExThumb && p2.hasExPopBtn && p2.exPopTapTargetOk && p2.hasSingleInteractiveCueBar && p2.hasInlinePlateStack &&
       p2.popOpenNoSheet && p2.popItemTapOk && p2.popStillOpenAfterCardClick && p2.hasPairAction && p2.pairedOk &&
-      p2.armedInPop && p2.popClosed && p2.popSurvivesDraw && p2.hasStyAddSkip && p2.addedSet,
+      p2.armedInPop && p2.popClosed && p2.popSurvivesDraw && p2.hasStyAddSkip && p2.addedSet &&
+      p2.fmwEmpty && p2.popPinnedRight && p2.hasPairedRestPill && p2.rsTracksSet && p2.pillShowsCountdown &&
+      p2.restSheetHasLiveBar && p2.pillRestoredAfterSkip && p2.pairedRestCustomOk && p2.c1PillTicking &&
+      p2.c1PillClearedOnNextSet && p2.infoHidden && p2.infoShownAgain && p2.finishPromptsAllThree,
       JSON.stringify(p2));
 
     // Pillar 3: Unified Progress tab
@@ -195,7 +273,11 @@ module.exports = {
       st.S.sub = 'history';
       st.S.hv = 'wo';
       _.draw();
-      const hasWoTableAndFoot = !!document.querySelector('#view-train .tr-h-hdr') && !!document.querySelector('#view-train .tr-h-foot');
+      const hasWoTableAndFoot = !!document.querySelector('#view-train .tr-h-hdr') &&
+        !!document.querySelector('#view-train .tr-h-foot') &&
+        [...document.querySelectorAll('#view-train .tr-h-x br')].every((br) => getComputedStyle(br).display === 'none');
+      const w2CardTxt = (document.querySelector('#view-train [data-t="wosheet"][data-id="w2"]') || {}).textContent || '';
+      const singleUnitConvInHistory = /220\.5 lb \u00d7 6/.test(w2CardTxt);
       document.querySelector('#view-train [data-t="wosheet"][data-id="w2"]').click();
       const hasPerformAgain = /Perform Again/.test((document.querySelector('.tr-sheet [data-t="redo"]') || {}).textContent || '');
       st.S.sheet = null;
@@ -210,7 +292,7 @@ module.exports = {
       const liftHasThumbSparkLast = liftRows.length === 2 &&
         thumbRect.right <= nameRect.left + 2 &&
         !!liftRows[0].querySelector('svg.tr-spark') &&
-        / lb last best: /i.test(bestText);
+        /last best: 220\.5 lb \u00d7 6/i.test(bestText);
 
       // Open Lift Sheet on bb-squat and switch to About/Summary tab
       liftRows[0].click();
@@ -228,10 +310,10 @@ module.exports = {
         return cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.fontSize) < 12.9;
       }).map((el) => el.tagName + '.' + el.className + ':' + getComputedStyle(el).fontSize);
 
-      return { hasWoTableAndFoot, hasPerformAgain, liftOrder, liftHasThumbSparkLast, hasSumKpi, mediaPaused, mcOhpFixed, smallFonts };
+      return { hasWoTableAndFoot, singleUnitConvInHistory, hasPerformAgain, liftOrder, liftHasThumbSparkLast, hasSumKpi, mediaPaused, mcOhpFixed, smallFonts };
     });
-    t.ok('Pillar 4 (History & Lifts): Strong-style 2-col workout cards + Perform Again, 3-col Lifts cards with avatar/sparkline/lastBest, single Lift Sheet pause toggle, mc-ohp media fix, and >=13px fonts',
-      p4.hasWoTableAndFoot && p4.hasPerformAgain && p4.liftOrder === 'bb-squat,bb-bench' &&
+    t.ok('Pillar 4 (History & Lifts): Strong-style 2-col workout cards + Perform Again, single kg->lb conversion on Best set, 3-col Lifts cards with avatar/sparkline/lastBest, single Lift Sheet pause toggle, mc-ohp media fix, and >=13px fonts',
+      p4.hasWoTableAndFoot && p4.singleUnitConvInHistory && p4.hasPerformAgain && p4.liftOrder === 'bb-squat,bb-bench' &&
       p4.liftHasThumbSparkLast && p4.hasSumKpi && p4.mediaPaused &&
       p4.mcOhpFixed && p4.smallFonts.length === 0,
       JSON.stringify(p4));

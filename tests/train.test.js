@@ -4962,7 +4962,8 @@ module.exports = {
         }
         const m = _.MEDIA[ex.id];
         const about = _.exAbout(ex.id, ex);
-        if (!m || m.src !== 'art/lifts/' + ex.id + '.gif' || !/class="tr-media"/.test(about) || !/gymvisual\.com/.test(about)) {
+        const expectedSrc = ex.id === 'mc-ohp' ? 'art/lifts/sm-ohp.gif' : 'art/lifts/' + ex.id + '.gif';
+        if (!m || m.src !== expectedSrc || !/class="tr-media"/.test(about) || !/gymvisual\.com/.test(about)) {
           allMedia = false;
         }
       });

@@ -699,6 +699,7 @@
   LIB_LIST.forEach(function (ex) {
     MEDIA[ex.id] = { src: 'art/lifts/' + ex.id + '.gif', credit: '\u00a9 Gym visual \u2014 gymvisual.com' };
   });
+  MEDIA['mc-ohp'] = { src: 'art/lifts/sm-ohp.gif', credit: '\u00a9 Gym visual \u2014 gymvisual.com' };
 
   var EQUIP = { bb: 'Barbell', db: 'Dumbbell', mc: 'Machine', cb: 'Cable', sm: 'Smith machine', bw: 'Bodyweight' };
 
@@ -1557,8 +1558,9 @@
      itself so two that squeeze to the same key cannot be mistaken. */
   function ntKey(e) { return 'n' + String(e).replace(/[^A-Za-z0-9]/g, ''); }
   function noteOf(e) {
-    var n = T.nt[ntKey(e)];
-    return n && n.e === e ? n.t || '' : '';
+    var n = T.nt && T.nt[ntKey(e)];
+    if (n && n.e === e && n.t) return n.t;
+    return (T.pr && T.pr.en && T.pr.en[e]) ? String(T.pr.en[e]) : '';
   }
   // a link to how it is done: a video you trust, your coach's clip
   function linkOf(e) {
@@ -5812,6 +5814,70 @@
   // Settings as a gear, so the tabs, the plate counter and it share one row
   var GEAR_ICO = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
     '<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1.1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>';
+  function mediaThumb(e) {
+    var ex = lib(e), m = mediaFor(e, ex);
+    if (m && m.src) {
+      return '<span class="tr-ex-thumb" aria-hidden="true"><img src="' + esc(m.src) + '" alt="" loading="lazy"></span>';
+    }
+    return '<span class="tr-ex-thumb tr-ex-thumb-svg" aria-hidden="true"></span>';
+  }
+  var exThumbHTML = mediaThumb;
+
+  function drawPop() {
+    var view = $('view-train');
+    if (!view) return;
+    var box = $('trPop');
+    if (!S.pop) {
+      if (box) box.innerHTML = '';
+      return;
+    }
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'trPop';
+      box.className = 'tr-pop-root no-print';
+      view.appendChild(box);
+    }
+    var p = S.pop, body = '';
+    if (p.k === 'expop' && LIVE && LIVE.x[p.x]) {
+      var xi = p.x, x = LIVE.x[xi], ex = lib(x.e), note = noteOf(x.e);
+      var armed = S.arm === 'rm:' + xi, nDone = x.s.filter(function (z) { return z.t; }).length;
+      body = '<div class="tr-pop-head"><span class="tr-pop-title">' + esc(ex.n) + '</span>' +
+        '<button type="button" class="tr-pop-x" data-t="popclose" aria-label="Close menu">&times;</button></div>' +
+        '<div class="tr-pop-list" role="menu">' +
+          '<button type="button" class="tr-pop-item" data-t="exsheet" data-e="' + esc(x.e) + '">' + EA_ICO.note + '<span>Lift details, history &amp; records</span></button>' +
+          (ex.k === 'c' && ex.q !== 'bw' ? '<button type="button" class="tr-pop-item" data-t="warm" data-x="' + xi + '">' + EA_ICO.warm + '<span>Warm-up sets</span></button>' : '') +
+          (plateLoaded(ex) ? '<button type="button" class="tr-pop-item" data-t="plates" data-x="' + xi + '">' + EA_ICO.plates + '<span>Plates &amp; bar calculator</span></button>' : '') +
+          '<button type="button" class="tr-pop-item" data-t="swap" data-x="' + xi + '">' + EA_ICO.swap + '<span>Swap exercise</span></button>' +
+          '<button type="button" class="tr-pop-item" data-t="restpick" data-e="' + esc(x.e) + '"><span>\u23f1</span><span>Rest timer (' + clock(x.rest) + ')</span></button>' +
+          '<button type="button" class="tr-pop-item" data-t="fmpop" data-x="' + xi + '"><span>\ud83d\udcca</span><span>Set a Focus Metric</span></button>' +
+          '<button type="button" class="tr-pop-item" data-t="note" data-e="' + esc(x.e) + '">' + EA_ICO.note + '<span>' + (note ? 'Edit sticky note' : 'Add sticky note') + '</span></button>' +
+          (x.s.length > 1 ? '<button type="button" class="tr-pop-item" data-t="dropset" data-x="' + xi + '">' + EA_ICO.minus + '<span>Remove last unlogged set</span></button>' : '') +
+          '<button type="button" class="tr-pop-item tr-pop-danger' + (armed ? ' tr-lnk-arm' : '') + '" data-t="rmex" data-x="' + xi + '">' + EA_ICO.rm +
+            '<span>' + (armed ? 'Tap again: remove (' + nDone + ' done)' : 'Remove exercise') + '</span></button>' +
+        '</div>';
+    } else if (p.k === 'fm' && LIVE && LIVE.x[p.x]) {
+      var fxi = p.x, fx = LIVE.x[fxi], fex = lib(fx.e), curFm = T.pr.fmo === 0 ? 'off' : fmFor(fx.e);
+      var fmOpts = [
+        ['vc', 'Volume change (%)', 'Compare working volume against last session or plan'],
+        ['vol', 'Total volume', 'Total weight \u00d7 reps moved across completed sets'],
+        ['reps', 'Total reps', 'Total working reps completed so far'],
+        ['best', 'Best set (est. 1RM)', 'Highest estimated 1-rep max set today'],
+        ['off', 'Off', 'Hide focus metric badge on exercise cards']
+      ];
+      body = '<div class="tr-pop-head"><span class="tr-pop-title">Set a Focus Metric \u00b7 ' + esc(fex.n) + '</span>' +
+        '<button type="button" class="tr-pop-x" data-t="popclose" aria-label="Close menu">&times;</button></div>' +
+        '<div class="tr-pop-list" role="menu">' + fmOpts.map(function (o) {
+          var on = curFm === o[0];
+          return '<button type="button" class="tr-pop-item' + (on ? ' is-on' : '') + '" data-t="fmset" data-x="' + fxi + '" data-v="' + o[0] + '" aria-pressed="' + on + '">' +
+            '<span class="tr-pop-item-main"><b>' + esc(o[1]) + '</b><small>' + esc(o[2]) + '</small></span>' +
+            '<span class="tr-pop-chk" aria-hidden="true">' + (on ? '\u2713' : '') + '</span></button>';
+        }).join('') + '</div>';
+    }
+    if (!body) { box.innerHTML = ''; S.pop = null; return; }
+    box.innerHTML = '<div class="tr-pop-scrim" data-t="popclose">' +
+      '<div class="tr-pop-card" role="dialog" aria-modal="false" aria-label="Options">' + body + '</div></div>';
+  }
+
   function draw() {
     if (DRAG && DRAG.on) return;
     var root = $('trBody');
@@ -5852,6 +5918,7 @@
     S.flash = '';
     drawRest();
     drawSheet();
+    drawPop();
     markTab();
     ticking();
     if (LIVE) wake();
@@ -5961,8 +6028,8 @@
     /* One thing to do on this screen, and it is Start. The other ways in are
        a quiet list below it, and ending the block, which can't be taken
        back, stands apart in red. */
-    html += '<div class="tr-more" role="group" aria-label="Other ways to train">' +
-      '<div class="tr-ql">Other ways to train</div>' +
+    html += '<div class="tr-more' + (S.moreOpen ? ' is-open' : '') + '" role="group" aria-label="Other ways to train">' +
+      '<button type="button" class="tr-more-tog" data-t="moretog" aria-expanded="' + !!S.moreOpen + '"><span class="tr-ql">Other ways to train</span><span class="tr-more-arr" aria-hidden="true">' + (S.moreOpen ? '\u25b4' : '\u25be') + '</span></button>' +
       moreRow('ready', 'Pick a ready workout', 'Full body, upper and lower, machines only') +
       moreRow('empty', 'Log a workout outside the block', 'Start empty and add what you do') +
       (nx && nx.w < acc && !steady(ms) ? moreRow('deloadnow', 'Deload now', 'A light week before the planned one') : '') +
@@ -6177,7 +6244,13 @@
     }).join('') + '</div>';
   }
   function seshNames(p) {
-    return '<ol class="tr-snames">' + p.x.map(function (x) {
+    var tot = p.x.reduce(function (a, x) { return a + (x.sets || 0); }, 0);
+    var open = !!S.seshExOpen;
+    return '<button type="button" class="tr-seshex-tog" data-t="seshex" aria-expanded="' + open + '">' +
+        '<span>' + (open ? 'Hide ' : 'Preview ') + p.x.length + ' planned exercise' + (p.x.length === 1 ? '' : 's') + ' \u00b7 ' + tot + ' working set' + (tot === 1 ? '' : 's') + '</span>' +
+        '<span class="tr-seshex-arr" aria-hidden="true">' + (open ? '\u25b4' : '\u25be') + '</span>' +
+      '</button>' +
+      '<ol class="tr-snames' + (open ? '' : ' is-collapsed') + '">' + p.x.map(function (x) {
       return '<li><span>' + esc(lib(x.e).n) + '</span><i>' + (x.st ? 'main lift' : x.sets + ' set' + (x.sets === 1 ? '' : 's')) + '</i></li>';
     }).join('') + '</ol>';
   }
@@ -7685,7 +7758,7 @@
     }
     var pl = onBar(ex) ? T.pr.pl : 'off';
     var nx = nextSet(x);
-    var note = noteOf(x.e);
+    var note = noteOf(x.e) || x.note || '';
     var mate = label ? LIVE.x[partner(i)] : null;
     var cue = backCue(ex);
     var num = 0, bodyOn = onBody(x.e), lf = lowFirst(i);
@@ -7750,9 +7823,11 @@
       '<div class="tr-ex-h">' +
         (nDone > 0 ? '<button type="button" class="tr-ex-done-b' + (allWorkDone ? ' is-ready' : '') + '" data-t="exdone" data-x="' + i + '" aria-label="Mark ' + esc(ex.n) + ' complete and collapse">\u2713 Done</button>' : '') +
         (label ? '<span class="tr-pair" aria-label="' + (x.cc ? 'Station ' : 'Pair ') + label + '">' + label + '</span>' : '') +
+        mediaThumb(x.e) +
         // new to lifting, the name opens how it is done
         '<button class="tr-ex-n" data-t="' + (nb ? 'exhow' : 'exsheet') + '" data-e="' + esc(x.e) + '">' + esc(ex.n) + '</button>' +
         '<span class="tr-fmw" id="trfm-' + i + '">' + fmHTML(i) + '</span>' +
+        '<button type="button" class="tr-expop-b" data-t="expop" data-x="' + i + '" aria-label="More options for ' + esc(ex.n) + '">\u22ef</button>' +
         '<span class="tr-ex-m">' + esc(mnameP(ex.m)) + ' \u00b7 ' + (x.fix ? 'main lift, set by set'
             : (nb ? nWork + ' set' + (nWork === 1 ? '' : 's') + ' of ' : '') + ex.rr[0] + '\u2013' + ex.rr[1] + ' reps') +
           (rirHere ? ' \u00b7 ' + (nb ? (x.rir ? 'stop with ' + x.rir + ' rep' + (x.rir === 1 ? '' : 's') + ' to spare' : 'to your last good rep') : effSay(x.rir)) : '') +
@@ -7770,10 +7845,10 @@
         (ASST[x.e] ? '<span class="tr-ex-m">Type the machine\u2019s help as the weight: less help is progress.</span>' : '') +
         homeNote(x, i) +
         (fresh ? efNote(x, i) : '') +
-        (wy && fresh ? '<span class="tr-ex-m tr-ovl tr-ovl-' + wyk + '">' + esc(wy) + '</span>' : '') +
+        (wy && fresh ? '<span class="tr-ex-m tr-ovl tr-cue-bar tr-ovl-' + wyk + '">' + esc(wy) + '</span>' : '') +
         (first && SAFETY[x.e] ? '<div class="tr-first tr-safe"><b>Safety first.</b> ' + esc(SAFETY[x.e]) + '</div>' : '') +
         (nb ? firstTime(x) : '') +
-        (note ? '<button class="tr-exnt" data-t="note" data-e="' + esc(x.e) + '" aria-label="Your note on ' + esc(ex.n) + ': ' + esc(note) + '. Edit">' +
+        (note ? '<button class="tr-exnt tr-cue-bar" data-t="note" data-e="' + esc(x.e) + '" aria-label="Your note on ' + esc(ex.n) + ': ' + esc(note) + '. Edit">' +
           '<span class="tr-exnt-l">Note</span> ' + esc(note) + '</button>' : '') +
       '</div>' +
       healHTML(i) +
@@ -7922,7 +7997,11 @@
         '<li><b>Drop set</b>: straight after the set before it, lighter, no rest between.</li>' +
         '<li><b>To failure</b>: the last rep you could do. Counted as a hard set with nothing in reserve.</li>' +
         '<li><b>Missed</b>: an attempt that didn\u2019t go up. The weight is kept, with the reps you got (0 if none); never a record, never counted, never a target.</li></ul>' +
-      (x.s.length > 1 ? '<div class="tr-acts"><button class="ghost danger" data-t="styrm">Remove this set</button></div>' : '');
+      '<div class="tr-acts tr-sty-acts">' +
+        '<button type="button" class="ghost" data-t="styadd">+ Add set below</button>' +
+        (x.s.length > 1 ? '<button type="button" class="ghost" data-t="styskip">Skip set</button>' : '') +
+        (x.s.length > 1 ? '<button class="ghost danger" data-t="styrm">Remove this set</button>' : '') +
+      '</div>';
   }
 
   /* Reps in reserve for one set: blank until you say. Five means five or
@@ -8015,14 +8094,15 @@
         '<span class="tr-fbt-s">' + esc(said.length ? said.join(' \u00b7 ') + (pre ? ' \u00b7 as last time' : '') : 'not rated yet') + '</span>' +
         '<span class="tr-fbt-e">' + (said.length ? (pre ? 'Change' : 'Edit') : 'Rate') + '</span></button>' + (f.j === 2 ? HURT_NOTE : '');
     }
-    return '<div class="tr-card tr-ask tr-fbc"><div class="tr-fbc-h"><span class="tr-ql">' + esc(mname(m)) + ' done \u2014 how was it?</span>' +
-        '<button class="tr-lnk" data-t="fbhide" data-m="' + m + '">Hide</button></div>' +
+    return '<div class="tr-card tr-ask tr-fbc tr-fbc-modal"><div class="tr-fbc-h"><span class="tr-ql">' + esc(mname(m)) + ' done \u2014 how was it?</span>' +
+        '<button class="tr-lnk" data-t="fbhide" data-m="' + m + '">Later</button></div>' +
       // the healing, when it still has no answer: the reps moved, or it was never said
       (healNeed(m) ? segQ('Since last time', 'sore', '', SORE.map(function (t, i) { return [i, t]; }), ' data-m="' + m + '"') : '') +
       (noPump(m) ? '' : segQ('Pump', 'fb', fin(f.p) ? f.p : '', PUMP.map(function (t, i) { return [i, t]; }), ' data-m="' + m + '" data-f="p"')) +
       segQ('Workload', 'fb', fin(f.k) ? f.k : '', WORK.map(function (t, i) { return [i, t]; }), ' data-m="' + m + '" data-f="k"') +
       segQ(jl, 'fb', fin(f.j) ? f.j : '', JOINT.map(function (t, i) { return [i, t]; }), ' data-m="' + m + '" data-f="j"') +
       (f.j === 2 ? HURT_NOTE : '') +
+      '<div class="tr-acts tr-fbc-foot"><button type="button" class="btn-primary tr-fbc-done" data-t="fbhide" data-m="' + m + '">Done</button></div>' +
     '</div>';
   }
 
@@ -8316,10 +8396,24 @@
           fmtBig(volOf(wo)) + ' ' + T.pr.u + (prs ? ' \u00b7 <span class="tr-pr">\ud83e\udd47 ' + prs + ' record' + (prs === 1 ? '' : 's') + '</span>' : '') +
           (wo.mc && mcScore(wo.mc) ? ' · circuit ' + esc(mcScore(wo.mc)) : '') +
         '</span>' +
+        '<span class="tr-h-hdr" aria-hidden="true"><span>Exercise</span><span>Best set</span></span>' +
         '<span class="tr-h-x">' + wo.x.map(function (x) {
+          var work = x.s.filter(counts);
+          var bs = work.length ? (ASST[x.e] ? leastHelp(work, wo.u) : topSet(work, wo.u)) : (x.s[0] || null);
+          var bsTxt = '';
+          if (bs) {
+            var bw0 = conv(bs.w, wo.u);
+            bsTxt = (onBody(x.e) ? (bw0 > 0 ? '+' + fmtN(bw0) + ' ' + T.pr.u : 'BW')
+              : ASST[x.e] ? fmtN(bw0) + ' ' + T.pr.u + ' help'
+              : bw0 > 0 ? fmtN(bw0) + ' ' + T.pr.u : 'BW') + ' \u00d7 ' + bs.r;
+          }
           // the lift that set the record wears it
-          return esc(x.s.length + ' × ' + lib(x.e).n) + (won[x.e] ? ' <span class="tr-pr" aria-label="' + won[x.e] + ' record' + (won[x.e] === 1 ? '' : 's') + '">\ud83e\udd47' + (won[x.e] > 1 ? '\u00d7' + won[x.e] : '') + '</span>' : '');
+          return '<span class="tr-h-xrow"><span class="tr-h-xl">' + esc(x.s.length + ' × ' + lib(x.e).n) +
+            (won[x.e] ? ' <span class="tr-pr" aria-label="' + won[x.e] + ' record' + (won[x.e] === 1 ? '' : 's') + '">\ud83e\udd47' + (won[x.e] > 1 ? '\u00d7' + won[x.e] : '') + '</span>' : '') +
+            '</span>' + (bsTxt ? '<span class="tr-h-xr">' + esc(bsTxt) + '</span>' : '') + '</span>';
         }).join('<br>') + '</span>' +
+        '<span class="tr-h-foot"><span>' + dur((wo.en || wo.st) - wo.st) + '</span><span>\u00b7</span><span>' + fmtBig(volOf(wo)) + ' ' + T.pr.u + ' vol</span>' +
+          (prs ? '<span>\u00b7</span><span class="tr-pr">\ud83e\udd47 ' + prs + ' PR' + (prs === 1 ? '' : 's') + '</span>' : '') + '</span>' +
         (wo.nt ? '<span class="tr-h-nt">' + esc(wo.nt.length > 90 ? wo.nt.slice(0, 88) + '\u2026' : wo.nt) + '</span>' : '') +
       '</button>';
     }).join('') + '</div>';
@@ -8354,11 +8448,18 @@
     var per = {};
     ix().list.forEach(function (wo) {
       wo.x.forEach(function (x) {
-        var p = per[x.e] = per[x.e] || { n: 0, last: 0, pts: [] };
+        var p = per[x.e] = per[x.e] || { n: 0, last: 0, lastBest: '', pts: [] };
         p.n++;
         p.last = wo.st;
         var work = x.s.filter(counts);
         if (!work.length) return;
+        var bs = ASST[x.e] ? leastHelp(work, wo.u) : topSet(work, wo.u);
+        if (bs) {
+          var bw0 = conv(bs.w, wo.u);
+          p.lastBest = (onBody(x.e) ? (bw0 > 0 ? '+' + fmtN(bw0) + ' ' + T.pr.u : 'BW')
+            : ASST[x.e] ? fmtN(bw0) + ' ' + T.pr.u + ' help'
+            : bw0 > 0 ? fmtN(bw0) + ' ' + T.pr.u : 'BW') + ' \u00d7 ' + bs.r;
+        }
         // reps where the weight is you, or a machine's help; the estimated max where it is a load
         var v = usesBw(x.e) || ASST[x.e] ? Math.max.apply(null, work.map(function (z) { return z.r; })) : bestE1(work, wo.u);
         if (v > 0) p.pts.push([wo.st, v]);
@@ -8380,10 +8481,12 @@
       var best = r.e1 > 0 ? fmtN(Math.round(r.e1)) + ' ' + T.pr.u : r.r + ' reps';
       var ch = trend4(p.pts);
       return '<button class="tr-card tr-lrow" data-t="exsheet" data-e="' + esc(e) + '">' +
+        mediaThumb(e) +
         '<span class="tr-l-n">' + esc(ex.n) + '</span>' +
         '<span class="tr-l-m">' + esc(mname(ex.m)) + ' \u00b7 ' + p.n + ' session' + (p.n === 1 ? '' : 's') +
           ' \u00b7 last ' + shortDate(p.last) + '</span>' +
-        '<span class="tr-l-b"><span class="tr-l-bl">' + (r.e1 > 0 ? 'best est. max' : 'best') + '</span>' + best + '</span>' +
+        '<span class="tr-l-b"><span class="tr-l-bl">' + (r.e1 > 0 ? 'best est. max' : 'best') + '</span>' + best +
+          (p.lastBest ? '<span class="tr-l-last">last best: ' + esc(p.lastBest) + '</span>' : '') + '</span>' +
         (p.pts.length > 1 ? '<span class="tr-l-t">' + spark(p.pts.slice(-12)) +
           (ch === null ? '' : '<span class="tr-l-c ' + (ch > 0.005 ? 'up' : ch < -0.005 ? 'dn' : 'eq') + '">' +
             (Math.abs(ch) < 0.005 ? 'level' : (ch > 0 ? '+' : '\u2212') + Math.abs(Math.round(ch * 100)) + '%') +
@@ -8719,13 +8822,32 @@
       return { k: m.k, n: m.n, lg: lg, pl: pl, cls: hmCls(lg, pl), pct: pl ? lg / pl : (lg ? 1 : 0) };
     }).sort(function (a, b) { return (b.pct - a.pct) || (b.pl - a.pl); });
 
-    /* Recovery instead of sets: the same map, coloured by how rested each
-       muscle is. Green is ready here, so the two read the same way — green
-       is good — and the toggle says which question the colours answer. */
-    var recMode = S.hmMode === 'rec', rec = recMode ? recOf() : null;
+    /* Recovery or Strength Δ instead of sets: the same map, coloured by how
+       rested each muscle is or how its lifts have moved. Green is good across
+       all three modes, and the toggle says which question the colours answer. */
+    var recMode = S.hmMode === 'rec', strMode = S.hmMode === 'str', rec = recMode ? recOf() : null;
     if (recMode) {
       mList.forEach(function (x) { x.rc = rec[x.k]; x.cls = recCls(rec[x.k]); });
       mList.sort(function (a, b) { return b.rc.frac - a.rc.frac; });
+    } else if (strMode) {
+      var strD = pgData('block'), strBy = {};
+      Object.keys(strD.per || {}).forEach(function (e) {
+        var p = strD.per[e];
+        if (!p || p.length < 2 || !(p[0].v > 0)) return;
+        var m = musOf(e);
+        (strBy[m] = strBy[m] || []).push(p[p.length - 1].v / p[0].v - 1);
+      });
+      mList.forEach(function (x) {
+        var arr = strBy[x.k] || [];
+        var d = arr.length ? pgMean(arr) : null;
+        x.strDelta = d;
+        x.cls = d === null ? 'hm-0' : d >= 0.02 ? 'hm-hit' : d >= -0.01 ? 'hm-mid' : 'hm-low';
+      });
+      mList.sort(function (a, b) {
+        var da = a.strDelta !== null && a.strDelta !== undefined ? a.strDelta : -99;
+        var db = b.strDelta !== null && b.strDelta !== undefined ? b.strDelta : -99;
+        return db - da;
+      });
     }
     var clsMap = {};
     mList.forEach(function (x) { clsMap[x.k] = x.cls; });
@@ -8775,14 +8897,17 @@
     var nLit = mList.filter(function (m) { return m.cls === 'hm-hit'; }).length, nAll = mList.length;
     var nPart = mList.filter(function (m) { return m.cls === 'hm-low' || m.cls === 'hm-mid'; }).length;
     var modeSeg = '<div class="seg tr-hm-mode" role="group" aria-label="Colour the map by">' +
-      '<button data-t="hmmode" data-v="sets" aria-pressed="' + !recMode + '">Sets this week</button>' +
-      '<button data-t="hmmode" data-v="rec" aria-pressed="' + recMode + '">Recovery</button></div>';
-    var allLit = !recMode && nAll > 0 && nLit === nAll;
-    var left = recMode ? [] : mList.filter(function (m) { return m.cls !== 'hm-hit' && m.pl > 0; })
+      '<button data-t="hmmode" data-v="sets" aria-pressed="' + (!recMode && !strMode) + '">Sets this week</button>' +
+      '<button data-t="hmmode" data-v="rec" aria-pressed="' + recMode + '">Recovery</button>' +
+      '<button data-t="hmmode" data-v="str" aria-pressed="' + strMode + '">Strength \u0394</button></div>';
+    var allLit = !recMode && !strMode && nAll > 0 && nLit === nAll;
+    var left = (recMode || strMode) ? [] : mList.filter(function (m) { return m.cls !== 'hm-hit' && m.pl > 0; })
       .sort(function (a, b) { return (a.pl - a.lg) - (b.pl - b.lg); }).slice(0, 4);
     var streak = ms ? litStreak(ms, Math.max(selW, Math.min(curW, defW))) : null;
     var head = recMode ? '<div class="tr-lit-top">' + litRing(nLit, nAll) +
         '<div class="tr-lit-h"><b>' + nLit + ' of ' + nAll + ' ready to train</b><span>Green is rested. Paler is still recovering from its last hard sets.</span></div></div>'
+      : strMode ? '<div class="tr-lit-top">' + litRing(nLit, nAll) +
+        '<div class="tr-lit-h"><b>' + nLit + ' of ' + nAll + ' muscles climbing</b><span>Green gained 2%+ in estimated 1RM. Paler held steady or needs volume.</span></div></div>'
       : nAll ? '<div class="tr-lit-top">' + litRing(nLit, nAll) +
         '<div class="tr-lit-h"><b>' + (allLit ? 'Whole body lit' : nLit + ' of ' + nAll + ' muscles lit') + '</b>' +
         '<span>' + (allLit ? 'Every muscle in the plan got its sets. 🎉' : (nPart ? nPart + ' more under way, in the paler greens. ' : '') + 'A muscle turns green when it gets its planned hard sets.') + '</span></div></div>' +
@@ -8796,8 +8921,8 @@
     return '<div class="tr-card tr-hm-card' + (allLit ? ' all-lit' : '') + '">' +
       '<div class="tr-eyebrow">Light it up · this week\u2019s muscles</div>' +
       modeSeg + head +
-      // the week's title, key and weeks belong to the sets; recovery is about now
-      (recMode ? '' : '<div class="tr-title">' + esc(wkTitle) + '</div>' +
+      // the week's title, key and weeks belong to the sets; recovery and strength delta are across sessions
+      (recMode || strMode ? '' : '<div class="tr-title">' + esc(wkTitle) + '</div>' +
       '<div class="tr-note tr-vkey">' + esc(vkeyText) + '</div>' +
       pills) +
       '<div class="tr-hm-box" role="img" aria-label="Front and back muscle progress map">' +
@@ -8808,13 +8933,18 @@
         '<span><i class="tr-hm-sw hm-low"></i> Just trained</span>' +
         '<span><i class="tr-hm-sw hm-mid"></i> Recovering</span>' +
         '<span><i class="tr-hm-sw hm-hit"></i> Ready</span></div>'
+      : strMode ? '<div class="tr-hm-legend" aria-hidden="true">' +
+        '<span><i class="tr-hm-sw hm-0"></i> Need 2+ logs</span>' +
+        '<span><i class="tr-hm-sw hm-low"></i> Dipping</span>' +
+        '<span><i class="tr-hm-sw hm-mid"></i> Holding</span>' +
+        '<span><i class="tr-hm-sw hm-hit"></i> Gaining ✓</span></div>'
       : '<div class="tr-hm-legend" aria-hidden="true">' +
         '<span><i class="tr-hm-sw hm-0"></i> Not yet</span>' +
         '<span><i class="tr-hm-sw hm-low"></i> Started</span>' +
         '<span><i class="tr-hm-sw hm-mid"></i> Halfway</span>' +
         '<span><i class="tr-hm-sw hm-hit"></i> Lit ✓</span>' +
       '</div>' + streakSay) +
-      (mList.length ? '<div class="tr-mus-grid" role="group" aria-label="' + (recMode ? 'How rested each muscle is' : 'Sets logged versus planned per muscle') + '">' +
+      (mList.length ? '<div class="tr-mus-grid" role="group" aria-label="' + (recMode ? 'How rested each muscle is' : strMode ? 'Strength change per muscle' : 'Sets logged versus planned per muscle') + '">' +
         mList.map(function (m) {
           var hit = m.cls === 'hm-hit';
           // a button, so a tap opens the muscle: its sets by week, its strength, its rest
@@ -8822,6 +8952,8 @@
             '<span class="tr-mus-name"><i class="tr-mus-dot ' + m.cls + '"></i>' + esc(m.n) + '</span>' +
             (recMode
               ? '<span class="tr-mus-sets' + (hit ? ' hit' : '') + '">' + (hit ? 'ready ✓' : 'in ' + m.rc.left + ' h') + '</span>'
+              : strMode
+              ? '<span class="tr-mus-sets' + (hit ? ' hit' : '') + '">' + (m.strDelta !== null && m.strDelta !== undefined ? pgPct(m.strDelta, 1) : '—') + '</span>'
               : '<span class="tr-mus-sets' + (hit ? ' hit' : '') + '"><b>' + m.lg + '</b> / ' + m.pl + (hit ? ' ✓' : '') + '</span>') +
           '</button>';
         }).join('') + '</div>' : '') +
@@ -8897,10 +9029,10 @@
     var b6Key = dayKey(b6);
     var msFrom = ms ? (ms.st || (fin(ms.at) && ms.at > 0 ? dayKey(new Date(ms.at)) : '')) : '';
     var from;
-    if (span === 'block' && msFrom) {
+    if ((span === 'block' || span === 'week') && msFrom) {
       from = msFrom;
       if (pgWeek(today, from) < 2 && fd && fd < from) from = fd > b6Key ? fd : b6Key;
-    } else if (span === 'block') {
+    } else if (span === 'block' || span === 'week') {
       from = b6Key;
     } else {
       from = fd || today;
@@ -8942,7 +9074,7 @@
       });
       if (k >= from && k <= today && ch.length) sess.push({ k: k, ch: pgMean(ch), up: pgMean(ch) > 0.005 });
     });
-    return { span: span, from: from, to: today, ms: span === 'block' ? ms : null, days: days, byK: byK, wos: wos, sess: sess, per: per,
+    return { span: span, from: from, to: today, ms: (span === 'block' || span === 'week') ? ms : null, days: days, byK: byK, wos: wos, sess: sess, per: per,
       goalLb: nd ? nd.goalLb : null, plan: nd ? nd.plan : null, lb: nd ? nd.lb : null, waterGoalOz: nd && nd.waterGoalOz ? nd.waterGoalOz : 100 };
   }
 
@@ -8995,11 +9127,26 @@
     '</div>';
   }
 
-  function pgCard(eye, body, math) {
-    return '<div class="tr-card tr-pg">' + '<div class="tr-eyebrow">' + eye + '</div>' + body +
-      (S.rvDeep && math ? '<div class="tr-pg-stats">' + math.map(function (m) {
-        return '<div><small>' + esc(m[0]) + '</small><b>' + esc(m[1]) + '</b>' + (m[2] ? '<small>' + esc(m[2]) + '</small>' : '') + '</div>';
-      }).join('') + '</div>' : '') + '</div>';
+  function pgCard(eye, body, math, D) {
+    var isWk = D && D.span === 'week';
+    var key = String(eye).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    var open = S.pgOpen && S.pgOpen[key] !== undefined ? !!S.pgOpen[key] : !isWk;
+    var badge = /tr-pg-wait/.test(body) ? 'Collecting'
+      : /slipped|both going <b>down<\/b>|Weaker ones came/.test(body) ? 'Review' : 'Active';
+    var badgeTone = badge === 'Active' ? 'good' : badge === 'Review' ? 'warn' : 'muted';
+    var stats = S.rvDeep && math ? '<div class="tr-pg-stats">' + math.map(function (m) {
+      return '<div><small>' + esc(m[0]) + '</small><b>' + esc(m[1]) + '</b>' + (m[2] ? '<small>' + esc(m[2]) + '</small>' : '') + '</div>';
+    }).join('') + '</div>' : '';
+    return '<div class="tr-card ' + (isWk ? 'tr-pg-wk' : 'tr-pg') + (open ? ' is-open' : ' is-shut') + '" data-pg="' + esc(key) + '">' +
+      '<div class="tr-pg-hbar">' +
+        '<div class="tr-eyebrow">' + eye + '</div>' +
+        '<div class="tr-pg-hright">' +
+          '<span class="tr-pg-l0badge ' + badgeTone + '">' + badge + '</span>' +
+          '<button type="button" class="tr-pg-tog" data-t="pgtog" data-v="' + esc(key) + '" aria-expanded="' + open + '" aria-label="Toggle ' + esc(eye) + ' chart">' + (open ? '\u25be' : '\u25b8') + '</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="tr-pg-body' + (open ? '' : ' is-collapsed') + '">' + body + stats + '</div>' +
+    '</div>';
   }
   function pgSay(t) { return '<p class="tr-pg-say">' + t + '</p>'; }
   function pgWait(t) { return '<p class="tr-pg-wait">' + esc(t) + '</p>'; }
@@ -9007,7 +9154,7 @@
   function pgPace(D) {
     var ws = D.days.filter(function (d) { return d.w > 0; });
     if (ws.length < 2) {
-      return pgCard('On pace', pgWait('Weigh in on a few more mornings, across two weeks or more, and your pace appears here.'));
+      return pgCard('On pace', pgWait('Weigh in on a few more mornings, across two weeks or more, and your pace appears here.'), null, D);
     }
     // the trend: an exponentially weighted average, which a single salty morning barely moves
     var tr = [], e = null;
@@ -9055,7 +9202,7 @@
       var fast = -(rate - 1.28 * rf.se), slow = -(rate + 1.28 * rf.se);
       math.push([goal + ' lb by', when(wks), slow > 0 ? '80% range ' + when(toGo / fast) + ' – ' + when(toGo / slow) : 'too uncertain for a range']);
     }
-    return pgCard('On pace', body + pgSay(kid), math);
+    return pgCard('On pace', body + pgSay(kid), math, D);
   }
 
   // ---- keeping muscle: weight and strength, as change from the first week
@@ -9064,7 +9211,7 @@
     var ws = D.days.filter(function (d) { return d.w > 0; });
     var lifts = Object.keys(D.per).filter(function (e) { return D.per[e].length >= 2; });
     if (ws.length < 2 || !lifts.length) {
-      return pgCard('Keeping muscle', pgWait(nW < 2 ? 'Two weeks in, this shows your weight and your strength side by side.' : 'Needs two weeks of weigh-ins and lifts done more than once.'));
+      return pgCard('Keeping muscle', pgWait(nW < 2 ? 'Two weeks in, this shows your weight and your strength side by side.' : 'Needs two weeks of weigh-ins and lifts done more than once.'), null, D);
     }
     var wBy = [], sBy = [];
     D.days.forEach(function (d) { if (d.w > 0) { var i = pgWeek(d.k, D.from); (wBy[i] = wBy[i] || []).push(d.w); } });
@@ -9133,7 +9280,7 @@
     });
     var math = [['Strength ÷ bodyweight', pgPct((1 + sNow) / (1 + wNow) - 1), 'since ' + pgDate(D.from)], ['Lifts up / flat / down', up + ' / ' + flat + ' / ' + dn, lifts.length + ' lifts, ' + nW + ' weeks']]
       .concat(rows.sort(function (a, b) { return parseFloat(b[1].replace('−', '-')) - parseFloat(a[1].replace('−', '-')); }).slice(0, 8));
-    return pgCard('Keeping muscle', svg + pgSay(kid), math);
+    return pgCard('Keeping muscle', svg + pgSay(kid), math, D);
   }
 
   // ---- muscles: the body map, coloured by how each muscle's lifts moved
@@ -9146,7 +9293,7 @@
       (by[m] = by[m] || []).push(p[p.length - 1].v / p[0].v - 1);
     });
     var keys = Object.keys(by);
-    if (!keys.length) return pgCard('Muscles', pgWait('Do a lift twice and its muscles take a colour here.'));
+    if (!keys.length) return pgCard('Muscles', pgWait('Do a lift twice and its muscles take a colour here.'), null, D);
     var nW = Math.max(1, (pgWeek(D.to, D.from) + 1));
     var sets = {};
     D.wos.forEach(function (wo) { wo.x.forEach(function (x) { var m = musOf(x.e); sets[m] = (sets[m] || 0) + x.s.filter(counts).length; }); });
@@ -9176,7 +9323,7 @@
          show; every muscle's figure is a tap away. */
       pgSay(say) +
       '<details class="tr-pg-more"><summary>See all ' + list.length + ' muscles</summary>' +
-      '<div class="tr-pg-chips">' + chips + '</div></details>', math);
+      '<div class="tr-pg-chips">' + chips + '</div></details>', math, D);
   }
 
   // the day before a session, as Nourish saw it
@@ -9356,7 +9503,7 @@
       } else r.v = 'early';
       rows.push(r);
     });
-    if (!rows.length) return pgCard('What helps your lifts', pgWait('Once you have logged food, the morning check-in and a few weeks of workouts, this shows which habits went with stronger workouts and which with weaker ones.'));
+    if (!rows.length) return pgCard('What helps your lifts', pgWait('Once you have logged food, the morning check-in and a few weeks of workouts, this shows which habits went with stronger workouts and which with weaker ones.'), null, D);
     var rank = { help: 0, hurt: 1, same: 2, early: 3 };
     rows.sort(function (x, y) { return rank[x.v] - rank[y.v] || (y.na + y.nb) - (x.na + x.nb); });
     var TAG = { help: ['Helps', 'g'], hurt: ['Went with weaker', 'o'], same: ['No real difference', 'n'], early: ['Too early to tell', 'n'] };
@@ -9382,17 +9529,24 @@
     return pgCard('What helps your lifts',
       '<p class="tr-pg-say" style="margin-top:0">How often your next workout was stronger after each kind of day.</p>' +
       '<div class="tr-hl">' + html + '</div>' + pgSay(kid) +
-      '<p class="tr-pg-wait">From ' + nUsed + ' workout' + (nUsed === 1 ? '' : 's') + '. “Too early” means fewer than ' + PG_MIN + ' workouts on one side, or a gap still small next to how much workouts vary. These went together; they don’t prove cause.</p>', math);
+      '<p class="tr-pg-wait">From ' + nUsed + ' workout' + (nUsed === 1 ? '' : 's') + '. “Too early” means fewer than ' + PG_MIN + ' workouts on one side, or a gap still small next to how much workouts vary. These went together; they don’t prove cause.</p>', math, D);
   }
 
   function progressHTML(span) {
     var D = pgData(span);
-    var head = D.span === 'block'
+    var head = D.span === 'block' || D.span === 'week'
       ? (D.ms ? esc(D.ms.n || 'This block') + ' · since ' + esc(pgDate(D.from)) : 'No block running · the last six weeks')
       : 'Since ' + esc(pgDate(D.from));
-    return '<div class="seg tr-pg-seg" role="group" aria-label="How much to show">' +
-        '<button data-t="rvdeep" data-v="0" aria-pressed="' + !S.rvDeep + '">Simple</button>' +
-        '<button data-t="rvdeep" data-v="1" aria-pressed="' + !!S.rvDeep + '">The math</button></div>' +
+    var pgKeys = ['on-pace', 'keeping-muscle', 'muscles', 'what-helps-your-lifts'];
+    var allOpen = pgKeys.every(function (k) {
+      return S.pgOpen && S.pgOpen[k] !== undefined ? !!S.pgOpen[k] : span !== 'week';
+    });
+    return '<div class="tr-pg-labhead">' +
+        '<div class="seg tr-pg-seg" role="group" aria-label="How much to show">' +
+          '<button data-t="rvdeep" data-v="0" aria-pressed="' + !S.rvDeep + '">Simple</button>' +
+          '<button data-t="rvdeep" data-v="1" aria-pressed="' + !!S.rvDeep + '">The math</button></div>' +
+        '<button type="button" class="ghost tr-pg-expall" data-t="pgexpall" aria-expanded="' + allOpen + '">' + (allOpen ? 'Collapse All PhD Charts' : 'Expand All PhD Charts') + '</button>' +
+      '</div>' +
       '<p class="tr-pg-head">' + head + '</p>' +
       pgReadinessHTML(D) +
       hcBiometricsHubHTML(D) +
@@ -9439,14 +9593,14 @@
   }
 
   function reviewHTML() {
-    if (S.rvSpan === 'block' || S.rvSpan === 'all') return pgSpanSeg() + progressHTML(S.rvSpan);
+    if (S.rvSpan === 'block' || S.rvSpan === 'all') return pgSpanSeg() + muscleMapCard(review()) + progressHTML(S.rvSpan);
     return pgSpanSeg() + reviewWeekHTML();
   }
   function reviewWeekHTML() {
     var r = review();
     var done = S.flash2 ? '<div class="tr-note tr-flash2" role="status">' + esc(S.flash2) + '</div>' : '';
     S.flash2 = '';
-    var html = done + weekCard() + muscleMapCard(r);
+    var html = done + weekCard() + muscleMapCard(r) + progressHTML('week');
     var ckOpen = S.ck || {};
     var ordered = r.checks.slice().sort(function (a, b) {
       var rank = { look: 0, info: 1, good: 2 };
@@ -10344,13 +10498,14 @@
           '</g>';
     }
 
-    var still = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var still = !!(S.exPaused || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches));
     if (still) scene = scene.replace(/repeatCount="indefinite"/g, 'repeatCount="0"');
 
     return '<div class="tr-ex-anim-card" data-rig="' + esc(rig) + '">' +
       '<div class="tr-ex-anim-head">' +
         '<span class="tr-ex-anim-tag">● ' + esc(mname(ex.m)) + ' · ' + esc(EQUIP[ex.q] || 'Lift') + '</span>' +
         '<span class="tr-ex-anim-cue">' + esc(cue) + '</span>' +
+        '<button type="button" class="ghost tr-expause-b" data-t="expause" data-e="' + esc(e) + '" aria-pressed="' + !!S.exPaused + '">' + (S.exPaused ? '\u25b6 Play' : '\u23f8 Pause') + '</button>' +
       '</div>' +
       '<svg class="tr-ex-anim" viewBox="0 0 320 190" role="img" aria-label="Animated form demonstration for ' + esc(ex.n) + '">' +
         scene +
@@ -10380,11 +10535,25 @@
 
   function exAbout(e, ex) {
     var steps = HOWTO[e], m = mediaFor(e, ex), link = linkOf(e), note = noteOf(e), cue = backCue(ex);
-    return (m ? (m.kind === 'video'
-        ? '<video class="tr-media" data-e="' + esc(e) + '" src="' + esc(m.src) + '" muted loop playsinline autoplay aria-label="' + esc(ex.n) + '"></video>'
-        : '<img class="tr-media" data-e="' + esc(e) + '" src="' + esc(m.src) + '" alt="' + esc(ex.n) + '">') +
-        (m.credit ? '<div class="tr-sub">' + esc(m.credit) + '</div>' : '')
-      : exAnimSVG(e, ex)) +
+    var r = records(e), ss = sessionsOf(e);
+    var sumKPI = ss.length ? '<div class="tr-ex-sumkpi">' +
+      '<div><small>Best est. max</small><b>' + (r.e1 > 0 ? fmtN(Math.round(r.e1)) + ' ' + T.pr.u : r.r ? r.r + ' reps' : '\u2014') + '</b></div>' +
+      '<div><small>Heaviest</small><b>' + (r.w > 0 ? fmtN(r.w) + ' ' + T.pr.u : '\u2014') + '</b></div>' +
+      '<div><small>Sessions</small><b>' + ss.length + '</b></div>' +
+    '</div>' : '';
+    var mediaHTML = m ? (
+      '<div class="tr-media-bar">' +
+        '<span class="tr-ex-anim-tag">● ' + esc(mname(ex.m)) + ' · ' + esc(EQUIP[ex.q] || 'Lift') + '</span>' +
+        '<button type="button" class="ghost tr-expause-b" data-t="expause" data-e="' + esc(e) + '" aria-pressed="' + !!S.exPaused + '">' + (S.exPaused ? '\u25b6 Play' : '\u23f8 Pause') + '</button>' +
+      '</div>' +
+      (S.exPaused
+        ? exAnimSVG(e, ex)
+        : (m.kind === 'video'
+            ? '<video class="tr-media" data-e="' + esc(e) + '" src="' + esc(m.src) + '" muted loop playsinline autoplay aria-label="' + esc(ex.n) + '"></video>'
+            : '<img class="tr-media" data-e="' + esc(e) + '" src="' + esc(m.src) + '" alt="' + esc(ex.n) + '">') +
+          (m.credit ? '<div class="tr-sub">' + esc(m.credit) + '</div>' : ''))
+    ) : exAnimSVG(e, ex);
+    return sumKPI + mediaHTML +
       (steps ? '<ol class="tr-howto">' + steps.map(function (st) { return '<li>' + esc(st) + '</li>'; }).join('') + '</ol>'
         : '<div class="tr-note">' + (ex.own ? 'One of your own, so no steps are written for it. ' : '') + 'A how-to link on its note shows here.</div>') +
       (SAFETY[e] ? '<div class="tr-first tr-safe"><b>Safety first.</b> ' + esc(SAFETY[e]) + '</div>' : '') +
@@ -10680,7 +10849,8 @@
               (e1 > 0 ? ' <span class="tr-e1">est. max ' + Math.round(e1) + '</span>' : '') + '</li>';
           }).join('') + '</ol></div>';
       }).join('') +
-      (!LIVE && wo.x.length ? '<div class="tr-acts"><button class="btn-primary" data-t="woredo" data-id="' + esc(wo.id) + '">Redo this workout</button></div>' : '') +
+      (!LIVE && wo.x.length ? '<div class="tr-acts"><button class="btn-primary" data-t="woredo" data-id="' + esc(wo.id) + '">Redo this workout</button>' +
+        '<button class="ghost" data-t="redo" data-id="' + esc(wo.id) + '">Perform Again</button></div>' : '') +
       '<div class="tr-acts"><button class="ghost" data-t="edopen" data-id="' + esc(wo.id) + '">Edit</button>' +
         '<button class="ghost" data-t="wocopy" data-id="' + esc(wo.id) + '">Copy as text</button>' +
         '<button class="ghost" data-t="rtsave" data-id="' + esc(wo.id) + '">Save as routine</button>' +
@@ -12765,11 +12935,50 @@
       S.flash2 = 'Added a set: ' + lib(fsl.e).n + ' on ' + dayName(fc.days[fd]) + ' is ' + fsets + ' sets next time, and one more than it would have been for the rest of the block.';
       draw(); return;
     }
+    if (t !== 'expop' && t !== 'fmpop' && t !== 'popclose' && S.pop) { S.pop = null; drawPop(); }
+    if (t === 'popclose') { S.pop = null; drawPop(); return; }
+    if (t === 'seshex') { S.seshExOpen = !S.seshExOpen; draw(); return; }
+    if (t === 'moretog') { S.moreOpen = !S.moreOpen; draw(); return; }
+    if (t === 'expop' && LIVE) {
+      var pxi = num('data-x');
+      S.pop = S.pop && S.pop.k === 'expop' && S.pop.x === pxi ? null : { k: 'expop', x: pxi };
+      drawPop(); return;
+    }
+    if (t === 'fmpop' && LIVE) {
+      var fxi = num('data-x');
+      S.pop = S.pop && S.pop.k === 'fm' && S.pop.x === fxi ? null : { k: 'fm', x: fxi };
+      drawPop(); return;
+    }
+    if (t === 'fmset' && LIVE) {
+      var fmx = LIVE.x[num('data-x')];
+      if (fmx) {
+        if (v === 'off') { T.pr.fmo = 0; stamp('pr'); }
+        else {
+          if (!T.pr.fmo) { T.pr.fmo = T.pr.lvl === 0 ? 2 : 1; stamp('pr'); }
+          setFm(fmx.e, v);
+        }
+      }
+      S.pop = null;
+      draw(); return;
+    }
     if (t === 'planopen') { S.planOpen = !S.planOpen; draw(); return; }
     if (t === 'peeknext') { S.peekNext = !S.peekNext; if (!S.peekNext) S.planOpen = false; draw(); return; }
     if (t === 'revwk') { S.revWk = num('data-w'); draw(); return; }
-    // the map by sets this week, or by recovery
-    if (t === 'hmmode') { S.hmMode = v === 'rec' ? 'rec' : 'sets'; draw(); return; }
+    // the map by sets this week, recovery, or strength delta
+    if (t === 'hmmode') { S.hmMode = v === 'rec' ? 'rec' : v === 'str' ? 'str' : 'sets'; draw(); return; }
+    if (t === 'pgtog') {
+      S.pgOpen = S.pgOpen || {};
+      var curPgOpen = S.pgOpen[v] !== undefined ? !!S.pgOpen[v] : (S.rvSpan === 'block' || S.rvSpan === 'all');
+      S.pgOpen[v] = !curPgOpen;
+      draw(); return;
+    }
+    if (t === 'pgexpall') {
+      S.pgOpen = S.pgOpen || {};
+      var pgKs = ['on-pace', 'keeping-muscle', 'muscles', 'what-helps-your-lifts'];
+      var allPgNow = pgKs.every(function (k) { return S.pgOpen[k] !== undefined ? !!S.pgOpen[k] : (S.rvSpan === 'block' || S.rvSpan === 'all'); });
+      pgKs.forEach(function (k) { S.pgOpen[k] = !allPgNow; });
+      draw(); return;
+    }
     // a muscle tapped, on the figure or in the list
     if (t === 'musopen' && MUS[v]) { openSheet({ k: 'mus', m: v, title: MUS[v].n, eyebrow: MUS[v].n }); return; }
     // Review's span (This week, This block, All time) and how much of the math it shows
@@ -12918,7 +13127,7 @@
       return;
     }
     if (t === 'empty') { startEmpty(); return; }
-    if (t === 'woredo') {
+    if (t === 'woredo' || t === 'redo') {
       var rw = T.wo[el.getAttribute('data-id')];
       if (!rw || LIVE) return;
       closeSheet();
@@ -13028,11 +13237,16 @@
     // the logger
     if (t === 'tick') { tick(num('data-x'), num('data-s')); return; }
     if (t === 'sty' && LIVE) { openSheet({ k: 'sty', x: num('data-x'), s: num('data-s'), eyebrow: 'Set', title: 'Set' }); return; }
-    if ((t === 'styset' || t === 'styrm') && LIVE && S.sheet && S.sheet.k === 'sty') {
+    if ((t === 'styset' || t === 'styrm' || t === 'styadd' || t === 'styskip') && LIVE && S.sheet && S.sheet.k === 'sty') {
       var sx = LIVE.x[S.sheet.x], ss = sx && sx.s[S.sheet.s];
       if (!ss) { closeSheet(); return; }
       if (t === 'styrm') { if (sx.s.length > 1) sx.s.splice(S.sheet.s, 1); sx.open = 1; delete sx.done; }
-      else {
+      else if (t === 'styadd') {
+        sx.s.splice(S.sheet.s + 1, 0, { w: '', r: '', t: 0, tw: ss.tw, tr: ss.tr, pw: ss.pw, pr: ss.pr });
+        sx.open = 1; delete sx.done;
+      } else if (t === 'styskip') {
+        delete ss.wu; ss.ty = 'm';
+      } else {
         if (v === 'w') ss.wu = 1; else delete ss.wu;
         if (v === 'd' || v === 'f' || v === 'm') ss.ty = v; else delete ss.ty;
       }
@@ -13309,11 +13523,12 @@
       draw(); return;
     }
 
-    if (t === 'extab' && S.sheet && S.sheet.k === 'ex') { S.sheet.tab = v; drawSheet(); return; }
+    if (t === 'expause') { S.exPaused = !S.exPaused; if (S.sheet) drawSheet(); else draw(); return; }
+    if (t === 'extab' && S.sheet && S.sheet.k === 'ex') { S.sheet.tab = v === 'summary' ? 'about' : v; drawSheet(); return; }
 
     // the records
-    if (t === 'exsheet') { openSheet({ k: 'ex', e: el.getAttribute('data-e'), eyebrow: 'Lift', title: lib(el.getAttribute('data-e')).n }); return; }
-    if (t === 'exhow') { openSheet({ k: 'ex', e: el.getAttribute('data-e'), eyebrow: 'Lift', title: lib(el.getAttribute('data-e')).n, tab: 'about' }); return; }
+    if (t === 'exsheet') { S.exPaused = false; openSheet({ k: 'ex', e: el.getAttribute('data-e'), eyebrow: 'Lift', title: lib(el.getAttribute('data-e')).n }); return; }
+    if (t === 'exhow') { S.exPaused = false; openSheet({ k: 'ex', e: el.getAttribute('data-e'), eyebrow: 'Lift', title: lib(el.getAttribute('data-e')).n, tab: 'about' }); return; }
     if (t === 'wosheet') { openSheet({ k: 'wo', id: el.getAttribute('data-id'), eyebrow: 'Workout', title: 'Workout' }); return; }
     if (t === 'woedit') {
       var we = T.wo[el.getAttribute('data-id')];
@@ -14073,7 +14288,7 @@
       e1rm: e1rm, plateMath: plateMath, review: review, merge: merge, payload: payload,
       rirFor: rirFor, nextSlot: nextSlot, prsIn: prsIn, lib: lib, SPLITS: SPLITS, MUS: MUS,
       estDay: estDay, barred: barred, KEEP_SPLITS: KEEP_SPLITS, HABITS: HABITS, weeksOf: weeksOf, nextTm: nextTm, tmOf: tmOf, outgrown: outgrown,
-      weekPlanSets: weekPlanSets, weekLoggedSets: weekLoggedSets, anatMapSVG: anatMapSVG, secMusclesOf: secMusclesOf, exMuscleMap: exMuscleMap, exRigOf: exRigOf, exAnimSVG: exAnimSVG, MEDIA: MEDIA, exAbout: exAbout,
+      weekPlanSets: weekPlanSets, weekLoggedSets: weekLoggedSets, anatMapSVG: anatMapSVG, secMusclesOf: secMusclesOf, exMuscleMap: exMuscleMap, exRigOf: exRigOf, exAnimSVG: exAnimSVG, MEDIA: MEDIA, exAbout: exAbout, mediaThumb: mediaThumb, exThumbHTML: exThumbHTML,
       recommend: recommend, PROGS: PROGS, FOCUS: FOCUS, KITS: KITS, axWeek: axWeek, defaultsPr: defaultsPr,
       MOVES: MOVES, mcScore: mcScore, sgParse: sgParse, sgMatch: sgMatch, sgGuess: sgGuess, sgList: sgList, csvRows: csvRows, ntKey: ntKey,
       LIB_LIST: LIB_LIST, slotDone: slotDone, barFor: barFor, barLabel: barLabel, onBar: onBar, liftE1: liftE1, stackHTML: stackHTML, elapsed: elapsed,

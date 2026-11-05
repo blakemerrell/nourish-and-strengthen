@@ -9824,3 +9824,241 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
 .tr-rqw.off::after { content: none; }
 .tr-rqw::after { content: attr(data-aim); position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
   color: var(--placeholder); font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+
+/* ---- Strengthen UX Overhaul (2026-11-05): Workout preview toggle, 1-line exercise header,
+   #trPop popovers, gold cue bar, RP feedback modal, unified Progress & History ---- */
+#view-train :is(.seg, .unitseg, .src-seg):not(#u#u) > button, #view-train .seg button, .tr-ovl, .tr-efn,
+.tr-ovl::before, .tr-plate.p2_5, .tr-plate.p1_25, .tr-cue, .tr-stk-e, .tr-stk-x, .tr-stk-left,
+.tr-wkl, .tr-wkm, .tr-ghint, .tr-ex-a .tr-ea span, .tr-ax { font-size: 0.8125rem; }
+
+/* Circular lift avatar thumbnail */
+.tr-ex-thumb {
+  display: inline-flex; width: 32px; height: 32px; min-width: 32px; border-radius: 50%;
+  overflow: hidden; align-items: center; justify-content: center; vertical-align: middle;
+  background: var(--paper-soft); border: 1px solid var(--line-soft); flex-shrink: 0;
+}
+.tr-ex-thumb img, .tr-ex-thumb svg { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Pillar 1: Collapsible exercise preview & More ways to train */
+.tr-sesh-extog, .tr-seshex-tog, .tr-more-tog {
+  display: flex; width: 100%; min-height: 44px; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 8px 12px; margin: 8px 0 4px; background: var(--paper-soft);
+  border: 1px solid var(--line-soft); border-radius: 8px; font: inherit; font-size: 0.875rem;
+  font-weight: 600; color: var(--ink); text-align: left; cursor: pointer;
+}
+.tr-sesh-extog:hover, .tr-seshex-tog:hover, .tr-more-tog:hover { border-color: var(--ochre); }
+.tr-snames.is-collapsed, .tr-more-body.is-collapsed, .tr-more.is-collapsed .tr-mrow, .tr-pg-body.is-collapsed { display: none; }
+.tr-more-body { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+
+/* Pillar 2: 1-Line Exercise Header, Focus Metric & Ellipsis Popover, Gold Cue Bar */
+.tr-ex-h {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-bottom: 8px;
+}
+.tr-ex-h > .tr-ex-n { flex: 1 1 auto; min-width: 0; text-align: left; }
+.tr-ex-h > .tr-fmw { margin-left: auto; }
+.tr-ex-h > .tr-ex-done-b, .tr-ex-h > .tr-ex-open-b { float: none; margin: 0; }
+.tr-expop-b {
+  display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;
+  min-width: 44px; min-height: 44px; padding: 0 8px; margin-left: auto; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--paper-soft); color: var(--ink);
+  font: inherit; font-size: 1rem; font-weight: 700; line-height: 1; cursor: pointer;
+}
+.tr-fmw:not(:empty) + .tr-expop-b,
+.tr-fmw:not(:empty) ~ .tr-expop-b,
+.tr-ex-done-b + .tr-expop-b { margin-left: 0; }
+.tr-expop-b:hover { border-color: var(--ochre); }
+.tr-ex-h > .tr-ex-info,
+.tr-ex-h > .tr-ex-safety,
+.tr-ex-h > .tr-cue-bar { flex: 0 0 100%; width: 100%; }
+.tr-ex-h > .tr-ex-infoshow { flex: 0 0 auto; width: auto; }
+.tr-ex-info.is-hidden { display: none; }
+.tr-ex-infotog, .tr-ex-infoshow {
+  font-size: 0.8125rem; color: var(--muted);
+}
+.tr-ex-infoshow {
+  display: inline-flex; align-items: center; min-height: 30px; margin-top: 2px;
+}
+#view-train.tr-reo .tr-ex .tr-ex-h > :not(.tr-ex-n):not(.tr-pair) { display: none; }
+
+/* Inline Rest Timer Line + Centered Pill Between Sets */
+.tr-rdiv { display: flex; align-items: center; gap: 8px; margin: 2px 0; }
+.tr-rdiv-b {
+  background: var(--paper-soft); border: 1px solid var(--line); border-radius: 99px;
+  padding: 2px 10px; min-height: 26px; font: inherit; font-size: 0.8125rem; font-weight: 600;
+  color: var(--ochre-text); cursor: pointer; font-variant-numeric: tabular-nums;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.tr-rdiv-b:hover { border-color: var(--ochre); }
+.tr-rdiv-b.is-ticking {
+  background: color-mix(in oklab, var(--ochre) 18%, var(--card));
+  border-color: var(--ochre); color: var(--ink); font-weight: 700;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--ochre) 20%, transparent);
+}
+.tr-rest-live-box {
+  background: color-mix(in oklab, var(--ochre) 12%, var(--card));
+  border: 1px solid color-mix(in oklab, var(--ochre) 38%, var(--line));
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 10px;
+}
+.tr-rest-live-h {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;
+}
+.tr-rest-live-t {
+  font-size: 0.9375rem; font-weight: 700; color: var(--ochre-text); font-variant-numeric: tabular-nums;
+}
+
+.tr-cue-bar {
+  display: flex; width: 100%; min-height: 44px; align-items: center; gap: 8px;
+  margin: 6px 0 6px; padding: 8px 12px; border-radius: 8px;
+  background: color-mix(in oklab, var(--ochre) 14%, var(--card));
+  border: 1px solid color-mix(in oklab, var(--ochre) 38%, var(--line));
+  font: inherit; font-size: 0.8125rem; color: var(--ink); text-align: left; cursor: pointer;
+}
+.tr-cue-bar:hover { border-color: var(--ochre); }
+.tr-cue-ic { color: var(--ochre-text); font-weight: 700; flex-shrink: 0; }
+.tr-cue-txt { flex: 1 1 auto; min-width: 0; line-height: 1.35; }
+.tr-cue-sep { margin: 0 6px; color: var(--muted); }
+.tr-cue-ed { color: var(--ochre-text); font-weight: 600; flex-shrink: 0; font-size: 0.8125rem; }
+
+/* Dedicated Popover (#trPop) */
+#trPop:empty { display: none; }
+.tr-pop-scrim {
+  position: fixed; inset: 0; z-index: calc(var(--z-modal, 900) + 5);
+  background: rgba(15, 14, 12, 0.48); display: flex; align-items: flex-end; justify-content: center;
+  padding: 16px;
+}
+.tr-pop-card {
+  width: 100%; max-width: 420px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 16px; padding: 14px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+  max-height: 82vh; overflow-y: auto;
+}
+.tr-pop-h, .tr-pop-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding-bottom: 10px; margin-bottom: 8px; border-bottom: 1px solid var(--line-soft);
+}
+.tr-pop-h b, .tr-pop-title { font-size: 0.9375rem; font-weight: 600; color: var(--ink); }
+.tr-pop-x {
+  min-width: 44px; min-height: 44px; border: 0; background: none;
+  font: inherit; font-size: 0.875rem; font-weight: 600; color: var(--ochre-text); cursor: pointer;
+}
+.tr-pop-list { display: flex; flex-direction: column; gap: 4px; }
+.tr-pop-it, .tr-pop-item {
+  display: flex; width: 100%; min-height: 44px; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 8px 12px; border: 1px solid transparent; border-radius: 10px;
+  background: var(--paper-soft); font: inherit; font-size: 0.875rem; font-weight: 600;
+  color: var(--ink); text-align: left; cursor: pointer;
+}
+.tr-pop-it small, .tr-pop-item small { font-size: 0.8125rem; font-weight: 400; color: var(--muted); }
+.tr-pop-it.on, .tr-pop-item.is-on { border-color: var(--ochre); background: color-mix(in oklab, var(--ochre) 14%, var(--card)); }
+.tr-pop-it.danger, .tr-pop-item.tr-pop-danger { color: var(--danger); }
+
+.tr-sty-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tr-sty-act {
+  flex: 1 1 auto; min-height: 44px; padding: 6px 10px; border: 1px solid var(--line);
+  border-radius: 6px; background: var(--paper-soft); font: inherit; font-size: 0.8125rem;
+  font-weight: 600; color: var(--ink); cursor: pointer;
+}
+
+/* RP Bottom-Sheet Modal styling for Post-Muscle Feedback */
+.tr-fbc-modal {
+  position: relative; z-index: var(--z-pop, 45);
+  background: var(--bg-card, var(--card));
+  border: 2px solid var(--ochre); border-radius: 18px;
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.18), 0 12px 32px rgba(0, 0, 0, 0.22);
+  padding: 16px; margin: 10px 0;
+}
+.tr-fbc-modal::before {
+  content: ""; display: block; width: 38px; height: 4px; border-radius: 99px;
+  background: var(--line-firm); margin: 0 auto 10px;
+}
+.tr-fbc-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.tr-fbc-later {
+  min-height: 44px; min-width: 44px; padding: 0 10px; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--paper-soft); font: inherit; font-size: 0.8125rem;
+  font-weight: 600; color: var(--muted); cursor: pointer; flex-shrink: 0;
+}
+
+/* Pillar 3: Unified Progress & PhD Lab Cards */
+.tr-hm-mode { display: flex; flex-wrap: wrap; gap: 4px; }
+.tr-hm-mode button { min-height: 44px; font-size: 0.8125rem; padding: 4px 10px; }
+.tr-pg-labhead {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 8px; margin: 14px 0 8px;
+}
+.tr-pg-labt { font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.tr-pg-expall {
+  min-height: 44px; padding: 4px 12px; border: 1px solid var(--line); border-radius: 99px;
+  background: var(--paper-soft); font: inherit; font-size: 0.8125rem; font-weight: 600;
+  color: var(--ochre-text); cursor: pointer;
+}
+.tr-pg-hbar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 6px; margin-bottom: 4px;
+}
+.tr-pg-hacts, .tr-pg-hright { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tr-pg-l0 { margin: 4px 0 0; font-size: 0.875rem; color: var(--ink); line-height: 1.4; }
+.tr-pg-l0badge {
+  font-style: normal; font-size: 0.8125rem; font-weight: 700; padding: 2px 8px;
+  border-radius: 99px; background: color-mix(in oklab, var(--ochre) 16%, transparent);
+  color: var(--ochre-text); white-space: nowrap;
+}
+.tr-pg-l0badge.good {
+  background: color-mix(in oklab, var(--green) 16%, transparent); color: var(--green);
+}
+.tr-pg-l0badge.warn {
+  background: color-mix(in oklab, var(--ochre) 20%, transparent); color: var(--ochre-text);
+}
+.tr-pg-l0badge.muted {
+  background: color-mix(in oklab, var(--muted) 14%, transparent); color: var(--muted);
+}
+.tr-pg-tog {
+  min-height: 44px; padding: 0 10px; border: 1px solid var(--line-soft); border-radius: 8px;
+  background: var(--paper-soft); font: inherit; font-size: 0.8125rem; font-weight: 600;
+  color: var(--muted); cursor: pointer;
+}
+
+/* Pillar 4: History 2-Column Session Table, Lift Cards & Lift Sheet Controls */
+.tr-h-table { margin-top: 8px; border-top: 1px solid var(--line-soft); padding-top: 6px; }
+.tr-h-th, .tr-h-hdr {
+  display: flex; justify-content: space-between; font-size: 0.8125rem; font-weight: 700;
+  color: var(--muted); padding-bottom: 4px; margin-top: 6px; border-top: 1px solid var(--line-soft); padding-top: 6px;
+}
+.tr-h-x > br { display: none; }
+.tr-h-tr, .tr-h-xrow {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  padding: 2px 0; font-size: 0.875rem; width: 100%;
+}
+.tr-h-exn, .tr-h-xl { color: var(--ink); font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tr-h-best, .tr-h-xr { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; }
+.tr-h-foot {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin-top: 8px; padding-top: 6px; border-top: 1px dashed var(--line-soft);
+  font-size: 0.8125rem; font-weight: 600; color: var(--ochre-text);
+}
+.tr-lrow { grid-template-columns: auto 1fr auto; align-items: center; }
+.tr-lrow > .tr-ex-thumb { grid-column: 1; grid-row: 1 / span 2; margin-right: 0; }
+.tr-lrow > .tr-l-n { grid-column: 2; grid-row: 1; }
+.tr-lrow > .tr-l-m { grid-column: 2; grid-row: 2; }
+.tr-lrow > .tr-l-b { grid-column: 3; grid-row: 1 / span 2; }
+.tr-l-row { display: flex; align-items: center; gap: 10px; }
+.tr-l-main { flex: 1 1 auto; min-width: 0; }
+.tr-l-last { display: block; font-size: 0.8125rem; color: var(--muted-2); font-weight: 500; margin-top: 2px; }
+
+.tr-media-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 8px 6px; }
+.tr-expause-b {
+  min-height: 44px; padding: 4px 12px; border: 1px solid var(--line); border-radius: 99px;
+  background: var(--card); font: inherit; font-size: 0.8125rem; font-weight: 600;
+  color: var(--ink); cursor: pointer;
+}
+.tr-media-paused svg *, .tr-media-paused img { animation-play-state: paused !important; }
+.tr-ex-sumkpi {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+  margin: 0 0 12px; padding: 10px; border-radius: 10px; background: var(--paper-soft);
+  border: 1px solid var(--line-soft);
+}
+.tr-ex-sumkpi > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tr-ex-sumkpi small, .tr-ex-sumkpi span { font-size: 0.8125rem; color: var(--muted); }
+.tr-ex-sumkpi b { font-size: 0.9375rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.tr-wo-acts { margin: 10px 0; }
+.tr-wo-redo { width: 100%; min-height: 44px; }
+

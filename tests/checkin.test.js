@@ -332,5 +332,54 @@ module.exports = {
     t.ok('a drink whose label is in mL counts as water, whatever its flavour is called; olive oil does not',
       /\+7 oz\s*Gorilla Mind/.test(vLiq) && !/Olive oil/.test(vLiq) && /7 \/ 100 oz/.test(vLiq), vLiq);
     await v.context().close();
+
+    /* ---- Health Connect granted state in morning check-in ----
+     * When Health Connect is granted, manual sleep steppers, yesterday step
+     * inputs, and caffeine are omitted in favor of the clean synced badge. */
+    const hc = await t.fresh({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    await hc.clock.setFixedTime(new Date(2026, 9, 26, 7, 30, 0));
+    await hc.evaluate(SETUP);
+    await hc.reload();
+    await hc.waitForTimeout(700);
+    await hc.evaluate(() => {
+      window.NourishAndroid = {
+        getHealthStatus: function () {
+          return JSON.stringify({ available: true, status: 'granted', lastSync: 1760000000000 });
+        },
+        syncHealthNow: function () {},
+      };
+      const am = JSON.parse(localStorage.getItem('bsc.macroAm') || '{}');
+      am['2026-10-26'] = { sl: 7.5, sy: 9420 };
+      localStorage.setItem('bsc.macroAm', JSON.stringify(am));
+    });
+    await hc.click('.td-weigh');
+    await hc.waitForTimeout(300);
+    const hcBadge = await hc.evaluate(() => !!document.querySelector('#weighSheet .am-health-synced'));
+    t.ok('Health Connect granted shows clean synced banner in morning sheet', hcBadge);
+    const noManualSteps = await hc.evaluate(() => !document.querySelector('#weighSheet #amSteps') && !document.querySelector('#weighSheet [data-am="sl:1"]'));
+    t.ok('and manual sleep stepper and step input are omitted', noManualSteps);
+    const noCaf = await hc.evaluate(() => !document.querySelector('#weighSheet .am-caf'));
+    t.ok('and caffeine is omitted from morning check-in', noCaf);
+    await hc.context().close();
+
+    /* ---- Weekly body measurements on Today screen ---- */
+    const td = await t.fresh({ viewport: { width: 390, height: 844 } });
+    await td.clock.setFixedTime(new Date(2026, 9, 26, 7, 30, 0));
+    await td.evaluate(SETUP);
+    await td.reload();
+    await td.waitForTimeout(700);
+    const hasBmBar = await td.evaluate(() => !!document.querySelector('#todayRoot .td-bm-bar'));
+    t.ok('Today screen displays weekly body measurements bar', hasBmBar);
+    await td.click('#todayRoot [data-td="bmopen"]');
+    await td.waitForTimeout(200);
+    const isOpen = await td.evaluate(() => !!document.querySelector('#todayRoot .td-bm-open #tdBm_wa'));
+    t.ok('tapping Measure opens body measurement inputs on Today', isOpen);
+    await td.fill('#tdBm_wa', '34.5');
+    await td.fill('#tdBm_ch', '41.5');
+    await td.click('#todayRoot [data-td="bmsave"]');
+    await td.waitForTimeout(200);
+    const savedBm = await td.evaluate(() => (JSON.parse(localStorage.getItem('bsc.macroAm') || '{}')['2026-10-26'] || {}).bm);
+    t.ok('saving body measurements on Today writes to macroAm', savedBm && savedBm.wa === 34.5 && savedBm.ch === 41.5, JSON.stringify(savedBm));
+    await td.context().close();
   }
 };

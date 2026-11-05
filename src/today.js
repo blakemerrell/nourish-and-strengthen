@@ -536,6 +536,61 @@
   var DAYNAME = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   var MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+  function measurementsCard(d) {
+    if (!window.Hive || !window.Hive.mBodyDays) return '';
+    var tk = dayKey(d.date);
+    var bDays = window.Hive.mBodyDays();
+    var last = bDays.length ? bDays[bDays.length - 1] : null;
+    var lastKey = last ? last.k : null;
+    var age = lastKey ? Math.round((new Date(tk + 'T12:00:00') - new Date(lastKey + 'T12:00:00')) / 864e5) : -1;
+    var due = !lastKey || age >= 6;
+    var doneToday = lastKey === tk;
+    var open = readFlag('bsc.tdBmOpen');
+    var lastBm = last ? last.bm : {};
+    var say = doneToday ? 'Measured this morning ✓'
+      : lastKey ? 'Last recorded ' + (age === 1 ? 'yesterday' : age + ' days ago') + (lastBm.wa ? ' · waist ' + lastBm.wa + '″' : '')
+      : 'Once a week, same morning, before eating';
+
+    if (!open) {
+      return '<section class="td-bm-bar" aria-label="Body measurements">' +
+        '<div class="td-bm-head">' +
+          '<span class="td-bm-ico" aria-hidden="true">📏</span>' +
+          '<div class="td-bm-txt"><b>' + esc(say) + '</b><small>Weekly body measurements' + (due && !doneToday ? ' · due' : '') + '</small></div>' +
+          '<button type="button" class="am-tog td-bm-btn" data-td="bmopen">' + (doneToday ? 'Edit' : 'Measure') + '</button>' +
+        '</div>' +
+      '</section>';
+    }
+
+    var fields = [
+      ['wa', 'Waist at the navel'],
+      ['ch', 'Chest'],
+      ['ar', 'Arm flexed'],
+      ['th', 'Thigh']
+    ];
+    var curBm = (doneToday && lastBm) ? lastBm : {};
+    var inputs = fields.map(function (f) {
+      var v = curBm[f[0]] || '';
+      var prev = (last && lastKey !== tk && lastBm[f[0]]) ? lastBm[f[0]] : '';
+      return '<label class="am-bm"><span class="am-bm-l">' + f[1] + '</span>' +
+        '<input type="text" class="am-in am-bm-in" id="tdBm_' + f[0] + '" inputmode="decimal" maxlength="5" autocomplete="off" value="' +
+        v + '" placeholder="' + (prev || 'in') + '"></label>';
+    }).join('');
+
+    return '<section class="td-bm-bar td-bm-open" aria-label="Weekly body measurements">' +
+      '<div class="td-bm-head">' +
+        '<span class="td-bm-ico" aria-hidden="true">📏</span>' +
+        '<div class="td-bm-txt"><b>Weekly body measurements' + (due && !doneToday ? ' · due' : '') + '</b>' +
+        '<small>' + esc(say) + '</small></div>' +
+        '<button type="button" class="sheet-x td-bm-close" data-td="bmclose" aria-label="Close">&times;</button>' +
+      '</div>' +
+      '<div class="am-bm-grid">' + inputs + '</div>' +
+      '<div class="am-bm-act">' +
+        '<span class="am-bm-err" id="tdBmErr" role="alert"></span>' +
+        '<button type="button" class="td-bmsave-btn" data-td="bmsave">' + (doneToday ? 'Update ✓' : 'Save measurements') + '</button>' +
+      '</div>' +
+    '</section>';
+  }
+
   function render() {
     var root = document.getElementById('todayRoot');
     if (!root || !window.Hive || !window.Hive.today) return;
@@ -566,7 +621,7 @@
       if (h) { html += h; first = false; }
     });
     d.shop.wmMark = d.wmMark || '';
-    html += (hp.d ? shopCard(d.shop) : '') + (hp.d || hp.w ? weekCard(d) : '') + (doneT && hp.d ? cookedCard(d.tonight) : '') +
+    html += (hp.d ? shopCard(d.shop) : '') + (hp.d || hp.w ? weekCard(d) : '') + (hp.e ? measurementsCard(d) : '') + (doneT && hp.d ? cookedCard(d.tonight) : '') +
       (doneW && hp.w ? workoutCard(d.workout, false) : '');
     var topBars = (hp.e || hp.w) ? morningCard(hp.e ? d : { date: d.date, weigh: null, vitals: d.vitals }) : '';
     root.innerHTML = '<div class="td-top"><div class="step-k">' + DAYNAME[d.date.getDay()] + ' · ' + MONTH[d.date.getMonth()] + ' ' + d.date.getDate() + '</div>' +
@@ -596,6 +651,18 @@
     else if (a === 'cooked') H.cooked(id, b.getAttribute('data-day'), b.getAttribute('data-tk'));
     else if (a === 'rate') H.rate(id, b.getAttribute('data-day'));
     else if (a === 'weigh') H.weighOpen();
+    else if (a === 'bmopen') { writeFlag('bsc.tdBmOpen', true); render(); return; }
+    else if (a === 'bmclose') { writeFlag('bsc.tdBmOpen', false); render(); return; }
+    else if (a === 'bmsave') {
+      if (H.saveMeasurements) {
+        var err = H.saveMeasurements(dayKey(new Date()));
+        var errEl = document.getElementById('tdBmErr');
+        if (err && errEl) { errEl.textContent = err; return; }
+        writeFlag('bsc.tdBmOpen', false);
+        render();
+      }
+      return;
+    }
     else if (a === 'act') { if (window.Train && window.Train.logActivity) window.Train.logActivity(b.getAttribute('data-k')); render(); }
     else if (a === 'actnew') { H.go('train'); if (window.Train && window.Train.newActivity) window.Train.newActivity(); }
     else if (a === 'actedit') { H.go('train'); if (window.Train && window.Train.editActivity) window.Train.editActivity(id); }

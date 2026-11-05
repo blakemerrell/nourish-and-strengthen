@@ -7440,6 +7440,11 @@
       el.addEventListener('click', wgClick);
       el.addEventListener('keydown', function (e) {
         if (e.target.id === 'wFixIn' && e.key === 'Enter') { var b = el.querySelector('[data-wsave]'); if (b) b.click(); }
+        if (e.target.id === 'mWeight' && e.key === 'Enter') {
+          e.preventDefault();
+          var wb = el.querySelector('#macroWeigh [data-mwsave]');
+          if (wb) wb.click();
+        }
       });
       document.body.appendChild(el);
       return el;
@@ -7589,13 +7594,13 @@
       mWeightSay(got.big ? 'big' : !!got.bad, got.odd ? got : null);
       var wb = document.querySelector('#macroWeigh [data-mwsave]');
       if (wb) { wb.classList.remove('saved'); wb.textContent = 'Save'; }
-      if (got.bad || got.odd) return;            // nothing is written from nonsense, or unasked
-      mwTimer = setTimeout(function () {
-        mWriteWeight(key, got.lb);
-        var wb2 = document.querySelector('#macroWeigh [data-mwsave]');
-        if (wb2) { wb2.classList.add('saved'); wb2.textContent = 'Saved ✓'; }
-        if (WGAPI.week) WGAPI.week();
-      }, 600);
+      if (got.bad || got.odd) return;
+      if (!WGAPI.isOpen || !WGAPI.isOpen()) {
+        mwTimer = setTimeout(function () {
+          mWriteWeight(key, got.lb);
+          if (WGAPI.week) WGAPI.week();
+        }, 600);
+      }
     });
     $('macroWeigh').addEventListener('change', function (e) {
       if (e.target.id !== 'mWeight') return;
@@ -9693,6 +9698,28 @@
     meal: function (sk) { S.macroDate = null; tdSheetOpen({ k: 'meal', sk: sk }); },
     // the weigh-in sheet on Today (Hive.weigh is the write, used by Strengthen)
     weighOpen: function () { if (WGAPI.open) WGAPI.open(); },
+    mBodyDays: function () { return mBodyDays(); },
+    saveMeasurements: function (k) {
+      var waIn = $('tdBm_wa'), chIn = $('tdBm_ch'), arIn = $('tdBm_ar'), thIn = $('tdBm_th');
+      var raw = {
+        wa: waIn ? waIn.value.trim() : '',
+        ch: chIn ? chIn.value.trim() : '',
+        ar: arIn ? arIn.value.trim() : '',
+        th: thIn ? thIn.value.trim() : ''
+      };
+      var bm = {};
+      var fNames = { wa: 'Waist', ch: 'Chest', ar: 'Arm', th: 'Thigh' };
+      for (var f in raw) {
+        var s = raw[f].replace(',', '.');
+        if (!s) continue;
+        var n = Number(s);
+        if (!isFinite(n) || n < 10 || n > 80) return fNames[f] + ': enter inches between 10 and 80.';
+        bm[f] = Math.round(n * 4) / 4;
+      }
+      if (!Object.keys(bm).length) return 'Enter at least one measurement.';
+      mAmWrite(k, 'bm', bm);
+      return '';
+    },
     /* A meal ticked on Today: everything on it eaten, as its boxes on the
        Nourish day would be. `tk` is the day the card was drawn for: past
        midnight on a card nobody had redrawn, the tick went to a day with no

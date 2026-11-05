@@ -348,6 +348,15 @@ module.exports = nourish({
       }, extraFav), wizChips1 + ' -> ' + wizChips2);
     await wiz.evaluate((id) => document.querySelector('[data-fppick="' + id + '"]').click(), extraFav);
     await wiz.waitForTimeout(200);
+    await wiz.click('[data-fpstaples="1"]');
+    await wiz.waitForTimeout(250);
+    const staplesRes = await wiz.evaluate(() => ({
+      btnGone: !document.querySelector('[data-fpstaples="1"]'),
+      onCount: document.querySelectorAll('.fp-chip.on').length,
+      doneText: document.querySelector('[data-mtw="done"]').textContent
+    }));
+    t.ok('Auto-select common pantry staples stars 24 core staple foods in one tap and updates the Done count',
+      staplesRes.btnGone && staplesRes.onCount === 24 && /24 chosen/.test(staplesRes.doneText), JSON.stringify(staplesRes));
 
     /* Back to the plan step, because Save lives there and the next assertion
        presses it. */

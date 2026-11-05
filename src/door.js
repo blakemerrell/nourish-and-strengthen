@@ -70,14 +70,14 @@
   var HELP_JOIN = { e: 'Your own goal and your own day. Nobody else sees it.', w: 'Your own plan, at home or a gym.' };
   /* Plan my week's own choices, so the two can never disagree. */
   var PPL = [[2, '2'], [3, '3'], [4, '4'], [6, '6'], [8, '8+']];
-  var SRC = [
-    ['sh', 'The bishops’ storehouse', 'Its order list, ready to copy for your bishop'],
-    ['fb', 'A food bank or pantry', 'What they give, and a store for the rest'],
-    ['big', 'A big monthly shop', 'Stock up once a month, and a quick shop for fresh'],
-    ['own', 'I keep my own', 'What isn’t on the shelf gets bought']
-  ];
   /* Strengthen's own: its kits, its days, its minutes. */
-  var KIT = [['bw', 'Bodyweight only'], ['db', 'Dumbbells at home'], ['bar', 'Barbell & dumbbells'], ['gym', 'Full gym']];
+  var KIT = [
+    ['bw', 'Bodyweight only'],
+    ['db', 'Dumbbells at home'],
+    ['bar', 'Barbell & dumbbells'],
+    ['cage', 'Home gym (cage & cables)'],
+    ['gym', 'Full gym']
+  ];
   var DPW = [[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']];
   var MIN = [[30, '30'], [40, '40'], [45, '45'], [60, '60'], [0, 'No limit']];
   /* Nourish's four, in its own words. */
@@ -146,8 +146,8 @@
     }
     if (s === 'kitchen') {
       return head('Your kitchen', 'Your kitchen') +
-        q('How many are eating?', chips('ppl', PPL, A.ppl, 'How many are eating?')) +
-        q('Where do your staples come from?', radios('src', SRC, A.src, 'Where do your staples come from?'), 'The foods that keep: canned, dry and frozen.') +
+        q('How many are eating?', chips('ppl', PPL, A.ppl, 'How many are eating?'),
+          'Recipes and shopping lists start with common pantry staples stocked, and anything missing goes on your list.') +
         '<div class="dr-foot">' + next(last ? 'Show me today' : 'Next') + back +
           '<p class="dr-note">Shared with everyone in your kitchen. Change it any time under Share › Your kitchen.</p></div>';
     }
@@ -176,7 +176,7 @@
 
   function open() {
     A = { help: joining ? { d: true, e: true, w: false } : { d: true, e: true, w: true },
-      ppl: 4, src: 'sh', kit: null, dpw: null, min: null, goal: 'cut1' };
+      ppl: 4, kit: null, dpw: null, min: null, goal: 'cut1' };
     at = 0;
     var r = document.createElement('div');
     r.id = 'doorRoot';
@@ -212,7 +212,7 @@
   function finish(numbers) {
     var H = window.Hive || {};
     setHelp(A.help);
-    if (steps().indexOf('kitchen') >= 0 && H.kitchen) H.kitchen(A.ppl, A.src);
+    if (steps().indexOf('kitchen') >= 0 && H.kitchen) H.kitchen(A.ppl);
     if (A.help.w) {
       var w = {};
       if (A.kit) w.kit = A.kit;
@@ -221,7 +221,7 @@
       try { localStorage.setItem('sh.doorWork', JSON.stringify(w)); } catch (e) { /* private */ }
     }
     close('done');
-    if (A.help.e && H.goal) H.goal(A.goal);
+    if (A.help.e && H.goal) H.goal(A.goal, A.help.w ? A.dpw : null);
     if (H.go) H.go('today');
     if (numbers && H.numbersSetup) H.numbersSetup();
   }
@@ -269,7 +269,7 @@
     if (k === 'later') { finish(false); return; }
     if (k === 'back') { at = Math.max(0, at - 1); draw(true); return; }
     if (k === 'help') A.help[v] = !A.help[v];
-    else if (k === 'src' || k === 'kit' || k === 'goal') A[k] = A[k] === v && k === 'kit' ? null : v;
+    else if (k === 'kit' || k === 'goal') A[k] = A[k] === v && k === 'kit' ? null : v;
     else A[k] = A[k] === Number(v) && k !== 'ppl' ? null : Number(v);
     draw(false);
     var again = root() && root().querySelector('[data-dr="' + k + '"][data-v="' + v + '"]');

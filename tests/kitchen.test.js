@@ -76,7 +76,7 @@ module.exports = {
       const a = document.querySelector('#view-list .wm-btn');
       return !!a && a.getAttribute('href').indexOf(window.PANTRY[k].wm ? window.PANTRY[k].wm[0] : 'none') >= 0;
     }, pick.s);
-    t.ok('a storehouse line set to Buy moves to To buy', g0.store === 'Storehouse order' && g2 === 'To buy',
+    t.ok('a staples line set to Buy moves to To buy', g0.store === 'Pantry staples' && g2 === 'To buy',
       JSON.stringify({ was: g0.store, now: g2, inCart }));
 
     /* One tap is one change: the two writes behind Have are saved and drawn

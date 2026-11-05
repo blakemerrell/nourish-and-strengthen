@@ -52,6 +52,19 @@
      screen that hides your own answers is worse than a long one. */
   var MFP_SHOWN = 8;                   // chips before a shelf offers the rest
 
+  var STAPLES = {
+    'f:egg': 1, 'f:egg_white': 1, 'f:chicken_breast': 1, 'f:chicken_canned': 1,
+    'f:cooked_beef': 1, 'f:tuna': 1, 'f:black_beans': 1, 'f:pinto_beans': 1,
+    'f:milk': 1, 'f:cottage_cheese': 1, 'f:cheddar': 1, 'f:vanilla_yogurt': 1,
+    'f:cereal_o': 1, 'f:potato': 1, 'f:carrot': 1, 'f:green_beans': 1,
+    'f:corn': 1, 'f:broccoli': 1, 'f:apple': 1, 'f:banana': 1,
+    'f:orange': 1, 'f:peaches_canned': 1, 'f:applesauce': 1, 'f:peanut_butter': 1
+  };
+
+  function mFavStapleList() {
+    return LIVE.MFOODS.filter(function (r) { return r.food && STAPLES[r.id]; });
+  }
+
   function mFavPickShelves() {
     var by = {};
     LIVE.MFOODS.forEach(function (r) {
@@ -192,9 +205,13 @@
        is a tap that did nothing — but the app changing what it drafts is not
        something to learn by noticing. */
     var shopping = mExtOk();
-    return { blocks: (shopping
+    var unstarred = mFavStapleList().filter(function (r) { return !mIsFav(r); }).length;
+    var quick = unstarred > 0
+      ? '<div class="sync-row fp-quick"><button type="button" class="ghost fp-staples" data-fpstaples="1">Auto-select common pantry staples</button></div>'
+      : '';
+    return { blocks: '<div id="fpBody">' + quick + (shopping
         ? '<div class="fp-note">You\u2019ve picked food that isn\u2019t one of your ' +
-          'staples, so Fill may now shop outside them.</div>' : '') + blocks,
+          'staples, so Fill may now shop outside them.</div>' : '') + blocks + '</div>',
       total: total };
   }
 
@@ -234,5 +251,5 @@
       '</div></div>';
   }
 
-  return { mFavDoneLabel: mFavDoneLabel, mFavChipSync: mFavChipSync, mFavMoreSync: mFavMoreSync, mFavPickBodyHTML: mFavPickBodyHTML, mFavPickHTML: mFavPickHTML };
+  return { mFavDoneLabel: mFavDoneLabel, mFavChipSync: mFavChipSync, mFavMoreSync: mFavMoreSync, mFavPickBodyHTML: mFavPickBodyHTML, mFavPickHTML: mFavPickHTML, mFavStapleList: mFavStapleList };
 };

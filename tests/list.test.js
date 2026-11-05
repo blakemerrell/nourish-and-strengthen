@@ -163,8 +163,8 @@ module.exports = {
       [...document.querySelectorAll('.list-group-title')].map((e) => e.textContent));
     /* What you must buy comes first, since that is the trip; the storehouse
        pick-up and what is already in the kitchen follow it, apart. */
-    t.ok('what you must buy and what the storehouse gives are separate lists, buying first',
-      groups.length >= 2 && /^to buy$/i.test(groups[0]) && groups.slice(1).some((g) => /storehouse/i.test(g)),
+    t.ok('what you must buy and what comes from pantry staples are separate lists, buying first',
+      groups.length >= 2 && /^to buy$/i.test(groups[0]) && groups.slice(1).some((g) => /pantry staples|storehouse/i.test(g)),
       groups.join(' | '));
 
     // ---- Copy the order: a name, then its amount, with something between -----

@@ -86,8 +86,8 @@ module.exports = {
     t.ok('it says it is cooked double, and what the next nights are, leftovers included',
       /cooked ×2/.test(tn.facts) && tn.next === H.next.map((n) => n.day + ': ' + n.name).join(' · ') && /Friday: leftovers/.test(tn.next), JSON.stringify(tn));
     const shopTxt = await p.evaluate(() => (document.querySelector('[data-card="shop"]') || {}).textContent || '');
-    t.ok('the list, in a line: what is left to buy and what comes from the storehouse',
-      H.shop.items > 0 && (H.shop.src ? shopTxt.indexOf(H.shop.src + ' from the storehouse') >= 0 : true), shopTxt);
+    t.ok('the list, in a line: what is left to buy and what comes from the staples list',
+      H.shop.items > 0 && (H.shop.src ? shopTxt.indexOf(H.shop.src + ' from the staples list') >= 0 : true), shopTxt);
     t.ok('the week strip shows the dinners planned', await p.evaluate(() => document.querySelectorAll('[data-card="week"] .td-now, [data-card="week"] .td-plan').length >= 3));
     // Cook it opens the recipe
     await p.click('[data-card="tonight"] [data-td="open"]');

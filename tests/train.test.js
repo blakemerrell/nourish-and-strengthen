@@ -1223,7 +1223,7 @@ module.exports = {
       const homey = ['pushup-flat', 'inc-pushup', 'pushup', 'archer', 'pullup-neg', 'inv-row', 'bw-squat', 'split-squat', 'bw-bss',
         'sl-rdl', 'glute-bridge', 'sl-bridge', 'pike-pushup', 'diamond', 'calf-bw'];
       const bad = [], hurt = [];
-      ['grow', 'focus', 'lean', 'keep', 'start'].forEach((id) => ['gym', 'bar'].forEach((kit) => _.PROGS[id].dpw.forEach((dpw) => {
+      ['grow', 'focus', 'lean', 'keep', 'start'].forEach((id) => ['gym', 'cage', 'bar'].forEach((kit) => _.PROGS[id].dpw.forEach((dpw) => {
         _.build({ prog: id, fx: 'chest', dpw, kit, lvl: 1 }).days.forEach((d) => d.s.forEach((s) => {
           if (homey.indexOf(s.e) >= 0) bad.push(id + ' ' + kit + dpw + ' ' + s.e);
         }));
@@ -1377,6 +1377,44 @@ module.exports = {
     // ---- the quiz again, from Settings --------------------------------------------
     p = await t.fresh();
     await p.click('.tab[data-view="train"]');
+    // unified profile carry-over from Nourish (age, day activity, workout days, goal) + Home gym (cage & cables)
+    await p.evaluate(() => {
+      localStorage.setItem('bsc.macroProfile', JSON.stringify({ sex: 'f', age: 40, ft: 5, inch: 6, lb: 150, act: 1.375, goal: 'cut1', workouts: 4 }));
+      localStorage.setItem('bsc.train', JSON.stringify({ pr: { qz: 0 }, act: '', ms: {}, cx: {}, ax: {}, wo: {} }));
+      window.Train._.reload();
+      window.Train._.draw();
+    });
+    r = await p.evaluate(() => ({
+      eye: document.querySelector('.tr-qz-h .tr-eyebrow').textContent,
+      prof: (document.querySelector('.tr-qz-prof') || {}).textContent || '',
+      goalOn: (document.querySelector('[data-t="qz"][data-f="goal"][aria-pressed="true"]') || {}).dataset
+    }));
+    t.ok('when Nourish profile is filled in, Strengthen quiz starts at 1 of 6 (age skipped), shows profile summary, and pre-selects goal',
+      r.eye === 'Find your program · 1 of 6' && /40 yrs/.test(r.prof) && /On my feet/.test(r.prof) && /4 days\/wk/.test(r.prof) &&
+      r.goalOn && r.goalOn.v === 'lean', JSON.stringify(r));
+    await p.click('[data-t="qz"][data-f="goal"][data-v="lean"]');
+    await p.click('[data-t="qz"][data-f="lvl"][data-v="1"]');
+    await p.click('[data-t="qzn"]');
+    await p.click('[data-t="qz"][data-f="kit"][data-v="cage"]');
+    await p.click('[data-t="qzn"]');
+    r = await p.evaluate(() => ({
+      title: document.querySelector('.tr-quiz .tr-title').textContent,
+      hasDayQ: !!document.querySelector('[data-t="qz"][data-f="day"]'),
+      btn: document.querySelector('[data-t="qzn"]').textContent
+    }));
+    t.ok('on step 6 of 6 (life), duplicate daily activity question is skipped and button finishes the quiz',
+      r.title === 'Outside the gym' && !r.hasDayQ && r.btn === 'See my programs', JSON.stringify(r));
+    await p.click('[data-t="qzn"]');
+    r = await p.evaluate(() => window.Train._.state().T.pr);
+    t.ok('finishing saves age=40, day=feet, dpw=4, kit=cage without asking twice',
+      r.age === '40' && r.day === 'feet' && r.dpw === 4 && r.kit === 'cage', JSON.stringify(r));
+    await p.evaluate(() => {
+      localStorage.removeItem('bsc.macroProfile');
+      localStorage.setItem('bsc.train', JSON.stringify({ pr: { qz: 0 }, act: '', ms: {}, cx: {}, ax: {}, wo: {} }));
+      window.Train._.reload();
+      window.Train._.draw();
+    });
+
     await answer(p, { goal: 'lean', lvl: 1, dpw: 3, min: 45, kit: 'db', jt: 'K', day: 'desk', hab: ['walk', 'hike'], age: '40' });
     r = await p.evaluate(() => ({ pr: window.Train._.state().T.pr,
       first: document.querySelector('.tr-prog [data-t="prog"]').dataset.v,

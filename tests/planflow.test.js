@@ -36,7 +36,7 @@ module.exports = {
       s0.steps === 0 && s0.k === 'Plan · the week' && s0.tabs.join() === 'today,browse,plan,macros,train', JSON.stringify(s0));
     t.ok('each dinner is one button that opens its day; the ×N, × and rating are off the rows',
       s0.rows.length === 4 && s0.rows.every((r) => r.open && r.day) && s0.ctl === 0, JSON.stringify(s0.rows));
-    t.ok('the foot is the list: what to buy and what comes from the storehouse', /^The list/.test(s0.next) && /from the storehouse/.test(s0.next), s0.next);
+    t.ok('the foot is the list: what to buy and what comes from the staples list', /^The list/.test(s0.next) && /from the staples list/.test(s0.next), s0.next);
     t.ok('and, not set up yet, it asks where your staples come from', s0.banner === 'Where do your staples come from?', s0.banner);
 
     await p.click('.setup-card [data-stepgo="where"]');
@@ -75,7 +75,7 @@ module.exports = {
     await p.click('#syncBtn');
     await p.waitForTimeout(250);
     const rows = await p.evaluate(() => [...document.querySelectorAll('button.kit-row')].map((b) => b.dataset.sync + ':' + b.querySelector('small').textContent));
-    t.ok('the sheet has the two settings, each saying what it is set to', rows.length === 2 && /^where:The bishops’ storehouse · only what I have$/.test(rows[0]) && /^pantry:\d+ on hand$/.test(rows[1]), JSON.stringify(rows));
+    t.ok('the sheet has the two settings, each saying what it is set to', rows.length === 2 && /^where:Common pantry staples · only what I have$/.test(rows[0]) && /^pantry:\d+ on hand$/.test(rows[1]), JSON.stringify(rows));
     await p.click('button.kit-row[data-sync="pantry"]');
     await p.waitForTimeout(400);
     t.ok('tapping one closes the sheet and opens it', await p.evaluate(() => !document.querySelector('.sync-sheet') && !document.getElementById('view-pantry').classList.contains('hide') &&
@@ -117,10 +117,10 @@ module.exports = {
       mark: !!document.querySelector('#view-list [data-listmark="1"]'),
       back: (document.querySelector('#listNext [data-stepgo="plan"]') || {}).textContent || '',
     }));
-    t.ok('storehouse only: the storehouse order leads, and there is no Walmart cart',
-      shop.k === 'Plan · the list' && shop.titles.indexOf('Storehouse order') >= 0 && !shop.cart, JSON.stringify(shop));
+    t.ok('staples only: the pantry staples list leads, and there is no Walmart cart',
+      shop.k === 'Plan · the list' && shop.titles.indexOf('Pantry staples') >= 0 && !shop.cart, JSON.stringify(shop));
     t.ok('"Anything run out?" comes last, folded, the staples by shelf — no wall of pills before the food',
-      shop.order[0] === 'Storehouse order' && shop.order[shop.order.length - 1] === 'Anything run out?' &&
+      shop.order[0] === 'Pantry staples' && shop.order[shop.order.length - 1] === 'Anything run out?' &&
       shop.folded.every((f) => /:false$/.test(f)) && shop.shelves >= 1, JSON.stringify(shop));
     t.ok('a line is the thing and how much, with no tag and no switch; Mark what I have is where a line changes where it comes from',
       shop.tags === 0 && shop.segs === 0 && shop.mark, JSON.stringify(shop));
@@ -133,7 +133,7 @@ module.exports = {
       const i = document.querySelector('#listBody [data-check="' + k + '"]');
       return i ? { g: i.closest('.list-group').querySelector('.list-group-title').textContent, q: i.closest('.list-row').querySelector('.qty').textContent } : null;
     }, pill);
-    t.ok('a staple marked as run out goes on the storehouse order, said so', !!ran && ran.g === 'Storehouse order' && /ran out/.test(ran.q), JSON.stringify(ran));
+    t.ok('a staple marked as run out goes on the pantry staples list, said so', !!ran && ran.g === 'Pantry staples' && /ran out/.test(ran.q), JSON.stringify(ran));
     t.ok('the fold stays open through the redraw', await p.evaluate(() => document.querySelector('[data-fold="low"]').open));
     await p.click('[data-low="' + pill + '"]');
     await p.waitForTimeout(250);

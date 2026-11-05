@@ -51,17 +51,17 @@ module.exports = {
       }));
     };
 
-    /* ---- out of the box: the storehouse, as it always was ---- */
+    /* ---- out of the box: common pantry staples ---- */
     let s = await step1();
-    t.ok('step 1 asks where your staples come from, the storehouse chosen until somebody says otherwise',
+    t.ok('step 1 asks where your staples come from, common pantry staples chosen until somebody says otherwise',
       s.h === 'Where do your staples come from?' && s.picks.join() === 'sh:true,fb:false,big:false,own:false', JSON.stringify(s));
     t.ok('and this week: buy what is missing, or only what I have',
       s.week.join() === 'Buy what’s missing:true,Only what I have:false', JSON.stringify(s.week));
-    t.ok('what the storehouse carries is its list, as before', s.carries === 'What your storehouse carries', s.carries);
+    t.ok('what the staples list carries is shown', s.carries === 'What your staples list carries', s.carries);
     let l = await shop();
-    t.ok('the storehouse list is word for word the ward’s: Storehouse order, Copy the order, Have · Storehouse · Buy',
-      l.groups.includes('Storehouse order') && /from the storehouse/.test(l.count) && l.copy === 'Copy the order' &&
-      l.seg.join() === 'Have,Storehouse,Buy', JSON.stringify(l));
+    t.ok('the default staples list says Pantry staples, Copy staples list, Have · Staples · Buy',
+      l.groups.includes('Pantry staples') && /from the staples list/.test(l.count) && l.copy === 'Copy staples list' &&
+      l.seg.join() === 'Have,Staples,Buy', JSON.stringify(l));
 
     /* ---- a food bank ---- */
     await p.evaluate(() => window.Hive.go('where'));
@@ -129,7 +129,7 @@ module.exports = {
     await p.click('[data-srcpick="sh"]');
     await p.waitForTimeout(250);
     l = await shop();
-    t.ok('back to the storehouse, the ward’s words come back with it', l.groups.includes('Storehouse order') && l.copy === 'Copy the order', JSON.stringify(l));
+    t.ok('back to common pantry staples, the staples words come back with it', l.groups.includes('Pantry staples') && l.copy === 'Copy staples list', JSON.stringify(l));
 
     /* ---- Recipes says staples; the printed books keep the storehouse ---- */
     await p.click('.tab[data-view="browse"]');

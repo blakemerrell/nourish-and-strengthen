@@ -38,14 +38,26 @@ module.exports = {
 
     await p.click('[data-dr="next"]');
     s = await look();
-    t.ok('2 of 4: your kitchen', s.h === 'Your kitchen' && s.k === 'Your kitchen · 2 of 4', JSON.stringify(s));
+    t.ok('2 of 4: your kitchen (just how many are eating, with common pantry staples ready by default)',
+      s.h === 'Your kitchen' && s.k === 'Your kitchen · 2 of 4' && await p.evaluate(() => !document.querySelector('[data-dr="src"]')), JSON.stringify(s));
     await p.click('[data-dr="ppl"][data-v="6"]');
-    /* Where the staples come from is a radio group, and moves like one: the
-       arrows choose, the focus goes with the choice, and the group is one
-       Tab stop. It said radiogroup, and ArrowDown did nothing. */
-    await p.focus('[data-dr="src"][aria-checked="true"]');
+    await p.click('[data-dr="next"]');
+    s = await look();
+    t.ok('3 of 4: your workouts, including Home gym (cage & cables)',
+      s.h === 'Your workouts' && await p.evaluate(() => [...document.querySelectorAll('[data-dr="kit"]')].map((b) => b.dataset.v).join() === 'bw,db,bar,cage,gym' &&
+        [...document.querySelectorAll('[data-dr="min"]')].map((b) => b.textContent).join() === '30,40,45,60,No limit'), JSON.stringify(s));
+    await p.click('[data-dr="kit"][data-v="cage"]');
+    await p.click('[data-dr="dpw"][data-v="4"]');
+    await p.click('[data-dr="min"][data-v="45"]');
+    await p.click('[data-dr="next"]');
+    s = await look();
+    t.ok('4 of 4: your goal, in Nourish’s four', s.h === 'What’s your goal?' && s.next === 'Set my numbers' &&
+      await p.evaluate(() => [...document.querySelectorAll('[data-dr="goal"]')].map((b) => b.dataset.v).join() === 'cut1,cut2,keep,gain'), JSON.stringify(s));
+    /* The goal list is a radio group, and moves like one: the arrows choose,
+       the focus goes with the choice, and the group is one Tab stop. */
+    await p.focus('[data-dr="goal"][aria-checked="true"]');
     const radio = () => p.evaluate(() => {
-      const all = [...document.querySelectorAll('[data-dr="src"]')];
+      const all = [...document.querySelectorAll('[data-dr="goal"]')];
       return { on: all.filter((b) => b.getAttribute('aria-checked') === 'true').map((b) => b.dataset.v).join(),
         focus: document.activeElement.dataset.v, stops: all.map((b) => b.tabIndex).join() };
     });
@@ -58,24 +70,12 @@ module.exports = {
     await p.keyboard.press('ArrowRight');
     await p.keyboard.press('ArrowRight');
     const r3 = await radio();
-    t.ok('the staples question moves with the arrows: Down the next, Up and Left back and round the end, Right on, the focus with it',
-      r0.on === 'sh' && r1.on === 'fb' && r1.focus === 'fb' && r2.on === 'own' && r2.focus === 'own' && r3.on === 'fb' && r3.focus === 'fb',
+    t.ok('the goal radio group moves with the arrows: Down the next, Up and Left back and round the end, Right on, the focus with it',
+      r0.on === 'cut1' && r1.on === 'cut2' && r1.focus === 'cut2' && r2.on === 'gain' && r2.focus === 'gain' && r3.on === 'cut2' && r3.focus === 'cut2',
       JSON.stringify({ r0, r1, r2, r3 }));
     t.ok('and only the chosen one is a Tab stop', r0.stops === '0,-1,-1,-1' && r3.stops === '-1,0,-1,-1', JSON.stringify({ r0, r3 }));
-    await p.click('[data-dr="src"][data-v="fb"]');
-    await p.click('[data-dr="next"]');
-    s = await look();
-    t.ok('3 of 4: your workouts, in Strengthen’s own options',
-      s.h === 'Your workouts' && await p.evaluate(() => [...document.querySelectorAll('[data-dr="min"]')].map((b) => b.textContent).join() === '30,40,45,60,No limit'), JSON.stringify(s));
-    await p.click('[data-dr="kit"][data-v="db"]');
-    await p.click('[data-dr="dpw"][data-v="4"]');
-    await p.click('[data-dr="min"][data-v="45"]');
-    await p.click('[data-dr="next"]');
-    s = await look();
-    t.ok('4 of 4: your goal, in Nourish’s four', s.h === 'What’s your goal?' && s.next === 'Set my numbers' &&
-      await p.evaluate(() => [...document.querySelectorAll('[data-dr="goal"]')].map((b) => b.dataset.v).join() === 'cut1,cut2,keep,gain'), JSON.stringify(s));
     await p.click('[data-dr="back"]');
-    t.ok('Back goes back, with the answers kept', await p.evaluate(() => document.querySelector('[data-dr="kit"][data-v="db"]').getAttribute('aria-pressed') === 'true'));
+    t.ok('Back goes back, with the answers kept', await p.evaluate(() => document.querySelector('[data-dr="kit"][data-v="cage"]').getAttribute('aria-pressed') === 'true'));
     await p.click('[data-dr="next"]');
     await p.click('[data-dr="goal"][data-v="cut2"]');
     await p.click('[data-dr="later"]');
@@ -85,14 +85,15 @@ module.exports = {
       help: localStorage.getItem('sh.help'), fb: window.Store.opt('fb', false), store: window.Store.opt('store', true), setup: window.Store.opt('setup', false),
       ppl: window.__pw.answers().ppl, work: JSON.parse(localStorage.getItem('sh.doorWork') || 'null'),
       goal: (JSON.parse(localStorage.getItem('bsc.macroProfile') || '{}')).goal,
+      workouts: (JSON.parse(localStorage.getItem('bsc.macroProfile') || '{}')).workouts,
       today: !document.getElementById('view-today').classList.contains('hide'),
       cards: [...document.querySelectorAll('#todayRoot .td-label')].map((h) => h.id),
     }));
     t.ok('done: the door is gone and Today is up', !got.door && got.mark === 'done' && got.today, JSON.stringify(got));
-    t.ok('the kitchen is the household’s: a food bank, set up, and Plan my week cooks for 6',
-      got.fb && got.store && got.setup && got.ppl === 6, JSON.stringify(got));
-    t.ok('Nourish has the goal, and Strengthen has its three answers waiting',
-      got.goal === 'cut2' && JSON.stringify(got.work) === '{"kit":"db","dpw":4,"min":45}', JSON.stringify(got));
+    t.ok('the kitchen is the household’s: common pantry staples, set up, and Plan my week cooks for 6',
+      !got.fb && got.store && got.setup && got.ppl === 6, JSON.stringify(got));
+    t.ok('Nourish has the goal and workout frequency, and Strengthen has its three answers waiting',
+      got.goal === 'cut2' && got.workouts === 4 && JSON.stringify(got.work) === '{"kit":"cage","dpw":4,"min":45}', JSON.stringify(got));
     /* Four questions answered, and Today asked a fifth on top of them:
        "Cooking with someone else?" waits for the next open. */
     const hint = () => p.evaluate(() => ({ conf: !!window.Store.configured, shown: !document.getElementById('shareHint').classList.contains('hide') }));

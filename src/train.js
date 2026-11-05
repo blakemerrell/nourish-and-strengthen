@@ -706,6 +706,7 @@
   /* What you have to train with. The generator only draws from these. */
   var KITS = {
     gym: { n: 'Full gym', eq: ['bb', 'db', 'mc', 'cb', 'sm', 'bw'] },
+    cage: { n: 'Home gym (cage & cables)', eq: ['bb', 'db', 'cb', 'bw'] },
     bar: { n: 'Barbell & dumbbells', eq: ['bb', 'db', 'bw'] },
     db: { n: 'Dumbbells at home', eq: ['db', 'bw'] },
     bw: { n: 'Bodyweight only', eq: ['bw'] }
@@ -3162,19 +3163,19 @@
       dpw: [2, 3, 4, 5], acc: [3, 4, 5], dAcc: 4, refs: ['murphy22', 'schumann22'],
       s: 'Heavy enough to give your body a reason to keep its muscle, modest enough in volume to recover from while you eat less.',
       who: 'Losing weight, and wanting it to come off as fat rather than muscle.' },
-    waves: { n: 'Strength waves', sty: 'In the style of the Juggernaut Method', mode: 'str', kits: ['gym', 'bar'],
+    waves: { n: 'Strength waves', sty: 'In the style of the Juggernaut Method', mode: 'str', kits: ['gym', 'cage', 'bar'],
       dpw: [2, 3, 4], acc: [3], dAcc: 3, refs: ['jm', 'williams17', 'load17'],
       s: 'Four-week waves on the squat, bench, deadlift and press \u2014 tens, then eights, fives and threes \u2014 each ending in one set for as many reps as you can, which sets the weights for the next wave.',
       who: 'A year or more in, and wanting a bigger squat, bench, deadlift and press.' },
-    w531: { n: 'Submaximal 5/3/1', sty: 'In the style of Wendler 5/3/1 Forever', mode: 'str', w531: 1, kits: ['gym', 'bar'],
+    w531: { n: 'Submaximal 5/3/1', sty: 'In the style of Wendler 5/3/1 Forever', mode: 'str', w531: 1, kits: ['gym', 'cage', 'bar'],
       dpw: [2, 3, 4], acc: [3], dAcc: 3, refs: ['wendler17', 'williams17', 'load17'],
       s: 'Three-week waves of fives, threes and 5/3/1 off a ninety-per-cent training max, each backed by 3\u00d75 First Set Last work and a fourth-week deload.',
       who: 'Wanting heavy barbell work every month with fast bar speed and fresh joints.' },
-    power: { n: 'Powerbuilding', sty: 'Heavy top sets, then bodybuilding', mode: 'grow', pb: 1, kits: ['gym', 'bar'],
+    power: { n: 'Powerbuilding', sty: 'Heavy top sets, then bodybuilding', mode: 'grow', pb: 1, kits: ['gym', 'cage', 'bar'],
       dpw: [3, 4], acc: [3, 4, 5], dAcc: 4, refs: ['pb14', 'rp21'],
       s: 'Each session opens with one heavy top set of a big lift and three lighter back-off sets, then RP-style accessory work that climbs week to week.',
       who: 'Wanting to be both stronger and bigger, a year or more in.' },
-    liftmor: { n: 'Heavy & lithe', sty: 'In the style of LIFTMOR & Next Level (40+)', mode: 'grow', pb: 1, ceil: 0.85, kits: ['gym', 'bar', 'db'],
+    liftmor: { n: 'Heavy & lithe', sty: 'In the style of LIFTMOR & Next Level (40+)', mode: 'grow', pb: 1, ceil: 0.85, kits: ['gym', 'cage', 'bar', 'db'],
       dpw: [2, 3, 4], acc: [3, 4, 5], dAcc: 4, refs: ['watson18', 'sims22', 'pb14'],
       s: 'Opens with heavy four-to-six-rep compound sets to drive bone density and fast-twitch strength, then moderate glute, posture and core work that stops short of burnout.',
       who: 'In your forties or beyond, wanting bone strength, lean muscle and power without exhaustion.' },
@@ -3182,7 +3183,7 @@
       dpw: [2, 3, 4, 5], acc: [4, 6, 8], dAcc: 6, refs: ['claudino18', 'milanovic15', 'klimek18'],
       s: 'A few strength sets, then a short, hard circuit \u2014 as many rounds as you can, every minute on the minute, or rounds for time \u2014 from movements that suit your kit and your joints. Each circuit comes back the next week, so there is a score to beat.',
       who: 'Wanting fitness as much as muscle: harder breathing, less time.' },
-    tactical: { n: 'Tactical & endurance', sty: 'In the style of Tactical Barbell', mode: 'keep', kits: ['gym', 'bar', 'db'],
+    tactical: { n: 'Tactical & endurance', sty: 'In the style of Tactical Barbell', mode: 'keep', kits: ['gym', 'cage', 'bar', 'db'],
       dpw: [2, 3, 4], acc: [6, 8, 10], dAcc: 6, refs: ['tb17', 'schumann22', 'spiering21'],
       s: 'Frequent, paired compound lifting held two reps short of failure, so strength climbs steadily while leaving your legs and nervous system fresh for running, hiking, golf or sport.',
       who: 'Training for a sport, running, rucking or a physical job alongside the weights.' },
@@ -6666,19 +6667,38 @@
   var DAYS = { desk: ['Mostly sitting', 'A desk, a car, a screen'], feet: ['On my feet', 'Standing and walking most of the day'],
     labor: ['Physical work', 'Lifting, carrying, building'], active: ['Very active', 'Training or sport most days'] };
   var AGES = [['u13', 'Under 13'], ['teen', '13\u201317'], ['u40', '18\u201339'], ['40', '40\u201359'], ['60', '60 or over'], ['', 'Rather not say']];
-  var KIT_S = { gym: 'Machines, cables, barbells and dumbbells', bar: 'A barbell and rack, and dumbbells',
-    db: 'A pair or a set of dumbbells', bw: 'The floor — a pull-up bar helps' };
+  var KIT_S = { gym: 'Machines, cables, barbells and dumbbells',
+    cage: 'Power rack or cage with cables, barbell, pull-up & dip bars, kettlebells and dumbbells',
+    bar: 'A barbell and rack, and dumbbells',
+    db: 'Dumbbells, kettlebells and bodyweight at home', bw: 'The floor \u2014 a pull-up bar helps' };
   var MINS = [[30, '30 min'], [40, '40 min'], [45, '45 min'], [60, '60 min'], [0, 'No limit']];
   var QSTEPS = ['goal', 'lvl', 'time', 'kit', 'pain', 'life', 'age'];
   // one tap answers these, and moves on
   var QONE = ['goal', 'lvl', 'kit', 'age'];
+
+  function ageBracketFromYears(yr) {
+    var n = Number(yr) || 0;
+    if (n <= 0) return '';
+    return n < 13 ? 'u13' : n < 18 ? 'teen' : n < 40 ? 'u40' : n < 60 ? '40' : '60';
+  }
+  function dayFromAct(act) {
+    var a = Number(act) || 0;
+    if (a <= 0) return '';
+    return a < 1.29 ? 'desk' : a < 1.47 ? 'feet' : a < 1.65 ? 'labor' : 'active';
+  }
+  function qzSteps(z) {
+    if (z && z.fresh && z.fromProfile && z.fromProfile.age && !z.editAll) {
+      return QSTEPS.filter(function (s) { return s !== 'age'; });
+    }
+    return QSTEPS;
+  }
 
   /* The answers being given, started from the ones given last time. Nothing
      is pressed on a first run: an answer the app chose is not yours. */
   function quiz() {
     if (!S.qz) {
       var p = T.pr;
-      S.qz = { i: 0, fresh: !p.qz, set: {}, back: !!p.bk, bku: p.bk === 'fcx',
+      S.qz = { i: 0, fresh: !p.qz, set: {}, back: !!p.bk, bku: p.bk === 'fcx', fromProfile: {},
         a: { goal: p.goal, lvl: p.lvl, dpw: p.dpw, min: p.min, kit: p.kit,
         bk: p.bk, jt: p.jt, day: p.day, hab: p.hab.slice(), age: p.age } };
       /* The app's front door asks three of these on a new phone (what you
@@ -6691,6 +6711,35 @@
           if (dw.dpw >= 2 && dw.dpw <= 7) { S.qz.a.dpw = dw.dpw; S.qz.set.dpw = true; }
           if (MINS.some(function (m) { return m[0] === dw.min; })) { S.qz.a.min = dw.min; S.qz.set.min = true; }
         } catch (e) { /* private mode or nothing left */ }
+        /* One app, one profile: if you already told Nourish your age, daily
+           activity, workout days or goal, carry them across so Strengthen
+           never asks the same personal questions twice. */
+        var mp = readLS('bsc.macroProfile');
+        if (mp && typeof mp === 'object') {
+          if (Number(mp.age) > 0) {
+            S.qz.a.age = ageBracketFromYears(mp.age);
+            S.qz.set.age = 1;
+            S.qz.fromProfile.age = Math.round(Number(mp.age));
+          }
+          if (Number(mp.age) > 0 || Number(mp.lb) > 0) {
+            var df = dayFromAct(mp.act);
+            if (df) {
+              S.qz.a.day = df;
+              S.qz.set.day = 1;
+              S.qz.fromProfile.day = df;
+            }
+            var trN = Array.isArray(mp.train) && mp.train.length ? mp.train.length : Number(mp.workouts) || 0;
+            if (trN >= 2 && trN <= 7 && !S.qz.set.dpw) {
+              S.qz.a.dpw = trN;
+              S.qz.set.dpw = 1;
+              S.qz.fromProfile.dpw = trN;
+            }
+            if (!S.qz.set.goal) {
+              if (mp.goal === 'cut1' || mp.goal === 'cut2') { S.qz.a.goal = 'lean'; S.qz.set.goal = 1; }
+              else if (mp.goal === 'gain') { S.qz.a.goal = 'muscle'; S.qz.set.goal = 1; }
+            }
+          }
+        }
       }
     }
     return S.qz;
@@ -6710,7 +6759,9 @@
   }
 
   function quizHTML() {
-    var z = quiz(), a = z.a, step = QSTEPS[z.i];
+    var z = quiz(), a = z.a, steps = qzSteps(z);
+    if (z.i >= steps.length) z.i = steps.length - 1;
+    var step = steps[z.i];
     var shown = function (f) { return !z.fresh || z.set[f] ? a[f] : null; };
     var body = '';
     if (step === 'goal') {
@@ -6746,9 +6797,10 @@
           chip('qzbku', '', 'Not sure', z.bku) + '</div>',
           'Not sure plays it safe: the heavy spine-loaders of all three kinds are left out and the lighter ones come with a cue. You can narrow it later by changing your answers.') : '');
     } else if (step === 'life') {
-      body = '<div class="tr-title">What are your days like?</div>' +
-        bigOpts('day', a.day || null, Object.keys(DAYS).map(function (k) { return [k, DAYS[k][0], DAYS[k][1]]; })) +
-        q('Outside the gym <span class="tr-opt">any that apply</span>',
+      var skipDay = z.fresh && z.fromProfile && z.fromProfile.day && !z.editAll;
+      body = '<div class="tr-title">' + (skipDay ? 'Outside the gym' : 'What are your days like?') + '</div>' +
+        (skipDay ? '' : bigOpts('day', a.day || null, Object.keys(DAYS).map(function (k) { return [k, DAYS[k][0], DAYS[k][1]]; }))) +
+        q(skipDay ? 'Any that apply' : 'Outside the gym <span class="tr-opt">any that apply</span>',
           chips('qzm', a.hab, HAB_ORDER.map(function (k) { return [k, HABITS[k].n]; }), ' data-f="hab"'),
           'Counted toward your weekly activity, and one tap to log.');
     } else {
@@ -6757,14 +6809,27 @@
         bigOpts('age', shown('age'), AGES) +
         '<p class="tr-fine">It does not ask whether you are a man or a woman: both gain muscle at about the same relative rate, so no program here would change.</p>';
     }
+    var profSay = '';
+    if (z.fresh && z.fromProfile && (z.fromProfile.age || z.fromProfile.day) && !z.editAll) {
+      var u = window.Store && window.Store.user && window.Store.user();
+      var first = u && u.name ? String(u.name).trim().split(/\s+/)[0] : '';
+      var pbits = [];
+      if (first) pbits.push(esc(first));
+      if (z.fromProfile.age) pbits.push(z.fromProfile.age + ' yrs');
+      if (z.fromProfile.day && DAYS[z.fromProfile.day]) pbits.push(esc(DAYS[z.fromProfile.day][0]));
+      if (z.fromProfile.dpw) pbits.push(z.fromProfile.dpw + ' days/wk');
+      profSay = '<div class="tr-note tr-qz-prof">From your profile: <b>' + pbits.join(' \u00b7 ') +
+        '</b> \u00b7 <button type="button" class="tr-lnk" data-t="qzeditall">Change</button></div>';
+    }
     var one = QONE.indexOf(step) >= 0;
     return '<div class="tr-card tr-quiz">' +
       '<div class="tr-qz-h"><span class="tr-eyebrow">' + (z.fresh ? 'Find your program' : 'Your answers') + ' · ' +
-        (z.i + 1) + ' of ' + QSTEPS.length + '</span><span class="tr-qz-bar" aria-hidden="true"><span style="width:' +
-        Math.round(100 * (z.i + 1) / QSTEPS.length) + '%"></span></span></div>' +
+        (z.i + 1) + ' of ' + steps.length + '</span><span class="tr-qz-bar" aria-hidden="true"><span style="width:' +
+        Math.round(100 * (z.i + 1) / steps.length) + '%"></span></span></div>' +
+      profSay +
       body +
       '<div class="tr-acts">' +
-        (!one ? '<button class="btn-primary" data-t="qzn">' + (z.i === QSTEPS.length - 1 ? 'See my programs' : 'Next') + '</button>' : '') +
+        (!one ? '<button class="btn-primary" data-t="qzn">' + (z.i === steps.length - 1 ? 'See my programs' : 'Next') + '</button>' : '') +
         (z.i > 0 ? '<button class="ghost" data-t="qzb">Back</button>' : '') +
         (!z.fresh ? '<button class="tr-lnk" data-t="qzx">Cancel</button>' : '') +
       '</div>' +
@@ -12852,8 +12917,13 @@
       zu.a.bk = zu.bku ? 'fcx' : '';
       draw(); return;
     }
+    if (t === 'qzeditall') {
+      var ze = quiz();
+      ze.editAll = true;
+      draw(); return;
+    }
     if (t === 'qz' || t === 'qzm') {
-      var z = quiz(), f = el.getAttribute('data-f');
+      var z = quiz(), f = el.getAttribute('data-f'), qsteps = qzSteps(z);
       if (t === 'qzm') {
         if (f === 'hab') z.a.hab = toggleIn(z.a.hab, v);
         else {
@@ -12868,7 +12938,7 @@
         z.a[f] = f === 'day' && z.a.day === val ? '' : val;
         z.set[f] = 1;
         if (QONE.indexOf(f) >= 0) {
-          if (z.i >= QSTEPS.length - 1) { quizDone(); return; }
+          if (z.i >= qsteps.length - 1) { quizDone(); return; }
           z.i++;
           draw(); scrollTop(); return;
         }
@@ -12876,10 +12946,10 @@
       draw(); return;
     }
     if (t === 'qzn') {
-      var zn = quiz();
+      var zn = quiz(), znSteps = qzSteps(zn);
       // Back ticked and nothing said about it: not sure, so play it safe
-      if (QSTEPS[zn.i] === 'pain' && zn.back && !zn.a.bk) { zn.a.bk = 'fcx'; zn.bku = true; }
-      if (zn.i >= QSTEPS.length - 1) { quizDone(); return; }
+      if (znSteps[zn.i] === 'pain' && zn.back && !zn.a.bk) { zn.a.bk = 'fcx'; zn.bku = true; }
+      if (zn.i >= znSteps.length - 1) { quizDone(); return; }
       zn.i++; draw(); scrollTop(); return;
     }
     if (t === 'qzb') { var zb = quiz(); zb.i = Math.max(0, zb.i - 1); draw(); scrollTop(); return; }
@@ -14383,6 +14453,21 @@
     attach: attach,
     remote: remote,
     forget: forget,
+    syncProfile: function (mp) {
+      if (!mp || typeof mp !== 'object') return;
+      var ch = false;
+      var ag = ageBracketFromYears(mp.age);
+      if (ag && (!T.pr.qz || !T.pr.age) && T.pr.age !== ag) { T.pr.age = ag; ch = true; }
+      if (Number(mp.age) > 0 || Number(mp.lb) > 0) {
+        var df = dayFromAct(mp.act);
+        if (df && (!T.pr.qz || !T.pr.day) && T.pr.day !== df) { T.pr.day = df; ch = true; }
+      }
+      if (!T.pr.qz && S.qz) { S.qz = null; ch = true; }
+      if (ch) {
+        stamp('pr');
+        draw();
+      }
+    },
     // the corrected clock, from Nourish: see tnow
     clock: function (fn) { CLOCK = typeof fn === 'function' ? fn : null; },
     sheetClosed: sheetClosed,
@@ -14407,7 +14492,7 @@
       checkin: checkin, chkReads: chkReads, dueSay: dueSay, phaseNow: phaseNow, phaseAt: phaseAt, capAt: capAt, phaseCap: phaseCap, phaseLine: phaseLine, phaseReset: function () { phLive.t = 0; },
       dropWo: dropWo, fitSay: fitSay, yearOf: yearOf, woCsv: woCsv, imDate: imDate, snapHome: snapHome, homeLoads: homeLoads, plateHave: plateHave, counts: counts, tick: tick, yr: function () { return YR; }, lsFull: function () { return LSFULL; },
       state: function () { return { T: T, TS: TS, LIVE: LIVE, S: S }; },
-      reload: function () { T = loadT(); TS = loadTS(); PRSEEN = prSeen(); MSSEEN = msSeenAll(); LIVE = readLS(LS_LIVE); if (!readLS('bsc.trainGuard')) S.guardDone = 0; REV++; phLive.t = 0; }
+      reload: function () { T = loadT(); TS = loadTS(); PRSEEN = prSeen(); MSSEEN = msSeenAll(); LIVE = readLS(LS_LIVE); if (!readLS('bsc.trainGuard')) S.guardDone = 0; if (!T.pr.qz) S.qz = null; REV++; phLive.t = 0; }
     }
   };
 })();

@@ -1390,7 +1390,7 @@
     var favs = 0;
     DAYS.forEach(function (d) { window.Store.day(d[0]).forEach(function (e) { if (window.Store.rating(e.id) === 2) favs++; }); });
     if ($('planSetup')) $('planSetup').innerHTML = planSetUp() ? '' :
-      '<div class="setup-card"><b>Where do your staples come from?</b><span>The storehouse, a food bank, a big shop or your own shelf. Set it once; it decides which dinners are suggested and how the list is split.</span>' +
+      '<div class="setup-card"><b>Where do your staples come from?</b><span>Common pantry staples, a food bank, a big shop or your own shelf. Set it once; it decides which dinners are suggested and how the list is split.</span>' +
       '<button class="pw-go" data-stepgo="where">Set it once</button></div>';
     /* The status line: the week's numbers, after "This week". */
     if ($('planSum')) $('planSum').innerHTML = ents.length ?
@@ -2620,9 +2620,9 @@
      `store` (on/off, as the rules already allow), so nothing is migrated:
      a household that never chose is the storehouse, as it always was. */
   var SRC_WORDS = {
-    sh: { pick: 'The bishops\u2019 storehouse', why: 'Its order list, ready to copy for your bishop.', name: 'Storehouse',
-      the: 'the storehouse', your: 'your storehouse', list: 'Storehouse order', copy: 'Copy the order',
-      reset: 'Back to the storehouse list?', back: 'back to the book\u2019s list' },
+    sh: { pick: 'Common pantry staples', why: 'Canned, dry and frozen basics you keep stocked, plus fresh items from the store.', name: 'Staples',
+      the: 'the staples list', your: 'your staples list', list: 'Pantry staples', copy: 'Copy staples list',
+      reset: 'Back to the default staples?', back: 'back to the default list' },
     fb: { pick: 'A food bank or pantry', why: 'What they give, and a store for the rest.', name: 'Food bank',
       the: 'the food bank', your: 'your food bank', list: 'From the food bank', copy: 'Copy the list',
       reset: 'Back to the starting list?', back: 'back to the starting list' },
@@ -3638,6 +3638,7 @@
   function mFavMoreSync(btn, key) { return FAVPICK.mFavMoreSync(btn, key); }
   function mFavPickBodyHTML() { return FAVPICK.mFavPickBodyHTML(); }
   function mFavPickHTML() { return FAVPICK.mFavPickHTML(); }
+  function mFavStapleList() { return FAVPICK.mFavStapleList(); }
 
   /* src/copyfrom.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
@@ -4256,7 +4257,7 @@
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mslotdel', 'data-mslotmove', 'data-mholdclose', 'data-maddslot', 'data-mslotpreset', 'data-maddpop', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
-    'data-mmore', 'data-fppick', 'data-fpmore', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mwtiles', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd', 'data-hydmodal', 'data-hyd', 'data-hydmg', 'data-hydoz'];
+    'data-mmore', 'data-fppick', 'data-fpmore', 'data-fpstaples', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mwtiles', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd', 'data-hydmodal', 'data-hyd', 'data-hydmg', 'data-hydoz'];
 
   function focusKey(el) {
     if (!el || el === document.body || !el.getAttribute) return null;
@@ -4578,7 +4579,7 @@
           if (!m.length) return '';
           return '<div class="sheet-extras">' +
             (window.Store.pantryChanged() || srcKind() === 'own' ? 'Not on your shelf: '
-              : srcKind() === 'sh' ? 'Needs items not on the standard storehouse list: '
+              : srcKind() === 'sh' ? 'Needs items not on the standard staples list: '
                 : 'Needs things ' + srcW().the + ' doesn\u2019t carry: ') +
             esc(m.join(', ')) + '.</div>';
         })() +
@@ -8122,6 +8123,27 @@
         else mFavMoreSync(fpm, fpm.dataset.fpmore);
         return;
       }
+      var fps = e.target.closest('[data-fpstaples]');
+      if (fps) {
+        var stList = mFavStapleList().filter(function (r) { return mCanFav(r) && !mIsFav(r); });
+        if (stList.length) {
+          if (window.Store.addFavs) {
+            window.Store.addFavs(stList.map(function (r) { return r.id; }));
+          } else {
+            window.Store.batch(function () {
+              stList.forEach(function (r) { mToggleFav(r); });
+            });
+          }
+        }
+        if (S.favPick) renderModal();
+        else {
+          var fpb = document.getElementById('fpBody');
+          if (fpb) fpb.outerHTML = mFavPickBodyHTML();
+          var done = document.querySelector('[data-mtw="done"]');
+          if (done) done.innerHTML = mFavDoneLabel();
+        }
+        return;
+      }
 
       var mpn = e.target.closest('[data-mpnew]');
       if (mpn && S.macroPick) {
@@ -9666,15 +9688,17 @@
        household's staples switches, as Where sets them, and Plan my week's
        "how many are eating"; Nourish's goal; Nourish's numbers sheet. */
     kitchen: function (ppl, kind) {
-      setSrcKind(kind, function () { window.Store.setOpt('setup', true); });
+      if (kind) setSrcKind(kind, function () { window.Store.setOpt('setup', true); });
+      else window.Store.setOpt('setup', true);
       var a = pwAnswers();
       a.ppl = ppl;
       pwSave(a);
     },
-    goal: function (g) {
+    goal: function (g, dpw) {
       if (!MGOAL_WORDS[g]) return;
       var pr = mReadProfileRaw();
       pr.goal = g;
+      if (dpw >= 2 && dpw <= 7 && !pr.workouts) pr.workouts = dpw;
       mWriteProfile(pr);
     },
     numbersSetup: function () { S.macroDate = null; goView('macros'); mOpenTargets(); },

@@ -1671,6 +1671,16 @@ window.Store = (function () {
       });
     },
 
+    addFavs: function (list) {
+      var add = (list || []).filter(function (id) { return id && state.favs.indexOf(id) < 0; });
+      if (!add.length) return;
+      push(function () {
+        return doc.set({ favs: FV.arrayUnion.apply(FV, add) }, { merge: true });
+      }, function () {
+        state.favs = state.favs.concat(add);
+      });
+    },
+
     // ------------------------------------------------------------- the weeks
     /* [{id, name, active}] in the order they are shown. */
     weeks: function () {

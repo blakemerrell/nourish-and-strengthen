@@ -80,6 +80,7 @@
     if (!pr.goalLb || !pr.goalBy) { delete pr.goalSet; delete pr.goalFrom; }
     mStamp('pr');
     mPut('bsc.macroProfile', pr);
+    if (window.Train && window.Train.syncProfile) window.Train.syncProfile(pr);
     /* A new profile is the one thing that can turn a stored plan into a day
        nobody can eat — a heavier body raises its own floor. Asked here, where
        the change is made, rather than inside whichever read ran first. */

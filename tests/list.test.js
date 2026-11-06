@@ -83,13 +83,16 @@ module.exports = {
      * extra filed under "free" — there are none — it takes any extra at all,
      * which is what the assertion was ever about. */
     const flagged = await p.evaluate(() => {
-      const r = window.RECIPES.find((x) => (x.ingp || []).some((i) => i && i.x));
+      /* An extra the pantry still says to buy: since 2026-11-06 some old
+         extras (cocoa, vinegar) are everyday staples, and rightly not bought. */
+      const P = window.PANTRY || {}, buyX = (i) => i && i.x && P[i.k] && !P[i.k].s;
+      const r = window.RECIPES.find((x) => (x.ingp || []).some(buyX));
       const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
       days.forEach((d) => window.Store.day(d).forEach((e) =>
         window.Store.removeFromDay(e.id !== undefined ? e.id : e, d)));
       window.Store.addToDay(r.id, 'mon');
       document.querySelector('.tab[data-view="list"]').click();
-      const hit = r.ingp.find((i) => i && i.x) || {};
+      const hit = r.ingp.find(buyX) || {};
       const name = ((window.PANTRY || {})[hit.k] || {}).l || hit.a || String(hit.k).replace(/_/g, ' ');
       const groups = [...document.querySelectorAll('.list-group')].map((g) => ({
         title: g.querySelector('.list-group-title').textContent.trim(),

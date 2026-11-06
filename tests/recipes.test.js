@@ -240,10 +240,11 @@ module.exports = {
 
     const bought = await p.evaluate(() => {
       const P = window.PANTRY;
-      return ['breadcrumbs', 'celery_salt', 'spray_butter', 'cream_cheese', 'biscuit_dough']
+      // breadcrumbs and celery salt are everyday staples since 2026-11-06; these three are still bought
+      return ['spray_butter', 'cream_cheese', 'biscuit_dough']
         .filter((k) => P[k] && P[k].s);
     });
-    t.ok('the five the order never carried are no longer listed as staples',
+    t.ok('the three a kitchen does not keep are not listed as staples',
       bought.length === 0, bought.join(', ') + ' still marked stocked');
 
     /* --------------------------------------------------- what you were told

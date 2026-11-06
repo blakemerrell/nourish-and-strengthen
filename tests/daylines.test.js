@@ -67,16 +67,30 @@ module.exports = {
     t.ok('with no keys on it until it is opened, and tall enough for a thumb', shut.every((l) => l.keys === 0 && l.h >= 44), JSON.stringify(shut));
     const rec = await p.evaluate((sel) => {
       const l = document.querySelector(sel);
-      return { leaf: !!l.querySelector('.mfl-lf .leaf'), go: l.classList.contains('mtray-go'), open: (l.querySelector('.mtray-fn') || {}).dataset.open,
-        foodLeaf: !!document.querySelector(sel.replace('nth-child(1)', 'nth-child(2)') + ' .mfl-lf .leaf') };
+      const leaf = l.querySelector('.mfl-nm .mfl-sup .leaf'), nm = l.querySelector('.mfl-nm');
+      return { leaf: !!leaf, go: l.classList.contains('mtray-go'), open: (l.querySelector('.mtray-fn') || {}).dataset.open,
+        // raised: the leaf's top sits above the top of the name's last line, beside its last word
+        raised: !!leaf && (() => {
+          const tx = nm.firstChild, r = document.createRange();
+          r.setStart(tx, tx.length - 1); r.setEnd(tx, tx.length);
+          const last = r.getBoundingClientRect(), lf = leaf.getBoundingClientRect();
+          return lf.top < last.top && lf.left >= last.right - 1;
+        })(),
+        foodLeaf: !!document.querySelector(sel.replace('nth-child(1)', 'nth-child(2)') + ' .leaf') };
     }, line('d', 0));
-    t.ok('a recipe’s line wears its leaf, and its name is the door to the recipe', rec.leaf && rec.go && rec.open === '66' && !rec.foodLeaf, JSON.stringify(rec));
+    t.ok('a recipe’s line wears its leaf raised after its name, and its name is the door to the recipe',
+      rec.leaf && rec.raised && rec.go && rec.open === '66' && !rec.foodLeaf, JSON.stringify(rec));
+    /* Since 2026-11-06 the leaf is a superscript, not a column of its own,
+       so every food's name starts at the card's own edge, where the meal's
+       pills start too (Blake: "stretch the whole span of the card"). */
     const names = await p.evaluate(() => {
-      const meal = document.querySelector('#macroSlots .mtray-n').getBoundingClientRect().left;
-      return { meal, foods: [...document.querySelectorAll('#macroSlots .mtray-fn')].map((b) => Math.round(b.getBoundingClientRect().left - meal)) };
+      const edge = document.querySelector('#macroSlots .mtray-caps').getBoundingClientRect().left;
+      const card = document.querySelector('#macroSlots .mtray-caps').closest('.mtray').getBoundingClientRect();
+      return { edge: Math.round(edge - card.left), card: Math.round(card.width), capsRight: Math.round(card.right - document.querySelector('#macroSlots .mtray-caps').getBoundingClientRect().right),
+        foods: [...document.querySelectorAll('#macroSlots .mtray-fn')].map((b) => Math.round(b.getBoundingClientRect().left - edge)) };
     });
-    t.ok('every name starts where the meal’s own name does, the leaf in the column under the tick',
-      names.foods.every((d) => Math.abs(d) <= 2), JSON.stringify(names));
+    t.ok('every food’s name starts where the meal’s pills do, at the card’s edge, and the pills reach across the card',
+      names.foods.every((d) => Math.abs(d) <= 2) && names.edge <= 14 && names.capsRight <= 14, JSON.stringify(names));
 
     /* ---- a tap on the line opens it there, on the day ---- */
     const at = await p.evaluate((sel) => { const r = document.querySelector(sel + ' .mfl-r').getBoundingClientRect(); return { x: r.left + r.width * 0.62, y: r.top + r.height / 2 }; }, line('l', 0));
@@ -190,8 +204,10 @@ module.exports = {
       foods.length === 2 && foods[1].name === 'Eggs' && foods[1].fm === '2 whole' && foods[1].g === '100 g' &&
       foods.every((l) => l.split && l.tick && !l.open && l.h >= 44), JSON.stringify(foods));
     const verbs = (sel) => p.evaluate((s2) => [...document.querySelectorAll(s2 + ' .mtray-vbs button')].map((b) => Object.keys(b.dataset)[0]), sel);
-    t.ok('and its verbs in State 2 are drawings: + to add, ↻ to try another, and ⊘ to skip (the scale waits for State 3)',
-      (await verbs(card('d'))).join() === 'mopen,mtry,mskipask', JSON.stringify(await verbs(card('d'))));
+    /* The scale used to wait for State 3 (Details). That view went on
+       2026-11-06, and the scale came with it onto the open card. */
+    t.ok('and its verbs on the open card are drawings: + to add, ↻ to try another, the scale to balance, and ⊘ to skip',
+      (await verbs(card('d'))).join() === 'mopen,mtry,mbal,mskipask', JSON.stringify(await verbs(card('d'))));
 
     /* What each ring should say, worked out here from the meal's own pills
        (have/want): within a tenth on plan, past it over, short of it still
@@ -199,39 +215,32 @@ module.exports = {
     const want = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-caps .mcap')].map((c) => ({
       want: Number(c.dataset.want), have: Number(c.querySelector('.mcap-t').childNodes[1].textContent.replace(/,/g, '')) })), card('l'));
 
-    /* Stepping Lunch from State 2 (mv-2) -> State 3 (mv-3): every food says what it costs under its line, header carries +, ↻, ⚖, ⊘ without inline quick-add drawer.
-       It used to open every line with its keys at once; three foods filled
-       the phone. Blake chose "one open, macros under each" (2026-10-24). */
-    await p.click(card('l') + ' [data-mview]');
-    await p.waitForTimeout(250);
-    t.ok('State 3 carries the scale in the header as well', (await verbs(card('l'))).join() === 'mopen,mtry,mbal,mskipask', JSON.stringify(await verbs(card('l'))));
-    const s3 = await p.evaluate((sel) => {
+    /* An open card is the foods and nothing under them: what a food costs
+       is said on its own open line, one open at a time. There used to be a
+       third view, Details, that put a quiet cost line under every shut
+       food (2026-10-24); it went on 2026-11-06 (Blake: "The final expand
+       just shows me macros. It's really not that helpful"). */
+    const open2 = await p.evaluate((sel) => {
       const c = document.querySelector(sel);
       const ls = [...c.querySelectorAll('.mtray-f')];
-      const gap = ls.length >= 2 ? Math.round(ls[1].getBoundingClientRect().top - ls[0].getBoundingClientRect().bottom) : 0;
-      const bordered = ls.every((l) => parseFloat(getComputedStyle(l).borderBottomWidth) >= 1 && parseFloat(getComputedStyle(l).borderTopWidth) >= 1);
-      return {
-        mv3: c.classList.contains('mv-3'),
-        costs: ls.length === 2 && ls.every((l) => !l.classList.contains('open') && !l.querySelector('[data-mstep]') &&
-          /kcal/.test((l.querySelector('.mfl-q') || {}).textContent || '')),
-        noAddDrawer: !c.querySelector('.mtray-add'),
-        gap: gap,
-        bordered: bordered
-      };
+      return { mv2: c.classList.contains('mv-2'), noMv3: !document.querySelector('#macroSlots .mv-3'),
+        shut: ls.length === 2 && ls.every((l) => !l.classList.contains('open') && !l.querySelector('[data-mstep]') && !l.querySelector('.mfl-mac')),
+        noAddDrawer: !c.querySelector('.mtray-add') };
     }, card('l'));
-    t.ok('State 3 shows each food’s cost on a quiet line under it, keys on none until one is tapped, and no inline quick-add drawer',
-      s3.mv3 && s3.costs && s3.noAddDrawer, JSON.stringify(s3));
+    t.ok('an open card lists its foods shut, keys and costs on none until one is tapped, and no inline quick-add drawer',
+      open2.mv2 && open2.noMv3 && open2.shut && open2.noAddDrawer, JSON.stringify(open2));
     await p.click(line('l', 0) + ' [data-mamt]');
     await p.waitForTimeout(250);
-    const s3one = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-f')].map((l) => ({
-      open: l.classList.contains('open'), keys: l.querySelectorAll('[data-mstep]').length, quiet: !!l.querySelector('.mfl-q') })), card('l'));
-    t.ok('and a tap on a line opens that one alone with its dial, its cost moving into the open line',
-      s3one.length === 2 && s3one[0].open && s3one[0].keys === 2 && !s3one[0].quiet && !s3one[1].open && s3one[1].keys === 0 && s3one[1].quiet,
-      JSON.stringify(s3one));
+    const oneOpen = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-f')].map((l) => ({
+      open: l.classList.contains('open'), keys: l.querySelectorAll('[data-mstep]').length,
+      cost: /kcal/.test((l.querySelector('.mfl-mac') || {}).textContent || '') })), card('l'));
+    t.ok('and a tap on a line opens that one alone, with its dial and what it costs',
+      oneOpen.length === 2 && oneOpen[0].open && oneOpen[0].keys === 2 && oneOpen[0].cost && !oneOpen[1].open && oneOpen[1].keys === 0 && !oneOpen[1].cost,
+      JSON.stringify(oneOpen));
     await p.click(line('l', 1) + ' [data-mamt]');
     await p.waitForTimeout(250);
-    const s3two = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-f')].map((l) => l.classList.contains('open')), card('l'));
-    t.ok('and opening another shuts the first: one open at a time on Details too', s3two.join() === 'false,true', JSON.stringify(s3two));
+    const twoOpen = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-f')].map((l) => l.classList.contains('open')), card('l'));
+    t.ok('and opening another shuts the first: one open at a time', twoOpen.join() === 'false,true', JSON.stringify(twoOpen));
     await p.click(line('l', 0) + ' [data-mamt]');
     await p.waitForTimeout(250);
 
@@ -264,7 +273,7 @@ module.exports = {
       return r >= 0.9 && (i === 1 || r <= 1.1) ? 'on' : r > 1.1 ? 'over' : 'under';
     });
 
-    /* the name steps the card: State 3 (Details) → State 1 (Status) → State 2 (Foods) → State 3 (Details) */
+    /* the name folds and opens the card: open (Foods) → folded (Status) → open */
     await p.click(card('l') + ' [data-mview]');
     await p.waitForTimeout(250);
     const status = await p.evaluate((sel) => {
@@ -274,12 +283,12 @@ module.exports = {
         verbs: [...c.querySelectorAll('.mtray-vbs button')].map((b) => Object.keys(b.dataset)[0]), h: Math.round(c.getBoundingClientRect().height),
         focus: document.activeElement === c.querySelector('[data-mview]') };
     }, card('l'));
-    t.ok('a tap on the name from State 3 shuts the card to State 1 (Status): no lines, no pills, a circle each for 🔥 P F C, and only Skip',
+    t.ok('a tap on the name of an open card folds it to State 1 (Status): no lines, no pills, a circle each for 🔥 P F C, and only Skip',
       status.v === '1' && status.lines === 0 && !status.pills && status.beads.length === 4 && /^mbd-kcal/.test(status.beads[0]) &&
       status.verbs.join() === 'mskipask' && status.h < 70 && status.focus, JSON.stringify(status));
     const SAY = { on: '(on plan|over, which is fine)', over: 'over', under: '\\d+% there' };
     const said = new RegExp('^Lunch, planned: ' + ['calories', 'protein', 'fat', 'carbs'].map((m, i) => m + ' ' + SAY[judged[i]]).join(', ') +
-      '\\. Showing its status; tap for its foods$');
+      '\\. Folded; tap to open$');
     t.ok('the rings fill by the meal’s share, green on plan, and it is said in words',
       wantAfter.length === 4 && judged.some((j) => j !== 'under') && status.beads.join() === ['kcal', 'p', 'f', 'c'].map((m, i) => 'mbd-' + m + ' rg-' + judged[i]).join() &&
       said.test(status.say), JSON.stringify({ wantAfter, judged, status }));
@@ -291,14 +300,8 @@ module.exports = {
       return c.classList.contains('mv-2') && ls.length === 2 &&
         ls.every((l) => !!l.querySelector('.mfl-amt.split-pill') && !!l.querySelector('input.mitem-ate') && !l.classList.contains('open'));
     }, card('l'));
-    t.ok('again, and it is on State 2 (Foods with Unified Split Pill and ticks)', onState2);
-    await p.click(card('l') + ' [data-mview]');
-    await p.waitForTimeout(250);
-    const reExpanded = await p.evaluate((sel) => {
-      const ls = [...document.querySelectorAll(sel + ' .mtray-f')];
-      return ls.length === 2 && ls.every((l) => !l.classList.contains('open') && !!l.querySelector('.mfl-q') && !!l.querySelector('.mfl-amt') && !!l.querySelector('input.mitem-ate'));
-    }, card('l'));
-    t.ok('and once more back to State 3 (Details), every line with its cost, none open', reExpanded);
+    t.ok('again, and it is open on its foods (Unified Split Pill and ticks), and says so',
+      onState2 && (await p.$eval(card('l') + ' [data-mview]', (b) => b.getAttribute('aria-expanded'))) === 'true');
 
     /* the meal’s pills open the meal sheet, where food is added */
     await p.click(card('l') + ' .mtray-caps');

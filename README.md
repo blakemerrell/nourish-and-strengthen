@@ -79,10 +79,12 @@ each a number with the week drawn under it against its target.
 The day's head says the day as a date; tap it for the phone's calendar, any day from the
 first you ever logged (or 120 days back, if that is further) to a week ahead. Nothing is
 let go of: every day and every weigh-in stays, on the phone and in your account. ‹ and › step a week, and so does a swipe
-across the week's bars. The button beside the menu (☰) steps every meal of the day at once
-through the three views a meal's name steps it through: its status, its foods, its details.
-On a meal's foods and its details each food is a line; details adds what it costs under it.
-Tap a line to open it for its bin, lock, pin, star and − and +, one at a time.
+across the week's bars. A meal's name opens and folds it: folded, it is its name and a ring
+each for calories, protein, fat and carbs; open, its foods, with + ↻ ⚖ ⊘ beside the name.
+A meal folds itself a moment after its last food is ticked, unless you opened or folded it
+yourself that day. The button beside the menu (☰) folds every meal, or opens them all when
+every one is folded. Open, each food is a line; tap one to open it for what it costs, its
+bin, lock, pin, star and − and +, one at a time.
 The menu holds My plan, Food I eat, Sync & sharing and How today went. The beehive skep logo
 button on the top left of the header opens Share & settings from every tab and carries the
 sync colour: green when the household or your account has everything, amber while something is

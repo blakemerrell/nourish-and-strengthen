@@ -19,11 +19,11 @@ const SETUP = () => {
     // the first day ever logged, four months back: older than the 120 days that used to be all there was
     '2026-06-01': { b: [f('egg', 1)] } }));
 };
-// the three meals with food on them, Breakfast, Lunch and Dinner: an empty meal has no views to step
+// the three meals with food on them, Breakfast, Lunch and Dinner: an empty meal has nothing to fold
 const views = (p) => p.evaluate(() => [...document.querySelectorAll('#macroSlots [data-mview]')].map((b) => Number(b.dataset.mv)).join(''));
 const button = (p) => p.evaluate(() => {
   const b = document.getElementById('macroViews'), r = b.getBoundingClientRect();
-  return { lit: [...b.querySelectorAll('.mtray-pips i')].findIndex((i) => i.classList.contains('on')) + 1,
+  return { icon: !!b.querySelector('svg.mday-ic'),
     say: b.getAttribute('aria-label'), w: r.width, h: r.height, hidden: b.hidden };
 });
 
@@ -121,25 +121,58 @@ module.exports = {
     t.ok('and the title is for a screen reader at every width, not only on a phone', wideTitle <= 1, wideTitle);
     await wide.context().close();
 
-    // every meal's view is on the head row beside the menu
+    /* Two views since 2026-11-06 (Blake: the third "just shows me macros.
+       It's really not that helpful"): a meal's name opens and folds it, and
+       the button beside the menu folds every meal, or opens them all when
+       every one is folded. */
     let b = await button(p);
-    t.ok('meals all on their foods: the button’s middle pip lit, and it says what a press shows next',
-      (await views(p)) === '222' && b.lit === 2 && b.say === 'Every meal: show their details' && b.w >= 44 && b.h >= 44, JSON.stringify(b));
+    t.ok('meals all open: the button draws its icon and offers to fold every meal',
+      (await views(p)) === '222' && b.icon && b.say === 'Fold every meal' && b.w >= 44 && b.h >= 44, JSON.stringify(b));
     await pressViews(p);
-    t.ok('pressed, every meal opens to its details', (await views(p)) === '333' && (await button(p)).lit === 3);
+    t.ok('pressed, every meal folds to its rings, and the button offers to open them all',
+      (await views(p)) === '111' && (await button(p)).say === 'Open every meal');
     await pressViews(p);
-    t.ok('again, every meal closes to its status', (await views(p)) === '111' && (await button(p)).say === 'Every meal: show their foods');
-    await pressViews(p);
-    t.ok('and again, round to their foods', (await views(p)) === '222');
+    t.ok('again, every meal opens to its foods', (await views(p)) === '222');
 
     await p.click('#macroSlots [data-mview="l"]');
     b = await button(p);
-    t.ok('a meal’s own name still steps that meal alone, and the button then lights no pip',
-      (await views(p)) === '232' && b.lit === 0 && b.say === 'Every meal: show just their status', JSON.stringify(b));
+    const lunchSays = await p.evaluate(() => document.querySelector('#macroSlots [data-mview="l"]').getAttribute('aria-expanded'));
+    t.ok('a meal’s own name folds that meal alone and says so, and the button still offers to fold the rest',
+      (await views(p)) === '212' && lunchSays === 'false' && b.say === 'Fold every meal', JSON.stringify([b, lunchSays]));
     await pressViews(p);
-    t.ok('meals in different views all go to the start of the round', (await views(p)) === '111');
+    t.ok('pressed with meals in both views, every meal folds', (await views(p)) === '111');
     await p.click('#macroSlots [data-mview="d"]');
-    t.ok('and a name still steps its meal on from there', (await views(p)) === '112', await views(p));
+    t.ok('a name opens its meal again from there', (await views(p)) === '112', await views(p));
+    await p.click('#macroSlots [data-mview="d"]');
+    t.ok('and folds it on the next press: two views, never a third', (await views(p)) === '111', await views(p));
+    await p.click('#macroSlots [data-mview="d"]');
+
+    /* What the third view held moved: the scale (Balance) is on an open
+       card now, and no shut food carries a line of numbers under it. */
+    const opened = await p.evaluate(() => {
+      const d = document.querySelector('#macroSlots .mtray[data-mslot="d"]');
+      return { bal: !!d.querySelector('[data-mbal]'), quiet: document.querySelectorAll('#macroSlots .mfl-q').length,
+        chev: !!d.querySelector('.mtray-hd .mtray-chev') };
+    });
+    t.ok('an open meal has the scale beside + and ⊘, a chevron on its name, and no line of numbers under its shut foods',
+      opened.bal && opened.quiet === 0 && opened.chev, JSON.stringify(opened));
+
+    /* Ticking a meal's last food folds it to its rings, a beat later, so
+       the tick is seen landing first; a meal opened or folded by its own
+       name today is left as it was set. */
+    const q = await open({ width: 390, height: 844 });
+    await q.click('#macroSlots .mtray[data-mslot="b"] input[data-meat]');
+    const atOnce = (await views(q)).charAt(0);
+    await q.waitForTimeout(1200);
+    const later = (await views(q)).charAt(0);
+    t.ok('ticking breakfast’s last food leaves it open a beat, then folds it', atOnce === '2' && later === '1', atOnce + later);
+    await q.click('#macroSlots [data-mview="l"]');
+    await q.click('#macroSlots [data-mview="l"]');
+    // each tick redraws the card, so the next box is found afresh
+    for (let i = 0; i < 2; i++) await q.click('#macroSlots .mtray[data-mslot="l"] input[data-meat]:not(:checked)');
+    await q.waitForTimeout(1200);
+    t.ok('a meal opened by its own name stays open when its last food is ticked', (await views(q)).charAt(1) === '2', await views(q));
+    await q.context().close();
 
     /* ---- the date's calendar, and weeks ---- */
     const day = () => p.evaluate(() => [document.getElementById('macroDayPick').value, document.getElementById('macroDateTx').textContent,
@@ -193,11 +226,11 @@ module.exports = {
         kcalIn: [...kc.querySelectorAll('span, b')].every((e) => !e.getBoundingClientRect().width || e.getBoundingClientRect().right <= sum.right + 0.5),
         page: document.documentElement.scrollWidth <= innerWidth, day: document.getElementById('macroDate').getBoundingClientRect().width,
         whole: (() => { const tx = document.getElementById('macroDateTx'); return tx.scrollWidth <= tx.clientWidth; })(),
-        // the meal cards drop their own pips this narrow; the button is nothing but them
-        pips: [...document.querySelectorAll('#macroViews .mtray-pips i')].filter((i) => i.getBoundingClientRect().width >= 5).length };
+        // the fold-every-meal button keeps its icon this narrow
+        icon: (() => { const ic = document.querySelector('#macroViews svg'); return ic ? ic.getBoundingClientRect().width : 0; })() };
     });
-    t.ok('at 320 px in the dark the head stays one row, inside the screen, the calories inside their box, the date whole and the menu\u2019s pips shown',
-      narrow.oneRow && narrow.inside && narrow.kcalIn && narrow.page && narrow.day >= 44 && narrow.whole && narrow.pips === 3, JSON.stringify(narrow));
+    t.ok('at 320 px in the dark the head stays one row, inside the screen, the calories inside their box, the date whole and the fold button\u2019s icon shown',
+      narrow.oneRow && narrow.inside && narrow.kcalIn && narrow.page && narrow.day >= 44 && narrow.whole && narrow.icon >= 16, JSON.stringify(narrow));
     await n.context().close();
 
     t.ok('with no error on the page', errs.length === 0, errs.join(' | '));

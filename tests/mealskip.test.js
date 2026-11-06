@@ -128,7 +128,7 @@ module.exports = {
     await p.waitForTimeout(200);
     const back = await p.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray[data-mslot]')].map((c) => (c.className.match(/\bmv-(\d)/) || [])[1]).join());
     // the empty Snacks has nothing to show on either, and stays as it was drawn
-    t.ok('printing shows every meal with food on Details, and the cards go back after', paper === '3,3,3,' && back === '1,2,2,', JSON.stringify({ paper, back }));
+    t.ok('printing shows every meal with food open, and the cards go back after', paper === '2,2,2,' && back === '1,2,2,', JSON.stringify({ paper, back }));
 
     /* ---- rings: protein past its share stays green, fat past it amber ---- */
     const ringsOf = (sk) => p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mbd')].map((b) => (b.className.match(/rg-\w+/) || [''])[0]), card(sk));

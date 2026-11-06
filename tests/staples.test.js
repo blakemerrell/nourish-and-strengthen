@@ -131,7 +131,7 @@ module.exports = {
     l = await shop();
     t.ok('back to common pantry staples, the staples words come back with it', l.groups.includes('Pantry staples') && l.copy === 'Copy staples list', JSON.stringify(l));
 
-    /* ---- Recipes says staples; the printed books keep the storehouse ---- */
+    /* ---- Recipes says staples, and since 2026-11-06 so do the printed books ---- */
     await p.click('.tab[data-view="browse"]');
     await p.waitForTimeout(300);
     const rec = await p.evaluate(() => ({
@@ -141,7 +141,7 @@ module.exports = {
     }));
     t.ok('the collection is built on staples that keep', /staples that keep/.test(rec.blurb) && !/storehouse/i.test(rec.blurb), rec.blurb);
     t.ok('the filter says Just my staples', rec.filter === 'Everything|Just my staples|Needs a shop', rec.filter);
-    t.ok('and the printed books keep their storehouse words', /storehouse/.test(rec.book), rec.book);
+    t.ok('and the printed books say nothing of the storehouse either', !/storehouse|bishop/i.test(rec.book), rec.book);
 
     t.ok('no page errors', errs.length === 0, errs.join(' | '));
     await p.context().close();

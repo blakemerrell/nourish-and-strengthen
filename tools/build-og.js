@@ -47,9 +47,9 @@ p { font-size: 27px; line-height: 1.45; color: #5f574c; max-width: 19em }
 </style>
 <img class="cover" src="/welcome/demo/book-1-cover.webp">
 <div>
-  <div class="eyebrow">Hive &amp; Hearth</div>
+  <div class="eyebrow">Nourish &amp; Strengthen</div>
   <h1>Recipes</h1>
-  <p>${COUNT} recipes built mostly from what the bishops&rsquo; storehouse carries.</p>
+  <p>${COUNT} recipes built mostly from everyday pantry staples.</p>
   <div class="foot">Free &middot; No account &middot; Works with no signal</div>
 </div>`;
 

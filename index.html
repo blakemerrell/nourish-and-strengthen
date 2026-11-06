@@ -13,14 +13,14 @@
      search, Open Food Facts' barcodes. Framing: Google's sign-in button and
      Firebase's auth domain. tests/csp.test.js holds every host the code
      loads or fetches to this list, and a page with no violations. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; img-src 'self' data: blob: https://images.openfoodfacts.org; font-src 'self' data:; media-src 'self' blob:; connect-src 'self' https://*.googleapis.com https://accounts.google.com https://api.nal.usda.gov https://world.openfoodfacts.org; frame-src https://accounts.google.com https://storehouse-recipe-book.firebaseapp.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; img-src 'self' data: blob: https://images.openfoodfacts.org https://blakemerrell.github.io; font-src 'self' data:; media-src 'self' blob:; connect-src 'self' https://*.googleapis.com https://accounts.google.com https://api.nal.usda.gov https://world.openfoodfacts.org; frame-src https://accounts.google.com https://storehouse-recipe-book.firebaseapp.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- The browser's own bar matches the header: its ink by day, and the
      darker night the header takes when the phone is set to dark. -->
 <meta name="theme-color" content="#3b3630" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#120d0a" media="(prefers-color-scheme: dark)">
 <script src="src/theme.js?v=0"></script>
-<title>Hive &amp; Hearth Recipes</title>
+<title>Nourish &amp; Strengthen</title>
 <meta name="description" content="365 recipes built on staples that keep: canned, dry and frozen. Browse them, plan a week, and let the shopping list build itself.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-32.png" sizes="32x32">
@@ -37,7 +37,7 @@
 <header class="topbar no-print">
   <div class="topbar-in">
     <div class="brand sr-only">
-      <div class="brand-name">Hive &amp; Hearth</div>
+      <div class="brand-name">Nourish &amp; Strengthen</div>
       <div class="brand-sub">365 recipes &middot; two volumes</div>
     </div>
     <!-- The skep logo is the Share & settings button on one row with the tabs:
@@ -51,7 +51,7 @@
         <path d="M148 288q108-32 216 0"/>
         <path d="M104 366h304"/>
         <path d="M230 366v-22q0-26 26-26t26 26v22z" fill="currentColor" stroke-width="16"/>
-      </svg><span class="sr-only">Hive &amp; Hearth — </span><span class="sr-only" id="syncLabel" role="status">Share</span>
+      </svg><span class="sr-only">Nourish &amp; Strengthen — </span><span class="sr-only" id="syncLabel" role="status">Share</span>
     </button>
     <!-- Two labels each, and the media query picks one. A tab called "Shopping
          List" on a 390px screen is a tab you cannot see; "List" beside a basket

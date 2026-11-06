@@ -69,7 +69,7 @@ const EXCLUDE = [
   [/^package(-lock)?\.json$/, 'npm'],
   [/^firebase\.json$|^firestore\.rules$/, 'Firebase configuration, deployed with the firebase CLI'],
   [/^welcome\/demo\/stamp\.json$/, 'records which build the demo frames were taken of, for the suite'],
-  [/^print\/Storehouse-Handout\.json$/, 'records what the handout PDF was rendered from, for the suite'],
+  [/^print\/Pantry-Handout\.json$/, 'records what the handout PDF was rendered from, for the suite'],
 ];
 
 function excluded(rel) {

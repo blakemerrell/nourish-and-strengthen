@@ -82,8 +82,10 @@ module.exports = {
       t.ok('volume ' + book + ' blurb in the app is about staples, with no stray capitals',
         /staples that keep/.test(line) && !/Bishops|Storehouse/.test(line), line.slice(0, 90));
       const printed = await p.evaluate((b) => window.__bookBlurbs[b], book);
-      t.ok('volume ' + book + ' printed blurb uses the Church’s casing',
-        /bishops’ ?\s?storehouse/.test(printed) && !/Bishops|Storehouse/.test(printed), printed.slice(0, 90));
+      /* Since 2026-11-06 the printed books are built from pantry staples too:
+         Blake moved the app away from the bishops' storehouse. */
+      t.ok('volume ' + book + ' printed blurb says pantry staples, not the storehouse',
+        /pantry staples/.test(printed) && !/storehouse|bishop/i.test(printed), printed.slice(0, 90));
     }
     await p.click('[data-book="1"]');
     await p.waitForTimeout(150);

@@ -33,7 +33,19 @@ module.exports = {
         unsaid: run('cb-row', row.map((s) => ({ w: s.w, r: s.r, t: 1 })), 0, 3),
         harder: run('cb-row', [{ w: 120, r: 10, q: 3, t: 1 }], 3, 1),
         short: run('bb-bench', [{ w: 185, r: 6, q: 0, t: 1 }], 0, 3),
-        rr: window.Train._.lib('cb-row').rr
+        // Oct 22 kind: no spare logged and no pq saved (before 2026-10-27), and no block to read: assume two
+        unknown: run('cb-rev-x', [{ w: 15, r: 14, t: 1 }, { w: 15, r: 12, t: 1 }], undefined, 3),
+        rr: window.Train._.lib('cb-row').rr,
+        // the same session, kept with the block it belonged to: its week's reps to spare are read from the block
+        fromBlock: (() => {
+          const _ = window.Train._, ms = _.build({ goal: 'grow', dpw: 4, kit: 'gym', lvl: 1, acc: 4, pri: [] });
+          ms.id = 'old'; const lastW = 3;
+          const wo = { o1: { id: 'o1', st: now - 15 * 864e5, en: now - 15 * 864e5 + 3600e3, u: 'lb', ms: 'old', w: lastW, d: 0, n: 'x',
+            x: [{ e: 'cb-rev-x', s: [{ w: 15, r: 14, t: 1 }, { w: 15, r: 12, t: 1 }] }], sr: {}, fb: {} } };
+          localStorage.setItem('bsc.train', JSON.stringify({ pr: { u: 'lb', qz: 1, lvl: 1 }, ms: { old: ms }, cx: {}, ax: {}, wo }));
+          _.reload();
+          return { t: _.target(_.lib('cb-rev-x'), null, 0, 0, false, 3), asked: _.rirFor(ms, lastW) };
+        })()
       };
     });
     t.ok('after 120 x 15 with none to spare, a week asking for three plans 125 x 10, not 125 x 13',
@@ -41,6 +53,10 @@ module.exports = {
     t.ok('the step up never plans reps past the top of the range', plan.same.tw === 125 && plan.same.tr === plan.rr[1] && !plan.same.ef, JSON.stringify(plan.same));
     t.ok('with no spare logged, what last time’s plan asked stands in for it', plan.unsaid.tw === 125 && plan.unsaid.tr === 10, JSON.stringify(plan.unsaid));
     t.ok('a week asking for less to spare is left to double progression: never moved up by this', !plan.harder.ef || plan.harder.ef.k !== 'aim', JSON.stringify(plan.harder));
+    t.ok('an old session with no plan saved has its week\u2019s reps to spare read from its block',
+      plan.fromBlock.t.ef && plan.fromBlock.t.ef.q === plan.fromBlock.asked && plan.fromBlock.t.tr < 15, JSON.stringify(plan.fromBlock));
+    t.ok('a session with no spare logged and no plan saved is taken as two to spare, so week one still eases off',
+      plan.unknown.tr < 15 && plan.unknown.ef && plan.unknown.ef.k === 'aim' && plan.unknown.ef.q === 2, JSON.stringify(plan.unknown));
     t.ok('when the weight is worth fewer reps than the range starts at, the reps go to the bottom and the weight comes down, no more than a tenth',
       plan.short.tr === 6 && plan.short.tw < 185 && plan.short.tw >= 185 - 20 && plan.short.ef.k === 'aim', JSON.stringify(plan.short));
 
@@ -75,6 +91,24 @@ module.exports = {
     await p.waitForTimeout(150);
     const next = await p.evaluate(([x, j]) => document.getElementById(`trr-${x}-${j + 1}`).placeholder, [x, j]);
     t.ok('ten reps with one to spare, on a day asking for three: the next set says eight, not ten', next === '8', next);
+
+    /* The card's head (Blake, 2026-11-06): the menu keeps its corner on the
+       name's line, Done is at the foot under the set buttons, and the line
+       under the name runs the card's width. */
+    const head = await p.evaluate((x) => {
+      const c = document.querySelector('.tr-ex[data-xi="' + x + '"]'), r = (q) => { const e = c.querySelector(q); return e && e.getBoundingClientRect(); };
+      const n = r('.tr-ex-n'), m = r('.tr-expop-b'), d = r('.tr-ex-done-foot'), a = r('.tr-ex-a'), info = r('.tr-ex-info'), sets = r('.tr-set-h'), cr = c.getBoundingClientRect();
+      return { menuOnName: !!(n && m && m.top < n.bottom && m.bottom > n.top), menuRight: m && Math.round(cr.right - m.right),
+        doneBelow: !!(d && a && d.top >= a.bottom - 1), noHeadDone: !c.querySelector('.tr-ex-h .tr-ex-done-b'),
+        infoLeft: info && sets ? Math.round(info.left - sets.left) : null,
+        // every button's word inside its own button (seven to a row, "Warm-up" ran into "Plates")
+        spill: [...c.querySelectorAll('.tr-ex-a .tr-ea span')].filter((sp) => { const a = sp.getBoundingClientRect(), b = sp.closest('.tr-ea').getBoundingClientRect();
+          return a.width > 0 && (a.left < b.left - 0.5 || a.right > b.right + 0.5 || sp.scrollWidth > sp.clientWidth + 1); }).map((sp) => sp.textContent) };
+    }, x);
+    t.ok('the lift card keeps its menu on the name\u2019s line, in the corner', head.menuOnName && head.menuRight < 30, JSON.stringify(head));
+    t.ok('Done is at the foot of the card, under the set buttons, not beside the name', head.doneBelow && head.noHeadDone, JSON.stringify(head));
+    t.ok('every set button\u2019s word fits inside its own button', head.spill.length === 0, JSON.stringify(head.spill));
+    t.ok('and the line under the name starts at the card\u2019s edge, with the sets', head.infoLeft !== null && Math.abs(head.infoLeft) <= 4, JSON.stringify(head));
 
     await p.click(`[data-t="tick"][data-x="${x}"][data-s="${j + 1}"]`).catch(() => {});
     await p.waitForTimeout(150);

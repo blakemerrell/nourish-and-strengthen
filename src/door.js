@@ -170,7 +170,7 @@
   function draw(focus) {
     var r = root();
     if (!r) return;
-    r.innerHTML = '<div class="dr-top"><span class="dr-brand">Hive &amp; Hearth</span></div><div class="dr-body">' + screen() + '</div>';
+    r.innerHTML = '<div class="dr-top"><span class="dr-brand">Nourish &amp; Strengthen</span></div><div class="dr-body">' + screen() + '</div>';
     if (focus) { var h = r.querySelector('.dr-h'); if (h) h.focus(); r.scrollTop = 0; }
   }
 

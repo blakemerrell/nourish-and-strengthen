@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Recipes from the Storehouse &mdash; one sheet</title>
-<meta name="description" content="A one-sheet handout: eight recipes made only from what the bishops' storehouse carries, and a code for the rest of the collection.">
+<title>Recipes from the pantry &mdash; one sheet</title>
+<meta name="description" content="A one-sheet handout: eight recipes made only from everyday pantry staples, and a code for the rest of the collection.">
 <link rel="icon" href="../icons/icon-32.png" sizes="32x32">
 
 <!-- ---------------------------------------------------------------------
@@ -20,7 +20,7 @@
      9.5pt, which is a point larger than it wants to be, because the third
      generation of a photocopy is not the first.
 
-     Every recipe on it is storehouse-only. That is the whole claim of the
+     Every recipe on it is made from pantry staples only. That is the whole claim of the
      sheet — you can make this from the box, without a shop — so it is the
      one thing tests/share.test.js will not let go stale. The recipes are
      read out of data/recipes.js at render rather than typed here, and the
@@ -262,10 +262,10 @@ body {
 
 <div class="sheet" id="p1">
   <div class="head">
-    <div class="eyebrow">Hive &amp; Hearth</div>
-    <h1>Eight recipes from the box</h1>
-    <p class="lede">Every recipe here is made <strong>only</strong> from what the
-    bishops&rsquo;&nbsp;storehouse carries &mdash; nothing to buy, nothing to substitute. The leaf
+    <div class="eyebrow">Nourish &amp; Strengthen</div>
+    <h1>Eight recipes from the pantry</h1>
+    <p class="lede">Every recipe here is made <strong>only</strong> from everyday
+    pantry staples &mdash; nothing to buy, nothing to substitute. The leaf
     is a nutrition score out of 100, worked out from the ingredients.</p>
   </div>
   <div class="grid" id="grid1"></div>
@@ -275,10 +275,10 @@ body {
       <h3><span data-n="all">277</span> recipes, free.</h3>
       <p>Scan the code, or type the address. Nothing to install, no account, and it works with
       no signal. Plan a week and it writes the shopping list &mdash; asking you to buy only what
-      the storehouse doesn&rsquo;t carry.</p>
+      isn&rsquo;t already on your shelf.</p>
       <div class="foot-url" data-url></div>
-      <div class="foot-note">Free to use, free to copy, free to hand on. Made by a family using
-      the storehouse. Not an official product of The Church of Jesus Christ of Latter-day Saints,
+      <div class="foot-note">Free to use, free to copy, free to hand on. Made by a family, for
+      families. Not an official product of The Church of Jesus Christ of Latter-day Saints,
       and not affiliated with or endorsed by the Church. &nbsp;<strong>Turn over for four more.</strong></div>
     </div>
   </div>
@@ -286,7 +286,7 @@ body {
 
 <div class="sheet" id="p2">
   <div class="head head-2">
-    <div class="eyebrow">Hive &amp; Hearth &middot; continued</div>
+    <div class="eyebrow">Nourish &amp; Strengthen &middot; continued</div>
     <h1>Breakfast, the diner, and pudding</h1>
   </div>
   <div class="feature" id="feature2"></div>
@@ -298,8 +298,8 @@ body {
       <p>Filter by what you have in, plan a week, and let the list add itself up. There is a
       printed book too, free to download, if you would rather have it on the counter.</p>
       <div class="foot-url" data-url></div>
-      <div class="foot-note">Free to use, free to copy, free to hand on. Made by a family using
-      the storehouse. Not an official product of The Church of Jesus Christ of Latter-day Saints,
+      <div class="foot-note">Free to use, free to copy, free to hand on. Made by a family, for
+      families. Not an official product of The Church of Jesus Christ of Latter-day Saints,
       and not affiliated with or endorsed by the Church.</div>
     </div>
   </div>
@@ -323,7 +323,7 @@ body {
 
    They are rendered from data/recipes.js rather than typed onto the page, so
    correcting a recipe corrects the handout, and tests/share.test.js re-reads
-   them and fails if any of the eight stops being storehouse-only. */
+   them and fails if any of the eight stops being made from staples only. */
 (function () {
   /* The collection's size, off the collection.
    *

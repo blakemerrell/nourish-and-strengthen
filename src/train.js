@@ -695,6 +695,8 @@
      art/lifts/<id>.gif (or .webp / .mp4) and name it here, and the lift's
      page shows it above the steps. Your own how-to link, set on the lift's
      note, shows whether or not there is one. */
+  // where the site lives, for a picture the phone's copy of it does not have
+  var SITE_HOST = 'blakemerrell.github.io', SITE_ROOT = 'https://blakemerrell.github.io/nourish-and-strengthen/';
   var MEDIA = {};
   LIB_LIST.forEach(function (ex) {
     MEDIA[ex.id] = { src: 'art/lifts/' + ex.id + '.gif', credit: '\u00a9 Gym visual \u2014 gymvisual.com' };
@@ -2026,9 +2028,24 @@
       if (before && w.st >= before) continue;
       if (w.dl) continue;
       var x = exIn(w, e);
-      if (x && x.s.length) return { s: x.s, u: w.u, st: w.st, pq: x.pq };
+      if (x && x.s.length) return { s: x.s, u: w.u, st: w.st, pq: pqOf(w, x) };
     }
     return null;
+  }
+  /* The reps to spare a saved session's plan asked of a lift. Saved with the
+     session since 2026-10-27 (x.pq); before that, worked out again from the
+     block and week the session belonged to, while the block is still kept.
+     Blake's first week of a new block (2026-11-06) planned his reverse
+     crossover at 15 x 15, "one more than last time", against an Oct 22 set
+     of 15 x 14 near the end of the block before: that session had no pq and
+     no spare logged, so aimAt had nothing to compare and stood aside. */
+  function pqOf(wo, x) {
+    if (fin(x.pq)) return x.pq;
+    var ms = wo && wo.ms && T.ms ? T.ms[wo.ms] : null;
+    if (!ms || !fin(wo.w) || wo.dl) return null;
+    var r = rirFor(ms, wo.w);
+    if (!fin(r)) return null;
+    return exRir(lib(x.e), r, (steady(ms) || ms.goal === 'str') && ms.prog !== 'youth');
   }
 
   /* What to lift next time, by the rule every logbook app runs: double
@@ -2043,7 +2060,7 @@
     if (ms && w > 0) {
       var pw = woFor(ms, w - 1, d);
       var px = pw && !pw.dl && exIn(pw, ex.id);
-      if (px && px.s.length) src = { s: px.s, u: pw.u, pq: px.pq };
+      if (px && px.s.length) src = { s: px.s, u: pw.u, pq: pqOf(pw, px) };
     }
     if (!src) src = lastPerf(ex.id);
     if (!src) return { tw: null, tr: null, prev: [] };
@@ -2101,8 +2118,11 @@
   function aimAt(ex, t, top, work, src, pq, step) {
     if (t.ef || ASST[ex.id] || !(top.w > 0) || !(t.tw > 0) || !fin(t.tr) || !fin(pq)) return t;
     var q = effortAt(work, src.u, top);
-    var had = q !== null ? q : fin(src.pq) ? src.pq : null;
-    if (had === null || pq - had < 1) return t;
+    /* With nothing logged and no plan to read, two to spare: the app's usual
+       ask, and what byEffort assumes too. A week asking for three still eases
+       off from a session nobody can say was easier than that. */
+    var had = q !== null ? q : fin(src.pq) ? src.pq : 2;
+    if (pq - had < 1) return t;
     var e1 = top.w * (1 + (top.r + had) / 30);
     var worth = Math.floor(30 * (e1 / t.tw - 1) - pq + 1e-9);
     if (worth >= t.tr) return t;
@@ -7923,7 +7943,6 @@
         // new to lifting, the name opens how it is done
         '<button class="tr-ex-n" data-t="' + (nb ? 'exhow' : 'exsheet') + '" data-e="' + esc(x.e) + '">' + esc(ex.n) + '</button>' +
         '<span class="tr-fmw" id="trfm-' + i + '">' + fmHTML(i) + '</span>' +
-        (nDone > 0 ? '<button type="button" class="tr-ex-done-b' + (allWorkDone ? ' is-ready' : '') + '" data-t="exdone" data-x="' + i + '" aria-label="Mark ' + esc(ex.n) + ' complete and collapse">\u2713 Done</button>' : '') +
         '<button type="button" class="tr-expop-b" data-t="expop" data-x="' + i + '" aria-label="More options for ' + esc(ex.n) + '">\u22ef</button>' +
         '<div class="tr-ex-info' + (T.pr.hideExInfo ? ' is-hidden' : '') + '">' +
           '<span class="tr-ex-m">' + esc(mnameP(ex.m)) + ' \u00b7 ' + (x.fix ? 'main lift, set by set'
@@ -7970,13 +7989,19 @@
       '<div class="tr-ex-a">' +
         '<button class="tr-ea tr-ea-add" data-t="addset" data-x="' + i + '" aria-label="Add a set of ' + esc(ex.n) + '">' + EA_ICO.plus + '<span>Set</span></button>' +
         (x.s.length > 1 ? eaBtn('dropset', 'minus', 'Set', ' data-x="' + i + '"', 'Take off the last set') : '') +
-        (ex.k === 'c' && ex.q !== 'bw' ? eaBtn('warm', 'warm', 'Warm-up', ' data-x="' + i + '"', 'Add warm-up sets') : '') +
+        (ex.k === 'c' && ex.q !== 'bw' ? eaBtn('warm', 'warm', 'Warm', ' data-x="' + i + '"', 'Add warm-up sets') : '') +
         (plateLoaded(ex) ? eaBtn('plates', 'plates', 'Plates', ' data-x="' + i + '"', 'What plates to load, or count the ones you loaded') : '') +
         eaBtn('swap', 'swap', 'Swap', ' data-x="' + i + '"', 'Swap ' + ex.n + ' for another exercise') +
         (note ? '' : eaBtn('note', 'note', 'Note', ' data-e="' + esc(x.e) + '"', 'Add a note to ' + ex.n)) +
         '<button class="tr-ea tr-ea-rm' + (armed ? ' tr-lnk-arm' : '') + '" data-t="rmex" data-x="' + i + '">' + EA_ICO.rm +
           '<span>' + (armed ? 'Tap again: remove it and its ' + nDone + ' done set' + (nDone === 1 ? '' : 's') : 'Remove') + '</span></button>' +
       '</div>' +
+      /* Done, at the foot of the card (Blake, 2026-11-06). Beside the name it
+         shared a line with the "14 reps vs last" badge and the menu, and on a
+         phone the menu fell to a line of its own under the name. Here it is
+         the last thing under the sets, where a finished lift's thumb already
+         is, and green once every working set is ticked. */
+      (nDone > 0 ? '<button type="button" class="tr-ex-done-b tr-ex-done-foot' + (allWorkDone ? ' is-ready' : '') + '" data-t="exdone" data-x="' + i + '" aria-label="Mark ' + esc(ex.n) + ' complete and collapse">\u2713 Done</button>' : '') +
     '</div>';
   }
 
@@ -14166,6 +14191,22 @@
       if (!el || !el.classList || !el.classList.contains('tr-media')) return;
       var exId = el.getAttribute('data-e');
       if (!exId) return;
+      /* The Play Store app runs from a copy of the site on the phone, and its
+         update fetches the code, not the art: the 44 lifts added on
+         2026-11-05 had no GIF there, and Blake's Renegade Row and
+         Chest-Supported T-Bar Row showed the stick figure (a bent-over row,
+         right for neither). So a picture the copy lacks is fetched once from
+         the site itself before the stick figure stands in. */
+      var own = el.getAttribute('src') || '';
+      if (!el.getAttribute('data-web') && /^art\/lifts\//.test(own) && location.hostname !== SITE_HOST) {
+        el.setAttribute('data-web', '1');
+        el.src = SITE_ROOT + own;
+        return;
+      }
+      /* The stick figure draws its own tag and Pause; the photo's bar above
+         it said both again (2026-11-06). */
+      var bar = el.previousElementSibling;
+      if (bar && bar.classList && bar.classList.contains('tr-media-bar')) bar.remove();
       var sub = el.nextElementSibling;
       if (sub && sub.classList && sub.classList.contains('tr-sub')) sub.remove();
       var wrap = document.createElement('div');

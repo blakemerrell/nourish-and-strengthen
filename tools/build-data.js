@@ -30,7 +30,7 @@ require(path.join(ROOT, 'design', 'project', 'recipes.js'));
 // carried over from the original books — see tools/added-recipes.js
 const ADDED = require('./added-recipes.js');
 const FIXES = require('./recipe-fixes.js');
-const { CATS, NOT_STOCKED } = require('./pantry-cats.js');
+const { CATS, NOT_STOCKED, STAPLES } = require('./pantry-cats.js');
 
 // apply the corrections to the original text without editing the source export
 const ORIGINAL = global.window.RECIPES.map((r) => Object.assign({}, r, { steps: r.steps.slice() }));
@@ -409,7 +409,8 @@ Object.keys(CATS).sort().forEach((k) => {
   pantry[k] = {
     l: (shop[k] && shop[k].l) || k.replace(/_/g, ' '),
     c: CATS[k],
-    s: !anyExtra[k] && !NOT_STOCKED[k],
+    // the everyday pantry wins over a recipe's old "extra" flag (pantry-cats.js)
+    s: !!STAPLES[k] || (!anyExtra[k] && !NOT_STOCKED[k]),
   };
   /* A dried spice is assumed to be in the cupboard. Blake: spices don't
      count — paprika and cumin are not a trip to the shop, so "Also needs"

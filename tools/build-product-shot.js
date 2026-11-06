@@ -19,7 +19,7 @@
  * cooked from it says "I made this".
  *
  * Run:  node tools/build-product-shot.js
- * Needs: print/Hive-and-Hearth-Recipes.pdf, and pdftoppm on the path.
+ * Needs: print/Nourish-and-Strengthen-Recipes.pdf, and pdftoppm on the path.
  */
 
 const fs = require('fs');
@@ -28,7 +28,7 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
-const PDF = path.join(ROOT, 'print', 'Hive-and-Hearth-Recipes.pdf');
+const PDF = path.join(ROOT, 'print', 'Nourish-and-Strengthen-Recipes.pdf');
 const OUT = path.join(ROOT, 'store', 'product-book.png');
 
 if (!fs.existsSync(PDF)) {

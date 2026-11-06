@@ -70,7 +70,7 @@ module.exports = {
     require(path.join(root, 'data', 'recipes.js'));
     const count = global.window.RECIPES.length;
     const pdfHash = crypto.createHash('sha1')
-      .update(fs.readFileSync(path.join(root, 'print', 'Hive-and-Hearth-Recipes.pdf')))
+      .update(fs.readFileSync(path.join(root, 'print', 'Nourish-and-Strengthen-Recipes.pdf')))
       .digest('hex').slice(0, 12);
     t.ok('the demo frames were taken of the current build',
       stamp.recipes === count && stamp.pdf === pdfHash,
@@ -383,7 +383,7 @@ module.exports = {
       const fs2 = require('fs'), path2 = require('path');
       const dir = path2.join(__dirname, '..', 'print');
       const counts = {};
-      for (const f of ['Hive-and-Hearth-Recipes.pdf', 'Run-and-Not-Be-Weary.pdf', 'Around-the-Table.pdf']) {
+      for (const f of ['Nourish-and-Strengthen-Recipes.pdf', 'Run-and-Not-Be-Weary.pdf', 'Around-the-Table.pdf']) {
         const doc = await real.PDFDocument.load(fs2.readFileSync(path2.join(dir, f)));
         counts[f] = doc.getPageCount();
       }
@@ -455,6 +455,8 @@ module.exports = {
         'storehouse-recipe-book.firebaseapp.com': /Firebase/, 'api.nal.usda.gov': /USDA/,
         'world.openfoodfacts.org': /Open Food Facts/, 'www.walmart.com': /Walmart/,
         'www.youtube.com': /YouTube/, 'buy.stripe.com': /Stripe/,
+        // a lift's picture the Android app's copy lacks (2026-11-06)
+        'blakemerrell.github.io': /blakemerrell\.github\.io/,
       };
       const files = fs.readdirSync(path.join(root, 'src')).filter((f) => f.endsWith('.js'))
         .map((f) => path.join(root, 'src', f)).concat([path.join(root, 'index.html'), path.join(root, 'sw.js')]);

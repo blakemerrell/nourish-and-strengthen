@@ -60,7 +60,7 @@ module.exports = {
     await p.evaluate(() => { window.__choose(); window.dispatchEvent(new Event('appinstalled')); });
     await p.waitForTimeout(150);
     s = await read(p);
-    t.ok('once the browser says it is installed, the sheet says where to open it', /^Installed\. Open Hive & Hearth from your home screen/.test(s.says), s.says);
+    t.ok('once the browser says it is installed, the sheet says where to open it', /^Installed\. Open Nourish & Strengthen from your home screen/.test(s.says), s.says);
 
     /* Turned down: no button until the browser offers again. */
     const q = await open();

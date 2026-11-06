@@ -16,7 +16,7 @@
  * they are the argument rather than the decoration.
  *
  * Run:  node tools/build-demo.js
- * Needs: print/Hive-and-Hearth-Recipes.pdf, pdftoppm, pdftotext and pdfinfo
+ * Needs: print/Nourish-and-Strengthen-Recipes.pdf, pdftoppm, pdftotext and pdfinfo
  *        (poppler-utils), playwright, sharp.
  */
 
@@ -27,7 +27,7 @@ const { execFileSync } = require('child_process');
 const sharp = require('sharp');
 
 const ROOT = path.join(__dirname, '..');
-const PDF = path.join(ROOT, 'print', 'Hive-and-Hearth-Recipes.pdf');
+const PDF = path.join(ROOT, 'print', 'Nourish-and-Strengthen-Recipes.pdf');
 const OUT = path.join(ROOT, 'welcome', 'demo');
 
 /* Four pages, chosen to answer four different doubts: that it is a real book,
@@ -42,7 +42,7 @@ const OUT = path.join(ROOT, 'welcome', 'demo');
    Nothing failed; the landing page just quietly showed the wrong pages. The
    text a page carries says what it is, so it is asked. */
 const PAGES = [
-  { name: 'book-1-cover', alt: 'The printed cover: a beehive above the title, Hive and Hearth Recipes',
+  { name: 'book-1-cover', alt: 'The printed cover: a beehive above the title, Nourish and Strengthen Recipes',
     is: (t, n) => n === 1 },
   { name: 'book-2-opener', alt: 'A section opening page: an engraving of a breakfast spread above the section\u2019s name',
     // the first section's opener: "SECTION 1 Breakfasts", letter-spaced in the text layer
@@ -115,7 +115,7 @@ function serve() {
 
 (async () => {
   if (!fs.existsSync(PDF)) {
-    console.error('no print/Hive-and-Hearth-Recipes.pdf — run tools/print-books.js one first');
+    console.error('no print/Nourish-and-Strengthen-Recipes.pdf — run tools/print-books.js one first');
     process.exit(2);
   }
   fs.mkdirSync(OUT, { recursive: true });

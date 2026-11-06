@@ -2026,9 +2026,24 @@
       if (before && w.st >= before) continue;
       if (w.dl) continue;
       var x = exIn(w, e);
-      if (x && x.s.length) return { s: x.s, u: w.u, st: w.st, pq: x.pq };
+      if (x && x.s.length) return { s: x.s, u: w.u, st: w.st, pq: pqOf(w, x) };
     }
     return null;
+  }
+  /* The reps to spare a saved session's plan asked of a lift. Saved with the
+     session since 2026-10-27 (x.pq); before that, worked out again from the
+     block and week the session belonged to, while the block is still kept.
+     Blake's first week of a new block (2026-11-06) planned his reverse
+     crossover at 15 x 15, "one more than last time", against an Oct 22 set
+     of 15 x 14 near the end of the block before: that session had no pq and
+     no spare logged, so aimAt had nothing to compare and stood aside. */
+  function pqOf(wo, x) {
+    if (fin(x.pq)) return x.pq;
+    var ms = wo && wo.ms && T.ms ? T.ms[wo.ms] : null;
+    if (!ms || !fin(wo.w) || wo.dl) return null;
+    var r = rirFor(ms, wo.w);
+    if (!fin(r)) return null;
+    return exRir(lib(x.e), r, (steady(ms) || ms.goal === 'str') && ms.prog !== 'youth');
   }
 
   /* What to lift next time, by the rule every logbook app runs: double
@@ -2043,7 +2058,7 @@
     if (ms && w > 0) {
       var pw = woFor(ms, w - 1, d);
       var px = pw && !pw.dl && exIn(pw, ex.id);
-      if (px && px.s.length) src = { s: px.s, u: pw.u, pq: px.pq };
+      if (px && px.s.length) src = { s: px.s, u: pw.u, pq: pqOf(pw, px) };
     }
     if (!src) src = lastPerf(ex.id);
     if (!src) return { tw: null, tr: null, prev: [] };
@@ -2101,8 +2116,11 @@
   function aimAt(ex, t, top, work, src, pq, step) {
     if (t.ef || ASST[ex.id] || !(top.w > 0) || !(t.tw > 0) || !fin(t.tr) || !fin(pq)) return t;
     var q = effortAt(work, src.u, top);
-    var had = q !== null ? q : fin(src.pq) ? src.pq : null;
-    if (had === null || pq - had < 1) return t;
+    /* With nothing logged and no plan to read, two to spare: the app's usual
+       ask, and what byEffort assumes too. A week asking for three still eases
+       off from a session nobody can say was easier than that. */
+    var had = q !== null ? q : fin(src.pq) ? src.pq : 2;
+    if (pq - had < 1) return t;
     var e1 = top.w * (1 + (top.r + had) / 30);
     var worth = Math.floor(30 * (e1 / t.tw - 1) - pq + 1e-9);
     if (worth >= t.tr) return t;

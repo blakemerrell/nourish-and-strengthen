@@ -33,7 +33,19 @@ module.exports = {
         unsaid: run('cb-row', row.map((s) => ({ w: s.w, r: s.r, t: 1 })), 0, 3),
         harder: run('cb-row', [{ w: 120, r: 10, q: 3, t: 1 }], 3, 1),
         short: run('bb-bench', [{ w: 185, r: 6, q: 0, t: 1 }], 0, 3),
-        rr: window.Train._.lib('cb-row').rr
+        // Oct 22 kind: no spare logged and no pq saved (before 2026-10-27), and no block to read: assume two
+        unknown: run('cb-rev-x', [{ w: 15, r: 14, t: 1 }, { w: 15, r: 12, t: 1 }], undefined, 3),
+        rr: window.Train._.lib('cb-row').rr,
+        // the same session, kept with the block it belonged to: its week's reps to spare are read from the block
+        fromBlock: (() => {
+          const _ = window.Train._, ms = _.build({ goal: 'grow', dpw: 4, kit: 'gym', lvl: 1, acc: 4, pri: [] });
+          ms.id = 'old'; const lastW = 3;
+          const wo = { o1: { id: 'o1', st: now - 15 * 864e5, en: now - 15 * 864e5 + 3600e3, u: 'lb', ms: 'old', w: lastW, d: 0, n: 'x',
+            x: [{ e: 'cb-rev-x', s: [{ w: 15, r: 14, t: 1 }, { w: 15, r: 12, t: 1 }] }], sr: {}, fb: {} } };
+          localStorage.setItem('bsc.train', JSON.stringify({ pr: { u: 'lb', qz: 1, lvl: 1 }, ms: { old: ms }, cx: {}, ax: {}, wo }));
+          _.reload();
+          return { t: _.target(_.lib('cb-rev-x'), null, 0, 0, false, 3), asked: _.rirFor(ms, lastW) };
+        })()
       };
     });
     t.ok('after 120 x 15 with none to spare, a week asking for three plans 125 x 10, not 125 x 13',
@@ -41,6 +53,10 @@ module.exports = {
     t.ok('the step up never plans reps past the top of the range', plan.same.tw === 125 && plan.same.tr === plan.rr[1] && !plan.same.ef, JSON.stringify(plan.same));
     t.ok('with no spare logged, what last time’s plan asked stands in for it', plan.unsaid.tw === 125 && plan.unsaid.tr === 10, JSON.stringify(plan.unsaid));
     t.ok('a week asking for less to spare is left to double progression: never moved up by this', !plan.harder.ef || plan.harder.ef.k !== 'aim', JSON.stringify(plan.harder));
+    t.ok('an old session with no plan saved has its week\u2019s reps to spare read from its block',
+      plan.fromBlock.t.ef && plan.fromBlock.t.ef.q === plan.fromBlock.asked && plan.fromBlock.t.tr < 15, JSON.stringify(plan.fromBlock));
+    t.ok('a session with no spare logged and no plan saved is taken as two to spare, so week one still eases off',
+      plan.unknown.tr < 15 && plan.unknown.ef && plan.unknown.ef.k === 'aim' && plan.unknown.ef.q === 2, JSON.stringify(plan.unknown));
     t.ok('when the weight is worth fewer reps than the range starts at, the reps go to the bottom and the weight comes down, no more than a tenth',
       plan.short.tr === 6 && plan.short.tw < 185 && plan.short.tw >= 185 - 20 && plan.short.ef.k === 'aim', JSON.stringify(plan.short));
 

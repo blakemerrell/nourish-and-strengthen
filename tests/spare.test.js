@@ -92,6 +92,20 @@ module.exports = {
     const next = await p.evaluate(([x, j]) => document.getElementById(`trr-${x}-${j + 1}`).placeholder, [x, j]);
     t.ok('ten reps with one to spare, on a day asking for three: the next set says eight, not ten', next === '8', next);
 
+    /* The card's head (Blake, 2026-11-06): the menu keeps its corner on the
+       name's line, Done is at the foot under the set buttons, and the line
+       under the name runs the card's width. */
+    const head = await p.evaluate((x) => {
+      const c = document.querySelector('.tr-ex[data-xi="' + x + '"]'), r = (q) => { const e = c.querySelector(q); return e && e.getBoundingClientRect(); };
+      const n = r('.tr-ex-n'), m = r('.tr-expop-b'), d = r('.tr-ex-done-foot'), a = r('.tr-ex-a'), info = r('.tr-ex-info'), sets = r('.tr-set-h'), cr = c.getBoundingClientRect();
+      return { menuOnName: !!(n && m && m.top < n.bottom && m.bottom > n.top), menuRight: m && Math.round(cr.right - m.right),
+        doneBelow: !!(d && a && d.top >= a.bottom - 1), noHeadDone: !c.querySelector('.tr-ex-h .tr-ex-done-b'),
+        infoLeft: info && sets ? Math.round(info.left - sets.left) : null };
+    }, x);
+    t.ok('the lift card keeps its menu on the name\u2019s line, in the corner', head.menuOnName && head.menuRight < 30, JSON.stringify(head));
+    t.ok('Done is at the foot of the card, under the set buttons, not beside the name', head.doneBelow && head.noHeadDone, JSON.stringify(head));
+    t.ok('and the line under the name starts at the card\u2019s edge, with the sets', head.infoLeft !== null && Math.abs(head.infoLeft) <= 4, JSON.stringify(head));
+
     await p.click(`[data-t="tick"][data-x="${x}"][data-s="${j + 1}"]`).catch(() => {});
     await p.waitForTimeout(150);
     await p.evaluate(([x, j]) => { const L = window.Train._.state().LIVE; L.x[x].s[j + 1].q = '5'; window.Train._.draw(); }, [x, j]);

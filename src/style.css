@@ -10062,3 +10062,27 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
 .tr-wo-acts { margin: 10px 0; }
 .tr-wo-redo { width: 100%; min-height: 44px; }
 
+
+/* The lift card's head, 2026-11-06: the name and the menu share the top line,
+   the menu held in its corner however long the name; the "vs last" badge
+   sits on its own line under the name; and the info, cue and note lines run
+   the card's full width rather than starting under the name. Done moved to
+   the card's foot (.tr-ex-done-foot). */
+.tr-ex:not(.tr-ex-tuck) .tr-ex-h > .tr-ex-n { flex: 1 1 0; }
+.tr-ex:not(.tr-ex-tuck) .tr-ex-h > .tr-expop-b { order: 2; margin-left: auto; }
+.tr-ex:not(.tr-ex-tuck) .tr-ex-h > .tr-fmw { order: 3; margin-left: 0; }
+.tr-ex:not(.tr-ex-tuck) .tr-ex-h > .tr-fmw:not(:empty) { flex: 0 0 100%; }
+.tr-ex:not(.tr-ex-tuck) .tr-ex-h > .tr-ex-info,
+.tr-ex:not(.tr-ex-tuck) .tr-ex-h > .tr-ex-safety,
+.tr-ex:not(.tr-ex-tuck) .tr-ex-h > .tr-cue-bar,
+.tr-ex:not(.tr-ex-tuck) .tr-ex-h > .tr-ex-infoshow { order: 4; }
+.tr-ex:not(.tr-ex-tuck) > .tr-grip ~ .tr-ex-h > .tr-ex-info,
+.tr-ex:not(.tr-ex-tuck) > .tr-grip ~ .tr-ex-h > .tr-ex-safety,
+.tr-ex:not(.tr-ex-tuck) > .tr-grip ~ .tr-ex-h > .tr-cue-bar {
+  margin-left: -36px; flex-basis: calc(100% + 36px); width: calc(100% + 36px);
+}
+.tr-ex:not(.tr-ex-tuck) > .tr-grip ~ .tr-ex-h > .tr-ex-infoshow { margin-left: -36px; }
+.tr-ex-done-b.tr-ex-done-foot {
+  float: none; display: flex; align-items: center; justify-content: center;
+  width: 100%; min-height: 48px; margin: 8px 0 0; border-radius: 10px; font-size: 0.9375rem;
+}

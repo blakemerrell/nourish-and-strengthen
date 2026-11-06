@@ -7943,7 +7943,6 @@
         // new to lifting, the name opens how it is done
         '<button class="tr-ex-n" data-t="' + (nb ? 'exhow' : 'exsheet') + '" data-e="' + esc(x.e) + '">' + esc(ex.n) + '</button>' +
         '<span class="tr-fmw" id="trfm-' + i + '">' + fmHTML(i) + '</span>' +
-        (nDone > 0 ? '<button type="button" class="tr-ex-done-b' + (allWorkDone ? ' is-ready' : '') + '" data-t="exdone" data-x="' + i + '" aria-label="Mark ' + esc(ex.n) + ' complete and collapse">\u2713 Done</button>' : '') +
         '<button type="button" class="tr-expop-b" data-t="expop" data-x="' + i + '" aria-label="More options for ' + esc(ex.n) + '">\u22ef</button>' +
         '<div class="tr-ex-info' + (T.pr.hideExInfo ? ' is-hidden' : '') + '">' +
           '<span class="tr-ex-m">' + esc(mnameP(ex.m)) + ' \u00b7 ' + (x.fix ? 'main lift, set by set'
@@ -7997,6 +7996,12 @@
         '<button class="tr-ea tr-ea-rm' + (armed ? ' tr-lnk-arm' : '') + '" data-t="rmex" data-x="' + i + '">' + EA_ICO.rm +
           '<span>' + (armed ? 'Tap again: remove it and its ' + nDone + ' done set' + (nDone === 1 ? '' : 's') : 'Remove') + '</span></button>' +
       '</div>' +
+      /* Done, at the foot of the card (Blake, 2026-11-06). Beside the name it
+         shared a line with the "14 reps vs last" badge and the menu, and on a
+         phone the menu fell to a line of its own under the name. Here it is
+         the last thing under the sets, where a finished lift's thumb already
+         is, and green once every working set is ticked. */
+      (nDone > 0 ? '<button type="button" class="tr-ex-done-b tr-ex-done-foot' + (allWorkDone ? ' is-ready' : '') + '" data-t="exdone" data-x="' + i + '" aria-label="Mark ' + esc(ex.n) + ' complete and collapse">\u2713 Done</button>' : '') +
     '</div>';
   }
 

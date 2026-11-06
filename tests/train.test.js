@@ -5013,8 +5013,15 @@ module.exports = {
       holder.innerHTML = _.exAbout('bb-bench', _.lib('bb-bench'));
       document.body.appendChild(holder);
       const img = holder.querySelector('img.tr-media');
+      /* The phone's copy may lack a picture (the Play Store app's update
+         fetches code, not art): the first miss tries the site itself, and
+         only a second miss draws the stick figure, under one tag and one
+         Pause rather than two (2026-11-06). */
       if (img) img.dispatchEvent(new Event('error'));
-      const fallbackOk = !!holder.querySelector('.tr-ex-anim-card') && !holder.querySelector('img.tr-media');
+      const triedWeb = !!img && /^https:\/\/blakemerrell\.github\.io\/nourish-and-strengthen\/art\/lifts\/bb-bench\.gif/.test(img.getAttribute('src') || '');
+      if (img) img.dispatchEvent(new Event('error'));
+      const fallbackOk = triedWeb && !!holder.querySelector('.tr-ex-anim-card') && !holder.querySelector('img.tr-media') &&
+        !holder.querySelector('.tr-media-bar') && holder.querySelectorAll('.tr-expause-b, [data-t="expause"]').length <= 1;
       holder.remove();
       const sgOk = _.sgMatch('T Bar Row') === 'lm-row' &&
         _.sgMatch('Barbell Standing Wrist Curl') === 'bb-wrist-curl' &&

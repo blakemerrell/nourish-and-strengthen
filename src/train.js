@@ -695,6 +695,8 @@
      art/lifts/<id>.gif (or .webp / .mp4) and name it here, and the lift's
      page shows it above the steps. Your own how-to link, set on the lift's
      note, shows whether or not there is one. */
+  // where the site lives, for a picture the phone's copy of it does not have
+  var SITE_HOST = 'blakemerrell.github.io', SITE_ROOT = 'https://blakemerrell.github.io/nourish-and-strengthen/';
   var MEDIA = {};
   LIB_LIST.forEach(function (ex) {
     MEDIA[ex.id] = { src: 'art/lifts/' + ex.id + '.gif', credit: '\u00a9 Gym visual \u2014 gymvisual.com' };
@@ -14184,6 +14186,22 @@
       if (!el || !el.classList || !el.classList.contains('tr-media')) return;
       var exId = el.getAttribute('data-e');
       if (!exId) return;
+      /* The Play Store app runs from a copy of the site on the phone, and its
+         update fetches the code, not the art: the 44 lifts added on
+         2026-11-05 had no GIF there, and Blake's Renegade Row and
+         Chest-Supported T-Bar Row showed the stick figure (a bent-over row,
+         right for neither). So a picture the copy lacks is fetched once from
+         the site itself before the stick figure stands in. */
+      var own = el.getAttribute('src') || '';
+      if (!el.getAttribute('data-web') && /^art\/lifts\//.test(own) && location.hostname !== SITE_HOST) {
+        el.setAttribute('data-web', '1');
+        el.src = SITE_ROOT + own;
+        return;
+      }
+      /* The stick figure draws its own tag and Pause; the photo's bar above
+         it said both again (2026-11-06). */
+      var bar = el.previousElementSibling;
+      if (bar && bar.classList && bar.classList.contains('tr-media-bar')) bar.remove();
       var sub = el.nextElementSibling;
       if (sub && sub.classList && sub.classList.contains('tr-sub')) sub.remove();
       var wrap = document.createElement('div');

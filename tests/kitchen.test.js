@@ -20,8 +20,12 @@ module.exports = {
     /* A dinner that needs something bought. */
     const pick = await p.evaluate(() => {
       const P = window.PANTRY;
-      const r = window.RECIPES.find((x) => x.book === 2 && x.secNum === 3 &&
-        x.ingp.some((i) => P[i.k] && !P[i.k].s && !P[i.k].sp && !i.o));
+      /* Any recipe that needs something bought and has a staple beside it.
+         It was a weeknight dinner; since 2026-11-06 every one of those is
+         made from the everyday pantry. */
+      const need = (x) => x.ingp.some((i) => P[i.k] && !P[i.k].s && !P[i.k].sp && !i.o) &&
+        x.ingp.some((i) => P[i.k] && P[i.k].s && !P[i.k].sp && !i.o);
+      const r = window.RECIPES.find((x) => x.book === 2 && need(x)) || window.RECIPES.find(need);
       const k = r.ingp.find((i) => P[i.k] && !P[i.k].s && !P[i.k].sp && !i.o).k;
       const s = r.ingp.find((i) => P[i.k] && P[i.k].s && !P[i.k].sp && !i.o).k;
       window.Store.addToDay(r.id, 'mon', 1);

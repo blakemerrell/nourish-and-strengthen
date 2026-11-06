@@ -455,6 +455,8 @@ module.exports = {
         'storehouse-recipe-book.firebaseapp.com': /Firebase/, 'api.nal.usda.gov': /USDA/,
         'world.openfoodfacts.org': /Open Food Facts/, 'www.walmart.com': /Walmart/,
         'www.youtube.com': /YouTube/, 'buy.stripe.com': /Stripe/,
+        // a lift's picture the Android app's copy lacks (2026-11-06)
+        'blakemerrell.github.io': /blakemerrell\.github\.io/,
       };
       const files = fs.readdirSync(path.join(root, 'src')).filter((f) => f.endsWith('.js'))
         .map((f) => path.join(root, 'src', f)).concat([path.join(root, 'index.html'), path.join(root, 'sw.js')]);

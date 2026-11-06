@@ -535,7 +535,7 @@
          only name on the shelf where the title and the food make the same claim.
          What protein and fiber buy you is the afternoon. */
       name: 'Run and Not Be Weary', short: 'RUN',
-      blurb: '{N1} recipes built on protein, fiber and staying full, built from everyday pantry staples. Every one carries real macros and a computed nutrition score.',
+      blurb: '{N1} recipes built on protein, fiber and staying full, made from everyday pantry staples. Every one carries real macros and a computed nutrition score.',
       epigraph: {
         t: ['And shall run and not be weary,', 'and shall walk and not faint.'],
         r: 'Doctrine and Covenants 89:20',

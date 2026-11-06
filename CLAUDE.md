@@ -28,7 +28,7 @@ SITE=_site FAST=1 node tests/run.js offline upgrade   # CI's quick gate, after `
 
 npm run build                          # tools/build-data.js: regenerate data/*.js and AUDIT.md
 npm run print                          # re-render the PDFs in print/ (needed after any recipe change)
-npm run handout                        # re-render print/Storehouse-Handout.pdf (also after any recipe change)
+npm run handout                        # re-render print/Pantry-Handout.pdf (also after any recipe change)
 node tools/build-demo.js               # re-shoot welcome/demo/ from the new PDFs and app (also after any recipe change)
 npm run site                           # tools/build-site.js → _site/ (add --no-minify to keep comments)
 npm run check                          # recipes vs. standard kitchen ratios (--all is the default here)
@@ -104,7 +104,7 @@ Nutrition comes from `tools/food-db.js`, parsed by `tools/parse-lib.js`, scored 
 `tests/share.test.js` fails because the sheet the page sets no longer matches the stamped PDF,
 and `node tools/build-demo.js`, or `tests/welcome.test.js` fails because the landing page's demo
 frames were taken of an older build. Run them in that order (the demo photographs the PDFs).
-Commit the PDFs and their stamps (`print/Storehouse-Handout.json`, `welcome/demo/stamp.json`) with the data.
+Commit the PDFs and their stamps (`print/Pantry-Handout.json`, `welcome/demo/stamp.json`) with the data.
 
 ### Storage and sync
 

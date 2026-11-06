@@ -417,26 +417,30 @@
 
   /* ---- front matter ----------------------------------------------------
      Reference pages that belong in a book people cook from: how to read a
-     recipe, the temperatures that matter, weights and swaps, and what the
-     storehouse actually carries. Built as blocks and packed like everything
+     recipe, the temperatures that matter, weights and swaps, and the pantry
+     the recipes assume. Built as blocks and packed like everything
      else, so a page can never overflow. */
-  var STOREHOUSE = [
+  /* The everyday pantry (2026-11-06): the storehouse order the books were
+     written from, with what an ordinary kitchen keeps besides — the spice
+     rack, the condiments, broth, cornstarch, cocoa. tools/pantry-cats.js
+     STAPLES is the same list as data; this is how it reads on the page. */
+  var STAPLES = [
     ['Canned meats', 'Fully cooked beef · Beef stew · Chili · Pork and beans · Tuna · Chicken breast pieces'],
-    ['Canned soups', 'Chicken rotini · Cream of chicken · Cream of mushroom · Tomato'],
+    ['Canned soups', 'Chicken rotini · Cream of chicken · Cream of mushroom · Tomato · Broth'],
     ['Canned fruit', 'Applesauce · Peaches · Pears'],
     ['Canned veg', 'Corn · Green beans · Diced tomatoes · Tomato sauce · Spaghetti sauce'],
     ['Beans, rice, potatoes', 'Black beans · Pinto beans · Great Northern beans · Dry pinto beans · Refried beans · Instant potatoes · Rice'],
     ['Meat', 'Beef franks · Ground beef · Pork sausage · Stewing beef · Beef roast · Chicken breasts · Sliced ham · Pork roast'],
-    ['Dairy and eggs', 'Butter · Cheddar · Cottage cheese · Eggs · 2% milk · Sour cream · Vanilla yogurt'],
-    ['Fresh', 'Apples · Bananas · Grapes · Oranges · Cucumbers · Lettuce · Bell peppers · Broccoli · Carrots · Onions · Potatoes · Tomatoes'],
+    ['Dairy and eggs', 'Butter · Cheddar · Parmesan · Cottage cheese · Eggs · 2% milk · Sour cream · Vanilla yogurt'],
+    ['Fresh', 'Apples · Bananas · Grapes · Oranges · Cucumbers · Lettuce · Bell peppers · Broccoli · Carrots · Garlic · Onions · Potatoes · Tomatoes'],
     ['Flour and pasta', 'White flour · Pancake and waffle mix · Macaroni · Ribbon pasta · Spaghetti · Mac and cheese'],
     ['Cereal', 'Rolled oats · Honey nut o’s · Raisin bran'],
-    ['Baking', 'Baking powder · Baking soda · Yeast · Evaporated milk · Raisins · Vegetable oil'],
+    ['Baking', 'Baking powder · Baking soda · Cornstarch · Cream of tartar · Yeast · Cocoa · Chocolate chips · Evaporated milk · Raisins · Vegetable oil'],
     ['Sugars', 'Brown · Granulated · Powdered'],
-    ['Seasonings', 'Cinnamon · Black pepper · Salt · Vanilla'],
-    ['Condiments', 'Ketchup · Mustard · Mayo · Ranch · Salsa · Honey · Jams · Peanut butter · Syrup · Black olives'],
+    ['Seasonings', 'Salt · Black pepper · Cinnamon · Vanilla · Paprika · Garlic powder · Onion powder · Cumin · Chili powder · Oregano · Thyme · Basil · Ginger · Italian seasoning · Mustard powder · Celery salt · Taco seasoning'],
+    ['Condiments', 'Ketchup · Mustard · Mayo · Ranch · Salsa · BBQ sauce · Hot sauce · Soy sauce · Worcestershire · Vinegar · Pickles · Honey · Jams · Peanut butter · Syrup · Black olives'],
     ['Drinks and desserts', 'Non-fat dry milk · Hot cocoa · Gelatin · Puddings · Cake mixes'],
-    ['Bread', 'White · Whole wheat · Hamburger buns · Hot dog buns · Tortillas'],
+    ['Bread', 'White · Whole wheat · Hamburger buns · Hot dog buns · Tortillas · Breadcrumbs'],
   ];
 
   function frontMatterItems(vol) {
@@ -549,13 +553,13 @@
       '<div>Sour cream</div><div>Plain yogurt, in most things that are not baked</div>' +
       '</div>');
 
-    head('<div class="fm-title">What the storehouse carries</div>' +
-      '<div class="fm-lede">The standard order. Anything a recipe needs beyond this is named at its foot.</div>');
+    head('<div class="fm-title">The pantry these recipes assume</div>' +
+      '<div class="fm-lede">What an ordinary kitchen keeps. Anything a recipe needs beyond this is named at its foot.</div>');
     // Chunked so it can flow across a page, but the label column is a fixed
     // width in CSS, so every chunk lines up with every other one. Left to size
     // itself, each piece picked its own width and the list looked scattered.
-    for (var i = 0; i < STOREHOUSE.length; i += 6) {
-      block('<div class="fm-table fm-pantry">' + STOREHOUSE.slice(i, i + 6).map(function (row) {
+    for (var i = 0; i < STAPLES.length; i += 6) {
+      block('<div class="fm-table fm-pantry">' + STAPLES.slice(i, i + 6).map(function (row) {
         return '<div>' + esc(row[0]) + '</div><div>' + esc(row[1]) + '</div>';
       }).join('') + '</div>');
     }
@@ -994,10 +998,10 @@
      scaling. The dialog is still there for the selections that cannot be made
      ahead of time — your favorites, this week, and recipes of your own. */
   var READY_MADE = {
-    all: { file: 'Both-Books.pdf', label: 'Both books', pages: 320 },
-    one: { file: 'Nourish-and-Strengthen-Recipes.pdf', label: 'One book', pages: 312 },
+    all: { file: 'Both-Books.pdf', label: 'Both books', pages: 324 },
+    one: { file: 'Nourish-and-Strengthen-Recipes.pdf', label: 'One book', pages: 316 },
     1: { file: 'Run-and-Not-Be-Weary.pdf', label: 'Run and Not Be Weary', pages: 116, booklet: true },
-    2: { file: 'Around-the-Table.pdf', label: 'Around the Table', pages: 204, booklet: true }
+    2: { file: 'Around-the-Table.pdf', label: 'Around the Table', pages: 208, booklet: true }
   };
 
   /* The shelf, in the order somebody chooses from it: the whole thing first,

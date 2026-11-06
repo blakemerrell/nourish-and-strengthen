@@ -1,5 +1,5 @@
 /*
- * Renders share/index.html to print/Storehouse-Handout.pdf.
+ * Renders share/index.html to print/Pantry-Handout.pdf.
  *
  * The page is the source and this only photographs it, for the same reason the
  * books are rendered rather than typeset by hand: there is one description of
@@ -19,8 +19,8 @@ const http = require('http');
 const { fixDates, keep, hash, pageTextHash } = require('./pdf-file.js');
 
 const ROOT = path.join(__dirname, '..');
-const OUT = path.join(ROOT, 'print', 'Storehouse-Handout.pdf');
-const STAMP = path.join(ROOT, 'print', 'Storehouse-Handout.json');
+const OUT = path.join(ROOT, 'print', 'Pantry-Handout.pdf');
+const STAMP = path.join(ROOT, 'print', 'Pantry-Handout.json');
 
 const TYPES = {
   '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
@@ -92,7 +92,7 @@ function serve() {
   try {
     pages = execFileSync('pdfinfo', [OUT]).toString().match(/^Pages:\s*(\d+)/m)[1];
   } catch (e) { /* pdfinfo is a nicety, not a dependency */ }
-  console.log((wrote ? 'wrote' : 'unchanged:') + ' print/Storehouse-Handout.pdf  ' + pages + ' pages, ' +
+  console.log((wrote ? 'wrote' : 'unchanged:') + ' print/Pantry-Handout.pdf  ' + pages + ' pages, ' +
     n.recipes + ' recipes, ' + Math.round(fs.statSync(OUT).size / 1024) + ' KB');
   if (pages !== '?' && pages !== '2') {
     console.error('  it is meant to be two — one sheet, printed both sides. Something grew.');

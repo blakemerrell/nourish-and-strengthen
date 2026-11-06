@@ -36,8 +36,6 @@
  */
 const NOT_STOCKED = {
   // named on the order sheet nowhere, and used by recipes
-  breadcrumbs: 'the storehouse carries bread, not crumbs',
-  celery_salt: 'seasonings are cinnamon, black pepper, salt and vanilla',
   /* The rest of the spice shelf, declared for the same reason celery salt is
      above it. Every one of these used to resolve to the catch-all seasoning,
      so a recipe could ask for paprika and the book would tell a reader it was
@@ -45,17 +43,6 @@ const NOT_STOCKED = {
      ten want oregano. Fresh garlic was already flagged here while garlic
      powder was not, in the same recipe. Naming them changes nothing a recipe
      computes and everything about whether the book warns you. */
-  paprika: 'seasonings are cinnamon, black pepper, salt and vanilla',
-  garlic_powder: 'seasonings are cinnamon, black pepper, salt and vanilla',
-  onion_powder: 'seasonings are cinnamon, black pepper, salt and vanilla',
-  cumin: 'seasonings are cinnamon, black pepper, salt and vanilla',
-  oregano: 'seasonings are cinnamon, black pepper, salt and vanilla',
-  thyme: 'seasonings are cinnamon, black pepper, salt and vanilla',
-  basil: 'seasonings are cinnamon, black pepper, salt and vanilla',
-  ginger: 'seasonings are cinnamon, black pepper, salt and vanilla',
-  mustard_powder: 'seasonings are cinnamon, black pepper, salt and vanilla',
-  chili_powder: 'seasonings are cinnamon, black pepper, salt and vanilla',
-  taco_seasoning: 'seasonings are cinnamon, black pepper, salt and vanilla',
   white_pepper: 'seasonings are cinnamon, black pepper, salt and vanilla',
   cilantro: 'seasonings are cinnamon, black pepper, salt and vanilla',
   lime: 'seasonings are cinnamon, black pepper, salt and vanilla',
@@ -64,16 +51,7 @@ const NOT_STOCKED = {
   creatine: 'seasonings are cinnamon, black pepper, salt and vanilla',
   pickle_juice: 'seasonings are cinnamon, black pepper, salt and vanilla',
   spray_butter: 'butter, yes; the spray tin, no',
-  bbq_sauce: 'condiments run to ketchup and mustard',
-  chocolate_chips: 'cake mixes and cocoa, not chips',
-  cocoa: 'hot cocoa mix is stocked; cocoa powder is not',
   cola: 'no soft drinks',
-  cream_of_tartar: 'baking shelf has flour, sugar, yeast and powders, not cream of tartar',
-  italian_seasoning: 'seasonings are cinnamon, black pepper, salt and vanilla',
-  worcestershire: 'condiments run to ketchup and mustard',
-  pickles: 'condiments run to ketchup and mustard',
-  vinegar: 'condiments run to ketchup and mustard',
-  broth: 'canned soups are cream of chicken, cream of mushroom, tomato and chicken rotini',
   tater_tots: 'potatoes come fresh and instant, not frozen',
   flank_steak: 'fresh meat on the order is chicken breast, stewing beef, roasts and ham',
   corn_tortilla: 'flour tortillas, not corn',
@@ -86,17 +64,12 @@ const NOT_STOCKED = {
   enchilada_sauce: 'made on the Copycat Shelf; chili powder is not stocked',
   avocado: 'no fresh avocados',
   jalapeno: 'no fresh chiles',
-  cornstarch: 'flour is stocked; cornstarch is not',
   crio_bru: 'a roasted cacao brew, bought outside',
-  garlic: 'fresh produce, but not garlic',
   gravy_mix: 'no packet gravies',
-  hot_sauce: 'no hot sauce',
   pepperoncini: 'no pickles or pickled peppers on the order sheet',
   light_mayo: 'plain mayo is stocked; the light one is not',
   light_ranch: 'plain ranch is stocked; the light one is not',
-  parmesan: 'the storehouse cheese is cheddar',
   salsa_verde: 'red salsa only',
-  soy_sauce: 'no soy sauce',
   whey: 'the storehouse protein is non-fat dry milk',
   // stocked nowhere and used by nothing, but wrong is wrong
   cream_cheese: 'the dairy list stops at sour cream',
@@ -292,4 +265,19 @@ const CATS = {
   wheat_bread: 'Bread',
 };
 
-module.exports = { CATS: CATS, NOT_STOCKED: NOT_STOCKED };
+
+/* The everyday pantry, 2026-11-06. Blake moved the app away from the
+   bishops' storehouse: the books are built from everyday pantry staples now,
+   and what counts as stocked is what an ordinary kitchen keeps, not what one
+   order sheet listed. The storehouse order is still the base (canned meat and
+   soup, beans, rice, flour, dairy, the fresh basics), and these are added to
+   it: the spice rack, the condiments in the door, broth, cornstarch, cocoa
+   and the rest that almost every kitchen has and the storehouse never carried.
+   Named here because a recipe that once flagged one of them as an extra
+   (vinegar, cocoa) would otherwise keep it on the shopping list for good;
+   this list wins over that flag. Specialty and fresh things (avocado,
+   cilantro, flank steak, guacamole), supplements and diet products stay
+   bought. */
+const STAPLES = {paprika: 1, garlic_powder: 1, onion_powder: 1, cumin: 1, chili_powder: 1, oregano: 1, thyme: 1, basil: 1, ginger: 1, italian_seasoning: 1, mustard_powder: 1, celery_salt: 1, taco_seasoning: 1, vinegar: 1, soy_sauce: 1, worcestershire: 1, hot_sauce: 1, bbq_sauce: 1, pickles: 1, broth: 1, cornstarch: 1, cocoa: 1, chocolate_chips: 1, breadcrumbs: 1, parmesan: 1, cream_of_tartar: 1, garlic: 1 };
+
+module.exports = { CATS: CATS, NOT_STOCKED: NOT_STOCKED, STAPLES: STAPLES };

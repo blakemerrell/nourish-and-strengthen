@@ -162,7 +162,7 @@ module.exports = {
      * recipes over a code leading to 277, on the one artefact designed to be
      * photocopied and sent home with an order. The books are held against what
      * the app renders today; this is the same check for the sheet. */
-    const pdf = path.join(root, 'print', 'Storehouse-Handout.pdf');
+    const pdf = path.join(root, 'print', 'Pantry-Handout.pdf');
     t.ok('the rendered handout ships with the repository', fs.existsSync(pdf));
 
     if (fs.existsSync(pdf)) {
@@ -197,7 +197,7 @@ module.exports = {
            and both have to agree — a recipe on the sheet changing, the count
            moving, or the PDF swapped without the stamp. */
         const { hash, pageTextHash } = require(path.join(root, 'tools', 'pdf-file.js'));
-        const stampFile = path.join(root, 'print', 'Storehouse-Handout.json');
+        const stampFile = path.join(root, 'print', 'Pantry-Handout.json');
         let stamp = {};
         try { stamp = JSON.parse(fs.readFileSync(stampFile, 'utf8')); } catch (e) { /* reported below */ }
         const now = await pageTextHash(p, '.sheet');

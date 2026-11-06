@@ -270,51 +270,54 @@
         : b.s === 'on' ? (b.m === 'p' && (b.overSl !== undefined ? b.overSl : b.r > 1.1) ? 'over, which is fine' : 'on plan') : Math.round(b.r * 100) + '% there');
     }).join(', ');
   }
-  var VIEW_SAY = ['', 'its status', 'its foods', 'its details'];
-  function mPipsHTML(v) {
-    return '<span class="mtray-pips" aria-hidden="true">' + [1, 2, 3].map(function (i) {
-      return '<i' + (i === v ? ' class="on"' : '') + '></i>';
-    }).join('') + '</span>';
+  /* Two views since 2026-11-06: folded to the rings, or open to the foods.
+     There were three. The third, Details, only added a line of numbers
+     under each food, which a food's own open line already says when you
+     tap it, and a third tap to learn that was, in Blake's words, "really
+     not that helpful". So the name is a plain open and shut now, and wears
+     a chevron that turns, the sign people already read as open and shut
+     (mockup: https://claude.ai/artifact/RwSruTSHpsPMeTWDVrByZV). */
+  var VIEW_SAY = ['', 'folded', 'open'];
+  function mChevHTML() {
+    return '<span class="mtray-chev" aria-hidden="true"></span>';
   }
-  /* Where each meal starts, until its name is tapped (Blake's "B"): a meal
-     eaten on its status, the next meal with food still to eat on its
-     details, and the meals after it on their foods. A tap holds for the day
-     it was made on (S.mView), and printing shows every meal whole. */
+  /* Where each meal starts, until its name is tapped: a meal eaten all
+     through is folded to its rings, and every other meal is open. A tap
+     holds for the day it was made on (S.mView), so a meal you open or fold
+     yourself stays that way; printing shows every meal whole. */
   /* Every meal at once. Blake, 2026-10-18, pointing at the day's head: "Add
-     a button here that lets me cycle through the triple tap for all meals.
-     Collapse, show foods, show. Edit foods". He chose it beside the gear.
-   *
-     One press puts every meal of the day in the same view, the next one
-     round from where they all are: Status, Foods, Details, and back. Meals
-     in different views (one opened by its own name) all go to Status, the
-     start of the round. It sets each meal's own view rather than holding
-     them all (S.mViewAll, which printing uses), so a meal's name still
-     steps that meal on its own afterwards. The button wears the pips the
-     meals' names wear, the shared view lit, none when they differ; the
-     current views are read off the cards as drawn (data-mv), so they are
-     the views on screen, defaults included. */
-  var VIEWS_SAY = ['', 'just their status', 'their foods', 'their details'];
+     a button here that lets me cycle through the triple tap for all meals."
+     With two views it is fold all and open all: when every meal is folded
+     it opens them all, and otherwise it folds them all, so a day with one
+     meal left open folds tidy in one press. It sets each meal's own view
+     rather than holding them all (S.mViewAll, which printing uses), so a
+     meal's name still opens or folds that meal on its own afterwards. The
+     views are read off the cards as drawn (data-mv), defaults included. */
   function mViewsAll() {
     var vs = Array.prototype.map.call(document.querySelectorAll('#macroSlots [data-mview]'), function (b) {
       return Number(b.getAttribute('data-mv')) || 0;
     });
-    var same = vs.length && vs.every(function (v) { return v === vs[0]; }) ? vs[0] : 0;
-    return { n: vs.length, same: same, next: same ? same % 3 + 1 : 1 };
+    var folded = vs.length && vs.every(function (v) { return v === 1; });
+    return { n: vs.length, folded: !!folded, next: folded ? 2 : 1 };
   }
   function mViewsNow() {
     var b = $('macroViews');
     if (!b) return;
     var a = mViewsAll();
     b.hidden = !a.n;
-    b.innerHTML = mPipsHTML(a.same);
-    b.setAttribute('aria-label', 'Every meal: show ' + VIEWS_SAY[a.next]);
-    b.title = 'Every meal: show ' + VIEWS_SAY[a.next];
+    b.innerHTML = mIcon(a.folded ? 'openall' : 'foldall');
+    b.setAttribute('aria-label', a.folded ? 'Open every meal' : 'Fold every meal');
+    b.title = a.folded ? 'Open every meal' : 'Fold every meal';
   }
 
   function mViewOf(k, sk, M, nextSk) {
     if (S.mViewAll) return S.mViewAll;
     var held = S.mView[k] && S.mView[k][sk];
-    if (held) return held;
+    if (held) return held === 1 ? 1 : 2;
+    /* A meal whose last food was just ticked stays open a beat (app.js,
+       the eaten box) so the tick is seen landing before the card folds;
+       folding under the finger read as the card running off. */
+    if (S.mFoldSoon === k + '|' + sk) return 2;
     return M.eatenAll ? 1 : 2;
   }
   /* A food's mark beside its name: the leaf, or for a meal you saved, the
@@ -374,7 +377,12 @@
       : '<button class="mstep-x mitem-amt ' + (spent ? 'mstep-wake" data-medit="' : 'mstep-type" data-mtype="') + tag + '" aria-label="' +
           name + ', ' + esc(mDialText(r, it.x)) + '. ' + (spent ? 'Correct it' : 'Type an amount') + '">' + esc(mDialText(r, it.x)) + '</button>';
     return '<div class="mfl-x no-print">' +
-        '<div class="mfl-mac"><span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mHydChip(r, it.x, it.nh) + mSaltChip(r, it.x) + '</div>' +
+        '<div class="mfl-mac"><span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' +
+          /* The water a drink adds rides in its portion pill already (the
+             droplet), so this line leaves it off, as Details did (Blake,
+             2026-10-30: "Water hydration is duplicated"). The open line is
+             the one place a food's numbers are said since Details went. */
+          (mItemFluidOz(r, it.x) > 0 ? '' : mHydChip(r, it.x, it.nh)) + mSaltChip(r, it.x) + '</div>' +
         '<div class="mfl-ctl">' +
           '<span class="mfl-ics">' +
             '<button class="mfl-ic" data-mdel="' + tag + '" aria-label="Remove ' + name + '">' + I_BIN + '</button>' +
@@ -997,12 +1005,12 @@
          pills and + are the door to the meal, where food is added. S.mAmt
          says which line is open, with the day in it, so a line left open on
          one day is not open on the next. Foods and Details both draw these
-         lines; Details adds what each costs under it. */
+         lines. */
       var live = M.live, anyEaten = items.some(function (it) { return it.eaten; });
       if (!live && onPlan) return emptyHTML(M, sk, name) + mCascadeLineHTML(sk, targets, slots);
       var view = mViewOf(k, sk, M, nextSk);
       var lines = '';
-      if (view === 2 || view === 3) {
+      if (view === 2) {
         lines = items.map(function (it, i) {
           var r = LIVE.BY_ID[it.id];
           if (!r) return '';
@@ -1044,40 +1052,35 @@
               '<input class="mitem-ate" type="checkbox" data-meat="' + esc(tag) + '" aria-label="Eaten, ' + name + '"' +
                 (it.eaten ? ' checked' : '') + (ahead ? ' disabled' : '') + '>' +
             '</div>';
-          /* Details used to open every line at once, each with its verbs
-             and dial, so three foods filled the phone and a fourth went off
-             it. Blake chose "one open, macros under each" (2026-10-24,
-             mockup https://claude.ai/artifact/LyyEvDjgiF94XKqV5u9tJf): in
-             Details each shut line says what it costs on a quiet line of its
-             own, and the keys are on the one you tap, as on Foods. The
-             water already rides in the portion pill (hydTag), so this line
-             leaves it off (Blake, 2026-10-30: "Water hydration is
-             duplicated"). */
-          var quiet = view === 3 && !open && !S.mViewAll
-            ? '<div class="mfl-q no-print"><span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + (fOz > 0 ? '' : mHydChip(r, it.x, it.nh)) + mSaltChip(r, it.x) + '</div>' : '';
+          /* What a food costs is on its own open line (mLineOpenHTML), one
+             open at a time. Details used to put a quiet line of numbers
+             under every shut food as well (2026-10-24); it went with the
+             third view on 2026-11-06, since the tap that opens a line says
+             the same and more. */
           return '<div class="mtray-f' + (r.food ? '' : ' mtray-go') + (it.eaten ? ' eaten' : '') + (it.l ? ' held' : '') + (open ? ' open' : '') + '">' +
-            line + (open ? mLineOpenHTML(M, r, it, i) : quiet) + '</div>';
+            line + (open ? mLineOpenHTML(M, r, it, i) : '') + '</div>';
         }).join('');
       }
 
-      /* The head: the name steps the views; an empty meal has nothing to
-         step through, so its name is the way to food, the same as its pills
-         (Blake: "clicking a meal that is empty just takes me to food
-         selection, right?"). The circles ride in the name on Status. */
+      /* The head: the name opens and folds the meal; an empty meal has
+         nothing to fold, so its name is the way to food, the same as its
+         pills (Blake: "clicking a meal that is empty just takes me to food
+         selection, right?"). The circles ride in the name when folded. */
       var B = mBeadsOf(M);
       var head = live
-        ? '<button class="mtray-hd" data-mview="' + esc(sk) + '" data-mv="' + view + '" aria-label="' + esc(name) + ', ' + esc(mBeadsSay(M, B)) +
-            '. Showing ' + VIEW_SAY[view] + '; tap for ' + VIEW_SAY[view % 3 + 1] + '">' +
-            '<span class="mtray-n">' + esc(name) + '</span>' + mPipsHTML(view) +
+        ? '<button class="mtray-hd" data-mview="' + esc(sk) + '" data-mv="' + view + '" aria-expanded="' + (view === 2) + '" aria-label="' + esc(name) + ', ' + esc(mBeadsSay(M, B)) +
+            '. ' + (view === 1 ? 'Folded; tap to open' : 'Open; tap to fold') + '">' +
+            mChevHTML() + '<span class="mtray-n">' + esc(name) + '</span>' +
             (view !== 1 ? '' : M.aim ? mBeadsHTML(B) : '<span class="mtray-k num"><b>' + fmtK(M.sub.kcal) + '</b> kcal</span>') + '</button>'
         : '<button class="mtray-hd" data-mopen="' + esc(sk) + '" aria-label="' + esc(name) + ', nothing on it yet. Add food">' +
             '<span class="mtray-n">' + esc(name) + '</span></button>';
       /* The card's own verbs, drawings alone, "minimal inside the cards":
          + adds (the meal's sheet, where food is found), the scale balances
          this meal (the sheet's Balance), and ⊘ skips it. The bar along the
-         bottom names the scale and the rest. Status keeps only Skip; the
-         scale is in Details, with the amounts it moves. A meal anything was
-         eaten from is not skippable: that food happened. */
+         bottom names the scale and the rest. Folded keeps only Skip; open
+         has all of them, the scale beside the amounts it moves (it was in
+         Details alone, until that view went). A meal anything was eaten
+         from is not skippable: that food happened. */
       var canBal = items.some(function (it) { return !it.eaten && it.l !== 2 && LIVE.BY_ID[it.id]; });
       var pinnedIds = (M.pins || []).map(function (pn) { return String(pn.id); });
       var canTry = onPlan && items.some(function (it) {
@@ -1085,7 +1088,7 @@
       });
       var verbs = (view === 1 || !onPlan ? '' : '<button class="mtray-ib" data-mopen="' + esc(sk) + '" aria-label="Add food to ' + esc(name) + '" title="Add food">' + mIcon('plus') + '</button>') +
         (view !== 1 && canTry ? '<button class="mtray-ib" data-mtry="' + esc(sk) + '" aria-label="Try another suggestion for ' + esc(name) + '" title="Try another">' + mIcon('another') + '</button>' : '') +
-        (view === 3 && canBal ? '<button class="mtray-ib" data-mbal="' + esc(sk) + '" aria-label="Balance every food on ' + esc(name) +
+        (view !== 1 && canBal ? '<button class="mtray-ib" data-mbal="' + esc(sk) + '" aria-label="Balance every food on ' + esc(name) +
           ', the amounts you set included" title="Balance">' + mIcon('scales') + '</button>' : '') +
         (onPlan && !anyEaten ? '<button class="mtray-ib" data-mskipask="' + esc(sk) + '" aria-label="Skip ' + esc(name) + ' today" title="Skip today">' + mIcon('skip') + '</button>' : '');
 

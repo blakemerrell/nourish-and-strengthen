@@ -914,7 +914,7 @@
        folding one you have eaten. Ephemeral: a new day starts fresh. */
     mFold: {}, mFoldFor: '', mTouched: '', mtOpen: '',
     // each meal's view on the day, by day (myday.js, mViewOf); the skip a card is asking about; Undo's copy
-    mView: {}, mViewAll: 0, mSkipAsk: '', mSkipUndo: null,
+    mView: {}, mViewAll: 0, mFoldSoon: '', mSkipAsk: '', mSkipUndo: null,
     // which empty meals have their line of ways to fill them open, by day (myday.js, emptyHTML)
     mEmptyOpen: {},
     chartOpen: false, chartWhich: 'weight', mcRange: 'all', keepMeal: '',
@@ -3494,6 +3494,9 @@
     scales: '<path d="M10 3v14M6.5 17h7M4 5.5h12M4 5.5 1.8 11a2.2 2.2 0 0 0 4.4 0zM16 5.5 13.8 11a2.2 2.2 0 0 0 4.4 0z"/>',
     another: '<path d="M15.8 11.5A6 6 0 1 1 14.2 5.7M15.6 2.8v3.4h-3.4"/>',
     skip: '<circle cx="10" cy="10" r="6.5"/><path d="M5.4 14.6 14.6 5.4"/>',
+    // every meal at once (myday.js, mViewsNow): arrows meeting to fold, parting to open
+    foldall: '<path d="M6 3.5 10 7.5l4-4M6 16.5l4-4 4 4"/>',
+    openall: '<path d="M6 7.5 10 3.5l4 4M6 12.5l4 4 4-4"/>',
     plus: '<path d="M10 4v12M4 10h12"/>',
     /* Two links of a chain: these plates, kept together. Blake picked it, and
        Save for its word, after the word Keep alone left him asking what the
@@ -6290,14 +6293,15 @@
         renderModal();
         return;
       }
-      /* A meal's name steps its card through Status, Foods and Details
-         (myday.js, mViewOf), held for the day it was pressed on. What the
-         view hides goes shut: an open line, a box being typed in. */
+      /* A meal's name opens or folds its card (myday.js, mViewOf), held for
+         the day it was pressed on. Folding shuts what it hides: an open
+         line, a box being typed in. */
       var mvw = e.target.closest('[data-mview]');
       if (mvw) {
-        var vk = mViewKey(), vsk = mvw.dataset.mview, nv = (Number(mvw.dataset.mv) || 2) % 3 + 1;
+        var vk = mViewKey(), vsk = mvw.dataset.mview, nv = Number(mvw.dataset.mv) === 1 ? 2 : 1;
         (S.mView[vk] = S.mView[vk] || {})[vsk] = nv;
-        if (nv !== 3 && S.mAmt && S.mAmt.indexOf(vk + '|' + vsk + ':') === 0) { S.mAmt = ''; S.mType = null; }
+        if (S.mFoldSoon === vk + '|' + vsk) S.mFoldSoon = '';
+        if (nv === 1 && S.mAmt && S.mAmt.indexOf(vk + '|' + vsk + ':') === 0) { S.mAmt = ''; S.mType = null; }
         keepingFocus(renderMacros);
         return;
       }
@@ -6846,10 +6850,26 @@
       var c = e.target.closest('[data-meat]');
       if (!c) return;
       var cp = c.dataset.meat.split(':');
-      mEditDay(mViewKey(), function (day) {
-        var it = (day[cp[0]] || [])[Number(cp[1])];
+      var ek = mViewKey(), all = false;
+      mEditDay(ek, function (day) {
+        var its = day[cp[0]] || [], it = its[Number(cp[1])];
         if (it) it.eaten = c.checked ? 1 : 0;
+        all = its.length > 0 && its.every(function (x) { return x.eaten; });
       });
+      /* Ticking a meal's last food folds it to its rings (myday.js,
+         mViewOf), but a beat later, so the tick is seen landing first; a
+         card that folded under the finger read as running off. A meal you
+         opened or folded yourself today is left as you set it. */
+      var held = S.mView[ek] && S.mView[ek][cp[0]];
+      S.mFoldSoon = all && !held ? ek + '|' + cp[0] : '';
+      if (S.mFoldSoon) {
+        var soon = S.mFoldSoon;
+        setTimeout(function () {
+          if (S.mFoldSoon !== soon) return;
+          S.mFoldSoon = '';
+          if (S.view === 'macros') keepingFocus(renderMacros);
+        }, 900);
+      }
       keepingFocus(renderMacros);
     });
 
@@ -6889,11 +6909,10 @@
       if (Math.abs(dx) < 48 || Math.abs(dx) < 1.5 * Math.abs(dy)) return;
       mNavDay(dx < 0 ? 7 : -7);
     }, { passive: true });
-    /* Every meal's view at once (myday.js, mViewsNow): each meal of the day
-       set to the next view round from the one they share, or to Status
-       when they differ. Set per meal, as a meal's name sets it, so a name
-       still steps its own meal afterwards; what Status and Foods hide goes
-       shut, as it does there. */
+    /* Every meal at once (myday.js, mViewsNow): all opened when all are
+       folded, all folded otherwise. Set per meal, as a meal's name sets it,
+       so a name still opens or folds its own meal afterwards; folding shuts
+       what it hides, as it does there. */
     $('macroViews').addEventListener('click', function () {
       var vk = mViewKey(), nv = MYDAY.mViewsAll().next;
       var held = (S.mView[vk] = S.mView[vk] || {});
@@ -6902,7 +6921,8 @@
       });
       S.mHydOpen = S.mHydOpen || {};
       S.mHydOpen[vk] = nv !== 1;
-      if (nv !== 3 && S.mAmt && S.mAmt.indexOf(vk + '|') === 0) { S.mAmt = ''; S.mType = null; }
+      S.mFoldSoon = '';
+      if (nv === 1 && S.mAmt && S.mAmt.indexOf(vk + '|') === 0) { S.mAmt = ''; S.mType = null; }
       keepingFocus(renderMacros);
     });
 
@@ -7674,7 +7694,7 @@
         mPrintFold = S.mFold;
         S.mFold = {};
         // every meal whole on paper, whatever view each card is in
-        S.mViewAll = 3;
+        S.mViewAll = 2;
         mOnPaper = true;
         /* Held on the day it is already on, so the arrival seed does not run
            and fold everything straight back down. */

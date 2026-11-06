@@ -298,11 +298,10 @@ module.exports = {
       }));
     /* Once, not twice: the droplet in the pill, and not again as "oz
        fluid" on the macro line under it (Blake, 2026-10-30). */
-    for (let n = 0; n < 3 && !(await r.$('#macroSlots .mfl-q')); n++) {   // to Details, where each line has its macro line
-      await r.click('#macroViews'); await r.waitForTimeout(150);
-    }
+    // the macro line is on a food's open line (Details, which put one under every food, went on 2026-11-06)
+    await r.click('#macroSlots [data-mslot="s"] .mtray-f:has(.mfl-hyd) [data-mamt]'); await r.waitForTimeout(150);
     const once = await r.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray-f')]
-      .filter((f) => f.querySelector('.mfl-hyd') && f.querySelector('.mfl-q'))
+      .filter((f) => f.querySelector('.mfl-hyd') && f.querySelector('.mfl-mac'))
       .map((f) => !f.querySelector('.mhyd-chip')));
     t.ok('and says it once: no second "oz fluid" on a line that already wears its ounces',
       once.length > 0 && once.every(Boolean), JSON.stringify(once));

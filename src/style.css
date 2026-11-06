@@ -6616,12 +6616,10 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
   position: absolute; inset: -4px 0; width: 100%; height: calc(100% + 8px); min-height: 0; margin: 0; padding: 0; border: 0;
   opacity: 0; cursor: pointer; font-size: 16px;
 }
-/* Every meal's view at once (myday.js, mViewsNow): the meals' own pips, a
-   size up, in the 32px square the gear has. */
-/* shown at every width: a narrow meal card drops its own pips for room, and
-   this button is nothing but them */
-.mday-head .mday-views .mtray-pips:not(#u#u) { display: inline-flex; gap: 4px; }
-.mday-head .mday-views .mtray-pips:not(#u#u) i { display: block; width: 6px; height: 6px; }
+/* Every meal at once (myday.js, mViewsNow): fold all, or open all when
+   every meal is already folded; arrows meeting or parting, in the square
+   the menu has. */
+.mday-head .mday-views .mday-ic { width: 20px; height: 20px; }
 .mday-head .mday-views[hidden] { display: none; }
 /* The title is for the screen reader only, at every width: the tab above
    already says Nourish, lit. It went on phones first (at 390 px it cut the
@@ -7391,14 +7389,21 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .mtray-hd:hover .mtray-n { color: var(--ink); }
 .mtray-hd:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; border-radius: 8px; }
 .mtray-hd .mtray-k { margin-left: auto; }
+/* The name opens and folds the meal (2026-11-06, two views where there were
+   three), and says so the way a list row does: a chevron, pointing on
+   when folded and down when open. Drawn from two borders, so it takes the
+   label colour in either theme. */
+.mtray-chev {
+  flex: none; width: 8px; height: 8px; margin: 0 2px 0 1px;
+  border-right: 2px solid var(--label); border-bottom: 2px solid var(--label);
+  transform: rotate(-45deg); transition: transform 0.18s ease;
+}
+.mtray.mv-2 .mtray-chev { transform: translateY(-2px) rotate(45deg); }
 /* The pills are the door to the meal now the name steps the views, so the
    row they sit in is a thumb tall; Status has no pills and its door none. */
 .mtray-b { min-height: 44px; justify-content: center; }
 .mtray-b .mtray-caps { margin: 2px 0; }
 .mtray.mv-1 .mtray-b, .mtray.mtray-empty .mtray-b { min-height: 0; }
-.mtray-pips { display: inline-flex; gap: 3px; flex: none; }
-.mtray-pips i { width: 5px; height: 5px; border-radius: 50%; background: var(--line-firm); }
-.mtray-pips i.on { background: var(--ochre); }
 .mtray-vbs { display: inline-flex; flex: none; }
 .mtray-ib {
   display: grid; place-items: center; width: 44px; height: 44px; border: 0; background: none; padding: 0; margin: 0;
@@ -7468,7 +7473,6 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   .mtray-hd .mtray-n { letter-spacing: 0.08em; }
   .mtray-acts button { padding: 0 6px; }
   .mtray-lg { display: none; }
-  .mtray-pips { display: none; }
   .mtray-cm { grid-template-columns: repeat(3, 2.4em); }
   .mtray-ck small { display: none; }
   .mtray-cl { column-gap: 8px; }
@@ -7577,10 +7581,6 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .mfl-x { display: grid; gap: 6px; padding: 0 0 10px 10px; }
 .mfl-mac { margin-top: -4px; padding-left: 36px; font-size: 0.8125rem; line-height: 1.35; color: var(--note); }
 .mfl-mac .mitem-mac { font-size: inherit; }
-/* Details, shut: the same cost line, where the open line's would sit, with
-   nothing under it. */
-.mfl-q { margin-top: -4px; padding: 0 0 8px 46px; font-size: 0.8125rem; line-height: 1.35; color: var(--note); }
-.mfl-q .mitem-mac { font-size: inherit; }
 .mfl-ctl { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
 /* The four verbs as one row of keys, edge to edge, so a thumb between two
    lands on one of them. */
@@ -8982,7 +8982,7 @@ button.mhyd-head { cursor: pointer; }
   flex: none;
   display: block;
 }
-.mfl-mac .mhyd-chip, .mfl-q .mhyd-chip, .mrow-m .mhyd-chip {
+.mfl-mac .mhyd-chip, .mrow-m .mhyd-chip {
   margin-left: 6px;
 }
 .mwk-icos {

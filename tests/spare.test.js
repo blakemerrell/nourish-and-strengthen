@@ -100,10 +100,14 @@ module.exports = {
       const n = r('.tr-ex-n'), m = r('.tr-expop-b'), d = r('.tr-ex-done-foot'), a = r('.tr-ex-a'), info = r('.tr-ex-info'), sets = r('.tr-set-h'), cr = c.getBoundingClientRect();
       return { menuOnName: !!(n && m && m.top < n.bottom && m.bottom > n.top), menuRight: m && Math.round(cr.right - m.right),
         doneBelow: !!(d && a && d.top >= a.bottom - 1), noHeadDone: !c.querySelector('.tr-ex-h .tr-ex-done-b'),
-        infoLeft: info && sets ? Math.round(info.left - sets.left) : null };
+        infoLeft: info && sets ? Math.round(info.left - sets.left) : null,
+        // every button's word inside its own button (seven to a row, "Warm-up" ran into "Plates")
+        spill: [...c.querySelectorAll('.tr-ex-a .tr-ea span')].filter((sp) => { const a = sp.getBoundingClientRect(), b = sp.closest('.tr-ea').getBoundingClientRect();
+          return a.width > 0 && (a.left < b.left - 0.5 || a.right > b.right + 0.5 || sp.scrollWidth > sp.clientWidth + 1); }).map((sp) => sp.textContent) };
     }, x);
     t.ok('the lift card keeps its menu on the name\u2019s line, in the corner', head.menuOnName && head.menuRight < 30, JSON.stringify(head));
     t.ok('Done is at the foot of the card, under the set buttons, not beside the name', head.doneBelow && head.noHeadDone, JSON.stringify(head));
+    t.ok('every set button\u2019s word fits inside its own button', head.spill.length === 0, JSON.stringify(head.spill));
     t.ok('and the line under the name starts at the card\u2019s edge, with the sets', head.infoLeft !== null && Math.abs(head.infoLeft) <= 4, JSON.stringify(head));
 
     await p.click(`[data-t="tick"][data-x="${x}"][data-s="${j + 1}"]`).catch(() => {});

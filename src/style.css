@@ -5745,7 +5745,15 @@ body:has(#view-train.tr-focus:not(.hide)) #shareHint { display: none; }
 .tr-ex .tr-ex-a { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
 /* One row: each button its picture over its word, sharing the row equally. */
 .tr-ex-a .tr-ea { flex: 1 1 0; min-width: 0; min-height: 52px; padding: 4px 0; flex-direction: column; gap: 3px; }
+/* ...but each at least as wide as its word: equal shares put "Remove" (51 px
+   of type) in a 46 px button when all seven are showing. */
+.tr-ex-a .tr-ea:not(.tr-lnk-arm) { flex: 1 1 auto; padding-left: 3px; padding-right: 3px; }
 .tr-ex-a .tr-ea span { font-size: 0.65625rem; line-height: 1; white-space: nowrap; }
+/* Seven buttons share a phone's row, and "Warm-up" ran into "Plates" beside
+   it (2026-11-06). The word is "Warm" now, each button is at least as wide
+   as its word, and a word that still will not fit ends in an ellipsis inside
+   its own button rather than over the next one. */
+.tr-ex-a .tr-ea:not(.tr-lnk-arm) span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .tr-ea.tr-ea-add { background: var(--ink); border-color: var(--ink); color: var(--card); font-weight: 600; }
 .tr-ea.tr-ea-add:hover { color: var(--card); border-color: var(--ink); opacity: 0.9; }
 /* Under 360 px the words go, and the pictures keep the row. */

@@ -327,7 +327,7 @@
         '<span>' + esc((function () {
           var m = missingFor(r);
           return m.length ? 'Also needs: ' + m.join(', ')
-            : (window.Store.pantryChanged() ? 'All on your shelf' : 'All storehouse items');
+            : (window.Store.pantryChanged() ? 'All on your shelf' : 'All pantry staples');
         })()) + '</span>' +
       '</div>' +
     '</div>';
@@ -466,14 +466,13 @@
          hundred recipes need something the storehouse does not stock, which is
          why every recipe carries a line at its foot saying so. "Actually" was
          arguing with somebody, too. Nobody had said otherwise. */
-      '<div class="fm-lede">Primary ingredients come from the bishops’&nbsp;storehouse order.</div>');
+      '<div class="fm-lede">Built from everyday pantry staples.</div>');
     /* In the book itself, because the book outlives the website and travels
        further than it — a spiral-bound copy on somebody's counter carries no
        footer and no address bar. */
     block('<div class="fm-p fm-fine">This is not an official product of The Church of Jesus ' +
       'Christ of Latter-day Saints and is not affiliated with or endorsed by the Church. It is ' +
-      'a family\u2019s own collection, built from what their bishops\u2019&nbsp;storehouse ' +
-      'carries.</div>');
+      'a family\u2019s own collection.</div>');
 
     block('<div class="fm-sub">The number</div>' +
       '<div class="fm-p">Every recipe has one, running from 001 straight through both volumes. ' +
@@ -995,10 +994,10 @@
      scaling. The dialog is still there for the selections that cannot be made
      ahead of time — your favorites, this week, and recipes of your own. */
   var READY_MADE = {
-    all: { file: 'Both-Books.pdf', label: 'Both books', pages: 328 },
-    one: { file: 'Hive-and-Hearth-Recipes.pdf', label: 'One book', pages: 320 },
-    1: { file: 'Run-and-Not-Be-Weary.pdf', label: 'Run and Not Be Weary', pages: 120, booklet: true },
-    2: { file: 'Around-the-Table.pdf', label: 'Around the Table', pages: 208, booklet: true }
+    all: { file: 'Both-Books.pdf', label: 'Both books', pages: 320 },
+    one: { file: 'Nourish-and-Strengthen-Recipes.pdf', label: 'One book', pages: 312 },
+    1: { file: 'Run-and-Not-Be-Weary.pdf', label: 'Run and Not Be Weary', pages: 116, booklet: true },
+    2: { file: 'Around-the-Table.pdf', label: 'Around the Table', pages: 204, booklet: true }
   };
 
   /* The shelf, in the order somebody chooses from it: the whole thing first,

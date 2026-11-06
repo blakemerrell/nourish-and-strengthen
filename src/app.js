@@ -20,7 +20,7 @@
      and it has already been renamed once — a volume in this repository went
      from Strong & Simple to Run and Not Be Weary and the change had to be
      chased through nine files. Not twice. */
-  var APP_NAME = 'Hive & Hearth';
+  var APP_NAME = 'Nourish & Strengthen';
   var APP_LINE = 'Recipes';           // the second line on a cover
 
   var BASE = window.RECIPES || [];    // the 271 in the two printed books
@@ -535,7 +535,7 @@
          only name on the shelf where the title and the food make the same claim.
          What protein and fiber buy you is the afternoon. */
       name: 'Run and Not Be Weary', short: 'RUN',
-      blurb: '{N1} recipes built on protein, fiber and staying full, with primary ingredients from the bishops’\u00a0storehouse. Every one carries real macros and a computed nutrition score.',
+      blurb: '{N1} recipes built on protein, fiber and staying full, built from everyday pantry staples. Every one carries real macros and a computed nutrition score.',
       epigraph: {
         t: ['And shall run and not be weary,', 'and shall walk and not faint.'],
         r: 'Doctrine and Covenants 89:20',
@@ -543,7 +543,7 @@
     },
     2: {
       name: 'Around the Table', short: 'TABLE',
-      blurb: '{N2} family recipes with primary ingredients from the bishops’\u00a0storehouse: three‑minute breakfasts to Sunday roasts, by way of an afternoon at the stove, the restaurant favourites worked out at home, and a section for chocolate alone.',
+      blurb: '{N2} family recipes built from everyday pantry staples: three‑minute breakfasts to Sunday roasts, by way of an afternoon at the stove, the restaurant favourites worked out at home, and a section for chocolate alone.',
       epigraph: {
         t: ['And did eat their meat with gladness', 'and singleness of heart.'],
         r: 'Acts 2:46',
@@ -561,7 +561,7 @@
      of two. */
   var ONE_BOOK = {
     name: APP_NAME + ' ' + APP_LINE,
-    blurb: '{N} recipes with primary ingredients from the bishops\u2019\u00a0storehouse, ' +
+    blurb: '{N} recipes built from everyday pantry staples, ' +
       'in two parts: {n1} built on protein and fiber, and {n2} for the family table.',
     epigraph: {
       t: ['And shall run and not be weary,', 'and shall walk and not faint.'],
@@ -663,7 +663,7 @@
     '2-6': 'Nothing quick here. Bread that rises, gravy that thickens, custard that sets.',
     '2-7': 'The restaurant version, worked out at home.',
     '2-8': 'For when only chocolate will do.',
-    '2-9': 'The three bottles the storehouse does not carry, made from what it does.'
+    '2-9': 'The three bottles you would otherwise buy, made from what is already on the shelf.'
   };
 
   /* The app says staples where the printed books say the storehouse. The
@@ -5062,7 +5062,7 @@
     var st = I.state();
     var say = {
       app: 'You are in the installed app.',
-      done: 'Installed. Open Hive &amp; Hearth from your home screen; it works with no signal.',
+      done: 'Installed. Open Nourish &amp; Strengthen from your home screen; it works with no signal.',
       wait: 'Installing. It appears on your home screen in a moment.',
       no: 'Not installed. Open the app again to be offered it again.',
       ios: 'On an iPhone or iPad: in Safari, tap Share, then <b>Add to Home Screen</b>.',
@@ -5070,7 +5070,7 @@
     };
     return '<div class="mt-div">On your home screen</div>' +
       (st === 'offer'
-        ? '<p class="kit-say">Hive &amp; Hearth as an app of its own: on your home screen, without the browser around it, and working with no signal.</p>' +
+        ? '<p class="kit-say">Nourish &amp; Strengthen as an app of its own: on your home screen, without the browser around it, and working with no signal.</p>' +
           '<div class="sync-row"><button class="btn-primary" data-sync="install">Install the app</button></div>'
         : '<p class="kit-say" role="status">' + say[st] + '</p>');
   }
@@ -8901,7 +8901,7 @@
           });
         }
         if (act === 'inviteshare' && S.inviteUrl && navigator.share) {
-          navigator.share({ title: 'Hive & Hearth', text: 'Join my pantry on Hive & Hearth', url: S.inviteUrl })
+          navigator.share({ title: 'Nourish & Strengthen', text: 'Join my pantry on Nourish & Strengthen', url: S.inviteUrl })
             .catch(function () { /* dismissed */ });
         }
         if (act === 'invitecopy' && S.inviteUrl) {

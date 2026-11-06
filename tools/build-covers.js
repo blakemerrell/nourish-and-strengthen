@@ -34,7 +34,7 @@ const OUT = path.join(ROOT, 'art', 'covers');
  * whose entire job is telling them apart. It is drawn as the two volumes
  * overlapping instead, which is also what the file actually is. */
 const COVERS = {
-  one: 'Hive-and-Hearth-Recipes.pdf',
+  one: 'Nourish-and-Strengthen-Recipes.pdf',
   1: 'Run-and-Not-Be-Weary.pdf',
   2: 'Around-the-Table.pdf',
 };

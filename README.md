@@ -1,6 +1,11 @@
-# Hive & Hearth Recipes
+# Nourish & Strengthen
 
-271 recipes from the storehouse, in two volumes, plus a third that starts empty and
+Recipes, a week's plan and a shopping list (Nourish's recipe books), macro
+tracking, and a lifting block and logger (Strengthen). Renamed from Hive & Hearth
+Recipes in November 2026, when it moved away from the bishops' storehouse: the
+recipes are built from everyday pantry staples now.
+
+271 recipes in two volumes, plus a third that starts empty and
 fills with your own — browse them, plan a week, let the shopping list build itself,
 and print the lot as a real half-letter book. It works with no signal.
 

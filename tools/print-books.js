@@ -35,7 +35,7 @@ const BOOKS = {
   2: 'Around-the-Table.pdf',
   3: 'Ours.pdf',
   all: 'Both-Books.pdf',
-  one: 'Hive-and-Hearth-Recipes.pdf',
+  one: 'Nourish-and-Strengthen-Recipes.pdf',
 };
 
 function serve() {

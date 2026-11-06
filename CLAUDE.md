@@ -4,8 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Hive & Hearth Recipes: a static, offline-first web app (PWA) holding the Bishops' Storehouse
-recipe books — browse, plan weeks, a self-building shopping list, printable half-letter books —
+Nourish & Strengthen (formerly Hive & Hearth Recipes): a static, offline-first web app (PWA) holding the
+recipe books, built from everyday pantry staples (originally the Bishops' Storehouse books) — browse, plan weeks, a self-building shopping list, printable half-letter books —
 plus Nourish (macro tracking, the "My Day" screens) and Strengthen (an RP-style lifting block
 and logger). It is used on phones, often with no signal. Sharing between devices is optional,
 through Firebase.

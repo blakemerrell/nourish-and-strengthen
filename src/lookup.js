@@ -107,7 +107,7 @@
       encodeURIComponent(code) + '.json?fields=product_name,brands,nutriments,serving_size,serving_quantity,serving_quantity_unit,allergens_tags,' +
       'nutriscore_grade,nova_group,nova_groups_markers,nutrient_levels,ingredients_analysis_tags,' +
       'additives_tags,ingredients_text,ingredients_text_en,data_quality_errors_tags,image_front_small_url' +
-      '&app_name=' + encodeURIComponent('Hive and Hearth') +
+      '&app_name=' + encodeURIComponent('Nourish and Strengthen') +
       '&app_version=' + encodeURIComponent(BUILD);
     return fetch(url).then(function (r) {
       if (r.status === 429 || r.status === 503) throw new Error('toofast');

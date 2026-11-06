@@ -7471,6 +7471,11 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   .mbd { width: 24px; height: 24px; }
   .mbds { gap: 3px; }
   .mtray-hd .mtray-n { letter-spacing: 0.08em; }
+  /* Four drawings in an open card's head left a 320px phone "D…" for
+     Dinner once the scale joined + ↻ ⊘ (2026-11-06). On the narrowest
+     phones the scale stays in the meal's sheet, where Balance has always
+     been, and the head keeps + ↻ ⊘ and the meal's name. */
+  .mtray-vbs [data-mbal] { display: none; }
   .mtray-acts button { padding: 0 6px; }
   .mtray-lg { display: none; }
   .mtray-cm { grid-template-columns: repeat(3, 2.4em); }
@@ -7482,21 +7487,29 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .mtray-k b { font-weight: 700; color: var(--ink); }
 .mtray-k.over b { color: var(--warn); }
 .mtray-k.on b { color: var(--green); }
-/* Each food a line (myday.js, trayHTML): its leaf, its name, the kitchen
-   measure and the grams, its tick. The lines reach back under the meal's
-   tick, so a leaf sits in that column and every name starts where the meal's
-   own name does; 46px is the tick's 44 and its 2 of margin. */
+/* Each food a line (myday.js, trayHTML): its name with its leaf raised after
+   it, the kitchen measure and the grams, its tick. The lines reach back under
+   the meal's tick (46px is the tick's 44 and its 2 of margin), and since
+   2026-11-06 the name starts at the card's own 12px edge, where a column for
+   the leaf used to be: the leaf is a superscript now (Blake: "put the text of
+   the food all the way to the [left] and the leaf as a superscript"). */
 .mtray-fs { position: relative; z-index: 1; display: flex; flex-direction: column; margin: 6px 0 0 -46px; }
 /* "Nothing yet" takes the line a food would, so an empty tray is the height
    of a tray with one food on it; it is the door's, not a line of its own. */
-.mtray-fs .mtray-none { pointer-events: none; display: flex; align-items: center; min-height: 46px; padding-left: 46px; font-size: 0.84375rem; }
+.mtray-fs .mtray-none { pointer-events: none; display: flex; align-items: center; min-height: 46px; padding-left: 12px; font-size: 0.84375rem; }
 .mtray-f { position: relative; }
-.mtray-f + .mtray-f::before { content: ''; position: absolute; top: 0; left: 46px; right: 0; border-top: 1px solid var(--line-soft); }
+.mtray-f + .mtray-f::before { content: ''; position: absolute; top: 0; left: 12px; right: 0; border-top: 1px solid var(--line-soft); }
 .mfl-r {
-  display: grid; grid-template-columns: 38px minmax(0, 1fr) auto 30px; align-items: center; column-gap: 8px;
-  min-height: 46px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto 30px; align-items: center; column-gap: 8px;
+  min-height: 46px; padding-left: 12px; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
-.mfl-lf { display: grid; place-items: center; }
+/* The leaf, raised after the name like a footnote mark: smaller than the
+   leaf a recipe card wears, its number still in it. inline-block keeps it
+   whole at the end of a wrapped name rather than split from its last word's
+   line. */
+.mfl-sup { display: inline-block; vertical-align: top; line-height: 0; margin-left: 3px; position: relative; top: -5px; }
+.mfl-sup .leaf-sm { width: 16px; height: 19px; vertical-align: top; }
+.mfl-sup .mtray-kept { display: inline-flex; vertical-align: top; }
 .mtray-fn {
   justify-self: start; display: flex; align-items: center; max-width: 100%; min-width: 44px; min-height: 44px;
   border: 0; background: none; padding: 0; margin: 0; text-align: left; cursor: pointer;
@@ -7579,7 +7592,7 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .mtray-f.open::before, .mtray-f.open + .mtray-f::before { border-top-color: transparent; }
 .mtray-f.open .mtray-fm b { color: var(--ochre-text); }
 .mfl-x { display: grid; gap: 6px; padding: 0 0 10px 10px; }
-.mfl-mac { margin-top: -4px; padding-left: 36px; font-size: 0.8125rem; line-height: 1.35; color: var(--note); }
+.mfl-mac { margin-top: -4px; padding-left: 2px; font-size: 0.8125rem; line-height: 1.35; color: var(--note); }
 .mfl-mac .mitem-mac { font-size: inherit; }
 .mfl-ctl { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
 /* The four verbs as one row of keys, edge to edge, so a thumb between two
@@ -7679,7 +7692,13 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 @keyframes mfl-drop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 /* the meal's pills, small, under its name */
 .mtray-caps { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 4px; margin: 4px 0 6px; }
-.mtray-caps .mcap { padding: 2px 3px; }
+/* Thin, and the card's whole width (Blake, 2026-11-06: "thin up the pills
+   and stretch the whole span of the card"): they reach back under the meal's
+   tick to the card's 12px edge, where the food names now start too. The
+   pills are not buttons of their own; the meal's door (.mtray-b) behind them
+   keeps its 44px. */
+.mtray-b .mtray-caps { margin-left: -36px; width: calc(100% + 36px); }
+.mtray-caps .mcap { padding: 0 3px; line-height: 1.35; }
 .mtray-caps .mcap-t { font-size: 0.8125rem; }
 /* On the narrowest phones four pills in a row cut their own numbers short
    ("1,504/5" for 1,504 of 513), so the pills go two to a row. */

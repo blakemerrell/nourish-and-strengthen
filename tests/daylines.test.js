@@ -67,16 +67,30 @@ module.exports = {
     t.ok('with no keys on it until it is opened, and tall enough for a thumb', shut.every((l) => l.keys === 0 && l.h >= 44), JSON.stringify(shut));
     const rec = await p.evaluate((sel) => {
       const l = document.querySelector(sel);
-      return { leaf: !!l.querySelector('.mfl-lf .leaf'), go: l.classList.contains('mtray-go'), open: (l.querySelector('.mtray-fn') || {}).dataset.open,
-        foodLeaf: !!document.querySelector(sel.replace('nth-child(1)', 'nth-child(2)') + ' .mfl-lf .leaf') };
+      const leaf = l.querySelector('.mfl-nm .mfl-sup .leaf'), nm = l.querySelector('.mfl-nm');
+      return { leaf: !!leaf, go: l.classList.contains('mtray-go'), open: (l.querySelector('.mtray-fn') || {}).dataset.open,
+        // raised: the leaf's top sits above the top of the name's last line, beside its last word
+        raised: !!leaf && (() => {
+          const tx = nm.firstChild, r = document.createRange();
+          r.setStart(tx, tx.length - 1); r.setEnd(tx, tx.length);
+          const last = r.getBoundingClientRect(), lf = leaf.getBoundingClientRect();
+          return lf.top < last.top && lf.left >= last.right - 1;
+        })(),
+        foodLeaf: !!document.querySelector(sel.replace('nth-child(1)', 'nth-child(2)') + ' .leaf') };
     }, line('d', 0));
-    t.ok('a recipe’s line wears its leaf, and its name is the door to the recipe', rec.leaf && rec.go && rec.open === '66' && !rec.foodLeaf, JSON.stringify(rec));
+    t.ok('a recipe’s line wears its leaf raised after its name, and its name is the door to the recipe',
+      rec.leaf && rec.raised && rec.go && rec.open === '66' && !rec.foodLeaf, JSON.stringify(rec));
+    /* Since 2026-11-06 the leaf is a superscript, not a column of its own,
+       so every food's name starts at the card's own edge, where the meal's
+       pills start too (Blake: "stretch the whole span of the card"). */
     const names = await p.evaluate(() => {
-      const meal = document.querySelector('#macroSlots .mtray-n').getBoundingClientRect().left;
-      return { meal, foods: [...document.querySelectorAll('#macroSlots .mtray-fn')].map((b) => Math.round(b.getBoundingClientRect().left - meal)) };
+      const edge = document.querySelector('#macroSlots .mtray-caps').getBoundingClientRect().left;
+      const card = document.querySelector('#macroSlots .mtray-caps').closest('.mtray').getBoundingClientRect();
+      return { edge: Math.round(edge - card.left), card: Math.round(card.width), capsRight: Math.round(card.right - document.querySelector('#macroSlots .mtray-caps').getBoundingClientRect().right),
+        foods: [...document.querySelectorAll('#macroSlots .mtray-fn')].map((b) => Math.round(b.getBoundingClientRect().left - edge)) };
     });
-    t.ok('every name starts where the meal’s own name does, the leaf in the column under the tick',
-      names.foods.every((d) => Math.abs(d) <= 2), JSON.stringify(names));
+    t.ok('every food’s name starts where the meal’s pills do, at the card’s edge, and the pills reach across the card',
+      names.foods.every((d) => Math.abs(d) <= 2) && names.edge <= 14 && names.capsRight <= 14, JSON.stringify(names));
 
     /* ---- a tap on the line opens it there, on the day ---- */
     const at = await p.evaluate((sel) => { const r = document.querySelector(sel + ' .mfl-r').getBoundingClientRect(); return { x: r.left + r.width * 0.62, y: r.top + r.height / 2 }; }, line('l', 0));

@@ -1042,9 +1042,15 @@
                 (hydOff ? '<path d="M3 13L13 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' : '') +
                 '</svg><span class="vis-hidden">' + fOz + ' oz</span></span>'
             : '';
+          /* The leaf rides after the name, small and raised like a footnote
+             mark, rather than in a column of its own (Blake, 2026-11-06: "put
+             the text of the food all the way to the [left] and the leaf as a
+             superscript"). The column cost every line 46px of a phone's
+             width, foods with no leaf included, and pushed long recipe names
+             onto three lines. */
+          var badge = mBadgeHTML(r);
           var line = '<div class="mfl-r">' +
-              '<span class="mfl-lf">' + mBadgeHTML(r) + '</span>' +
-              door + '<span class="mfl-nm">' + name + '</span></button>' +
+              door + '<span class="mfl-nm">' + name + (badge ? '<sup class="mfl-sup">' + badge + '</sup>' : '') + '</span></button>' +
               '<button class="mfl-amt split-pill' + (it.l ? ' locked' : '') + (single ? ' single' : '') + (fOz > 0 ? ' has-hyd' : '') + (hydOff ? ' hyd-off' : '') + '" data-mamt="' + esc(k + '|' + tag) + '" aria-expanded="' + open + '" aria-label="' + name + ', ' +
                 esc(kitchen ? kitchen + ', ' + metric : metric) + (fOz > 0 ? (hydOff ? ', hydration off' : ', ' + fOz + ' oz hydration') : '') + (it.l ? ', locked' : '') + '. ' + (open ? 'Close' : 'Change it') + '">' +
                 '<span class="mtray-fm sp-k"><b>' + (it.l ? LOCK_SM : '') + esc(kitchen) + '</b></span>' +

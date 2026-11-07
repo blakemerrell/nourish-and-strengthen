@@ -219,9 +219,12 @@
      been named yet. The macros come from the parts as they stand rather than
      from re-reading the ingredient text, because the parts already carry
      measured numbers and re-deriving them would only lose accuracy. */
-  function mSaveMeal(sk, name, share) {
+  /* `given`: the foods to keep, when they are not the meal's own. A meal
+     said into the picker (heard.js) is kept before any of it is on the day,
+     and kept alone, without whatever else the meal already holds. */
+  function mSaveMeal(sk, name, share, given) {
     var day = mDay(mViewKey());
-    var items = (day[sk] || []).filter(function (it) { return LIVE.BY_ID[it.id]; });
+    var items = (given || day[sk] || []).filter(function (it) { return LIVE.BY_ID[it.id]; });
     if (!items.length || !name) return null;
     var mac = { kcal: 0, p: 0, f: 0, c: 0, na: 0, fib: 0 };
     var ing = [], parts = [], est = false;

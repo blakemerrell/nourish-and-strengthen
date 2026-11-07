@@ -915,6 +915,8 @@
     mFold: {}, mFoldFor: '', mTouched: '', mtOpen: '',
     // each meal's view on the day, by day (myday.js, mViewOf); the skip a card is asking about; Undo's copy
     mView: {}, mViewAll: 0, mFoldSoon: '', mSkipAsk: '', mSkipUndo: null,
+    // a meal said into the picker's box (heard.js): the band's choices; foods to keep as one; a meal a new recipe goes on
+    mpHeard: null, mpMicHint: false, keepItems: null, editAddTo: null,
     // which empty meals have their line of ways to fill them open, by day (myday.js, emptyHTML)
     mEmptyOpen: {},
     chartOpen: false, chartWhich: 'weight', mcRange: 'all', keepMeal: '',
@@ -3726,7 +3728,33 @@
 
   /* src/pickhome.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var PICKHOME = window.HiveParts.pickhome({ S: S, keepingFocus: keepingFocus, mDay: mDay, mDayTargets: mDayTargets, mQueryKind: mQueryKind, mQueryTopHTML: mQueryTopHTML, mViewKey: mViewKey, mpComboHTML: mpComboHTML, mpElseHTML: mpElseHTML, mpFitsHTML: mpFitsHTML, mpKnownIds: mpKnownIds, mpLastXs: mpLastXs, mpFavsHTML: mpFavsHTML, mpNamedHTML: mpNamedHTML, mpPinsHTML: mpPinsHTML, mpQ: mpQ, mpRecentHTML: mpRecentHTML, mpShelvesHTML: mpShelvesHTML, LIVE: LIVE });
+  /* src/heard.js, handed what it reads of the app's and kept under its own
+     names here, as declarations, so they answer from anywhere in this file:
+     a meal said in one breath into the picker's box, and its band. */
+  var HEARD = window.HiveParts.heard({ S: S, fmtNum: fmtNum, mMacLine: mMacLine, mReadSlots: mReadSlots, searchScore: searchScore, LIVE: LIVE });
+  function mHeard(q) { return HEARD.mHeard(q); }
+  function mHeardHTML(q) { return HEARD.mHeardHTML(q); }
+  function mHeardTotals(H) { return HEARD.mHeardTotals(H); }
+  function mHeardIng(l) { return HEARD.mHeardIng(l); }
+  /* The box emptied after a heard meal went on: the band, its choices and
+     the sentence go, and the picker is the picker again. */
+  function mHeardDone() {
+    S.mpQuery = '';
+    S.mpHeard = null;
+    var box = $('mpFind');
+    if (box) {
+      box.value = '';
+      var sh = box.closest('.msheet');
+      if (sh) sh.classList.remove('mpq');
+    }
+  }
+  function mSlotName(sk) {
+    var nm = 'the meal';
+    mReadSlots().list.forEach(function (sl) { if (sl.k === sk) nm = sl.n; });
+    return nm;
+  }
+
+  var PICKHOME = window.HiveParts.pickhome({ S: S, keepingFocus: keepingFocus, mDay: mDay, mDayTargets: mDayTargets, mHeardHTML: mHeardHTML, mQueryKind: mQueryKind, mQueryTopHTML: mQueryTopHTML, mViewKey: mViewKey, mpComboHTML: mpComboHTML, mpElseHTML: mpElseHTML, mpFitsHTML: mpFitsHTML, mpKnownIds: mpKnownIds, mpLastXs: mpLastXs, mpFavsHTML: mpFavsHTML, mpNamedHTML: mpNamedHTML, mpPinsHTML: mpPinsHTML, mpQ: mpQ, mpRecentHTML: mpRecentHTML, mpShelvesHTML: mpShelvesHTML, LIVE: LIVE });
   function mpHomeBodyHTML() { return PICKHOME.mpHomeBodyHTML(); }
   function refreshMacroPicker() { return PICKHOME.refreshMacroPicker(); }
 
@@ -3900,7 +3928,7 @@
   var MEALTOOLS = window.HiveParts.mealtools({ MFOOD_G_MAX: MFOOD_G_MAX, MNA_CAP: MNA_CAP, MNA_W: MNA_W, MW: MW, fmtNum: fmtNum, kcalOf: kcalOf, keepingFocus: keepingFocus, mBuildFoods: mBuildFoods, mByGram: mByGram, mDay: mDay, mDayTargets: mDayTargets, mEditDay: mEditDay, mLadder: mLadder, mMealAsk: mMealAsk, mNewFoodKey: mNewFoodKey, mReadMyFoods: mReadMyFoods, mReadSlots: mReadSlots, mViewKey: mViewKey, mWriteMyFoods: mWriteMyFoods, renderMacros: renderMacros, LIVE: LIVE });
   function mBalanceMeal(sk, opt) { return MEALTOOLS.mBalanceMeal(sk, opt); }
   function mMealFitX(sk, r) { return MEALTOOLS.mMealFitX(sk, r); }
-  function mSaveMeal(sk, name, share) { return MEALTOOLS.mSaveMeal(sk, name, share); }
+  function mSaveMeal(sk, name, share, given) { return MEALTOOLS.mSaveMeal(sk, name, share, given); }
 
   /* How many "not that one"s it takes before a meal is allowed to look
      outside its own sections. */
@@ -4819,7 +4847,7 @@
   }
 
   function editorAction(what) {
-    if (what === 'cancel') { S.editId = null; S.editBase = null; renderModal(); restoreOpener(); return; }
+    if (what === 'cancel') { S.editId = null; S.editBase = null; S.editAddTo = null; renderModal(); restoreOpener(); return; }
 
     if (what === 'delete' || what === 'revert') {
       var id = S.editBase.id;
@@ -4844,6 +4872,19 @@
     if (!rec.ing.length) { ask({ title: 'A recipe needs at least one ingredient.' }); return; }
     window.Store.saveRecipe(rec);
     S.editId = null; S.editBase = null;
+    /* Written from a meal said into the picker: one serving of it goes on
+       that meal, and you are back on the picker rather than in the recipe,
+       because what you were doing was logging a meal. */
+    if (S.editAddTo) {
+      var to = S.editAddTo;
+      S.editAddTo = null;
+      var ate = mAddsEaten(to.k, to.sk);
+      mEditDay(to.k, function (day) { (day[to.sk] = day[to.sk] || []).push({ id: rec.id, x: 1, eaten: ate }); });
+      mHeardDone();
+      renderAll();
+      mToast(esc(rec.name) + ' saved to Ours, and a serving added to ' + esc(mSlotName(to.sk)));
+      return;
+    }
     S.openId = rec.id;          // straight into the recipe you just wrote
     S.scale = 1;
     renderAll();
@@ -4870,7 +4911,10 @@
         esc(p.unpriced.join(', ')) + '. Everything else is in.</div>' : '');
   }
 
-  function openEditor(id) {
+  /* `seed` starts a new recipe with something already in it: a meal said
+     into the picker (heard.js) arrives with its foods as ingredients and its
+     macros typed in. */
+  function openEditor(id, seed) {
     var b;
     if (id === 'new') {
       b = {
@@ -4878,6 +4922,7 @@
         secName: 'Ours', name: '', servings: '4 Servings', time: '', diff: 'Easy',
         ing: [], steps: [], extras: '', macro: {}
       };
+      if (seed) b = Object.assign(b, seed);
     } else {
       var r = BY_ID[id];
       if (!r) return;
@@ -7996,6 +8041,21 @@
         var nm3 = String((($('mkName') || {}).value) || '').trim();
         if (!nm3) { $('mkNote').textContent = 'It needs a name to be found again.'; return; }
         var sk3 = S.keepMeal;
+        /* Foods heard in the picker (heard.js) are kept on their own, and the
+           food they make goes on the meal beside what was already there. */
+        if (S.keepItems) {
+          var heardId = mSaveMeal(sk3, nm3, mkd.dataset.mkdo === 'share', S.keepItems);
+          if (!heardId) { $('mkNote').textContent = 'Nothing to keep.'; return; }
+          var ate3 = mAddsEaten(mViewKey(), sk3);
+          mEditDay(mViewKey(), function (day) { (day[sk3] = day[sk3] || []).push({ id: heardId, x: 1, eaten: ate3 }); });
+          S.keepItems = null;
+          S.keepMeal = '';
+          mHeardDone();
+          close();
+          renderMacros();
+          mToast('Kept as ' + esc(nm3) + ', and added to ' + esc(mSlotName(sk3)));
+          return;
+        }
         var newId = mSaveMeal(sk3, nm3, mkd.dataset.mkdo === 'share');
         if (!newId) { $('mkNote').textContent = 'Nothing on this meal to keep.'; return; }
         /* The meal becomes the thing it just became: four rows collapse into
@@ -8384,6 +8444,111 @@
          on the meal balance together (mRefitMeal); pressed again it takes the
          plate back off and re-balances what remains. With a plate marked for
          Swap, what you tap takes its place instead. */
+      /* The band a meal said in one breath gets (heard.js): − and + on a
+         line, which food a word was, a word sent off to be searched on its
+         own, and the three ways on. Every one of them leaves the box and its
+         caret alone and redraws only the list, the way a keystroke does. */
+      var mic = e.target.closest('[data-mpmic]');
+      if (mic && S.macroPick) {
+        S.mpMicHint = true;
+        var mbox = $('mpFind');
+        if (mbox && !$('mpMicHint')) {
+          mbox.closest('.mp-find').insertAdjacentHTML('afterend',
+            '<div class="mp-mic-hint" id="mpMicHint" role="status">Now tap the mic on your keyboard and say what you ate: ' +
+            '\u201ctwo eggs, toast with butter, coffee with half and half.\u201d</div>');
+        }
+        if (mbox) mbox.focus();
+        return;
+      }
+      var mhq = e.target.closest('[data-mhq]');
+      if (mhq && S.macroPick && S.mpHeard) {
+        var Hq = mHeard(S.mpQuery);
+        var lq = Hq && Hq.known.filter(function (l) { return l.k === mhq.dataset.mhq; })[0];
+        if (lq) {
+          // a quarter cup, ten grams, or one of anything else
+          var stq = lq.unit === 'cup' ? 0.25 : lq.unit === 'g' ? 10 : 1;
+          S.mpHeard.qty[lq.k] = Math.max(stq, Math.round((lq.qty + stq * Number(mhq.dataset.mhd)) * 100) / 100);
+        }
+        refreshMacroPicker();
+        return;
+      }
+      var mhp = e.target.closest('[data-mhpick]');
+      if (mhp && S.macroPick && S.mpHeard) {
+        S.mpHeard.pick[mhp.dataset.mhpick] = idOf(mhp.dataset.mhid);
+        refreshMacroPicker();
+        return;
+      }
+      var mhf = e.target.closest('[data-mhfind]');
+      if (mhf && S.macroPick) {
+        S.mpQuery = mhf.dataset.mhfind;
+        S.mpHeard = null;
+        var fbox = $('mpFind');
+        if (fbox) { fbox.value = S.mpQuery; fbox.focus(); }
+        refreshMacroPicker();
+        mpLookSoon();
+        return;
+      }
+      var mhs = e.target.closest('[data-mhserve]');
+      if (mhs && S.macroPick && S.mpHeard) {
+        S.mpHeard.serves = Math.max(1, Math.min(24, (S.mpHeard.serves || 1) + Number(mhs.dataset.mhserve)));
+        refreshMacroPicker();
+        return;
+      }
+      var mhd = e.target.closest('[data-mhdo]');
+      if (mhd && S.macroPick && S.mpHeard) {
+        var Hd = mHeard(S.mpQuery), dk = mViewKey(), dsk = S.macroPick.slot, what = mhd.dataset.mhdo;
+        if (!Hd || !Hd.known.length) return;
+        var parts = Hd.known.map(function (l) { return { id: l.r.id, x: l.x }; });
+        if (what === 'recipe') {
+          S.mpHeard.mode = S.mpHeard.mode === 'recipe' ? '' : 'recipe';
+          refreshMacroPicker();
+          return;
+        }
+        if (what === 'all') {
+          var ate = mAddsEaten(dk, dsk);
+          mEditDay(dk, function (day) {
+            var list = (day[dsk] = day[dsk] || []);
+            parts.forEach(function (pt) { list.push({ id: pt.id, x: pt.x, eaten: ate }); });
+          });
+          mHeardDone();
+          renderMacros();
+          renderModal();
+          mToast('Added ' + parts.length + ' to ' + esc(mSlotName(dsk)));
+          return;
+        }
+        /* Kept as one food: the keep sheet (keep.js), asked about these
+           foods rather than the meal's, and the one food it makes goes on
+           the meal beside what is already there. */
+        if (what === 'keep') {
+          S.keepMeal = dsk;
+          S.keepItems = parts;
+          rememberOpener();
+          pushSheet({ m: 1 });
+          renderModal();
+          return;
+        }
+        /* Saved as a recipe: the editor, opened on a new recipe with these
+           foods as its ingredients and their macros typed in, a serving's
+           worth. Typed rather than worked out again from the lines because
+           the recipe parser was written for cooking and misreads a third of
+           the food table's own names (salmon, almonds, Greek yogurt); the
+           band already knows exactly what each food is. Saved, one serving
+           goes on the meal. */
+        if (what === 'recipego') {
+          var sv = S.mpHeard.serves || 1, tt = mHeardTotals(Hd);
+          var per = {};
+          ['kcal', 'p', 'f', 'c', 'na', 'fib'].forEach(function (m) { per[m] = Math.round(tt[m] / sv * (m === 'fib' ? 10 : 1)) / (m === 'fib' ? 10 : 1); });
+          S.editAddTo = { k: dk, sk: dsk };
+          openEditor('new', {
+            servings: sv + (sv === 1 ? ' Serving' : ' Servings'),
+            ing: Hd.known.map(mHeardIng),
+            macro: per, typedMacro: true
+          });
+          return;
+        }
+        return;
+      }
+
       var mp = e.target.closest('[data-mpick]');
       if (mp && S.macroPick) {
         var pel = mp;
@@ -9062,6 +9227,8 @@
       if (S.newFood && e.target.closest && e.target.closest('.nfl')) mNfRefresh();
       if (S.macroPick && e.target.id === 'mpFind') {
         S.mpQuery = e.target.value;
+        // the words are arriving, so the reminder of how to say them can go
+        if (S.mpMicHint && S.mpQuery.trim()) { S.mpMicHint = false; var mh = $('mpMicHint'); if (mh) mh.remove(); }
         /* A word sends the meal's foods, if they are up in the page, down
            to the tray's chips, and an emptied box brings them back: a class,
            not a redraw, which would take the box being typed in with it. */
@@ -9324,6 +9491,7 @@
     S.openId = null;
     S.foodOpen = null;
     S.keepMeal = '';
+    S.keepItems = null;
     S.mCopyFrom = null;
     if (S.newFood) mScanStop();
     S.newFood = null;
@@ -9359,12 +9527,16 @@
        way out was the Cancel button. */
     S.editId = null;
     S.editBase = null;
+    S.editAddTo = null;
     // and the Macros sheets, for exactly the same reason
     if (S.macroPick) mScanStop();        // never leave the camera running
     S.macroPick = null;
     S.mpSwap = null;
+    S.mpHeard = null;
+    S.mpMicHint = false;
     S.chartOpen = false;
     S.keepMeal = '';
+    S.keepItems = null;
     S.foodOpen = null;
     S.mCopyFrom = null;
     S.macroTargOpen = false;

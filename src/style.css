@@ -1541,6 +1541,47 @@ select { max-width: 280px; }
   background: none; border: 0; color: var(--muted); cursor: pointer; padding: 0;
 }
 .mp-cam svg { width: 19px; height: 19px; }
+/* The microphone (heard.js), inside the field beside the camera. It puts
+   the caret in the box and says to tap the keyboard's own mic; it cannot
+   listen by itself. The field keeps its right-hand padding clear of both. */
+.mp-find .txt:not(#u#u) { padding-right: 92px; }
+.mp-mic:not(#u#u) {
+  position: absolute; right: 46px; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+  background: none; border: 0; color: var(--muted); cursor: pointer; padding: 0;
+}
+.mp-find:not(:has(.mp-cam)) .mp-mic:not(#u#u) { right: 2px; }
+.mp-mic svg { width: 19px; height: 19px; }
+.mp-mic:focus-visible { outline: 2px solid var(--ochre); outline-offset: -2px; border-radius: 8px; }
+.mp-mic-hint { margin: 6px 0 2px; padding: 8px 10px; border-radius: 10px; background: var(--ochre-soft); color: var(--ochre-text); font-size: 0.8125rem; line-height: 1.4; }
+
+/* A meal said in one breath (heard.js): its band, above the list. Ringed in
+   the book's ochre because nothing in it is on the meal yet; every line says
+   what it heard, and the buttons under it are the only way any of it goes on. */
+.mh-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--ochre-text); }
+.mh-tot { font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--ink); }
+.mh-box { border: 1.5px solid var(--ochre); border-radius: 12px; background: var(--paper-soft); padding: 2px 12px 12px; margin-bottom: 10px; }
+.mh-row { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 0; border-top: 1px solid var(--line-soft); }
+.mh-row:first-child { border-top: 0; }
+.mh-name { flex: 1 1 auto; min-width: 0; font-size: 0.9375rem; font-weight: 600; color: var(--ink); overflow-wrap: break-word; }
+.mh-name small { display: block; font-size: 0.8125rem; font-weight: 400; color: var(--note); margin-top: 2px; }
+.mh-unk .mh-name { color: var(--warn, var(--ochre-text)); }
+.mh-step { flex: none; display: inline-flex; border: 1px solid var(--line-firm); border-radius: 10px; background: var(--card); overflow: hidden; }
+.mh-step button { width: 44px; height: 44px; border: 0; background: none; font: inherit; font-size: 1.125rem; color: var(--ink); cursor: pointer; }
+.mh-step button + button { border-left: 1px solid var(--line-soft); }
+.mh-find { flex: none; min-height: 44px; padding: 0 12px; border: 1px solid var(--line-firm); border-radius: 10px; background: var(--card); font: inherit; font-size: 0.8125rem; font-weight: 600; color: var(--ochre-text); cursor: pointer; }
+.mh-alts { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 0 8px; }
+.mh-alt { min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font: inherit; font-size: 0.8125rem; color: var(--ink); cursor: pointer; }
+.mh-alt[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--on-ink, var(--card)); }
+.mh-acts { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
+.mh-acts .btn-primary { width: 100%; min-height: 46px; }
+.mh-two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mh-two .ghost { min-height: 44px; border: 1px solid var(--line-firm); border-radius: 10px; }
+.mh-two .ghost[aria-pressed="true"] { border: 2px solid var(--ink); }
+.mh-form { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+.mh-form p { margin: 0; font-size: 0.8125rem; color: var(--note); line-height: 1.4; }
+.mh-serve { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 0.9375rem; }
+@media (max-width: 360px) { .mh-two { grid-template-columns: 1fr; } }
 .mp-back {
   background: none; border: 0; font-family: var(--sans); font-size: 0.8125rem;
   color: var(--ochre-text); padding: 6px 0; cursor: pointer; font-weight: 600;

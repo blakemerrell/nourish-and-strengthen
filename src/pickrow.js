@@ -75,7 +75,9 @@
     // face and the fallbacks are boxes
     scan: '<path d="M2 3v10M4.5 3v10M7 3v7M9.5 3v10M12 3v7M14 3v10"/>',
     look: '<circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2 14 14"/>',
-    recipes: '<rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M5 6h6M5 8.5h6M5 11h3.5"/>'
+    recipes: '<rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M5 6h6M5 8.5h6M5 11h3.5"/>',
+    // a microphone, for a meal said into the box (heard.js)
+    mic: '<rect x="6" y="1.8" width="4" height="7.6" rx="2"/><path d="M3.6 7.6a4.4 4.4 0 0 0 8.8 0M8 12v2.4"/>'
   };
 
   function mpIcon(k) {

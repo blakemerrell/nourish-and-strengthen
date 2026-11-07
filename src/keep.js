@@ -33,7 +33,9 @@
      four scanned packets. */
   function mKeepHTML() {
     var sk = S.keepMeal, day = mDay(mViewKey());
-    var items = (day[sk] || []).filter(function (it) { return LIVE.BY_ID[it.id]; });
+    /* Foods heard in the picker (S.keepItems, heard.js) are asked about on
+       their own, not mixed with whatever the meal already holds. */
+    var items = (S.keepItems || day[sk] || []).filter(function (it) { return LIVE.BY_ID[it.id]; });
     var mac = { kcal: 0, p: 0, f: 0, c: 0 };
     items.forEach(function (it) {
       var r = LIVE.BY_ID[it.id];
@@ -45,7 +47,7 @@
       '<div class="sheet mt-sheet" role="dialog" aria-modal="true" aria-label="Save this meal">' +
         '<div class="sheet-top">' +
           /* Named for the button that opens it. */
-          '<div class="sheet-eyebrow">Save ' + esc(nm.toLowerCase()) + '</div>' +
+          '<div class="sheet-eyebrow">' + (S.keepItems ? 'Keep as one food' : 'Save ' + esc(nm.toLowerCase())) + '</div>' +
           '<button class="sheet-x" data-close="1" aria-label="Close">&times;</button>' +
         '</div>' +
         '<div class="mtl-row"><span class="mtl-lab">Call it</span>' +

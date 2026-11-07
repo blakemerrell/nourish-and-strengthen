@@ -19,6 +19,7 @@
   var keepingFocus = app.keepingFocus;
   var mDay = app.mDay;
   var mDayTargets = app.mDayTargets;
+  var mHeardHTML = app.mHeardHTML;
   var mQueryKind = app.mQueryKind;
   var mQueryTopHTML = app.mQueryTopHTML;
   var mViewKey = app.mViewKey;
@@ -135,7 +136,13 @@
        and filled when the answer lands, and being last, nothing moves when
        it does. A barcode is not this box: a scan opens what it found
        straight away (camera.js, mScanGot). */
-    var look = mpLookFootHTML();
+    /* A meal said in one breath (heard.js) gets its own band on top, and
+       the rest of the list stays under it in case the sentence was a name.
+       With it showing, the USDA box is not drawn, so the whole sentence is
+       never sent off as one food's name, and the list does not say that
+       nothing matches a sentence it was never going to match. */
+    var heard = mHeardHTML(S.mpQuery);
+    var look = heard ? '' : mpLookFootHTML();
     var body = favs + pins + recent + named + fits + closers + (only ? '' : mpElseHTML(shown));
     /* Judged on the ROWS, not on the string. A barcode with nothing behind it
        draws a band and no rows, and so does a shelf crossed with a lens that
@@ -144,7 +151,7 @@
        of the thing that emptied the list. Counting characters would read
        either of those as a list with something in it. Every band writes the
        rows it drew into `shown`, so that is the count. */
-    if (!Object.keys(shown).length) {
+    if (!Object.keys(shown).length && !heard) {
       body += '<div class="mslot-empty">' + (mpQ()
         ? 'Nothing matches ' + esc(S.mpQuery.trim()) + '.'
         : S.mpSec === 'saved' && !S.mpShelf
@@ -155,7 +162,7 @@
     }
     // the USDA's box after the app's own "nothing matches", not above it
     return mQueryTopHTML(S.mpQuery, mDay(mViewKey()), mDayTargets(mViewKey()),
-      { k: S.macroPick.slot, w: S.macroPick.w }) + body + look;
+      { k: S.macroPick.slot, w: S.macroPick.w }) + heard + body + look;
   }
 
   /* Rebuilds ONLY the list, never the sheet.

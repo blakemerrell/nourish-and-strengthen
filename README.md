@@ -64,6 +64,15 @@ nugget" finds Tyson's bag), then its plain foods. A food looked up or scanned op
 short page — its grades and allergens as one line, how much with − and +, the plate's
 P, F and C, and Add, all on the first screen — with the packet's whole Nutrition Facts
 panel and its ingredients folded under it, still there to correct a figure.
+A whole meal can be said into the same box: tap the microphone in it, then the
+keyboard's own mic, and say "two eggs, toast with butter, a cup of rice". Two or more
+foods make a *Heard* band above the list, a line each with the amount it heard, − and
++, a choice where a word could be more than one food (cooked rice or jasmine), and the
+words it did not know shown rather than dropped. Nothing goes on until you press *Add
+all*, *Keep as one food* (one food of your own, made of just those) or *Save as a
+recipe* (the editor, opened with them as its ingredients and a serving's macros; saved,
+a serving goes on the meal). One food named is still a plain search, and a sentence is
+never sent to the USDA as a food's name.
 At the top of the sheet the meal's foods are a line each: name, amount and calories.
 Tap one to open it for its macros, − and +, Details (its page) and ⋯; one is open at a
 time, a food just added opens by itself, and one you are setting stays open.
@@ -664,6 +673,7 @@ src/pickgap.js        what is still wanted: what is on the day in grams, and wha
 src/closers.js        three foods that close the day, one per macro
 src/query.js          a typed number in the picker, and the band that answers it
 src/shelves.js        the shelves a food sits on, and which one it goes on
+src/heard.js          a meal said in one breath into the picker's box: the foods and amounts it names, and their band
 src/pickhome.js       the picker's home list, and redrawing only the list while you type
 src/goalwords.js      the plan sheet's words: the goal names, the line under each, the status line
 src/account.js        the personal half of the sharing sheet: signed in, and what the account carries

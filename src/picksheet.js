@@ -170,12 +170,22 @@
       '<div class="mp-stick msh-find">' +
         '<div class="mp-controls mp-find">' +
           '<input type="search" class="txt" id="mpFind" ' +
-            'placeholder="Search, barcode, or recipe no.&hellip;" ' +
+            'placeholder="Search or say a meal&hellip;" ' +
             'aria-label="Search" value="' + esc(S.mpQuery) + '">' +
+          /* The microphone cannot listen by itself: a web page has no way to
+             start the keyboard's own dictation, and the browser's speech
+             recognition sends the sound to Google and needs a signal, which
+             this app does not lean on. So it puts the caret in the box and
+             says to tap the keyboard's mic, which works offline and sends
+             nothing. Blake kept it as the reminder that a meal can be said
+             (2026-11-06), knowing it costs that one extra tap. */
+          '<button class="mp-mic" data-mpmic="1" aria-label="Say a meal" title="Say a meal">' + mpIcon('mic') + '</button>' +
           (navigator.mediaDevices && navigator.mediaDevices.getUserMedia
             ? '<button class="mp-cam" data-mpmode="scan" aria-label="Scan a barcode">' +
               mpIcon('scan') + '</button>' : '') +
         '</div>' +
+        (S.mpMicHint ? '<div class="mp-mic-hint" id="mpMicHint" role="status">Now tap the mic on your keyboard and say what you ate: ' +
+          '\u201ctwo eggs, toast with butter, coffee with half and half.\u201d</div>' : '') +
         mpShelvesHTML() +
       '</div>' +
       '<div id="mpList">' + body + '</div>' +

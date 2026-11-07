@@ -131,6 +131,7 @@ var CORE = [
   './src/closers.js?v=0',
   './src/query.js?v=0',
   './src/shelves.js?v=0',
+  './src/heard.js?v=0',
   './src/pickhome.js?v=0',
   './src/goalwords.js?v=0',
   './src/account.js?v=0',

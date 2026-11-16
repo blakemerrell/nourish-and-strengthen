@@ -7496,6 +7496,32 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 }
 .mtray-acts button + button::before { content: '·'; position: absolute; left: -3px; color: var(--line-firm); }
 .mtray-acts button:hover, .mtray-acts button:focus-visible { background: var(--hint); }
+/* What you usually have, on the empty meal whose time it is (myday.js,
+   mUsualHTML): a small heading and a row of chips that scrolls sideways
+   rather than wrap, so three long recipe names cost one line of the day and
+   not three. Starts at the card's edge like the line of ways above it. */
+/* Above the door's reach (.mtray-b::after covers the whole card), as the
+   line of ways is: without it a tap on a chip opened the meal's sheet. */
+.mtray-usual { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 4px; margin: 2px 0 6px -48px; min-width: 0; }
+.mtray-usual-h { font: 600 0.8125rem/1.2 var(--sans); color: var(--label); padding-left: 2px; }
+.mtray-usual-row {
+  display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 4px; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
+}
+.mtray-usual-row::-webkit-scrollbar { display: none; }
+.mtray-uchip {
+  flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; max-width: 12.5rem;
+  padding: 5px 14px 5px 8px; border: 1px solid var(--line); border-radius: 22px; background: var(--paper-soft);
+  font: 500 0.875rem/1.2 var(--sans); color: var(--ink); cursor: pointer; text-align: left;
+}
+.mtray-uchip:hover, .mtray-uchip:focus-visible { background: var(--hint); }
+.mtray-uchip-p {
+  flex: none; width: 26px; height: 26px; border-radius: 13px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--ochre-text); color: var(--card); font-size: 1.0625rem; font-weight: 700; line-height: 1;
+}
+/* Two lines, not one: the books' names are long, and "Hard-Boiled Egg &
+   Fresh…" left the half that says which snack pack it was. */
+.mtray-uchip-n { min-width: 0; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 /* Foods: the leaf, the name, and what it costs, a line each. */
 .mtray-cl { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto auto; align-items: center; column-gap: 10px; min-height: 44px; }
 .mtray-cl .mfl-nm { -webkit-line-clamp: 2; }

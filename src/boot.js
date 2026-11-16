@@ -13,7 +13,42 @@
    is only visible on the *second* open — you look, see the old app, and have no
    reason to look again. hadWorker keeps the first install quiet, where there is
    nothing to update to. */
-if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+if (window.NourishAndroid) {
+  /* Inside the native Android app, files are already served offline straight
+     from local disk (ota_live/ and bundled APK assets/). A web Service Worker
+     here only caches an old build in WebView CacheStorage in front of
+     ota_live/, so unregister any leftover worker and ask the native OTA
+     syncer on foreground/interval instead. */
+  addEventListener('load', function () {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        (regs || []).forEach(function (r) { try { r.unregister(); } catch (e) { /* ignore */ } });
+      }).catch(function () {});
+    }
+    if (window.caches && caches.keys) {
+      caches.keys().then(function (ks) {
+        (ks || []).forEach(function (k) {
+          if (k.indexOf('storehouse-') === 0) { try { caches.delete(k); } catch (e) { /* ignore */ } }
+        });
+      }).catch(function () {});
+    }
+    var MIN_GAP = 60000, EVERY = 900000, last = Date.now();
+    var askOta = function () {
+      if (Date.now() - last < MIN_GAP) return;
+      last = Date.now();
+      try {
+        if (window.NourishAndroid && window.NourishAndroid.checkOtaUpdate) {
+          window.NourishAndroid.checkOtaUpdate();
+        }
+      } catch (e) { /* ignore */ }
+    };
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) askOta();
+    });
+    addEventListener('focus', askOta);
+    setInterval(askOta, EVERY);
+  });
+} else if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
   var hadWorker = !!navigator.serviceWorker.controller;
   var reloading = false;
   navigator.serviceWorker.addEventListener('controllerchange', function () {

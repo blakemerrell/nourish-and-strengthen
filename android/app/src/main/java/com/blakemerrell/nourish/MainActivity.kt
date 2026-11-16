@@ -10,6 +10,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
+import android.webkit.ServiceWorkerClient
+import android.webkit.ServiceWorkerController
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -222,44 +224,86 @@ class MainActivity : AppCompatActivity() {
 
         webView.addJavascriptInterface(NourishBridge(), "NourishAndroid")
 
+        val interceptAppAsset: (WebResourceRequest) -> WebResourceResponse? = intercept@{ request ->
+            val url = request.url
+            var relPath: String? = null
+            if (url.host == "appassets.androidplatform.net") {
+                val path = url.path ?: ""
+                if (path.startsWith("/assets/public/")) {
+                    val candidate = path.removePrefix("/assets/public/").ifEmpty { "index.html" }
+                    if (!candidate.contains("..")) {
+                        relPath = candidate
+                        val otaBytes = synchronized(otaLock) {
+                            val f = File(otaLiveDir(), candidate)
+                            if (f.isFile && f.length() > 0L) f.readBytes() else null
+                        }
+                        if (otaBytes != null) {
+                            return@intercept WebResourceResponse(
+                                mimeTypeFor(candidate),
+                                encodingFor(candidate),
+                                200,
+                                "OK",
+                                mapOf(
+                                    "Cache-Control" to "no-store",
+                                    "Access-Control-Allow-Origin" to "*"
+                                ),
+                                otaBytes.inputStream()
+                            )
+                        }
+                    }
+                }
+            }
+            val assetRes = assetLoader.shouldInterceptRequest(url)
+            if (assetRes != null) {
+                val headers = (assetRes.responseHeaders ?: emptyMap()).toMutableMap()
+                headers["Cache-Control"] = "no-store"
+                assetRes.responseHeaders = headers
+                return@intercept assetRes
+            }
+            if (relPath != null) {
+                try {
+                    val netBytes = fetchUrlBytes("$OTA_BASE_URL/$relPath")
+                    if (netBytes.isNotEmpty()) {
+                        synchronized(otaLock) {
+                            val dest = File(otaLiveDir(), relPath)
+                            dest.parentFile?.mkdirs()
+                            dest.writeBytes(netBytes)
+                        }
+                        return@intercept WebResourceResponse(
+                            mimeTypeFor(relPath),
+                            encodingFor(relPath),
+                            200,
+                            "OK",
+                            mapOf(
+                                "Cache-Control" to "no-store",
+                                "Access-Control-Allow-Origin" to "*"
+                            ),
+                            netBytes.inputStream()
+                        )
+                    }
+                } catch (_: Exception) {
+                    // Offline or missing on remote; fall through
+                }
+            }
+            null
+        }
+
+        try {
+            ServiceWorkerController.getInstance().setServiceWorkerClient(object : ServiceWorkerClient() {
+                override fun shouldInterceptRequest(request: WebResourceRequest): WebResourceResponse? {
+                    return interceptAppAsset(request)
+                }
+            })
+        } catch (_: Throwable) {
+            // Device WebView does not support ServiceWorkerController
+        }
+
         webView.webViewClient = object : WebViewClient() {
             override fun shouldInterceptRequest(
                 view: WebView,
                 request: WebResourceRequest
             ): WebResourceResponse? {
-                val url = request.url
-                if (url.host == "appassets.androidplatform.net") {
-                    val path = url.path ?: ""
-                    if (path.startsWith("/assets/public/")) {
-                        val relPath = path.removePrefix("/assets/public/").ifEmpty { "index.html" }
-                        if (!relPath.contains("..")) {
-                            val otaBytes = synchronized(otaLock) {
-                                val f = File(otaLiveDir(), relPath)
-                                if (f.isFile && f.length() > 0L) f.readBytes() else null
-                            }
-                            if (otaBytes != null) {
-                                return WebResourceResponse(
-                                    mimeTypeFor(relPath),
-                                    encodingFor(relPath),
-                                    200,
-                                    "OK",
-                                    mapOf(
-                                        "Cache-Control" to "no-store",
-                                        "Access-Control-Allow-Origin" to "*"
-                                    ),
-                                    otaBytes.inputStream()
-                                )
-                            }
-                        }
-                    }
-                }
-                val assetRes = assetLoader.shouldInterceptRequest(url)
-                if (assetRes != null) {
-                    val headers = (assetRes.responseHeaders ?: emptyMap()).toMutableMap()
-                    headers["Cache-Control"] = "no-store"
-                    assetRes.responseHeaders = headers
-                }
-                return assetRes
+                return interceptAppAsset(request)
             }
 
             override fun shouldOverrideUrlLoading(
@@ -488,14 +532,22 @@ class MainActivity : AppCompatActivity() {
                     val qVer = JSONObject.quote(updatedVersion)
                     val js = """
                         (function(targetVer) {
-                          if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
-                            navigator.serviceWorker.getRegistration().then(function(r) {
-                              if (r) r.update();
-                            });
-                          }
                           var s = document.querySelector('script[src*="src/app.js"]');
                           var src = s ? (s.getAttribute('src') || '') : '';
                           if (src && src.indexOf('v=' + targetVer) < 0) {
+                            var clean = Promise.resolve();
+                            if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+                              clean = navigator.serviceWorker.getRegistrations().then(function(regs) {
+                                return Promise.all((regs || []).map(function(r) { return r.unregister(); }));
+                              }).catch(function() {});
+                            }
+                            if (window.caches && caches.keys) {
+                              clean = clean.then(function() {
+                                return caches.keys().then(function(ks) {
+                                  return Promise.all((ks || []).filter(function(k) { return k.indexOf('storehouse-') === 0; }).map(function(k) { return caches.delete(k); }));
+                                });
+                              }).catch(function() {});
+                            }
                             var busy = function () {
                               if (window.__editing) return true;
                               var a = document.activeElement;
@@ -504,13 +556,16 @@ class MainActivity : AppCompatActivity() {
                               try { if (window.Train && window.Train.busy && window.Train.busy()) return true; } catch (e) {}
                               return false;
                             };
-                            setTimeout(function go() {
-                              if (busy()) { setTimeout(go, 2000); return; }
-                              location.reload();
-                            }, 400);
+                            clean.then(function() {
+                              setTimeout(function go() {
+                                if (busy()) { setTimeout(go, 2000); return; }
+                                location.reload();
+                              }, 250);
+                            });
                           }
                         })($qVer);
                     """.trimIndent()
+                    webView.clearCache(true)
                     webView.evaluateJavascript(js, null)
                 }
             }

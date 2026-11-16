@@ -168,6 +168,27 @@ module.exports = {
       typeof gCid === 'string' && gCid.indexOf('.apps.googleusercontent.com') > 0,
       String(gCid));
 
+    // 7. Native Android WebView boot bypasses ServiceWorker & purges stale storehouse-* CacheStorage
+    await p.evaluate(async () => {
+      await caches.open('storehouse-v-stale');
+    });
+    await p.addInitScript(() => {
+      window.NourishAndroid = {
+        getHealthStatus: function () { return JSON.stringify({ available: true, status: 'granted', lastSync: 0 }); },
+        checkOtaUpdate: function () { window.__otaChecked = (window.__otaChecked || 0) + 1; }
+      };
+    });
+    await p.reload();
+    await p.waitForTimeout(300);
+    const otaClean = await p.evaluate(async () => {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      const keys = (await caches.keys()).filter((k) => k.indexOf('storehouse-') === 0);
+      return { regs: regs.length, keys };
+    });
+    t.ok('when NourishAndroid is present at boot, ServiceWorkers are unregistered and storehouse-* caches are purged so OTA files load fresh',
+      otaClean.regs === 0 && otaClean.keys.length === 0,
+      JSON.stringify(otaClean));
+
     t.ok('no page errors', errs.length === 0, errs.join('; '));
   }
 };

@@ -53,11 +53,13 @@
   var mMarkAccountUI = app.mMarkAccountUI;
   var mMealAsk = app.mMealAsk;
   var mMealPillsSay = app.mMealPillsSay;
+  var mNowMins = app.mNowMins;
   var mReadSlots = app.mReadSlots;
   var mSaltChip = app.mSaltChip;
   var mSendOf = app.mSendOf;
   var mServeG = app.mServeG;
   var mSkipped = app.mSkipped;
+  var mSlotOpens = app.mSlotOpens;
   var mSnapTargets = app.mSnapTargets;
   var mViewKey = app.mViewKey;
   var mWeekHTML = app.mWeekHTML;
@@ -910,6 +912,7 @@
               '<button data-mfrom="' + esc(sk) + '" aria-label="Repeat ' + esc(name) + ' from another day">Repeat<span class="mtray-lg"> a day</span></button>' +
               '<button data-msaved="' + esc(sk) + '" aria-label="Saved meals, for ' + esc(name) + '">Saved<span class="mtray-lg"> meals</span></button>' +
             '</div>') +
+            mUsualHTML(k, sk, name, day) +
             mSlotHoldBarHTML(sk, name, false) +
           '</div>' +
         '</div>';
@@ -1260,6 +1263,80 @@
        clipped to yesterday's numbers. */
     mFoldForget();
     syncShrunk();
+  }
+
+  /* ------------------------------------------- what you usually have now
+   *
+     Blake logs food more than he does anything else in the app, and most of
+     it is the same few things at the same meal: his breakfast oats, the lunch
+     he rotates between two of, a yogurt in the afternoon. Each one was the
+     same trip every day: + on the meal, the picker, find it, tap it, close.
+     The redesign he asked for (2026-11-16, "Mock up your idea of the food
+     logging page. I touch that page the most"; mockup:
+     https://claude.ai/artifact/8bmu2EX5DvW2QNB45cBVY5) puts what you usually
+     have on the meal whose time it is, one tap each, with Undo in the toast
+     in case the thumb was wrong.
+   *
+     Only on today, only on the meal whose time it is (the latest to have
+     opened, the same rule the picker uses to choose where "Add food" goes,
+     src/picksheet.js mNextMeal), and only while that meal is empty: once
+     anything is on it the meal is under way and its own + is the door. A
+     skipped meal draws its skip line instead and never reaches here. */
+  var MUSUAL_DAYS = 28, MUSUAL_MAX = 3;
+
+  function mNowSlot(k) {
+    if (k !== todayKey()) return '';
+    var list = mReadSlots().list, now = mNowMins(), best = -1, sk = '';
+    list.forEach(function (sl, i) {
+      var at = mSlotOpens(list, i);
+      if (at <= now && at > best) { best = at; sk = sl.k; }
+    });
+    return sk;
+  }
+
+  /* The foods eaten at meal `sk` on at least two of the last four weeks'
+     days, most often first and the latest first among equals, each at the
+     portion it was last eaten at. Eaten, not merely placed: a Fill draft
+     nobody ate is the app's guess, and a guess repeated is not a habit. */
+  function mUsualOf(k, sk, today) {
+    var from = keyDate(k);
+    from.setDate(from.getDate() - MUSUAL_DAYS);
+    var fromK = dayKey(from), seen = {}, on = {};
+    (today[sk] || []).forEach(function (it) { on[String(it.id)] = 1; });
+    Object.keys(MDAYS).forEach(function (dk) {
+      if (dk >= k || dk < fromK) return;
+      var counted = {};
+      ((MDAYS[dk] || {})[sk] || []).forEach(function (it) {
+        if (!it || !it.eaten || !LIVE.BY_ID[it.id]) return;
+        var id = String(it.id);
+        if (on[id] || counted[id]) return;
+        counted[id] = 1;
+        var u = seen[id] || (seen[id] = { id: it.id, n: 0, last: '', x: 1 });
+        u.n++;
+        if (dk > u.last) { u.last = dk; u.x = it.x || 1; }
+      });
+    });
+    return Object.keys(seen).map(function (id) { return seen[id]; })
+      .filter(function (u) { return u.n >= 2; })
+      .sort(function (a, b) { return b.n - a.n || (a.last < b.last ? 1 : a.last > b.last ? -1 : 0); })
+      .slice(0, MUSUAL_MAX);
+  }
+
+  function mUsualHTML(k, sk, name, today) {
+    if (mNowSlot(k) !== sk) return '';
+    var us = mUsualOf(k, sk, today);
+    if (!us.length) return '';
+    return '<div class="mtray-usual no-print" role="group" aria-label="What you usually have at ' + esc(name) + '">' +
+      '<span class="mtray-usual-h">You usually have</span>' +
+      '<span class="mtray-usual-row">' +
+        us.map(function (u) {
+          var r = LIVE.BY_ID[u.id];
+          return '<button type="button" class="mtray-uchip" data-musual="' + esc(sk + '|' + u.id + '|' + u.x) + '"' +
+            ' aria-label="Add ' + esc(r.name) + ' to ' + esc(name) + ', the portion you last had">' +
+            '<span class="mtray-uchip-p" aria-hidden="true">+</span><span class="mtray-uchip-n">' + esc(r.name) + '</span></button>';
+        }).join('') +
+      '</span>' +
+    '</div>';
   }
 
   /* A meal's pills with a food added that is not on it yet: the "How

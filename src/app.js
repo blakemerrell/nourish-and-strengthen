@@ -914,7 +914,7 @@
        folding one you have eaten. Ephemeral: a new day starts fresh. */
     mFold: {}, mFoldFor: '', mTouched: '', mtOpen: '',
     // each meal's view on the day, by day (myday.js, mViewOf); the skip a card is asking about; Undo's copy
-    mView: {}, mViewAll: 0, mFoldSoon: '', mSkipAsk: '', mSkipUndo: null,
+    mView: {}, mViewAll: 0, mFoldSoon: '', mSkipAsk: '', mSkipUndo: null, mUsualUndo: null,
     // a meal said into the picker's box (heard.js): the band's choices; foods to keep as one; a meal a new recipe goes on
     mpHeard: null, mpMicHint: false, keepItems: null, editAddTo: null,
     // which empty meals have their line of ways to fill them open, by day (myday.js, emptyHTML)
@@ -3595,7 +3595,7 @@
 
   /* src/myday.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var MYDAY = window.HiveParts.myday({ MDAYS: MDAYS, MWEIGHTS: MWEIGHTS, M_MONS: M_MONS, S: S, WGAPI: WGAPI, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mpIcon: mpIcon, leaf: leaf, mAhead: mAhead, mBatchStrip: mBatchStrip, mCanFav: mCanFav, mCascadeLineHTML: mCascadeLineHTML, mCopyItems: mCopyItems, mDay: mDay, mDayTargets: mDayTargets, mDialUnit: mDialUnit, mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mEditDay: mEditDay, mFillRoom: mFillRoom, mFoldForget: mFoldForget, mHydChip: mHydChip, mIcon: mIcon, mIsFav: mIsFav, mItemFluidOz: mItemFluidOz, mLatestKey: mLatestKey, mLongDate: mLongDate, mMacLine: mMacLine, mMarkAccountUI: mMarkAccountUI, mMealAsk: mMealAsk, mMealPillsSay: mMealPillsSay, mReadSlots: mReadSlots, mSaltChip: mSaltChip, mSendOf: mSendOf, mServeG: mServeG, mSkipped: mSkipped, mSnapTargets: mSnapTargets, mViewKey: mViewKey, mWeekHTML: mWeekHTML, mWeekTilesHTML: mWeekTilesHTML, mWhyChip: mWhyChip, mWhyStrip: mWhyStrip, macroFootHTML: macroFootHTML, macroWeighHTML: macroWeighHTML, syncShrunk: syncShrunk, todayKey: todayKey, mDialFromX: mDialFromX, mDialG: mDialG, mDialMeasure: mDialMeasure, mDialText: mDialText, LIVE: LIVE });
+  var MYDAY = window.HiveParts.myday({ MDAYS: MDAYS, MWEIGHTS: MWEIGHTS, M_MONS: M_MONS, S: S, WGAPI: WGAPI, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mpIcon: mpIcon, leaf: leaf, mAhead: mAhead, mBatchStrip: mBatchStrip, mCanFav: mCanFav, mCascadeLineHTML: mCascadeLineHTML, mCopyItems: mCopyItems, mDay: mDay, mDayTargets: mDayTargets, mDialUnit: mDialUnit, mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mEditDay: mEditDay, mFillRoom: mFillRoom, mFoldForget: mFoldForget, mHydChip: mHydChip, mIcon: mIcon, mIsFav: mIsFav, mItemFluidOz: mItemFluidOz, mLatestKey: mLatestKey, mLongDate: mLongDate, mMacLine: mMacLine, mMarkAccountUI: mMarkAccountUI, mMealAsk: mMealAsk, mMealPillsSay: mMealPillsSay, mNowMins: mNowMins, mReadSlots: mReadSlots, mSaltChip: mSaltChip, mSendOf: mSendOf, mServeG: mServeG, mSkipped: mSkipped, mSlotOpens: mSlotOpens, mSnapTargets: mSnapTargets, mViewKey: mViewKey, mWeekHTML: mWeekHTML, mWeekTilesHTML: mWeekTilesHTML, mWhyChip: mWhyChip, mWhyStrip: mWhyStrip, macroFootHTML: macroFootHTML, macroWeighHTML: macroWeighHTML, syncShrunk: syncShrunk, todayKey: todayKey, mDialFromX: mDialFromX, mDialG: mDialG, mDialMeasure: mDialMeasure, mDialText: mDialText, LIVE: LIVE });
   function renderMacros() {
     var r = MYDAY.renderMacros();
     if (S.view === 'today' && window.Today) window.Today.render();
@@ -6136,6 +6136,22 @@
       mToast(esc(mSlotName(sk)) + ' skipped' + (n ? ', and its ' + (n === 1 ? 'food' : n + ' foods') + ' came off.' : '.'), sk, 'data-mskipundo');
     }
     document.addEventListener('click', function (e) {
+      if (!e.target.closest || !e.target.closest('[data-musualundo]') || !S.mUsualUndo) return;
+      var u = S.mUsualUndo;
+      S.mUsualUndo = null;
+      mEditDay(u.k, function (day) {
+        var list = day[u.sk] || [], at = u.at;
+        // the plate it put on, wherever it is now: the day may have moved since
+        if (!list[at] || String(list[at].id) !== u.id) {
+          at = -1;
+          list.forEach(function (it, i) { if (String(it.id) === u.id && !it.eaten) at = i; });
+        }
+        if (at >= 0) list.splice(at, 1);
+      });
+      var el = $('mToast'); if (el) el.hidden = true;
+      if (S.view === 'macros') renderMacros();
+    });
+    document.addEventListener('click', function (e) {
       if (!e.target.closest || !e.target.closest('[data-mskipundo]') || !S.mSkipUndo) return;
       var u = S.mSkipUndo;
       S.mSkipUndo = null;
@@ -6361,6 +6377,28 @@
       }
       var skg = e.target.closest('[data-mskipgo]');
       if (skg) { mSkipMeal(mViewKey(), skg.dataset.mskipgo); return; }
+      /* What you usually have (myday.js, mUsualHTML): one tap puts it on
+         the meal at the portion last eaten, planned like any add (mAddsEaten),
+         and the toast's Undo takes that one plate back off. Not re-fitted:
+         the point of the chip is the amount you always have, and a refit
+         would quietly change it to whatever the day has room for. */
+      var usb = e.target.closest('[data-musual]');
+      if (usb) {
+        var uparts = usb.dataset.musual.split('|');
+        var uk = mViewKey(), usk = uparts[0], uid = idOf(uparts[1]), ux = Number(uparts[2]) || 1;
+        var ur = BY_ID[uid];
+        if (!ur) return;
+        var uat = -1;
+        mEditDay(uk, function (day) {
+          var list = (day[usk] = day[usk] || []);
+          list.push({ id: uid, x: ux, eaten: mAddsEaten(uk, usk) });
+          uat = list.length - 1;
+        });
+        S.mUsualUndo = { k: uk, sk: usk, id: String(uid), at: uat };
+        renderMacros();
+        mToast(esc(ur.name) + ' is on ' + esc(mSlotName(usk)) + '.', usk, 'data-musualundo');
+        return;
+      }
       var skn = e.target.closest('[data-mskipno]');
       if (skn) {
         S.mSkipAsk = '';

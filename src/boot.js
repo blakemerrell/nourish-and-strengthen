@@ -25,10 +25,10 @@ if (window.NourishAndroid) {
         (regs || []).forEach(function (r) { try { r.unregister(); } catch (e) { /* ignore */ } });
       }).catch(function () {});
     }
-    if (window.caches && caches.keys) {
-      caches.keys().then(function (ks) {
+    if (window.caches && window.caches.keys) {
+      window.caches.keys().then(function (ks) {
         (ks || []).forEach(function (k) {
-          if (k.indexOf('storehouse-') === 0) { try { caches.delete(k); } catch (e) { /* ignore */ } }
+          if (k.indexOf('storehouse-') === 0) { try { window.caches.delete(k); } catch (e) { /* ignore */ } }
         });
       }).catch(function () {});
     }

@@ -101,6 +101,22 @@
     var vF = mVerdict('f', tot.all.f, Math.max(1, targets.f));
     var vC = mVerdict('c', tot.all.c, Math.max(1, targets.c));
 
+    var macroTile = function (name, mKey, v, goal, barCol) {
+      var g = Math.max(1, Math.round(goal));
+      var got = Math.round(v || 0);
+      var rem = g - got;
+      var verd = mVerdict(mKey, v || 0, g);
+      var tag = rem >= 0 ? rem.toLocaleString() + ' left' : Math.abs(rem).toLocaleString() + ' over';
+      var col = verd === 'over' ? 'var(--pill-fire)' : rem < 0 ? 'var(--muted)' : barCol;
+      var w = Math.min(100, Math.round((v || 0) / g * 100));
+      var fillCol = verd === 'over' ? 'var(--pill-fire)' : barCol;
+      var op = (0.35 + 0.65 * Math.min(1, (v || 0) / g)).toFixed(2);
+      return '<div class="mpt-tile" data-mptmacro="' + esc(mKey) + '">' +
+        '<div class="mpt-th"><span class="mpt-tn">' + esc(name) + '</span><span class="mpt-tt num" style="color:' + col + '">' + esc(tag) + '</span></div>' +
+        '<div class="mpt-tv num"><b>' + got.toLocaleString() + '</b> / ' + g.toLocaleString() + ' g</div>' +
+        '<div class="mpt-tb"><i style="width:' + w + '%;background:' + fillCol + ';opacity:' + op + '"></i></div>' +
+      '</div>';
+    };
     var floorTile = function (name, v, goal, unit) {
       var g = Math.max(1, goal);
       var p = v / g;
@@ -129,7 +145,9 @@
     };
 
     var fuelHTML =
-      floorTile('Protein', tot.all.p || 0, targets.p || 1, 'g') +
+      macroTile('Protein', 'p', tot.all.p || 0, targets.p || 1, 'var(--pill-p)') +
+      macroTile('Fat', 'f', tot.all.f || 0, targets.f || 1, 'var(--pill-f)') +
+      macroTile('Carbs', 'c', tot.all.c || 0, targets.c || 1, 'var(--pill-c)') +
       floorTile('Fibre', fib, fibFloor || 20, 'g') +
       ceilTile('Sodium', na, naCap, 'mg') +
       floorTile('Water', waterOz, goalOz || 80, 'oz');
@@ -685,11 +703,19 @@
     var trayOpen = !!S.mPillTrayOpen;
     var trayHTML = trayOpen ? mPillTrayHTML(vk, day, targets, slots, tot, tK, fib, fibFloor, na, naCap, waterOz, goalOz) : '';
     var fullKcal = Math.round(tot.all.kcal);
+    var goalKcal = Math.round(tK);
+    var remKcal = goalKcal - fullKcal;
+    var remTx = remKcal >= 0
+      ? remKcal.toLocaleString() + ' left'
+      : Math.abs(remKcal).toLocaleString() + ' over';
+    var remCls = remKcal < 0 ? ' over' : '';
     /* The calories and the filling water droplet on the right side of the
        day's box in the head row (index.html, #macroSum). Blake, 2026-10-30:
        "move the new water icon and the 22/100 oz text into a single water
        droplet pill that just shows me the percentage by fill on the right
-       side of the 774/1,413 kcal text... pure fill. no text." */
+       side of the 774/1,413 kcal text... pure fill. no text."
+       Step 1e adds a compact highlighted "N left / over" badge right beside
+       current / goal so you see both at a glance without opening the tray. */
     var dropSVG = '<svg class="mpillwk-drop" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">' +
         '<defs>' +
           '<clipPath id="mHeadDropClip"><path d="M12 2.1C8 7.2 4.6 10.9 4.6 15.1a7.4 7.4 0 0 0 14.8 0C19.4 10.9 16 7.2 12 2.1z"/></clipPath>' +
@@ -700,8 +726,11 @@
         (waterPct > 3 && waterPct < 98 ? '<line clip-path="url(#mHeadDropClip)" x1="4" y1="' + dropFillY + '" x2="20" y2="' + dropFillY + '" stroke="#93c5fd" stroke-width="1" stroke-opacity="0.85"/>' : '') +
         '<path class="mpillwk-drop-rim" d="M12 2.1C8 7.2 4.6 10.9 4.6 15.1a7.4 7.4 0 0 0 14.8 0C19.4 10.9 16 7.2 12 2.1z" fill="none"/>' +
       '</svg>';
-    var headBar = '<button type="button" class="mpillwk-hbtn" id="macroTrayHead" data-mpilltray="toggle" aria-expanded="' + (trayOpen ? 'true' : 'false') + '" aria-label="' + fullKcal.toLocaleString() + ' of ' + tK.toLocaleString() + ' calories, ' + waterOz + ' of ' + goalOz + ' oz water (' + waterPct + '%). ' + (trayOpen ? 'Collapse day detail' : 'Open day detail') + '">' +
-        '<span class="mpillwk-k"><b class="serif num">' + fullKcal.toLocaleString() + '</b><span class="mpillwk-kt"> / ' + tK.toLocaleString() + '<span class="mpillwk-ku"> kcal</span></span></span>' +
+    var headBar = '<button type="button" class="mpillwk-hbtn" id="macroTrayHead" data-mpilltray="toggle" aria-expanded="' + (trayOpen ? 'true' : 'false') + '" aria-label="' + fullKcal.toLocaleString() + ' of ' + goalKcal.toLocaleString() + ' calories (' + remTx + '), ' + waterOz + ' of ' + goalOz + ' oz water (' + waterPct + '%). ' + (trayOpen ? 'Collapse day detail' : 'Open day detail') + '">' +
+        '<span class="mpillwk-main">' +
+          '<span class="mpillwk-k"><b class="serif num">' + fullKcal.toLocaleString() + '</b><span class="mpillwk-kt"> / ' + goalKcal.toLocaleString() + '<span class="mpillwk-ku"> kcal</span></span></span>' +
+          '<span class="mpillwk-rem num' + remCls + '" data-rem="' + remKcal + '">' + remTx + '</span>' +
+        '</span>' +
         '<span class="mpillwk-w' + (waterPct >= 100 ? ' is-full' : '') + '" role="button" tabindex="0" data-hydmodal="open" data-water-pct="' + waterPct + '" title="' + waterOz + ' / ' + goalOz + ' oz (' + waterPct + '%) — Water &amp; Drinks" aria-label="Water and Drinks, ' + waterOz + ' of ' + goalOz + ' oz (' + waterPct + '%)">' + dropSVG + '<span class="vis-hidden">' + waterOz + ' / ' + goalOz + ' oz</span></span>' +
       '</button>';
     /* There was a "Tap for day's detail" button here, a 44-pixel row of its

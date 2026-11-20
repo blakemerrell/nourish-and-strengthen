@@ -2,8 +2,8 @@
  * logging page. I touch that page the most", then "Ok. Let's try it").
  *
  * The meal whose time it is, while it is still empty, shows the foods he has
- * eaten at that meal on at least two days of the last four weeks, most often
- * first. One tap puts one on at the portion he last had, and the toast's Undo
+ * logged at that meal on at least two days of the last four weeks, most often
+ * first (logged, ticked or not, since 1k; never a Fill draft nobody ate). One tap puts one on at the portion he last had, and the toast's Undo
  * takes it back off. Nowhere else: not on a meal whose time has not come, not
  * on a meal with food on it, not on a day that is not today, and nothing from
  * a draft nobody ate.
@@ -14,7 +14,8 @@ const { nourish, stepDay } = require('./fixtures/nourish.js');
 /* Fourteen days of history and a today with breakfast eaten and dinner
    planned. Lunch was the snack pack (4) every day, the canned chicken bowl
    (3) on most and roast beef roll-ups (9) on the rest; the tuna boats (2)
-   were Filled onto lunch every day and never eaten. */
+   were Filled onto lunch every day and never eaten; the tuna salad (12) he
+   logged himself on the last six days and never ticked. */
 const seed = (hour) => async (pg) => {
   await pg.clock.setFixedTime(new Date(2026, 10, 16, hour, 40));
   await pg.evaluate(() => {
@@ -25,7 +26,8 @@ const seed = (hour) => async (pg) => {
       const d = new Date(); d.setDate(d.getDate() - i);
       days[key(d)] = {
         b: [{ id: 27, x: 1, eaten: 1 }],
-        l: [{ id: i % 3 ? 3 : 9, x: 1, eaten: 1 }, { id: 4, x: i === 1 ? 1.5 : 1, eaten: 1 }, { id: 2, x: 1, eaten: 0 }],
+        l: [{ id: i % 3 ? 3 : 9, x: 1, eaten: 1 }, { id: 4, x: i === 1 ? 1.5 : 1, eaten: 1 }, { id: 2, x: 1, eaten: 0, by: 'f' }]
+          .concat(i <= 6 ? [{ id: 12, x: 1, eaten: 0 }] : []),
         d: [{ id: 51, x: 1, eaten: 1 }], s: [{ id: 6, x: 1, eaten: 1 }] };
     }
     days[key(new Date())] = { b: [{ id: 27, x: 1, eaten: 1 }], l: [], d: [{ id: 310, x: 1, eaten: 0 }], s: [] };
@@ -52,8 +54,9 @@ module.exports = nourish({
 
     const c = await chips(pg);
     t.ok('at twenty to one, the empty lunch offers what he usually has there, most often first',
-      c.length === 3 && c.every((x) => x.meal === 'l') && c.map((x) => x.v.split('|')[1]).join(',') === '4,3,9', JSON.stringify(c));
+      c.length === 3 && c.every((x) => x.meal === 'l') && c.map((x) => x.v.split('|')[1]).join(',') === '4,3,12', JSON.stringify(c));
     t.ok('a Filled food nobody ate is not a habit', !c.some((x) => x.v.split('|')[1] === '2'), JSON.stringify(c));
+    t.ok('a food he logged himself counts whether or not he ticked it (1k)', c.some((x) => x.v.split('|')[1] === '12'), JSON.stringify(c));
     t.ok('each at the portion he last had it', c[0] && c[0].v === 'l|4|1.5', JSON.stringify(c[0]));
 
     const size = await pg.evaluate(() => {

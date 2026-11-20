@@ -227,6 +227,7 @@ module.exports = {
     /* ---- Today is about today ---- */
     p = await at(t, EVENING, () => {
       localStorage.setItem('sh.view', 'today'); localStorage.setItem('sh.viewAt', String(Date.now()));
+      localStorage.setItem('sh.mweek', '1');   // the week strip, open (folded behind This week since 1g)
       localStorage.setItem('bsc.macroProfile', JSON.stringify({ sex: 'm', age: 43, ft: 5, inch: 11, lb: 190, act: 1.55, goal: 'cut1' }));
       localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 190, f: 70, c: 230 }));
     });
@@ -281,6 +282,7 @@ module.exports = {
     // a tick on a card drawn before midnight lands on the day the card was about
     p = await at(t, new Date(2026, 9, 1, 23, 58, 0), () => {
       localStorage.setItem('sh.view', 'today'); localStorage.setItem('sh.viewAt', String(Date.now()));
+      localStorage.setItem('sh.mweek', '1');   // the week strip, open (folded behind This week since 1g)
       localStorage.setItem('bsc.macroProfile', JSON.stringify({ sex: 'm', age: 43, ft: 5, inch: 11, lb: 190, act: 1.55, goal: 'cut1' }));
       localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 190, f: 70, c: 230 }));
       localStorage.setItem('bsc.macroDays', JSON.stringify({ '2026-10-01': { d: [{ id: 1, x: 1 }] } }));

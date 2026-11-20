@@ -303,6 +303,11 @@ function nourish(def) {
           const pg = await freshBare(opts);
           await pg.evaluate(() => localStorage.setItem('bsc.macroTargets',
             JSON.stringify({ p: 180, f: 50, c: 50 })));
+          /* The week strip folds behind "This week" since 1g (2026-11-20);
+             these suites were written about the strip, so they open it the
+             way a thumb would, once, on this phone. 1g's own suite
+             (macros-1g-left) starts folded. */
+          await pg.evaluate(() => localStorage.setItem('sh.mweek', '1'));
           await pg.reload();
           await pg.evaluate(() => document.fonts.ready);
           return pg;

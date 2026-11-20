@@ -105,23 +105,29 @@ module.exports = {
       const rows = [...s.querySelectorAll('.mrows .mrow')];
       return { caps: s.querySelectorAll('.msh-top .mcap').length, rows: rows.length,
         ticks: s.querySelectorAll('.mrows [data-meat], .mrows .mday-dot').length,
-        /* Step 1b: every food opens inline with Lock, − grams +, and ⋯ visible,
-           and no tick of its own. */
-        inline: rows.every((r) => r.classList.contains('mrow-open') && !!r.querySelector('.mrow-lock')?.offsetParent &&
-          !!r.querySelector('.mrow-dial')?.offsetParent && / g/.test(r.querySelector('.mstep-x')?.textContent || '') &&
-          !!r.querySelector('[data-mfmenu]')?.offsetParent),
+        /* Food search renders added foods as quiet 1-line rows (opening on tap)
+           so the search box and results fit comfortably on phone screens. */
+        lines: rows.every((r) => !!r.querySelector('.mrow-sum')),
+        shut: rows.every((r) => r.classList.contains('mrow-shut') && !r.querySelector('.mrow-dial')?.offsetParent),
         find: !!s.querySelector('.msh-find #mpFind'), shelves: !!s.querySelector('.msh-find #mpShelves'),
         basket: !!s.querySelector('[data-mpdone], [data-mpbasket]'), tall: Math.max.apply(null, rows.map((r) => r.offsetHeight)) };
     });
     t.ok('opened, the tray is one row a food, under the meal\'s four pills', !!sh && sh.caps === 4 && sh.rows === 7, JSON.stringify(sh));
-    t.ok('every food renders inline with Lock, − grams +, and ⋯ visible, and no tick of its own',
-      sh && sh.inline && sh.ticks === 0, JSON.stringify(sh));
-    const dials = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows .mrow')].every((r) =>
-      r.classList.contains('mrow-open') && r.querySelector('[data-mstep$=":down"]').offsetParent &&
-      r.querySelector('[data-mstep$=":up"]').offsetParent && r.querySelector('[data-mfmenu]').offsetParent &&
-      / g$/.test(r.querySelector('.mstep-x').textContent)));
-    t.ok('all seven rows stay open simultaneously for rapid portion dialing', dials);
-    t.ok('the rows are compact', sh && sh.tall <= 108, JSON.stringify(sh));
+    t.ok('every food is a line, its grams and calories, its dial and ⋯ behind a tap, and no tick of its own',
+      sh && sh.lines && sh.shut && sh.ticks === 0, JSON.stringify(sh));
+    await openRow(p, 'l:2');
+    const one = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows .mrow')].map((r) =>
+      (r.querySelector('[data-mrowopen]').getAttribute('aria-expanded') === 'true' ? 'O' : '-') +
+      (r.querySelector('[data-mstep$=":down"]').offsetParent && r.querySelector('[data-mstep$=":up"]').offsetParent &&
+        r.querySelector('[data-mfmenu]').offsetParent && / g$/.test(r.querySelector('.mstep-x').textContent) ? 'd' : '')).join());
+    t.ok('a tap opens that one: Lock, − grams +, and ⋯, the rest still a quiet line', one === '-,-,Od,-,-,-,-', one);
+    await openRow(p, 'l:4');
+    const shifted = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows [data-mrowopen]')].map((b) => b.getAttribute('aria-expanded') === 'true' ? 'O' : '-').join(''));
+    await p.click('#modalRoot [data-mrowopen="l:4"]');
+    await p.waitForTimeout(150);
+    const none = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows [data-mrowopen]')].every((b) => b.getAttribute('aria-expanded') === 'false'));
+    t.ok('one open at a time: another tap moves it, a tap on the open one shuts it', shifted === '----O--' && none, JSON.stringify({ shifted, none }));
+    t.ok('the rows are compact', sh && sh.tall <= 72, JSON.stringify(sh));
     t.ok('under them, the picker: the search box and the shelves, and no basket or Add', sh && sh.find && sh.shelves && !sh.basket, JSON.stringify(sh));
 
     /* + dials five grams */
@@ -280,17 +286,18 @@ module.exports = {
     t.ok('a food added from the list goes up with the others, and the list holds still under the thumb',
       at0.s > 0 && at1.n === at0.n + 1 && Math.abs(at1.y - at0.y) <= 1, JSON.stringify({ at0, at1 }));
 
-    /* Newly added food arrives ready to dial (always-open inline row), and − keeps it open. */
-    const eggOpen = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows .mrow')].every((x) => x.classList.contains('mrow-open')));
+    /* Newly added food in find mode stays a calm 1-line row until tapped, and − keeps it open. */
+    const eggShut = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows .mrow')].every((x) => x.classList.contains('mrow-shut')));
     const eggTag = await p.evaluate(() => { const r = [...document.querySelectorAll('#modalRoot .mrows .mrow')].find((x) => x.classList.contains('fresh'));
-      const btn = r && r.querySelector('[data-mfmenu]'); return btn ? btn.dataset.mfmenu : null; });
+      const btn = r && r.querySelector('[data-mrowopen]'); return btn ? btn.dataset.mrowopen : null; });
     if (eggTag) {
       await openRow(p, eggTag);
       await p.click('#modalRoot [data-mstep="' + eggTag + ':down"]');
       await p.waitForTimeout(250);
     }
-    const stillOpen = await p.evaluate((tg) => !!tg && !!(document.querySelector('#modalRoot [data-mstep="' + tg + ':down"]') || {}).offsetParent, eggTag);
-    t.ok('a food just added arrives ready to dial inline, and a − on it leaves it open', eggOpen && !!eggTag && stillOpen, eggTag);
+    const stillOpen = await p.evaluate((tg) => !!tg && (document.querySelector('#modalRoot [data-mrowopen="' + tg + '"]') || {}).getAttribute &&
+      document.querySelector('#modalRoot [data-mrowopen="' + tg + '"]').getAttribute('aria-expanded') === 'true', eggTag);
+    t.ok('a food just added stays a compact line until tapped, and a − on it leaves it open', eggShut && !!eggTag && stillOpen, eggTag);
 
     /* a recipe's Details (its name, until its line became the way to open
        it) opens the recipe; back lands on the meal's sheet */
@@ -504,6 +511,100 @@ module.exports = {
       cardGeom.oneLineMac && cardGeom.macAboveDial && cardGeom.dialInsideRow && cardGeom.rowVisibleInList,
       JSON.stringify(cardGeom));
     await sp.context().close();
+
+    /* Pixel 9 Pro Gboard simulation (412x915 -> 412x470 with 2 foods on the meal):
+       #mpFind and its clear × button stay uncovered above the tray & keyboard with
+       room for results, and tapping × clears the word while keeping focus on #mpFind. */
+    const kb = await t.fresh({ viewport: { width: 412, height: 915 }, hasTouch: true, isMobile: true });
+    kb.on('pageerror', (e) => errs.push(e.message));
+    await kb.clock.setFixedTime(new Date(2026, 9, 6, 8, 30, 0));
+    await kb.reload();
+    await kb.waitForTimeout(500);
+    await kb.evaluate(() => {
+      localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 185, f: 65, c: 205 }));
+      localStorage.setItem('bsc.macroSlots', JSON.stringify({
+        list: [
+          { k: 'b', n: 'Breakfast', t: 'b' },
+          { k: 'l', n: 'Lunch', t: 'l' },
+          { k: 'd', n: 'Dinner', t: 'd' },
+        ],
+        names: { b: 'Breakfast', l: 'Lunch', d: 'Dinner' },
+      }));
+      localStorage.setItem('bsc.macroDays', JSON.stringify({
+        '2026-10-06': {
+          b: [{ id: 'f:greek_yogurt', x: 1, eaten: 0 }, { id: 'f:oats', x: 1, eaten: 0 }],
+        },
+      }));
+    });
+    await kb.reload();
+    await kb.waitForTimeout(600);
+    await kb.click('.tab[data-view="macros"]');
+    await kb.waitForTimeout(300);
+    await kb.click('#macroSlots [data-mopen="b"]:not([data-madd])');
+    await kb.waitForTimeout(250);
+    await kb.click('#modalRoot [data-mpmode="home"]');
+    await kb.waitForTimeout(250);
+
+    const quietHead = await kb.evaluate(() => ({
+      hasDelta: !!document.querySelector('#modalRoot .msh-delta'),
+      hasWater: !!document.querySelector('#modalRoot .msh-wchips'),
+    }));
+    t.ok('food search omits redundant kcal header and water chips to keep focus on adding food',
+      !quietHead.hasDelta && !quietHead.hasWater, JSON.stringify(quietHead));
+
+    await kb.fill('#mpFind', 'milk');
+    await kb.waitForTimeout(200);
+    await kb.setViewportSize({ width: 412, height: 470 });
+    await kb.waitForTimeout(350);
+
+    const kbVis = await kb.evaluate(() => {
+      const f = document.getElementById('mpFind');
+      const clr = document.querySelector('#modalRoot [data-mpclear]');
+      const lst = document.getElementById('mpList');
+      const fr = f.getBoundingClientRect();
+      const cr = clr.getBoundingClientRect();
+      const lr = lst.getBoundingClientRect();
+      const hitF = document.elementFromPoint(fr.left + 20, fr.top + fr.height / 2);
+      const hitC = document.elementFromPoint(cr.left + cr.width / 2, cr.top + cr.height / 2);
+      return {
+        fTop: Math.round(fr.top),
+        fBottom: Math.round(fr.bottom),
+        hitFind: !!(hitF && (hitF.id === 'mpFind' || hitF.closest('.mp-find'))),
+        clrW: Math.round(cr.width),
+        clrH: Math.round(cr.height),
+        clrShown: !clr.hidden && cr.width >= 44 && cr.height >= 44,
+        hitClear: !!(hitC && hitC.closest('[data-mpclear]')),
+        listTop: Math.round(lr.top),
+        roomAboveKb: Math.round(470 - lr.top),
+      };
+    });
+    t.ok('with Gboard height (412x470), #mpFind and clear × stay uncovered at the top with >= 220px of result room',
+      kbVis.fTop >= 0 && kbVis.fBottom <= 120 && kbVis.hitFind && kbVis.clrShown && kbVis.hitClear && kbVis.roomAboveKb >= 220,
+      JSON.stringify(kbVis));
+
+    await kb.click('#modalRoot [data-mpclear]');
+    await kb.waitForTimeout(200);
+    await kb.keyboard.type('egg');
+    await kb.waitForTimeout(250);
+    const afterClr = await kb.evaluate(() => {
+      const f = document.getElementById('mpFind');
+      const clr = document.querySelector('#modalRoot [data-mpclear]');
+      const fr = f.getBoundingClientRect();
+      const rows = [...document.querySelectorAll('#mpList [data-mpick]')];
+      return {
+        val: f.value,
+        focused: document.activeElement && document.activeElement.id,
+        fTop: Math.round(fr.top),
+        fBottom: Math.round(fr.bottom),
+        clrShown: !clr.hidden,
+        eggRows: rows.filter((r) => /egg/i.test(r.textContent || '')).length,
+      };
+    });
+    t.ok('tapping × clears "milk", keeps focus in #mpFind above Gboard, and shows "egg" results immediately',
+      afterClr.val === 'egg' && afterClr.focused === 'mpFind' &&
+        afterClr.fTop >= 0 && afterClr.fBottom <= 120 && afterClr.clrShown && afterClr.eggRows > 0,
+      JSON.stringify(afterClr));
+    await kb.context().close();
 
     t.ok('no page errors', errs.length === 0, errs.join(' | '));
   },

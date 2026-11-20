@@ -3755,6 +3755,8 @@
       box.value = '';
       var sh = box.closest('.msheet');
       if (sh) sh.classList.remove('mpq');
+      var clrH = box.parentNode && box.parentNode.querySelector('[data-mpclear]');
+      if (clrH) clrH.hidden = true;
     }
   }
   function mSlotName(sk) {
@@ -4297,7 +4299,7 @@
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mslotdel', 'data-mslotmove', 'data-mholdclose', 'data-maddslot', 'data-mslotpreset', 'data-maddpop', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
-    'data-mmore', 'data-fppick', 'data-fpmore', 'data-fpstaples', 'data-mfsec', 'data-mfunpin', 'data-mfedit', 'data-mfdel', 'data-mfnew', 'data-mfadd', 'data-mffood', 'data-mfundo', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mwtiles', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd', 'data-hydmodal', 'data-hyd', 'data-hydmg', 'data-hydoz', 'data-mdrift', 'data-mlog', 'data-mpslot', 'data-mheardundo'];
+    'data-mmore', 'data-fppick', 'data-fpmore', 'data-fpstaples', 'data-mfsec', 'data-mfunpin', 'data-mfedit', 'data-mfdel', 'data-mfnew', 'data-mfadd', 'data-mffood', 'data-mfundo', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mwtiles', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd', 'data-hydmodal', 'data-hyd', 'data-hydmg', 'data-hydoz', 'data-mdrift', 'data-mlog', 'data-mpslot', 'data-mheardundo', 'data-mrowopen', 'data-mpclear'];
 
   function focusKey(el) {
     if (!el || el === document.body || !el.getAttribute) return null;
@@ -4350,6 +4352,44 @@
        preventScroll is ignored by browsers that do not know it, which leaves
        them exactly where they were before. */
     try { back.focus({ preventScroll: true }); } catch (e) { back.focus(); }
+  }
+
+  var mFindVisT1 = 0, mFindVisT2 = 0;
+  function mSyncPickerStick() {
+    var root = $('modalRoot');
+    if (!root) return;
+    var mtop = root.querySelector('.msh-top'), msht = root.querySelector('.msheet');
+    if (!mtop || !msht) return;
+    var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 800;
+    var isFind = msht.getAttribute('data-mode') === 'find';
+    var cramped = isFind && (vh <= 600 || (vh - mtop.offsetHeight < 260));
+    msht.classList.toggle('msheet-cramped', cramped);
+    msht.style.setProperty('--msh-top', (cramped ? 0 : mtop.offsetHeight) + 'px');
+  }
+  function mEnsureFindVisible() {
+    if (!S.macroPick || S.mpMode === 'meal' || S.mpMode === 'scan') return;
+    var box = $('mpFind');
+    if (!box || document.activeElement !== box) return;
+    mSyncPickerStick();
+    var scr = document.querySelector('#modalRoot .scrim');
+    var fnd = box.closest('.msh-find');
+    if (!scr || !fnd) return;
+    var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 800;
+    var msht = box.closest('.msheet');
+    var cramped = !!(msht && msht.classList.contains('msheet-cramped')) || vh <= 600;
+    var r = fnd.getBoundingClientRect();
+    if (cramped) {
+      if (r.top > 4 || r.top < -4) scr.scrollTop += r.top;
+    } else if (r.bottom > vh - 120) {
+      scr.scrollTop += r.top - 8;
+    }
+  }
+  function mScheduleFindVisible() {
+    mEnsureFindVisible();
+    clearTimeout(mFindVisT1);
+    clearTimeout(mFindVisT2);
+    mFindVisT1 = setTimeout(mEnsureFindVisible, 120);
+    mFindVisT2 = setTimeout(mEnsureFindVisible, 300);
   }
 
   function renderModalInner() {
@@ -4505,9 +4545,9 @@
         root.innerHTML = macroPickerHTML();
         document.body.style.overflow = 'hidden';
         /* The second pin (search and shelves) sits under the first (the
-           meal's header and pills), whatever height that came out. */
-        var mtop = root.querySelector('.msh-top'), msht = root.querySelector('.msheet');
-        if (mtop && msht) msht.style.setProperty('--msh-top', mtop.offsetHeight + 'px');
+           meal's header and pills), whatever height that came out — or at
+           the very top when a keyboard leaves too little vertical room. */
+        mSyncPickerStick();
         if (keepScroll) root.querySelector('.scrim').scrollTop = keepScroll;
         var newList = listAt !== null && root.querySelector('#mpList');
         if (newList) root.querySelector('.scrim').scrollTop += newList.getBoundingClientRect().top - listAt;
@@ -6088,8 +6128,8 @@
     $('modalRoot').addEventListener('click', function (e) {
       if (!S.macroPick || S.openId || S.foodOpen || S.keepMeal || S.mCopyFrom || S.newFood) return;
       if (!e.target.closest || !e.target.closest('.msheet')) return;
-      // ×, Done and mode switches pass to document's listener intact when a menu is open
-      if (e.target.closest('.sheet-x, .sheet-done, [data-mpmode], [data-mpslot]')) return;
+      // ×, Done, clear-search and mode switches pass to document's listener intact when a menu is open
+      if (e.target.closest('.sheet-x, .sheet-done, [data-mpmode], [data-mpslot], [data-mpclear]')) return;
       /* A food opened because it was just added stays open once you use it:
          its dial, its amount or its ⋯ pin it open, so the first − does not
          shut it as the "just added" mark is cleared. Here, before an open
@@ -6690,7 +6730,7 @@
         }
         renderModal();
         var fnd = $('mpFind');
-        if (fnd && fnd.focus) fnd.focus();
+        if (fnd && fnd.focus) { fnd.focus(); mScheduleFindVisible(); }
         else if (fnd && fnd.scrollIntoView) fnd.scrollIntoView({ block: 'start' });
         return;
       }
@@ -7300,7 +7340,7 @@
           }
         }
         var mf = $('mpFind');
-        if (mf && mf.focus) mf.focus();
+        if (mf && mf.focus) { mf.focus(); mScheduleFindVisible(); }
       });
     }
     if ($('macroAddPop')) {
@@ -7980,6 +8020,13 @@
     window.addEventListener('scroll', onScrollStrip, { passive: true });
     window.addEventListener('resize', onResizeFold);
     window.addEventListener('resize', onScrollStrip);
+    var onPickerViewport = function () {
+      if (!S.macroPick) return;
+      mSyncPickerStick();
+      mEnsureFindVisible();
+    };
+    window.addEventListener('resize', onPickerViewport);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', onPickerViewport);
     document.querySelector('.tabs').addEventListener('scroll', syncTabsFade, { passive: true });
     syncTabsFade();
 
@@ -8324,7 +8371,7 @@
             if (mtop2) mtop2.innerHTML = P2.head + (P2.stick || '');
             if (msht2) {
               msht2.setAttribute('aria-label', P2.name);
-              if (mtop2) msht2.style.setProperty('--msh-top', mtop2.offsetHeight + 'px');
+              mSyncPickerStick();
             }
           } else {
             var fIn = $('mpFind');
@@ -8368,12 +8415,34 @@
           pushSheet({ m: 1, mpFind: 1 });
           renderModal();
           var mpF = $('mpFind');
-          if (mpF && mpF.focus) mpF.focus();
+          if (mpF && mpF.focus) { mpF.focus(); mScheduleFindVisible(); }
           return;
         }
         S.mpMode = targetMode === S.mpMode ? 'home' : targetMode;
         mCamDone = false;               // a fresh visit to scan opens the lens again
         renderModal();
+        return;
+      }
+
+      var mpclr = e.target.closest('[data-mpclear]');
+      if (mpclr && S.macroPick) {
+        S.mpQuery = '';
+        S.mpHeard = null;
+        var cbox = $('mpFind');
+        if (cbox) {
+          cbox.value = '';
+          var csh = cbox.closest('.msheet');
+          if (csh) csh.classList.remove('mpq');
+        }
+        mpclr.hidden = true;
+        refreshMacroPicker();
+        if (cbox && cbox.focus) cbox.focus();
+        mScheduleFindVisible();
+        return;
+      }
+
+      if (S.macroPick && e.target && e.target.id === 'mpFind') {
+        mScheduleFindVisible();
         return;
       }
 
@@ -9599,8 +9668,11 @@
            not a redraw, which would take the box being typed in with it. */
         var mqs = e.target.closest('.msheet');
         if (mqs) mqs.classList.toggle('mpq', !!S.mpQuery.trim());
+        var clrBtn = e.target.parentNode && e.target.parentNode.querySelector('[data-mpclear]');
+        if (clrBtn) clrBtn.hidden = !S.mpQuery.trim();
         refreshMacroPicker();
         mpLookSoon();
+        mEnsureFindVisible();
       }
       /* One box over two speeds. What is already on this device answers on
          the keystroke; the food tables are a request over a network, so they
@@ -9635,8 +9707,18 @@
      *
        Only an exact "0", so a real figure you tapped into to correct keeps
        its caret where you put it. focusin because focus does not bubble. */
+    $('modalRoot').addEventListener('pointerdown', function (e) {
+      if (e.target.closest && e.target.closest('[data-mpclear]')) e.preventDefault();
+    });
+    $('modalRoot').addEventListener('mousedown', function (e) {
+      if (e.target.closest && e.target.closest('[data-mpclear]')) e.preventDefault();
+    });
     $('modalRoot').addEventListener('focusin', function (e) {
       var el = e.target;
+      if (S.macroPick && el && el.id === 'mpFind') {
+        mScheduleFindVisible();
+        return;
+      }
       if (!S.macroTargOpen || !el || el.tagName !== 'INPUT' || el.type !== 'number') return;
       if (el.value !== '0') return;
       try { el.select(); } catch (e2) { /* older webviews: leave the caret be */ }

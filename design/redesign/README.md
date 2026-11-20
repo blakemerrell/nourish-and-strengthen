@@ -35,11 +35,11 @@ exact copy, spacing and states. The live, clickable version is
 https://claude.ai/artifact/8bmu2EX5DvW2QNB45cBVY5 (private to Blake).
 Numbers in the mockups are a sample day, not real data.
 
-The mockups use the phone's system font and a flatter look. **The app
-permanently keeps its own Warm Editorial Look 1** (`src/style.css`
-tokens, `Source Serif 4` + `Work Sans`, warm cream/dark surfaces, and
-real-iron plate colours). Take structure and simplification from the
-mockups and RP Diet ergonomics, not visual restyling.
+The mockups use the phone's system font and a flatter look. **The look is
+being decided** (Blake, 2026-11-20): he asked to see the Eat screen in the
+app's own look (Source Serif 4 + Work Sans, warm cream) side by side with
+the mockups' flatter look before choosing. Until he does, change structure
+only: no restyling in either direction.
 
 ## What was wrong (the review, short)
 
@@ -112,8 +112,8 @@ ships last.
 ## Status & File Ownership
 
 Split ownership by file so agents work in parallel without merge collisions:
-- **Antigravity**: Owns `src/myday.js`, `src/mydayparts.js`, `src/picksheet.js` (Eat `1b`–`1f`).
-- **Claude**: Owns `src/train.js` (`2a`, `2b`, `3`) and Steps `4–6` prep (`Cook`, `Today`, bottom nav).
+- **Claude**: owns the Eat follow-ups `1g`–`1k` (Blake, 2026-11-20: "Claude does them"), so `src/myday.js`, `src/mydayparts.js`, `src/picksheet.js` and the Eat parts of `src/app.js` / `src/style.css` are Claude's until those are merged. Also `src/train.js` (`2a`, `2b`, `3`).
+- **Antigravity**: Steps `4–6` prep (`Cook`, `Today`, bottom nav) unless Blake reassigns; stay off the Eat files above until `1g`–`1k` are merged.
 
 | Step | Status | Who | PR / Branch |
 |---|---|---|---|
@@ -123,6 +123,11 @@ Split ownership by file so agents work in parallel without merge collisions:
 | 1d Log bar + local scanner | Done | Antigravity | #208 |
 | 1e Eat header (`current/goal` + `left`) | Done | Antigravity | #209 |
 | 1f My Foods & Routines manager | Done | Antigravity | #210 |
+| 1g "What's left" big at the top; week strip folds | Claimed | Claude | |
+| 1h Amount sheet: servings for recipes, grams for single foods | Claimed | Claude | |
+| 1i Remove the rebalance banner | Claimed | Claude | |
+| 1j Meal card header: ↻ moves under ⋯ (keep pills, ⚖, ⊘) | Claimed | Claude | |
+| 1k Chips count logged food, ticked or not (still add unticked) | Claimed | Claude | |
 | 2a Aim line (keep plates & RIR) | Not started | | |
 | 2b Prune duplicate `.tr-ex-a` buttons | Not started | | |
 | 2c Weigh-in to Today (with Step 5) | Bundled into 5 | | |
@@ -131,6 +136,24 @@ Split ownership by file so agents work in parallel without merge collisions:
 | 4 Cook (preserve Walmart flow) | Not started | | |
 | 5 Today (includes 2c weigh-in) | Not started | | |
 | 6 4-tab bottom bar (Look 1 kept) | Not started | | |
+
+## Decisions from Blake, 2026-11-20 (these override the 2026-11-19 list where they differ)
+
+Asked by Claude after comparing the app on `main` with the mockups:
+
+- **Look**: not settled; see the note under "Look at the mockups first".
+- **Top of Eat**: lead with what's left, big (calories left, then P / C / F
+  bars); the week strip folds into one tap. *(Replaces "show both" as the
+  lead.)*
+- **Log bar**: opening the full picker is fine; keep it.
+- **Amounts**: depends on the food: recipes in servings with ½ · 1 · 1½ · 2,
+  single foods in grams. Lock and the rest behind "More".
+- **Rebalance banner**: remove it; Rebalance stays in the ☰ menu.
+  *(Replaces the banner decision below.)*
+- **Meal card controls**: he uses the four macro pills, ⚖ Balance and
+  ⊘ Skip; ↻ Try another moves under ⋯.
+- **"You usually have" chips**: count everything logged at that meal,
+  ticked or not; a chip still adds the food unticked.
 
 ## Resolved decisions (2026-11-19)
 

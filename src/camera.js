@@ -273,7 +273,7 @@
       '<div class="sheet mt-sheet" role="dialog" aria-modal="true" aria-label="Add a food">' +
         '<div class="sheet-top">' +
           '<div class="sheet-eyebrow">' + (pre ? 'How much?' : 'Type it in') + '</div>' +
-          '<button class="sheet-x" data-close="1" aria-label="Close">&times;</button>' +
+          '<button class="sheet-x" ' + (S.newFood && S.newFood.fromFav ? 'data-nf="cancel"' : 'data-close="1"') + ' aria-label="Close">&times;</button>' +
         '</div>' +
         (pre && pre.note
           ? '<div class="mt-cap">From ' + esc(pre.note) + '</div>' : '') +
@@ -291,7 +291,7 @@
         '<div class="mt-cap" id="nfNote"></div>' +
         '<div class="sync-row">' +
           '<button class="btn-primary" data-nf="save">' +
-            (S.macroPick && S.macroPick.n ? 'Add to ' + esc(S.macroPick.n) : 'Add it to the day') + '</button>' +
+            (S.newFood && S.newFood.fromFav ? 'Save custom food' : S.macroPick && S.macroPick.n ? 'Add to ' + esc(S.macroPick.n) : 'Add it to the day') + '</button>' +
           '<button class="ghost" data-nf="cancel">Cancel</button>' +
         '</div>' +
         '<div id="nfOffSrc">' + mOffSrcHTML(pre && pre.off, pre && pre.code) + '</div>' +
@@ -346,7 +346,7 @@
         '</div>' +
         '<div class="mfs-plate"><span class="mfs-k">On your plate</span><span class="mk-tot" id="nfPlate"></span></div>' +
         '<button class="btn-primary nf-add" data-nf="save">' +
-          (S.macroPick && S.macroPick.n ? 'Add to ' + esc(S.macroPick.n) : 'Add it to the day') + '</button>' +
+          (S.newFood && S.newFood.fromFav ? 'Save custom food' : S.macroPick && S.macroPick.n ? 'Add to ' + esc(S.macroPick.n) : 'Add it to the day') + '</button>' +
         '<div class="mt-cap" id="nfNote"></div>' +
         '<div class="mfs-nutr" id="nfNow"></div>' +
         '<details class="nf-more"><summary>Full label &amp; ingredients</summary>' +

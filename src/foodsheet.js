@@ -259,6 +259,8 @@
         '</div>' +
         '<div class="mfs-name">' + esc(r.name) + '</div>' +
         '<div class="mfs-meta">Type the label as printed, for its serving.</div>' +
+        '<label class="mff-code" for="mffName"><span>Name</span>' +
+          '<input type="text" id="mffName" autocomplete="off" value="' + esc(r.name) + '"></label>' +
         (base
           ? '<div class="mff-serv"><label for="mffServ">Serving</label>' +
               '<input type="text" id="mffServ" autocomplete="off" placeholder="1 can" aria-label="The serving, as the label says it" value="' +
@@ -283,6 +285,9 @@
      grams the form used to keep did to every small unit. */
   function mFsFixRead(r) {
     var base = mFsBase(r), val = function (id) { return String((($(id) || {}).value) || '').trim(); };
+    var nmEl = $('mffName');
+    var nm = nmEl ? val('mffName') : String(r.name || '').trim();
+    if (!nm) return { err: 'Give it a name first.' };
     var servN = base ? Number(val('mffN')) : 1;
     if (base && !(servN > 0)) return { err: 'Say how many ' + base.u + ' the label’s serving is.' };
     var factor = base ? base.n / servN : 1;
@@ -300,7 +305,7 @@
     ['p', 'f', 'c'].forEach(function (k) { if (per[k] === undefined) per[k] = 0; });
     if (!any) return { err: 'Give it at least the calories, or it counts for nothing.' };
     var t2 = val('mffServ'), code = val('mffCode').replace(/\D/g, '');
-    return { per: per, sz: base ? { t: t2, n: servN } : null, code: code };
+    return { name: nm, per: per, sz: base ? { t: t2, n: servN } : null, code: code };
   }
   // the day counts calories as four, four and nine, as it does for every food
   function mFsFixKcal(p) { return p.p || p.f || p.c ? 4 * p.p + 4 * p.c + 9 * p.f : (p.kcal || 0); }

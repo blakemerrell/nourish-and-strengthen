@@ -122,7 +122,7 @@ Split ownership by file so agents work in parallel without merge collisions:
 | 1c Quiet foot + drift banner | Done | Antigravity | #207 |
 | 1d Log bar + local scanner | Done | Antigravity | #208 |
 | 1e Eat header (`current/goal` + `left`) | Done | Antigravity | #209 |
-| 1f My Foods & Routines manager | Not started | | |
+| 1f My Foods & Routines manager | Done | Antigravity | #210 |
 | 2a Aim line (keep plates & RIR) | Not started | | |
 | 2b Prune duplicate `.tr-ex-a` buttons | Not started | | |
 | 2c Weigh-in to Today (with Step 5) | Bundled into 5 | | |

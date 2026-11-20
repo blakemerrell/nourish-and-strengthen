@@ -1,17 +1,22 @@
-/* Step 1c: Quiet bottom bar + secondary menu tools + Smart Drift Banner.
+/* Step 1c: Quiet bottom bar + secondary menu tools, and (since 1i) no drift banner.
+ *
+ * Blake, 2026-11-20, of the "Meals are off target — tap to rebalance" strip
+ * this step added: "Remove it." It fired at lunchtime on a day whose dinner
+ * was planned under its share. Rebalance stays in the ☰ menu, so the checks
+ * that the banner appeared, could be dismissed and re-appeared became checks
+ * that it never appears, and that the menu's Rebalance does what its 1-tap
+ * did: unlocked open plates move, eaten and locked ones stay.
  *
  * Verifies:
  *  1) .mday-acts renders ONLY #macroFill across states (Craft my plan -> Fill -> Mark all complete / Complete the day).
  *  2) #macroMore opens #macroMenu with #macroRebal, #macroSweep, and #macroAddMeal, and activating each closes #macroMenu.
- *  3) No false-alarm drift banner on a freshly Filled day or partial morning with empty later slots.
- *  4) Finished meal drifting >10% while open unlocked plates exist shows #macroDrift at top of #macroSlots.
- *  5) Dismiss (x) hides #macroDrift for that day state; subsequent food changes allow it to re-appear.
- *  6) 1-tap Rebalance on #macroDrift adjusts unlocked open items, preserves eaten & locked (l === 2) items, clears banner, shows toast.
- *  7) Narrow 320x700 audit: zero overflow, >= 44x44 targets, >= 13px text, no mid-word breaks, scrollable #macroMenu. */
+ *  3) No drift banner, on a freshly Filled day, a partial morning, or a day really off target.
+ *  4) Rebalance from #macroMenu adjusts unlocked open items and keeps eaten & locked (l === 2) ones.
+ *  5) Narrow 320x700 audit: zero overflow, a >= 44px primary button, #macroMenu inside the viewport. */
 const { nourish, todayOn } = require('./fixtures/nourish.js');
 
 module.exports = nourish({
-  name: 'Macros — Step 1c: quiet footer, menu tools & smart drift banner',
+  name: 'Macros — Step 1c: quiet footer and menu tools; no drift banner (1i)',
   async suite(t) {
     const p = await t.fresh({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
     const errs = [];
@@ -158,107 +163,36 @@ module.exports = nourish({
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(350);
 
-    const driftInfo = await p.evaluate(() => {
-      const dr = document.getElementById('macroDrift');
-      const firstChild = document.getElementById('macroSlots').firstElementChild;
-      return {
-        exists: !!dr,
-        isFirst: dr && firstChild && dr.id === firstChild.id,
-        text: dr ? dr.querySelector('.mdrift-go').textContent.replace(/\s+/g, ' ').trim() : '',
-        sig: dr ? dr.dataset.sig : '',
-        hasDismiss: !!(dr && dr.querySelector('[data-mdrift="dismiss"]')),
-      };
-    });
-    t.ok('finished meal >10% off target with unlocked open meals shows #macroDrift at top of #macroSlots',
-      driftInfo.exists && driftInfo.isFirst && /Meals are off target/.test(driftInfo.text) &&
-        driftInfo.hasDismiss && !!driftInfo.sig,
-      JSON.stringify(driftInfo));
-
-    /* 6) Dismiss hides banner & preserves focus; skipping a slot or modifying a food changes signature */
-    await p.focus('#macroDrift [data-mdrift="dismiss"]');
-    await p.keyboard.press('Enter');
-    await p.waitForTimeout(250);
-    const dismissState = await p.evaluate(() => ({
-      hidden: !document.getElementById('macroDrift'),
-      focusKept: !!document.activeElement && document.activeElement !== document.body,
+    const noBanner = await p.evaluate(() => ({
+      drift: !!document.getElementById('macroDrift'),
+      any: document.querySelectorAll('.mdrift, [data-mdrift]').length,
+      text: /off target/i.test(document.getElementById('macroSlots').textContent),
     }));
-    t.ok('dismissing #macroDrift hides it for current signature and restores focus off body',
-      dismissState.hidden && dismissState.focusKept,
-      JSON.stringify(dismissState));
+    t.ok('a finished meal well off target, with open meals still to adjust, draws no banner (1i)',
+      !noBanner.drift && noBanner.any === 0 && !noBanner.text, JSON.stringify(noBanner));
 
-    await p.click('#macroSlots [data-mskipask="s"]');
-    await p.waitForTimeout(250);
-    const skipDrift = await p.evaluate((oldSig) => {
-      const dr = document.getElementById('macroDrift');
-      return { exists: !!dr, sig: dr ? dr.dataset.sig : '', changed: dr ? dr.dataset.sig !== oldSig : false };
-    }, driftInfo.sig);
-    t.ok('skipping a slot updates drift signature and allows #macroDrift to re-appear',
-      skipDrift.exists && skipDrift.changed && /#s/.test(skipDrift.sig),
-      JSON.stringify(skipDrift));
-
-    await p.click('#macroSlots [data-mskip="s"]');
-    await p.waitForTimeout(250);
-    await p.click('#macroSlots [data-mamt$="|l:1"]');
-    await p.waitForTimeout(200);
-    await p.click('#macroSlots [data-mstep="l:1:down"]');
-    await p.waitForTimeout(300);
-    const driftReappeared = await p.evaluate((oldSig) => {
-      const dr = document.getElementById('macroDrift');
-      return { exists: !!dr, newSig: dr ? dr.dataset.sig : '', changed: dr ? dr.dataset.sig !== oldSig : false };
-    }, driftInfo.sig);
-    t.ok('subsequent plate change updates signature and allows #macroDrift to appear again',
-      driftReappeared.exists && driftReappeared.changed,
-      JSON.stringify(driftReappeared));
-
-    /* 7) 1-tap Rebalance preserves eaten & locked items, resizes unlocked items, clears banner, keeps focus & toasts */
+    /* 7) Rebalance from the menu keeps eaten & locked items and resizes unlocked ones */
     const beforeRebal = await p.evaluate((dk) => JSON.parse(localStorage.getItem('bsc.macroDays'))[dk], dayKey);
-    await p.focus('#macroDrift [data-mdrift="rebal"]');
-    await p.keyboard.press('Enter');
+    await p.click('#macroMore');
+    await p.waitForTimeout(200);
+    await p.click('#macroRebal');
     await p.waitForTimeout(350);
     const afterRebal = await p.evaluate((dk) => ({
       day: JSON.parse(localStorage.getItem('bsc.macroDays'))[dk],
-      hasDrift: !!document.getElementById('macroDrift'),
-      focusKept: !!document.activeElement && document.activeElement !== document.body,
-      toast: (document.getElementById('mToast') || document.querySelector('.mtoast') || {}).textContent || '',
+      menuShut: document.getElementById('macroMenu').hidden || document.getElementById('macroMenu').classList.contains('hide'),
     }), dayKey);
     const unlockedChanged = (afterRebal.day.l[1].x !== beforeRebal.l[1].x) ||
       (afterRebal.day.d[1].x !== beforeRebal.d[1].x) ||
       (afterRebal.day.l[0].x !== beforeRebal.l[0].x);
-    t.ok('1-tap rebalance preserves eaten & locked items, updates unlocked plates, clears banner, keeps focus & toasts',
+    t.ok('Rebalance from the menu keeps eaten & locked plates and moves unlocked ones',
       afterRebal.day.b[0].x === 6 && afterRebal.day.b[1].x === 6 &&
         afterRebal.day.d[0].x === 2 && afterRebal.day.d[0].l === 2 &&
-        unlockedChanged && !afterRebal.hasDrift && afterRebal.focusKept && /rebalanced/i.test(afterRebal.toast),
-      JSON.stringify({ unlockedChanged, hasDrift: afterRebal.hasDrift, focusKept: afterRebal.focusKept, toast: afterRebal.toast, afterRebal: afterRebal.day }));
-
-    /* 7b) Past-day rebalance toast names the viewed date instead of "today's" */
-    const pastKey = '2026-10-01';
-    await p.evaluate((pk) => {
-      const days = JSON.parse(localStorage.getItem('bsc.macroDays') || '{}');
-      days[pk] = {
-        b: [{ id: 'f:oats', x: 6, eaten: 1 }, { id: 'f:peanut_butter', x: 5, eaten: 1 }],
-        l: [{ id: 'f:egg_white', x: 3, eaten: 0 }, { id: 'f:oats', x: 2, eaten: 0 }],
-        d: [{ id: 'f:egg_white', x: 4, eaten: 0 }],
-      };
-      localStorage.setItem('bsc.macroDays', JSON.stringify(days));
-    }, pastKey);
-    await p.reload();
-    await p.waitForTimeout(350);
-    await p.click('.tab[data-view="macros"]');
-    await p.waitForTimeout(250);
-    await p.evaluate((pk) => {
-      document.getElementById('macroDayPick').value = pk;
-      document.getElementById('macroDayPick').dispatchEvent(new Event('change', { bubbles: true }));
-    }, pastKey);
-    await p.waitForTimeout(250);
-    await p.click('#macroDrift [data-mdrift="rebal"]');
-    await p.waitForTimeout(300);
-    const pastToast = await p.textContent('#mToast');
-    t.ok('rebalancing a past day names that date rather than "today\'s target"',
-      /Oct 1/.test(pastToast) && !/today/i.test(pastToast), pastToast);
+        unlockedChanged && afterRebal.menuShut,
+      JSON.stringify({ unlockedChanged, menuShut: afterRebal.menuShut, afterRebal: afterRebal.day }));
 
     await p.context().close();
 
-    /* 8) Narrow 320x700 viewport layout audit with #macroDrift visible */
+    /* 8) Narrow 320x700 viewport layout audit on a drifting day (no banner since 1i) */
     const np = await t.fresh({ viewport: { width: 320, height: 700 }, hasTouch: true, isMobile: true });
     np.on('pageerror', (e) => errs.push(e.message));
     const npDay = await todayOn(np);
@@ -286,44 +220,16 @@ module.exports = nourish({
     await np.waitForTimeout(350);
 
     const layout320 = await np.evaluate(() => {
-      const dr = document.getElementById('macroDrift');
-      const go = dr && dr.querySelector('.mdrift-go');
-      const dis = dr && dr.querySelector('.mdrift-x');
       const fill = document.getElementById('macroFill');
-      const span = go && go.querySelector('span');
-      const wordBroken = (() => {
-        if (!span || !span.firstChild) return false;
-        const txt = span.firstChild.textContent;
-        const range = document.createRange();
-        let idx = 0;
-        for (const word of txt.split(/\s+/)) {
-          const at = txt.indexOf(word, idx);
-          idx = at + word.length;
-          if (!word.trim()) continue;
-          range.setStart(span.firstChild, at);
-          range.setEnd(span.firstChild, idx);
-          if (range.getClientRects().length > 1) return word;
-        }
-        return false;
-      })();
-      const goRect = go ? go.getBoundingClientRect() : { width: 0, height: 0 };
-      const disRect = dis ? dis.getBoundingClientRect() : { width: 0, height: 0 };
       const fillRect = fill ? fill.getBoundingClientRect() : { width: 0, height: 0 };
       return {
         docOverflow: document.documentElement.scrollWidth > window.innerWidth,
-        hasDrift: !!dr,
-        goW: goRect.width, goH: goRect.height,
-        disW: disRect.width, disH: disRect.height,
-        fillW: fillRect.width, fillH: fillRect.height,
-        fontPx: span ? parseFloat(getComputedStyle(span).fontSize) : 0,
-        wordBroken,
+        hasDrift: !!document.getElementById('macroDrift'),
+        fillH: fillRect.height,
       };
     });
-    t.ok('at 320x700: zero overflow, >= 44x44 targets, >= 13px banner text, no broken words',
-      layout320.hasDrift && !layout320.docOverflow &&
-        layout320.goW >= 44 && layout320.goH >= 44 &&
-        layout320.disW >= 44 && layout320.disH >= 44 &&
-        layout320.fillH >= 44 && layout320.fontPx >= 12.95 && !layout320.wordBroken,
+    t.ok('at 320x700: zero overflow, no banner, and the primary button is >= 44px tall',
+      !layout320.hasDrift && !layout320.docOverflow && layout320.fillH >= 44,
       JSON.stringify(layout320));
 
     await np.click('#macroMore');

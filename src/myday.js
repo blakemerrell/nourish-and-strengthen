@@ -1344,10 +1344,14 @@
     return sk;
   }
 
-  /* The foods eaten at meal `sk` on at least two of the last four weeks'
+  /* The foods logged at meal `sk` on at least two of the last four weeks'
      days, most often first and the latest first among equals, each at the
-     portion it was last eaten at. Eaten, not merely placed: a Fill draft
-     nobody ate is the app's guess, and a guess repeated is not a habit. */
+     portion it was last had at. Logged, ticked or not: it counted only
+     ticked food at first, and Blake logs more than he ticks, so most of his
+     habits never showed (2026-11-20: "Count logged"). A draft is still not a
+     habit: what Fill put on a meal (`by: 'f'`) or Plan my week did
+     (`by: 'w'`) is the app's guess, and a guess repeated is not a habit,
+     unless it was eaten, when it is his. */
   function mUsualOf(k, sk, today) {
     var from = keyDate(k);
     from.setDate(from.getDate() - MUSUAL_DAYS);
@@ -1357,7 +1361,8 @@
       if (dk >= k || dk < fromK) return;
       var counted = {};
       ((MDAYS[dk] || {})[sk] || []).forEach(function (it) {
-        if (!it || !it.eaten || !LIVE.BY_ID[it.id] || LIVE.BY_ID[it.id].archived) return;
+        if (!it || !LIVE.BY_ID[it.id] || LIVE.BY_ID[it.id].archived) return;
+        if (!it.eaten && it.by) return;
         var id = String(it.id);
         if (on[id] || counted[id]) return;
         counted[id] = 1;

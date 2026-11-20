@@ -199,6 +199,47 @@ module.exports = nourish({
       JSON.stringify(micState));
     await p.click('#modalRoot .msh-done');
     await p.waitForTimeout(250);
+
+    /* 3b) Regression (#208 Claude review Bug #1): switching meal chips clears basket/at marks */
+    await p.evaluate((dk) => {
+      localStorage.setItem('bsc.macroDays', JSON.stringify({
+        [dk]: { b: [], l: [{ id: 'f:apple', x: 1, eaten: 1 }], d: [], s: [] },
+      }));
+    }, dayKey);
+    await p.reload();
+    await p.waitForTimeout(450);
+    await p.click('.tab[data-view="macros"]');
+    await p.waitForTimeout(300);
+
+    await p.click('#macroLogOpen');
+    await p.waitForTimeout(250);
+    await p.click('#modalRoot [data-mpslot="b"]');
+    await p.waitForTimeout(200);
+    await p.fill('#mpFind', 'apple');
+    await p.waitForTimeout(250);
+    await p.click('#modalRoot .mpick-row[data-mpick="f:apple"]');
+    await p.waitForTimeout(200);
+    await p.click('#modalRoot [data-mpslot="l"]');
+    await p.waitForTimeout(250);
+    await p.fill('#mpFind', 'apple');
+    await p.waitForTimeout(250);
+    const pressedAfterSwitch = await p.evaluate(() => {
+      const r = document.querySelector('#modalRoot .mpick-row[data-mpick="f:apple"]');
+      return r ? r.getAttribute('aria-pressed') : null;
+    });
+    await p.click('#modalRoot .mpick-row[data-mpick="f:apple"]');
+    await p.waitForTimeout(250);
+    const lunchAfter = await p.evaluate((dk) => {
+      const day = JSON.parse(localStorage.getItem('bsc.macroDays'))[dk] || {};
+      return { b: day.b || [], l: day.l || [] };
+    }, dayKey);
+    t.ok('switching meal chips clears basket so adding & tapping the same food does not delete eaten items on the new meal',
+      pressedAfterSwitch !== 'true' && lunchAfter.b.length === 1 &&
+        lunchAfter.l.length === 2 && lunchAfter.l[0].id === 'f:apple' && lunchAfter.l[0].eaten === 1 &&
+        lunchAfter.l[1].id === 'f:apple' && !lunchAfter.l[1].eaten,
+      JSON.stringify({ pressedAfterSwitch, lunchAfter }));
+    await p.click('#modalRoot .msh-done');
+    await p.waitForTimeout(200);
     await p.context().close();
 
     /* 4) #macroLogScan + live camera stream + meal switch + Nutrition Facts manual entry */

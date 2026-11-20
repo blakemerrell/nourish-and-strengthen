@@ -214,8 +214,13 @@
   function mNewFoodKey(name, mine) {
     var base = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') ||
       ('x' + Date.now().toString(36));
-    var key = base, nm = name, n = 1;
-    while (Object.prototype.hasOwnProperty.call(mine, key)) { n++; key = base + '_' + n; nm = name + ' ' + n; }
+    var key = base, nm = name, n = 1, live = false;
+    while (Object.prototype.hasOwnProperty.call(mine, key)) {
+      if (mine[key] && !mine[key].archived) live = true;
+      n++;
+      key = base + '_' + n;
+      nm = live ? (name + ' ' + n) : name;
+    }
     return { key: key, name: nm };
   }
   function mReadMyFoods() {
@@ -357,7 +362,8 @@
         ['sat', 'chol', 'sug', 'ca', 'fe', 'k'].forEach(function (k3) { if (Number(f.lab[k3]) >= 0 && f.lab[k3] !== null && f.lab[k3] !== '') lab[k3] = Number(f.lab[k3]); });
         if (Object.keys(lab).length) rec.lab = lab;
       }
-      MFOODS.push(rec);
+      if (f.archived) rec.archived = true;
+      else MFOODS.push(rec);
       BY_ID[rec.id] = rec;
     });
     var N = window.Nutrition;
@@ -4670,7 +4676,11 @@
     D = null;
     /* The entry this dialog pushed, unwound — unless we are already inside a
        popstate, which is what removed it. */
-    if (d && d.pushed && !popping) { depth = Math.max(0, depth - 1); history.back(); }
+    if (d && d.pushed && !popping) {
+      if (S.favPick) S.mFavDlgBack = true;
+      depth = Math.max(0, depth - 1);
+      history.back();
+    }
     renderDialog();
     if (d && d.done) d.done(answer);
   }
@@ -6433,19 +6443,14 @@
           return;
         }
         if (mdf.dataset.mdrift === 'rebal') {
-          if (dvk === mViewKey()) mRebalance();
-          else {
-            var dTargets = mDayTargets(dvk);
-            mEditDay(dvk, function (day) { mBalanceDay(day, dTargets); });
-            renderMacros();
-          }
+          mRebalance();
           var afterDr = $('macroDrift');
           if (afterDr && afterDr.dataset.sig) {
             S.mDriftDis[dvk] = afterDr.dataset.sig;
             renderMacros();
           }
           restoreDriftFocus();
-          mToast('Meals rebalanced to today\u2019s target.');
+          mToast('Meals rebalanced to ' + (dvk === todayKey() ? 'today\u2019s' : esc(mLongDate(dvk)) + '\u2019s') + ' target.');
           return;
         }
       }
@@ -8305,6 +8310,9 @@
         if (srec2 && srec2.k !== S.macroPick.slot) {
           S.mMenu = '';
           S.mpSwap = null;
+          S.mpBasket = {};
+          S.mpAt = {};
+          S.mMarks = null;
           S.macroPick.slot = srec2.k;
           S.macroPick.n = srec2.n;
           S.macroPick.secs = mSlotSecs(srec2);
@@ -8460,21 +8468,44 @@
         if (String(delId).indexOf('f:my:') === 0) {
           var dKey = String(delId).slice(5), dMine = mReadMyFoods(), dRaw = dMine[dKey];
           if (!dRaw) return;
-          S.mLastFoodsUndo = { kind: 'my', key: dKey, raw: JSON.parse(JSON.stringify(dRaw)) };
-          delete dMine[dKey];
+          S.mLastFoodsUndo = { kind: 'my', key: dKey };
+          dRaw.archived = 1;
           mWriteMyFoods(dMine);
           mBuildFoods();
           keepingFocus(renderModal);
           if (S.view === 'macros') renderMacros();
-          mToast('Deleted ' + esc(delR ? delR.name : dRaw.name || dKey) + '.', '1', 'data-mfundo');
+          mToast('Archived ' + esc(delR ? delR.name : dRaw.name || dKey) + '.', '1', 'data-mfundo');
           return;
         }
         if (delR && delR.own) {
-          S.mLastFoodsUndo = { kind: 'own', rec: JSON.parse(JSON.stringify(delR)) };
-          window.Store.deleteRecipe(delR.id);
-          keepingFocus(renderModal);
-          if (S.view === 'macros') renderMacros();
-          mToast('Deleted ' + esc(delR.name) + '.', '1', 'data-mfundo');
+          ask({
+            title: 'Delete ' + delR.name + ' for everyone?',
+            body: 'This saved meal is shared with your household and will also come off favorites and planned weeks.',
+            ok: 'Delete',
+            danger: true
+          }, function (yes) {
+            if (!yes) return;
+            var wasFav = !!(window.Store.isFav && window.Store.isFav(delR.id));
+            var stWeeks = (window.Store.state && window.Store.state.weeks) || {};
+            var weekRefs = [];
+            Object.keys(stWeeks).forEach(function (wk) {
+              ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'].forEach(function (d) {
+                window.Store.dayOf(wk, d).forEach(function (ent) {
+                  if (ent.id === delR.id) weekRefs.push({ wk: wk, d: d, x: ent.x || 1, lo: !!ent.lo });
+                });
+              });
+            });
+            S.mLastFoodsUndo = {
+              kind: 'own',
+              rec: JSON.parse(JSON.stringify(delR)),
+              wasFav: wasFav,
+              weekRefs: weekRefs
+            };
+            window.Store.deleteRecipe(delR.id);
+            if (S.favPick) keepingFocus(renderModal);
+            if (S.view === 'macros') renderMacros();
+            mToast('Deleted ' + esc(delR.name) + '.', '1', 'data-mfundo');
+          });
           return;
         }
         return;
@@ -9832,6 +9863,10 @@
       S.newFood = null;
       renderModal();
       if (S.view === 'macros') renderMacros();
+    } else if (st && st.fp && S.favPick && S.mFavDlgBack) {
+      S.mFavDlgBack = false;
+      renderModal();
+      if (S.view === 'macros') renderMacros();
     } else {
       depth = 0;
       close();
@@ -9866,6 +9901,7 @@
     }
     S.mBackPending = false;
     S.mFavBackPending = false;
+    S.mFavDlgBack = false;
     /* Unwind every entry this modal pushed, so one press of × does not leave
        a trail of recipes behind the back gesture. */
     if (depth > 0 && !popping) {
@@ -10586,13 +10622,25 @@
           rSlot.pins.splice(Math.min(fu.idx, rSlot.pins.length), 0, fu.pin);
           mWriteSlots(rSlots);
         }
-      } else if (fu.kind === 'my' && fu.key && fu.raw) {
+      } else if (fu.kind === 'my' && fu.key) {
         var rMine = mReadMyFoods();
-        rMine[fu.key] = fu.raw;
-        mWriteMyFoods(rMine);
-        mBuildFoods();
+        if (rMine[fu.key]) {
+          delete rMine[fu.key].archived;
+          mWriteMyFoods(rMine);
+          mBuildFoods();
+        } else if (fu.raw) {
+          rMine[fu.key] = fu.raw;
+          mWriteMyFoods(rMine);
+          mBuildFoods();
+        }
       } else if (fu.kind === 'own' && fu.rec) {
         window.Store.saveRecipe(fu.rec);
+        if (fu.wasFav && window.Store.isFav && !window.Store.isFav(fu.rec.id)) {
+          window.Store.toggleFav(fu.rec.id);
+        }
+        (fu.weekRefs || []).forEach(function (wr) {
+          window.Store.addToWeekDay(wr.wk, wr.d, fu.rec.id, wr.x, wr.lo);
+        });
       } else if (fu.kind === 'log' && fu.k && fu.sk) {
         mEditDay(fu.k, function (day) { day[fu.sk] = fu.snap || []; });
       }

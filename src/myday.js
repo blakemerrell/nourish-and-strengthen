@@ -1377,7 +1377,7 @@
       if (dk >= k || dk < fromK) return;
       var counted = {};
       ((MDAYS[dk] || {})[sk] || []).forEach(function (it) {
-        if (!it || !it.eaten || !LIVE.BY_ID[it.id]) return;
+        if (!it || !it.eaten || !LIVE.BY_ID[it.id] || LIVE.BY_ID[it.id].archived) return;
         var id = String(it.id);
         if (on[id] || counted[id]) return;
         counted[id] = 1;

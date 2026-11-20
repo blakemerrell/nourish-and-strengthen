@@ -389,6 +389,7 @@ window.Store = (function () {
           return item;
         }) : []
       };
+      if (r.typedMacro) out[k].typedMacro = true;
     });
     return out;
   }

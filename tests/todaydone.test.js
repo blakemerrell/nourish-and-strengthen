@@ -176,11 +176,19 @@ module.exports = {
       return ((d.b || [])[0] || {}).id;
     });
     const b0 = await readB0();
-    await p.click('[data-mtry="b"]');
-    await p.waitForTimeout(200);
+    /* Try another lives in the meal's ⋯ since 1j (2026-11-20), not on the card. */
+    const tryAnother = async () => {
+      if (!await p.$('#modalRoot [data-mmenu="b"]')) {
+        await p.evaluate(() => document.querySelector('#macroSlots .mtray-b[data-mopen="b"]').click());
+        await p.waitForTimeout(400);
+      }
+      if (!await p.$('#modalRoot [data-mtry="b"]')) { await p.click('#modalRoot [data-mmenu="b"]'); await p.waitForTimeout(200); }
+      await p.click('#modalRoot [data-mtry="b"]');
+      await p.waitForTimeout(250);
+    };
+    await tryAnother();
     const b1 = await readB0();
-    await p.click('[data-mtry="b"]');
-    await p.waitForTimeout(200);
+    await tryAnother();
     const b2 = await readB0();
     t.ok('Try another advances through distinct suggestions without oscillating A -> B -> A (N2)',
       b0 && b1 && b2 && b0 !== b1 && b1 !== b2 && b0 !== b2, JSON.stringify([b0, b1, b2]));

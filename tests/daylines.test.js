@@ -206,8 +206,10 @@ module.exports = {
     const verbs = (sel) => p.evaluate((s2) => [...document.querySelectorAll(s2 + ' .mtray-vbs button')].map((b) => Object.keys(b.dataset)[0]), sel);
     /* The scale used to wait for State 3 (Details). That view went on
        2026-11-06, and the scale came with it onto the open card. */
-    t.ok('and its verbs on the open card are drawings: + to add, ↻ to try another, the scale to balance, and ⊘ to skip',
-      (await verbs(card('d'))).join() === 'mopen,mtry,mbal,mskipask', JSON.stringify(await verbs(card('d'))));
+    /* ↻ Try another left the card for the meal's ⋯ on 2026-11-20 (1j):
+       Blake uses the pills, the scale and ⊘, not ↻. */
+    t.ok('and its verbs on the open card are drawings: + to add, the scale to balance, and ⊘ to skip (↻ is in the meal\u2019s ⋯)',
+      (await verbs(card('d'))).join() === 'mopen,mbal,mskipask', JSON.stringify(await verbs(card('d'))));
 
     /* What each ring should say, worked out here from the meal's own pills
        (have/want): within a tenth on plan, past it over, short of it still

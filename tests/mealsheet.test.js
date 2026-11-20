@@ -76,9 +76,10 @@ module.exports = {
        card's head is its name (which opens and folds it) and its drawings:
        +, ↻, the scale and ⊘. Lunch is open on its foods, and since
        2026-11-06 an open card carries the scale (it waited for Details,
-       the third view, until that went). */
-    t.ok('and nothing else to press on it: the tick, its name, + ↻ ⚖ ⊘, the tray itself, and each food’s name, line and tick',
-      day.controls === 7 + 2 * day.lines.length && day.ticks === day.lines.length, JSON.stringify(day));
+       the third view, until that went). ↻ left the card for the meal's ⋯
+       on 2026-11-20 (1j): Blake uses the pills, the scale and ⊘, not ↻. */
+    t.ok('and nothing else to press on it: the tick, its name, + ⚖ ⊘, the tray itself, and each food’s name, line and tick',
+      day.controls === 6 + 2 * day.lines.length && day.ticks === day.lines.length, JSON.stringify(day));
     t.ok('the bar holds the one primary and Rebalance, Sweep, Add meal live in the day menu', !day.add && !day.openAll &&
       day.bar.join() === 'macroFill' && day.menuTools.join() === 'macroRebal,macroSweep,macroAddMeal', JSON.stringify(day));
 

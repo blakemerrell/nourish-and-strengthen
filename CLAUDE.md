@@ -122,6 +122,10 @@ and `tests/setuprules.test.js` fails when they differ.
 FIRST") was for the initial build and is no longer instructions. The app exists now; only
 `design/project/recipes.js` is still live input to the build.
 
+`design/redesign/` is different: the current redesign plan (Blake, 2026-11: "easier, just as
+powerful"), its mockup screenshots and a status table that every agent updates. Read its
+`README.md` before working on any screen it covers. `AGENTS.md` points other agents here.
+
 ## Tests
 
 The runner (`tests/run.js`) is custom, not Jest or Mocha. It serves the repo (or `SITE=` dir) over

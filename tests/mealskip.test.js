@@ -246,7 +246,8 @@ module.exports = {
       yestCopy.length === 1 && yestCopy[0].id === 'f:apple' && !(await p.$('#modalRoot .msheet')), JSON.stringify(yestCopy));
 
     /* Add meal button in bottom bar opens quick-add & 3–7 meal presets, and allows moving/removing snack slots */
-    await p.click('#macroAddMeal');
+    await p.click('#macroMore');
+  await p.click('#macroAddMeal');
     await p.waitForTimeout(200);
     t.ok('Add meal button in bottom bar opens the inline meal manager with 3–7 presets and quick-add chips',
       await p.evaluate(() => {

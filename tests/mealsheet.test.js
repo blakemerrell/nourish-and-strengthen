@@ -63,7 +63,8 @@ module.exports = {
         tick: !!lunch.querySelector('.mday-dot[data-mdot="l"]'),
         controls: lunch.querySelectorAll('button').length, ticks: lunch.querySelectorAll('input.mitem-ate[data-meat]').length,
         add: !!document.getElementById('macroAdd'), openAll: !!document.getElementById('macroOpenAll'),
-        bar: [...document.querySelectorAll('.mday-acts button')].filter((b) => b.offsetParent).map((b) => b.id) };
+        bar: [...document.querySelectorAll('.mday-acts button')].filter((b) => b.offsetParent).map((b) => b.id),
+        menuTools: [...document.querySelectorAll('#macroMenu #macroRebal, #macroMenu #macroSweep, #macroMenu #macroAddMeal')].map((b) => b.id) };
     });
     t.ok('the day is one small tray a meal, and a skipped meal is one line', day.trays === 3 && day.skip === 1 &&
       /Wake Up/i.test(day.skipText) && /skipped/.test(day.skipText), JSON.stringify(day));
@@ -78,8 +79,8 @@ module.exports = {
        the third view, until that went). */
     t.ok('and nothing else to press on it: the tick, its name, + ↻ ⚖ ⊘, the tray itself, and each food’s name, line and tick',
       day.controls === 7 + 2 * day.lines.length && day.ticks === day.lines.length, JSON.stringify(day));
-    t.ok('the bar is Rebalance, Sweep, Add meal and the one primary: no Add food, no Open all', !day.add && !day.openAll &&
-      day.bar.join() === 'macroRebal,macroSweep,macroAddMeal,macroFill', JSON.stringify(day.bar));
+    t.ok('the bar holds the one primary and Rebalance, Sweep, Add meal live in the day menu', !day.add && !day.openAll &&
+      day.bar.join() === 'macroFill' && day.menuTools.join() === 'macroRebal,macroSweep,macroAddMeal', JSON.stringify(day));
 
     /* ---- the sheet ---- */
     await p.click('[data-mopen="l"]');

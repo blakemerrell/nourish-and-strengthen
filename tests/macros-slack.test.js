@@ -722,7 +722,7 @@ module.exports = nourish({
     }, sel);
     /* The bar's own button and the tray's door, measured on the day. */
     const reach = { coarse: await reachPage.evaluate(() => matchMedia('(pointer: coarse)').matches),
-      bar: await box('.mday-acts button:not(#macroFill)'), seam: await box('#macroSlots .mtray .mtray-b') };
+      bar: await box('.mday-acts #macroFill'), seam: await box('#macroSlots .mtray .mtray-b') };
     await reachPage.click('#macroSlots .mtray .mtray-b');
     await reachPage.waitForTimeout(400);
     await openTray(reachPage);

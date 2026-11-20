@@ -2355,7 +2355,7 @@ select { max-width: 280px; }
 /* the two beside the title: open the day, or set it up */
 .mday-icon { flex: 0 0 auto; padding-left: 11px; padding-right: 11px; }
 .mday-head .mday-icon { padding-left: 8px; padding-right: 8px; font-size: 0.875rem; }
-.mday-head .mday-menu { top: calc(100% + 4px); bottom: auto; }
+.mday-head .mday-menu { top: calc(100% + 4px); bottom: auto; overflow-x: hidden; max-height: 74vh; max-height: min(74vh, calc(100dvh - 104px)); overflow-y: auto; overscroll-behavior: contain; }
 /* What you actually burn, as the fifth fact — its evidence tucked under it
    and the switch set in the same ochre as Edit. The old row was a form row
    with a border under it and a filled green pill beside it, which put a rule
@@ -7868,12 +7868,16 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 }
 .madd-ib.madd-del { color: var(--dial-over); }
 .madd-ib:disabled { opacity: 0.35; cursor: default; }
-#macroMenu #macroCopy { display: flex; align-items: center; gap: 8px; }
-#macroMenu #macroCopy .mday-ic { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+#macroMenu button { min-height: 44px; padding: 9px 13px; }
+#macroMenu button:disabled { color: var(--muted); opacity: 0.45; cursor: default; }
+#macroMenu button:disabled:hover { background: none; }
+#macroMenu #macroRebal { border-top: 1.5px solid var(--line-firm); }
+#macroMenu #macroRebal, #macroMenu #macroSweep, #macroMenu #macroAddMeal, #macroMenu #macroCopy { display: flex; align-items: center; gap: 8px; }
+#macroMenu .mday-ic { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.6; }
 
-/* the day bar: three tools and the one primary, one row */
-.mday-acts { grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.55fr); }
-.mday-acts #macroFill { grid-column: auto; min-height: 48px; font-size: 0.9375rem; padding: 4px 8px; }
+/* the day bar: one quiet primary */
+.mday-acts { grid-template-columns: minmax(0, 1fr); }
+.mday-acts #macroFill { grid-column: auto; min-height: 50px; font-size: 0.9375rem; padding: 4px 12px; }
 /* Drawn like the trays above it and the meal sheet's Balance and Done
    (Blake, 2026-10-07: "The buttons at the bottom. They feel out of character
    for this page"). The trays redesign of 2026-10-04 left the bar alone, so
@@ -7897,7 +7901,7 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
    their word, Rebalance the longest, and Fill drops to 14px so "Complete" in
    "Complete the day" still fits a line. */
 @media (max-width: 359px) {
-  .mday-acts { gap: 4px; grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr); }
+  .mday-acts { gap: 6px; grid-template-columns: minmax(0, 1fr); }
   .mday-acts #macroFill:not(#u#u) { padding: 4px 6px; font-size: 0.875rem; }
 }
 
@@ -10221,3 +10225,23 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
   float: none; display: flex; align-items: center; justify-content: center;
   width: 100%; min-height: 48px; margin: 8px 0 0; border-radius: 10px; font-size: 0.9375rem;
 }
+
+/* Smart drift notice at the top of Eat slots (Step 1c) */
+.mdrift {
+  display: flex; align-items: stretch; gap: 4px; margin: 0;
+  background: color-mix(in oklab, var(--ochre) 13%, var(--card));
+  border: 1px solid var(--ochre); border-radius: 12px; padding: 2px 2px 2px 6px;
+}
+.mdrift-go {
+  flex: 1 1 auto; min-width: 44px; min-height: 44px; margin: 0; padding: 6px 8px;
+  border: 0; border-radius: 9px; background: none; color: var(--ink);
+  font: 600 0.8125rem/1.25 var(--sans); text-align: left;
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+}
+.mdrift-go svg { width: 17px; height: 17px; flex: none; color: var(--ochre-text); }
+.mdrift-x {
+  flex: none; width: 44px; height: 44px; min-width: 44px; min-height: 44px; margin: 0; padding: 0;
+  border: 0; border-radius: 9px; background: none; color: var(--muted);
+  font-size: 1.1875rem; line-height: 1; display: grid; place-items: center; cursor: pointer;
+}
+.mdrift-go:hover, .mdrift-x:hover { background: color-mix(in oklab, var(--ochre) 10%, transparent); }

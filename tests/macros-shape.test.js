@@ -311,7 +311,8 @@ module.exports = nourish({
     const protGap = () => z.evaluate(() =>
       Number(document.querySelector('.mbrow[data-macro="p"] .mb-d').dataset.d));
     const leftBefore = await protGap();
-    await z.click('#macroRebal');
+    await z.click('#macroMore');
+  await z.click('#macroRebal');
     await z.waitForTimeout(250);
     await openMeal(z, 'b');
     const grownX = await dayX(z, 'b', 0);

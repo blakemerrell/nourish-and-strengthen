@@ -776,7 +776,7 @@
     var take = function (it) {
       if (seen[it.id] || out.length >= 6) return;
       var r = LIVE.BY_ID[it.id];
-      if (!r) return;
+      if (!r || r.archived) return;
       if (!mpMatches(r, mpQ())) return;
       seen[it.id] = 1;
       out.push({ r: r, x: it.x });

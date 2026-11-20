@@ -15,7 +15,7 @@
  *     >= 13px visible text, zero broken words inside buttons. */
 const { nourish, todayOn } = require('./fixtures/nourish.js');
 
-const SEED_DATA = (dk) => {
+const SEED_DATA = ({ dk, yk }) => {
   localStorage.setItem('bsc.macroTargets', JSON.stringify({ p: 185, f: 65, c: 205 }));
   localStorage.setItem('bsc.macroSlots', JSON.stringify({
     list: [
@@ -25,6 +25,25 @@ const SEED_DATA = (dk) => {
       { k: 's', n: 'Snacks', t: 's' },
     ],
     names: { b: 'Breakfast', l: 'Lunch', d: 'Dinner', s: 'Snacks' },
+  }));
+  localStorage.setItem('bsc.mine', JSON.stringify({
+    u_house_chili: {
+      id: 'u_house_chili',
+      own: true,
+      book: 3,
+      secNum: 1,
+      secName: 'Ours',
+      name: 'House Chili',
+      servings: '1 Serving',
+      servN: 1,
+      time: '0 mins',
+      diff: 'Easy',
+      ing: ['1 x cup Beans', '1 x serving Beef'],
+      steps: [],
+      extras: '',
+      macro: { kcal: 410, p: 32, f: 14, c: 38, na: 320, fib: 8 },
+      typedMacro: true,
+    },
   }));
   localStorage.setItem('bsc.myFoods', JSON.stringify({
     morning_bowl: {
@@ -51,9 +70,11 @@ const SEED_DATA = (dk) => {
       na: 110,
     },
   }));
-  localStorage.setItem('bsc.macroDays', JSON.stringify({
+  const days = {
     [dk]: { b: [{ id: 'f:egg_white', x: 3, eaten: 1 }], l: [], d: [], s: [] },
-  }));
+  };
+  if (yk) days[yk] = { b: [{ id: 'f:my:morning_bowl', x: 1, eaten: 1 }], l: [], d: [], s: [] };
+  localStorage.setItem('bsc.macroDays', JSON.stringify(days));
 };
 
 module.exports = nourish({
@@ -67,11 +88,17 @@ module.exports = nourish({
     await p.waitForTimeout(400);
 
     const dk = await todayOn(p);
-    await p.evaluate(SEED_DATA, dk);
+    const yk = '2026-11-19';
+    await p.evaluate(SEED_DATA, { dk, yk });
     await p.reload();
     await p.waitForTimeout(450);
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(300);
+
+    await p.evaluate(() => {
+      if (!window.Store.isFav('u_house_chili')) window.Store.toggleFav('u_house_chili');
+      window.Store.addToDay('u_house_chili', 'mon', 2, false);
+    });
 
     /* 1) Menu entry & unified sheet */
     await p.click('#macroMore');
@@ -175,20 +202,78 @@ module.exports = nourish({
     const afterMealDel = await p.evaluate(() => {
       const mine = JSON.parse(localStorage.getItem('bsc.myFoods') || '{}');
       return {
-        inStorage: !!mine.morning_bowl,
+        recordExists: !!mine.morning_bowl,
+        archivedFlag: !!(mine.morning_bowl && mine.morning_bowl.archived),
         uiHas: !!document.querySelector('#mfMeals [data-mfmeal="f:my:morning_bowl"]'),
         hasUndo: !!document.querySelector('#mToast [data-mfundo]'),
       };
     });
-    t.ok('Delete removes Saved meal cleanly and shows Undo toast',
-      !afterMealDel.inStorage && !afterMealDel.uiHas && afterMealDel.hasUndo,
+    t.ok('Delete soft-archives Saved meal (keeps record for past days), hides it from manager, and shows Undo toast',
+      afterMealDel.recordExists && afterMealDel.archivedFlag && !afterMealDel.uiHas && afterMealDel.hasUndo,
       JSON.stringify(afterMealDel));
+
+    await p.evaluate((yk) => {
+      document.getElementById('macroDayPick').value = yk;
+      document.getElementById('macroDayPick').dispatchEvent(new Event('change', { bubbles: true }));
+    }, yk);
+    await p.waitForTimeout(200);
+    const pastAfterArchive = await p.evaluate(() => {
+      const b = document.querySelector('#macroTrayHead .mpillwk-k b');
+      return {
+        yesterdayKcal: b ? Number(b.textContent.replace(/[^\d]/g, '')) : 0,
+      };
+    });
+    t.ok('archived Saved meal keeps yesterday\'s logged calories intact (360 kcal)',
+      pastAfterArchive.yesterdayKcal === 360, JSON.stringify(pastAfterArchive));
+    await p.evaluate((dk) => {
+      document.getElementById('macroDayPick').value = dk;
+      document.getElementById('macroDayPick').dispatchEvent(new Event('change', { bubbles: true }));
+    }, dk);
+    await p.waitForTimeout(200);
 
     await p.click('#mToast [data-mfundo]');
     await p.waitForTimeout(200);
-    t.ok('Undo restores deleted Saved meal into storage and #mFoodsSheet',
-      await p.evaluate(() => !!JSON.parse(localStorage.getItem('bsc.myFoods') || '{}').morning_bowl &&
-        !!document.querySelector('#mfMeals [data-mfmeal="f:my:morning_bowl"]')));
+    t.ok('Undo clears archived flag and restores Saved meal into #mFoodsSheet',
+      await p.evaluate(() => {
+        const mb = (JSON.parse(localStorage.getItem('bsc.myFoods') || '{}')).morning_bowl;
+        return !!mb && !mb.archived && !!document.querySelector('#mfMeals [data-mfmeal="f:my:morning_bowl"]');
+      }));
+
+    /* 4b) Shared household saved meal delete asks confirmation and Undo restores recipe, fav star, and week plan */
+    await p.click('#mFoodsSheet [data-mfdel="u_house_chili"]');
+    await p.waitForTimeout(200);
+    const confirmOwn = await p.evaluate(() => ({
+      dlgOpen: !!document.querySelector('#dialogRoot .dlg'),
+      dlgTitle: (document.querySelector('#dialogRoot .dlg-t') || {}).textContent || '',
+      stillListed: !!document.querySelector('#mfMeals [data-mfmeal="u_house_chili"]'),
+    }));
+    t.ok('deleting a shared household saved meal asks confirmation before removing',
+      confirmOwn.dlgOpen && /everyone/i.test(confirmOwn.dlgTitle) && confirmOwn.stillListed,
+      JSON.stringify(confirmOwn));
+    await p.click('#dialogRoot [data-dlg="ok"]');
+    await p.waitForTimeout(250);
+    const afterOwnDel = await p.evaluate(() => ({
+      sheetOpen: !!document.getElementById('mFoodsSheet'),
+      stillListed: !!document.querySelector('#mfMeals [data-mfmeal="u_house_chili"]'),
+      isFav: window.Store.isFav('u_house_chili'),
+      monCount: window.Store.day('mon').length,
+      hasUndo: !!document.querySelector('#mToast [data-mfundo]'),
+    }));
+    t.ok('confirming shared household delete removes recipe, fav star, and planned week entry while keeping #mFoodsSheet open and offering Undo',
+      afterOwnDel.sheetOpen && !afterOwnDel.stillListed && !afterOwnDel.isFav &&
+        afterOwnDel.monCount === 0 && afterOwnDel.hasUndo,
+      JSON.stringify(afterOwnDel));
+    await p.click('#mToast [data-mfundo]');
+    await p.waitForTimeout(250);
+    const afterOwnUndo = await p.evaluate(() => ({
+      restoredInSheet: !!document.querySelector('#mfMeals [data-mfmeal="u_house_chili"]'),
+      isFav: window.Store.isFav('u_house_chili'),
+      monEntries: window.Store.day('mon'),
+    }));
+    t.ok('Undo restores deleted shared household saved meal, its favorite star, and its Monday week-plan entry',
+      afterOwnUndo.restoredInSheet && afterOwnUndo.isFav &&
+        afterOwnUndo.monEntries.some((e) => e.id === 'u_house_chili' && e.x === 2 && !e.lo),
+      JSON.stringify(afterOwnUndo));
 
     await p.click('#mFoodsSheet [data-mfadd="f:my:morning_bowl"]');
     await p.waitForTimeout(250);
@@ -274,18 +359,24 @@ module.exports = nourish({
 
     await p.click('#mFoodsSheet [data-mfdel="f:my:' + afterCreate.key + '"]');
     await p.waitForTimeout(200);
-    const afterCustDel = await p.evaluate((key) => ({
-      inStorage: !!JSON.parse(localStorage.getItem('bsc.myFoods') || '{}')[key],
-      hasUndo: !!document.querySelector('#mToast [data-mfundo]'),
-    }), afterCreate.key);
-    t.ok('Delete removes custom food cleanly and offers Undo',
-      !afterCustDel.inStorage && afterCustDel.hasUndo, JSON.stringify(afterCustDel));
+    const afterCustDel = await p.evaluate((key) => {
+      const rec = JSON.parse(localStorage.getItem('bsc.myFoods') || '{}')[key];
+      return {
+        archivedFlag: !!(rec && rec.archived),
+        uiGone: !document.querySelector('#mfCustom [data-mfcustom="f:my:' + key + '"]'),
+        hasUndo: !!document.querySelector('#mToast [data-mfundo]'),
+      };
+    }, afterCreate.key);
+    t.ok('Delete soft-archives custom food, hides it from #mFoodsSheet, and offers Undo',
+      afterCustDel.archivedFlag && afterCustDel.uiGone && afterCustDel.hasUndo, JSON.stringify(afterCustDel));
 
     await p.click('#mToast [data-mfundo]');
     await p.waitForTimeout(200);
-    t.ok('Undo restores deleted custom food',
-      await p.evaluate((key) => !!JSON.parse(localStorage.getItem('bsc.myFoods') || '{}')[key] &&
-        !!document.querySelector('#mfCustom [data-mfcustom="f:my:' + key + '"]'), afterCreate.key));
+    t.ok('Undo clears archived flag and restores custom food',
+      await p.evaluate((key) => {
+        const rec = JSON.parse(localStorage.getItem('bsc.myFoods') || '{}')[key];
+        return !!rec && !rec.archived && !!document.querySelector('#mfCustom [data-mfcustom="f:my:' + key + '"]');
+      }, afterCreate.key));
 
     await p.context().close();
 
@@ -294,7 +385,7 @@ module.exports = nourish({
       const np = await t.fresh({ viewport: { width: 320, height: 640 }, hasTouch: true, isMobile: true, colorScheme: scheme });
       np.on('pageerror', (e) => errs.push(e.message));
       const ndk = await todayOn(np);
-      await np.evaluate(SEED_DATA, ndk);
+      await np.evaluate(SEED_DATA, { dk: ndk });
       await np.reload();
       await np.waitForTimeout(400);
       await np.click('.tab[data-view="macros"]');

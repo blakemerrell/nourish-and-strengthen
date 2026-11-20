@@ -230,6 +230,32 @@ module.exports = nourish({
         unlockedChanged && !afterRebal.hasDrift && afterRebal.focusKept && /rebalanced/i.test(afterRebal.toast),
       JSON.stringify({ unlockedChanged, hasDrift: afterRebal.hasDrift, focusKept: afterRebal.focusKept, toast: afterRebal.toast, afterRebal: afterRebal.day }));
 
+    /* 7b) Past-day rebalance toast names the viewed date instead of "today's" */
+    const pastKey = '2026-10-01';
+    await p.evaluate((pk) => {
+      const days = JSON.parse(localStorage.getItem('bsc.macroDays') || '{}');
+      days[pk] = {
+        b: [{ id: 'f:oats', x: 6, eaten: 1 }, { id: 'f:peanut_butter', x: 5, eaten: 1 }],
+        l: [{ id: 'f:egg_white', x: 3, eaten: 0 }, { id: 'f:oats', x: 2, eaten: 0 }],
+        d: [{ id: 'f:egg_white', x: 4, eaten: 0 }],
+      };
+      localStorage.setItem('bsc.macroDays', JSON.stringify(days));
+    }, pastKey);
+    await p.reload();
+    await p.waitForTimeout(350);
+    await p.click('.tab[data-view="macros"]');
+    await p.waitForTimeout(250);
+    await p.evaluate((pk) => {
+      document.getElementById('macroDayPick').value = pk;
+      document.getElementById('macroDayPick').dispatchEvent(new Event('change', { bubbles: true }));
+    }, pastKey);
+    await p.waitForTimeout(250);
+    await p.click('#macroDrift [data-mdrift="rebal"]');
+    await p.waitForTimeout(300);
+    const pastToast = await p.textContent('#mToast');
+    t.ok('rebalancing a past day names that date rather than "today\'s target"',
+      /Oct 1/.test(pastToast) && !/today/i.test(pastToast), pastToast);
+
     await p.context().close();
 
     /* 8) Narrow 320x700 viewport layout audit with #macroDrift visible */

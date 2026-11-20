@@ -41,7 +41,8 @@
      the list of cards), a line of its own on the right, then the body. */
   /* `go` makes the whole card a door to its tab: a tap anywhere on it that
      is not one of its own buttons goes there, and the corner says where. */
-  var TAB = { macros: 'Nourish', train: 'Strengthen' };
+  var TAB = { macros: 'Nourish', train: 'Strengthen', plan: 'Plan', list: 'List' };
+  var weighOdd = null, weighErr = '';
   function card(key, label, body, meta, go, done) {
     return '<section class="td-card' + (go ? ' td-go' : '') + (done ? ' td-fin' : '') + '" data-card="' + key + '"' +
         (go ? ' data-go="' + go + '"' : '') + ' aria-labelledby="td-' + key + '">' +
@@ -88,8 +89,9 @@
     var x = pl.x, xs = x === 0.5 ? '\u00bd' : x % 1 === 0.5 ? Math.floor(x) + '\u00bd' : String(Math.round(x * 100) / 100);
     return '<p class="td-plate"><b>Your plate</b><span>' + xs + (x === 1 ? ' serving' : ' servings') + ' \u00b7 ' + fmt(pl.kcal) + ' cal \u00b7 ' + fmt(pl.p) + ' g protein</span></p>';
   }
-  /* This morning's weight, first thing: the box is in a sheet over Today
-     (Nourish's own morning card, moved there while it is open). */
+  /* This morning's weight, first thing: inline 1-tap box before you've
+     weighed, plus the header row that opens Nourish's morning sheet
+     (sleep, steps, creatine, caffeine, or edit weight). */
   function weighLine(w) {
     if (!w) return '';
     var sub = w.done ? [w.avg ? w.avg + ' ' + w.unit + ' seven-day average' : '', w.week ? w.week + ' this week' : ''].filter(Boolean).join(' \u00b7 ')
@@ -101,11 +103,26 @@
        grey for the steps. Only sleep is asked after once you have weighed,
        because it is the one Review leans on hardest. */
     var am = w.am || (w.done && !w.slept ? 'How did you sleep?' : '');
-    return '<button class="td-weigh' + (w.done ? ' done' : '') + '" data-td="weigh">' +
+    var row = '<button class="td-weigh' + (w.done ? ' done' : '') + '" data-td="weigh">' +
       '<span class="td-wbadge" aria-hidden="true">' + (w.done ? CHECK.replace('td-ic', 'td-fic') : icon('scale')) + '</span>' +
       '<span class="td-wt"><b>' + (w.done ? 'Weighed in \u00b7 ' + w.now + ' ' + w.unit : 'Weigh in') + '</b>' + (sub ? '<small>' + sub + '</small>' : '') +
         (am ? '<small class="td-am">' + esc(am) + '</small>' : '') + '</span>' +
       '<i aria-hidden="true">\u203a</i></button>';
+    if (w.done) return row;
+    var u = w.unit || 'lb';
+    var ph = w.last ? String(w.last) : (u === 'kg' ? '85.0' : '185.0');
+    var quick = '<form class="td-weigh-quick" data-tdform="weigh">' +
+      '<input type="text" class="am-in td-weigh-in" id="tdWeightIn" inputmode="decimal" maxlength="6" autocomplete="off" ' +
+        'data-tk="' + esc(w.tk || '') + '" data-unit="' + esc(u) + '" placeholder="' + esc(ph) + '" ' +
+        'aria-label="Morning weight in ' + esc(u) + '"' + (weighOdd ? ' value="' + esc(String(weighOdd.v)) + '"' : '') + '>' +
+      '<span class="td-weigh-u">' + esc(u) + '</span>' +
+      (weighOdd
+        ? '<button type="button" class="ghost td-weigh-save" data-td="weighforce">Save ' + esc(String(weighOdd.v)) + ' ' + esc(u) + '</button>'
+        : '<button type="submit" class="ghost td-weigh-save" data-td="weighsave">Log weight</button>') +
+      (weighOdd && weighOdd.ref ? '<small class="td-weigh-odd" role="status">Far from your ~' + esc(String(weighOdd.ref)) + ' ' + esc(u) + ' average \u2014 tap Save again to confirm.</small>' : '') +
+      (weighErr ? '<small class="td-weigh-err" role="alert">' + esc(weighErr) + '</small>' : '') +
+    '</form>';
+    return row + quick;
   }
   /* ---- the morning ----
    * Blake, 2026-11-01, of the little sleep line under the weigh-in: "tiny and
@@ -307,7 +324,7 @@
       return card('tonight', 'Tonight', title(esc(t.name)) +
         note('Leftovers from yesterday. Nothing to cook or buy.') +
         acts(btn(main, 'open', 'See the recipe', ' data-id="' + esc(t.id) + '"')) +
-        (nx ? '<p class="td-next">' + esc(nx) + '</p>' : ''));
+        (nx ? '<p class="td-next">' + esc(nx) + '</p>' : ''), '', 'plan');
     }
     if (t) {
       return card('tonight', 'Tonight', title(esc(t.name)) +
@@ -317,12 +334,12 @@
           icon('swap', 'td-sic') + '</button>' +
           // data-tk: the day the card is about, as a meal's tick carries it
           '<button class="nut-ask" data-td="cooked" data-id="' + esc(t.id) + '" data-day="' + esc(t.day) + '" data-tk="' + dayKey(d.date) + '">Cooked it</button>') +
-        (nx ? '<p class="td-next">' + esc(nx) + '</p>' : ''));
+        (nx ? '<p class="td-next">' + esc(nx) + '</p>' : ''), '', 'plan');
     }
     if (d.planned) {
       return card('tonight', 'Tonight', title('Nothing planned tonight') +
         (nx ? '<p class="td-next">' + esc(nx) + '</p>' : '') +
-        acts(btn(main, 'addtonight', 'Add a dinner') + quiet('plan', 'See the week')));
+        acts(btn(main, 'addtonight', 'Add a dinner') + quiet('plan', 'See the week')), '', 'plan');
     }
     return card('tonight', 'Dinners', title('Plan this week’s dinners') +
       note('A few questions, then dinners for the nights left this week, one shopping list and a Walmart cart.') +
@@ -376,16 +393,20 @@
         '<button type="button" class="td-fold-btn" data-td="eatenfold" aria-expanded="' + (open ? 'true' : 'false') + '" aria-label="' + (open ? 'Hide eaten meals' : 'Show eaten meals') + '"><i aria-hidden="true">' + (open ? '\u25b4' : '\u203a') + '</i></button></div>' +
       list + '</div>';
   }
-  function eatingCard(e, main) {
+  function eatingCard(e, main, hasStart) {
     if (!e.set) {
       return card('eating', 'Eating', title('Set your numbers') +
         note('Your height and weight, and Nourish works out a calorie and protein target for you.') +
         acts(btn(main, 'numbers', 'Set my numbers') + quiet('addfood', 'Just log food for now')), '', 'macros');
     }
     var left = e.kcal.want - e.kcal.have, meals = e.meals || [];
+    var pLeft = Math.round(e.p.want - e.p.have);
     var big = '<p class="td-big"><b>' + fmt(Math.abs(left)) + '</b> ' + (left >= 0 ? 'left today' : 'over today') +
       (e.training ? '<span class="td-lift">Lifting day</span>' : '') + '</p>';
-    var hero = '<div class="td-eat-hero">' + dualRingSVG(e) + '<div class="td-eat-hero-r">' + big + '</div></div>';
+    var curLine = '<p class="td-eat-cur"><span>' + fmt(e.kcal.have) + ' / ' + fmt(e.kcal.want) + ' kcal</span>' +
+      ' <span aria-hidden="true">\u00b7</span> ' +
+      '<span><b>' + fmt(Math.abs(pLeft)) + ' g</b> protein ' + (pLeft >= 0 ? 'to go' : 'over') + '</span></p>';
+    var hero = '<div class="td-eat-hero">' + dualRingSVG(e) + '<div class="td-eat-hero-r">' + big + curLine + '</div></div>';
     /* The day's three macros as meters under the ring. Calories were said
        three times (the number left, the ring, and a bar), and protein twice;
        the ring and the number say calories, and these say the rest. */
@@ -403,12 +424,12 @@
     if (!meals.some(function (m) { return !m.empty; })) {
       return card('eating', 'Eating', hero + title('Nothing planned yet') +
         note('Fill it from the recipes to your numbers, or add what you eat as you go.') +
-        bars + wStrip + acts(btn(main, 'fill', 'Fill my day') + btn(false, 'addfood', 'Add food') + quiet('eatout', 'Eating out')), '', 'macros');
+        bars + wStrip + acts(btn(main, 'fill', 'Fill my day') + btn(false, 'addfood', '+ Log food') + quiet('eatout', 'Eating out')), '', 'macros');
     }
     var eaten = meals.filter(function (m) { return m.eaten; }), open = meals.filter(function (m) { return !m.eaten && !m.empty; });
     return card('eating', 'Eating', hero + (eaten.length ? eatenLine(eaten) : '') +
       (open.length ? '<div class="td-meals">' + open.map(function (m, i) { return mealRow(m, i === 0, e.key); }).join('') + '</div>' : '') +
-      bars + wStrip + (open.length ? acts(quiet('eatout', 'Eating out')) : ''), '', 'macros');
+      bars + wStrip + acts(btn(main && !hasStart, 'addfood', '+ Log food') + quiet('eatout', 'Eating out')), '', 'macros');
   }
 
   // ---------------------------------------------------------------- workout
@@ -473,13 +494,14 @@
       return '<li><span>' + esc(l.name) + '</span><span>' + esc(l.say) + '</span></li>';
     }).join('');
     var more = (w.lifts || []).length > 5 ? '<li class="td-more"><span>+' + (w.lifts.length - 5) + ' more</span></li>' : '';
-    /* The session first, the lit body beside it, and Start as the one big
-       button: Blake's mornings open on this card more than any other. */
+    var nLifts = (w.lifts || []).length;
+    /* Lead with Start so the primary action sits above the fold, with the lift
+       list tucked neatly behind a one-tap fold. */
     return card('workout', 'Workout', '<div class="td-wk-top"><div>' + title(esc(w.name)) +
-      facts([w.week || '', w.mins ? 'About ' + w.mins + ' min' : '', (w.lifts || []).length + ' exercises']) + '</div></div>' +
+      facts([w.week || '', w.mins ? 'About ' + w.mins + ' min' : '', nLifts + ' exercises']) + '</div></div>' +
       litStrip(w) +
-      (lifts ? '<ol class="td-lifts">' + lifts + more + '</ol>' : '') +
-      '<button class="btn-primary td-btn td-start" data-td="start">Start ' + esc(w.name) + '</button>', '', 'train');
+      '<button class="btn-primary td-btn td-start" data-td="start">Start ' + esc(w.name) + '</button>' +
+      (lifts ? '<details class="td-lifts-fold"><summary>See ' + nLifts + (nLifts === 1 ? ' exercise' : ' exercises') + '</summary><ol class="td-lifts">' + lifts + more + '</ol></details>' : ''), '', 'train');
   }
 
   // a rest day's activity, done: one green card, at the bottom
@@ -499,7 +521,7 @@
         s.src ? s.src + ' from ' + s.srcName : '']) +
       (s.wm ? '<a class="wm-btn td-wm" href="' + esc(s.wm.href) + '" target="_blank" rel="noopener">' + s.wmMark +
         'Add ' + s.wm.n + (s.wm.n === 1 ? ' item' : ' items') + ' to Walmart cart</a>' : '') +
-      acts(btn(false, 'list', 'Open the list')));
+      acts(btn(false, 'list', 'Open the list')), '', 'list');
   }
 
   // -------------------------------------------------------------- this week
@@ -610,9 +632,11 @@
        settings): dinners and the shopping, eating, workouts. */
     var hp = d.help || { d: true, e: true, w: true };
     order = order.filter(function (k) { return k === 'tonight' ? hp.d : k === 'eating' ? hp.e : hp.w; });
+    var hasStart = !!(hp.w && d.workout && d.workout.block && !d.workout.live && !doneW &&
+      !d.workout.finished && !d.workout.easy && !(d.workout.due > 0 && d.workout.rest));
     var make = {
       tonight: function (main) { return tonightCard(d, main); },
-      eating: function (main) { return eatingCard(d.eating, main); },
+      eating: function (main) { return eatingCard(d.eating, main, hasStart); },
       workout: function (main) { return workoutCard(d.workout, main); }
     };
     var first = true, html = '';
@@ -628,19 +652,56 @@
       '<h1 class="step-h td-h">Today</h1></div><div class="td-cards">' + topBars + html + '</div>';
   }
 
+  function saveQuickWeight(force) {
+    var box = document.getElementById('tdWeightIn');
+    if (!box || !window.Hive || !window.Hive.weigh) return;
+    var raw = String(box.value || '').trim().replace(',', '.');
+    var v = parseFloat(raw);
+    var u = box.getAttribute('data-unit') || 'lb';
+    var tk = box.getAttribute('data-tk') || dayKey(new Date());
+    if (!raw || !isFinite(v) || v <= 0 || v > (u === 'kg' ? 700 : 1500)) {
+      weighErr = 'Enter a valid weight in ' + u + '.';
+      weighOdd = null;
+      render();
+      var b2 = document.getElementById('tdWeightIn');
+      if (b2) b2.focus();
+      return;
+    }
+    var lb = u === 'kg' ? v * 2.20462 : v;
+    var res = window.Hive.weigh(tk, lb, { force: !!force });
+    if (res && res.odd) {
+      weighErr = '';
+      weighOdd = { v: Math.round(v * 10) / 10, ref: res.ref ? Math.round((u === 'kg' ? res.ref / 2.20462 : res.ref) * 10) / 10 : 0 };
+      render();
+      return;
+    }
+    weighOdd = null;
+    weighErr = '';
+    render();
+  }
+
   /* The doors. Each is the same function the full tab runs. */
+  document.addEventListener('submit', function (e) {
+    if (!e.target || !e.target.closest) return;
+    var f = e.target.closest('#todayRoot [data-tdform="weigh"]');
+    if (!f) return;
+    e.preventDefault();
+    saveQuickWeight(false);
+  });
   document.addEventListener('click', function (e) {
     if (!e.target.closest || !window.Hive) return;
     var b = e.target.closest('#todayRoot [data-td]');
     if (!b) {
-      /* Anywhere else on a card that is a door: its tab. Not on a link, and
-         not when the tap was the end of selecting text. */
+      /* Anywhere else on a card that is a door: its tab. Not on a link, fold
+         summary, or inline weigh-in form, and not when selecting text. */
       var c = e.target.closest('#todayRoot .td-go');
-      if (c && !e.target.closest('a') && !(window.getSelection && String(window.getSelection()))) window.Hive.go(c.getAttribute('data-go'));
+      if (c && !e.target.closest('a, summary, input, form') && !(window.getSelection && String(window.getSelection()))) window.Hive.go(c.getAttribute('data-go'));
       return;
     }
     var H = window.Hive, a = b.getAttribute('data-td'), id = b.getAttribute('data-id');
     if (a === 'go') { H.go(b.getAttribute('data-go')); return; }
+    if (a === 'weighsave') { saveQuickWeight(false); return; }
+    if (a === 'weighforce') { saveQuickWeight(true); return; }
     if (a === 'vitals') { writeFlag('bsc.tdVitalsOpen', !readFlag('bsc.tdVitalsOpen')); render(); return; }
     if (a === 'hub') { if (H.openHub) H.openHub(); else H.go('train'); return; }
     if (a === 'eatenfold') { writeFlag('bsc.tdEatenOpen', !readFlag('bsc.tdEatenOpen')); render(); return; }

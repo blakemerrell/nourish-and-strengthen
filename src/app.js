@@ -10131,7 +10131,7 @@
      the scale said, and the week it sits in. Nourish's own numbers. */
   function todayWeigh(tk) {
     var st = mWeightStats(), had = MWEIGHTS[tk];
-    return { done: !!had, now: had ? mWShow(had) : null, unit: mWUnit(),
+    return { tk: tk, done: !!had, now: had ? mWShow(had) : null, unit: mWUnit(),
       avg: st && st.n >= 2 ? mWShow(st.avg7) : null, week: st && st.n >= 2 && st.dWeek !== null ? mLbWord(st.dWeek) : '',
       last: st && st.lastKey !== tk && st.latest ? mWShow(st.latest) : null, lastKey: st ? st.lastKey : '',
       // the rest of the morning, as the check-in under the box said it (src/checkin.js)
@@ -10215,12 +10215,15 @@
     });
     var left = buy.filter(function (b) { return !window.Store.isChecked(b.key); });
     var wl = canBuy() && left.length ? window.Walmart.lines(left) : null;
+    var hasW = Object.keys(MWEIGHTS).some(function (k) { return MWEIGHTS[k] > 0; });
+    var wtInfo = window.Train && window.Train.today ? window.Train.today() : null;
+    var showWeigh = set || hasW || !!(wtInfo && wtInfo.block);
     return {
       date: now,
       help: window.Door ? window.Door.help() : { d: true, e: true, w: true },
       tonight: t ? { id: String(t.id), day: dk, name: r.name, time: r.time || '', x: t.x, lo: !!t.lo, twin: !!planTwin(t.id, dk),
         cooked: window.Store.cooked(dk), rating: window.Store.rating(t.id), plate: t.lo ? null : tonightPlate(t.id, tk) } : null,
-      weigh: set ? todayWeigh(tk) : null,
+      weigh: showWeigh ? todayWeigh(tk) : null,
       vitals: todayVitals(tk),
       next: next,
       planned: CAL_DAYS.some(function (d) { return !!dinnerOf(d[0]); }),

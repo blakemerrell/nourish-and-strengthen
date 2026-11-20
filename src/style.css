@@ -10288,26 +10288,6 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
   width: 100%; min-height: 48px; margin: 8px 0 0; border-radius: 10px; font-size: 0.9375rem;
 }
 
-/* Smart drift notice at the top of Eat slots (Step 1c) */
-.mdrift {
-  display: flex; align-items: stretch; gap: 4px; margin: 0;
-  background: color-mix(in oklab, var(--ochre) 13%, var(--card));
-  border: 1px solid var(--ochre); border-radius: 12px; padding: 2px 2px 2px 6px;
-}
-.mdrift-go {
-  flex: 1 1 auto; min-width: 44px; min-height: 44px; margin: 0; padding: 6px 8px;
-  border: 0; border-radius: 9px; background: none; color: var(--ink);
-  font: 600 0.8125rem/1.25 var(--sans); text-align: left;
-  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
-}
-.mdrift-go svg { width: 17px; height: 17px; flex: none; color: var(--ochre-text); }
-.mdrift-x {
-  flex: none; width: 44px; height: 44px; min-width: 44px; min-height: 44px; margin: 0; padding: 0;
-  border: 0; border-radius: 9px; background: none; color: var(--muted);
-  font-size: 1.1875rem; line-height: 1; display: grid; place-items: center; cursor: pointer;
-}
-.mdrift-go:hover, .mdrift-x:hover { background: color-mix(in oklab, var(--ochre) 10%, transparent); }
-
 /* Always-there quick food log bar docked beside #macroFill in one 58px sticky row (Step 1d) */
 .mday-dock {
   display: flex; align-items: stretch; gap: 6px; position: sticky; bottom: 0;

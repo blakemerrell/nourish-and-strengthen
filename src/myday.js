@@ -681,62 +681,6 @@
     '</div>';
   }
 
-  function mDriftSig(k, day, tK, slots) {
-    if (!day) return '';
-    var itemsSig = Object.keys(day).sort().map(function (sk) {
-      var list = day[sk];
-      if (!Array.isArray(list) || !list.length) return '';
-      return sk + ':' + list.map(function (it) {
-        return (it.id || '') + '@' + Math.round((it.x || 0) * 1000) + ':' + (it.eaten ? 1 : 0) + ':' + (it.l || 0);
-      }).join(',');
-    }).filter(Boolean).join('|');
-    if (!itemsSig) return '';
-    var skipSig = slots && Array.isArray(slots.list)
-      ? slots.list.filter(function (s) { return mSkipped(k, s.k); }).map(function (s) { return s.k; }).join(',')
-      : '';
-    return itemsSig + '#' + Math.round(tK || 0) + '#' + skipSig;
-  }
-
-  function mDriftBannerHTML(k, day, targets, slots, noPlan, dayDone, future, freeCount) {
-    if (noPlan || dayDone || future || !freeCount) return '';
-    var tK = targets ? (targets.kcal || (4 * (targets.p || 0) + 9 * (targets.f || 0) + 4 * (targets.c || 0))) : 0;
-    if (!(tK > 0)) return '';
-    var sig = mDriftSig(k, day, tK, slots);
-    if (!sig || (S.mDriftDis && S.mDriftDis[k] === sig)) return '';
-    var dayKcal = 0, allPopulated = true, finishedDrifted = false, openMovableDrifted = false;
-    var onPlanKeys = slots.list.map(function (s) { return s.k; });
-    var entries = slots.list.map(function (s) { return [s.k, s.n, true]; });
-    Object.keys(day || {}).forEach(function (sk) {
-      if (onPlanKeys.indexOf(sk) < 0) entries.push([sk, (slots.names && slots.names[sk]) || 'Meal', false]);
-    });
-    entries.forEach(function (entry) {
-      var M = mMealModel(k, entry[0], entry[1], entry[2], day, targets, slots);
-      if (!M) return;
-      dayKcal += (M.sub && M.sub.kcal) || 0;
-      if (entry[2] && !mSkipped(k, entry[0]) && !M.live) allPopulated = false;
-      var aimK = M.aim ? (M.aim.kcal || (4 * (M.aim.p || 0) + 9 * (M.aim.f || 0) + 4 * (M.aim.c || 0))) : 0;
-      var subK = (M.sub && M.sub.kcal) || 0;
-      if (M.eatenAll && aimK > 0) {
-        if (Math.abs(subK - aimK) > Math.max(25, aimK * 0.10)) finishedDrifted = true;
-      } else if (!M.eatenAll && M.live > 0 && aimK > 0) {
-        var hasMovable = (M.items || []).some(function (it) {
-          var r = LIVE.BY_ID[it.id];
-          return !it.eaten && !it.l && r && r.macro;
-        });
-        if (hasMovable && Math.abs(subK - aimK) > Math.max(25, aimK * 0.10)) openMovableDrifted = true;
-      }
-    });
-    var dayOver = dayKcal > tK + Math.max(50, tK * 0.10);
-    var dayUnderFull = allPopulated && dayKcal < tK - Math.max(50, tK * 0.10);
-    if (!((finishedDrifted && openMovableDrifted) || dayOver || dayUnderFull)) return '';
-    return '<div class="mdrift no-print" id="macroDrift" role="region" aria-label="Meal balance notice" data-day="' + esc(k) + '" data-sig="' + esc(sig) + '">' +
-      '<button type="button" class="mdrift-go" data-mdrift="rebal">' +
-        mIcon('scales') + '<span>Meals are off target &mdash; tap to rebalance</span>' +
-      '</button>' +
-      '<button type="button" class="mdrift-x" data-mdrift="dismiss" aria-label="Dismiss rebalance notice">&times;</button>' +
-    '</div>';
-  }
-
   function mRenderDay() {
     var todayK = todayKey();
     var k = mViewKey();
@@ -1245,8 +1189,12 @@
           '</div>' +
         '</div>' + (onPlan ? mCascadeLineHTML(sk, targets, slots) : '');
     };
-    var html = mDriftBannerHTML(k, day, targets, slots, noPlan, dayDone, future, freeCount) +
-      slots.list.map(function (s) { return trayHTML(s.k, s.n, true); }).join('');
+    /* No notice above the meals. Step 1c put a "Meals are off target — tap
+       to rebalance" strip here; at twenty to one it fired on a day with
+       lunch still to come, because the dinner on the plan was smaller than
+       its share. Blake, 2026-11-20, asked whether it helped or nagged:
+       "Remove it." Rebalance is in the menu (macroRebal) for when he wants it. */
+    var html = slots.list.map(function (s) { return trayHTML(s.k, s.n, true); }).join('');
     var onPlanKeys = slots.list.map(function (s) { return s.k; });
     Object.keys(day).forEach(function (sk) {
       if (onPlanKeys.indexOf(sk) < 0) html += trayHTML(sk, slots.names[sk] || 'Meal', false);

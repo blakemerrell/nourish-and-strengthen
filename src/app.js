@@ -921,7 +921,7 @@
     mpMode: 'home', mpFromMeal: false, mpAt: {},
     /* Which meals you have pressed open or shut, against the default of
        folding one you have eaten. Ephemeral: a new day starts fresh. */
-    mFold: {}, mFoldFor: '', mTouched: '', mtOpen: '', mDriftDis: {},
+    mFold: {}, mFoldFor: '', mTouched: '', mtOpen: '',
     // each meal's view on the day, by day (myday.js, mViewOf); the skip a card is asking about; Undo's copy
     mView: {}, mViewAll: 0, mFoldSoon: '', mSkipAsk: '', mSkipUndo: null, mUsualUndo: null,
     // a meal said into the picker's box (heard.js): the band's choices; foods to keep as one; a meal a new recipe goes on
@@ -4299,7 +4299,7 @@
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mslotdel', 'data-mslotmove', 'data-mholdclose', 'data-maddslot', 'data-mslotpreset', 'data-maddpop', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
-    'data-mmore', 'data-fppick', 'data-fpmore', 'data-fpstaples', 'data-mfsec', 'data-mfunpin', 'data-mfedit', 'data-mfdel', 'data-mfnew', 'data-mfadd', 'data-mffood', 'data-mfundo', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mwtiles', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd', 'data-hydmodal', 'data-hyd', 'data-hydmg', 'data-hydoz', 'data-mdrift', 'data-mlog', 'data-mpslot', 'data-mheardundo', 'data-mrowopen', 'data-mpclear'];
+    'data-mmore', 'data-fppick', 'data-fpmore', 'data-fpstaples', 'data-mfsec', 'data-mfunpin', 'data-mfedit', 'data-mfdel', 'data-mfnew', 'data-mfadd', 'data-mffood', 'data-mfundo', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mwtiles', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd', 'data-hydmodal', 'data-hyd', 'data-hydmg', 'data-hydoz', 'data-mlog', 'data-mpslot', 'data-mheardundo', 'data-mrowopen', 'data-mpclear'];
 
   function focusKey(el) {
     if (!el || el === document.body || !el.getAttribute) return null;
@@ -6465,35 +6465,6 @@
       /* A tray opens its meal's sheet: the one place food is added or
          changed (Blake, 2026-10-04: "ONE way to add and select food"). */
       var mop = e.target.closest('[data-mopen]');
-      var mdf = e.target.closest('[data-mdrift]');
-      if (mdf) {
-        var drEl = $('macroDrift');
-        var dvk = (drEl && drEl.dataset.day) || mViewKey();
-        S.mDriftDis = S.mDriftDis || {};
-        var restoreDriftFocus = function () {
-          if (!document.activeElement || document.activeElement === document.body) {
-            var nf = document.querySelector('#macroSlots button:not([tabindex="-1"]):not(:disabled)') || $('macroFill');
-            if (nf && nf.focus) nf.focus();
-          }
-        };
-        if (mdf.dataset.mdrift === 'dismiss') {
-          if (drEl && drEl.dataset.sig) S.mDriftDis[dvk] = drEl.dataset.sig;
-          renderMacros();
-          restoreDriftFocus();
-          return;
-        }
-        if (mdf.dataset.mdrift === 'rebal') {
-          mRebalance();
-          var afterDr = $('macroDrift');
-          if (afterDr && afterDr.dataset.sig) {
-            S.mDriftDis[dvk] = afterDr.dataset.sig;
-            renderMacros();
-          }
-          restoreDriftFocus();
-          mToast('Meals rebalanced to ' + (dvk === todayKey() ? 'today\u2019s' : esc(mLongDate(dvk)) + '\u2019s') + ' target.');
-          return;
-        }
-      }
       if (mop) {
         rememberOpener();
         S.mEdit = null;

@@ -524,7 +524,8 @@ module.exports = nourish({
     });
     t.ok('the sweeper is live while there is something loose to sweep',
       sweptBefore.off === false, JSON.stringify(sweptBefore));
-    await sweepPg.click('#macroSweep');
+    await sweepPg.click('#macroMore');
+  await sweepPg.click('#macroSweep');
     await sweepPg.waitForTimeout(400);
     const sweptAfter = await sweepPg.evaluate(() => {
       const all = JSON.parse(localStorage.getItem('bsc.macroDays'));
@@ -740,11 +741,14 @@ module.exports = nourish({
     const orderPg = await t.fresh({ viewport: { width: 390, height: 800 } });
     await orderPg.click('.tab[data-view="macros"]');
     await orderPg.waitForTimeout(300);
-    const barOrder = await orderPg.evaluate(() =>
-      [...document.querySelectorAll('.mday-acts button')].map((b) => b.id).join(' '));
-    t.ok('the day bar reads rebalance, sweep, add meal, then Fill',
-      barOrder === 'macroRebal macroSweep macroAddMeal macroFill',
-      barOrder);
+    const barOrder = await orderPg.evaluate(() => ({
+      bar: [...document.querySelectorAll('.mday-acts button')].map((b) => b.id).join(' '),
+      menu: [...document.querySelectorAll('#macroMenu #macroRebal, #macroMenu #macroSweep, #macroMenu #macroAddMeal')]
+        .map((b) => b.id).join(' '),
+    }));
+    t.ok('the day bar holds Fill alone and the day menu holds rebalance, sweep, add meal',
+      barOrder.bar === 'macroFill' && barOrder.menu === 'macroRebal macroSweep macroAddMeal',
+      JSON.stringify(barOrder));
     await orderPg.context().close();
   },
 });

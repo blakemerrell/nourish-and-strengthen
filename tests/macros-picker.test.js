@@ -56,13 +56,15 @@ module.exports = nourish({
     /* One row since 2026-10-04: three tools, each an icon over its word, and
        the one primary. Adding food is not on the bar any more — a meal's tray
        is the one door to that (Blake: "ONE way to add and select food"). */
-    t.ok('everything you do to today is in the bar, in one row, and adding food is not one of them',
+    t.ok('only the primary fills the bottom bar, in one row, and day tools live under the menu',
       await bar.evaluate(() => {
         const b2 = [...document.querySelectorAll('.mday-acts button')]
           .filter((x) => !x.classList.contains('hide')).map((x) => x.id);
         const rows = new Set([...document.querySelectorAll('.mday-acts button')]
           .map((x) => Math.round(x.getBoundingClientRect().top)));
-        return b2.join() === 'macroRebal,macroSweep,macroAddMeal,macroFill' && rows.size === 1 &&
+        const inMenu = ['macroRebal', 'macroSweep', 'macroAddMeal']
+          .every((id) => !!document.querySelector('#macroMenu #' + id));
+        return b2.join() === 'macroFill' && rows.size === 1 && inMenu &&
           document.querySelector('.mday-acts').getBoundingClientRect().height < 80;
       }), await bar.evaluate(() => Math.round(document.querySelector('.mday-acts').getBoundingClientRect().height) + 'px ' +
         [...document.querySelectorAll('.mday-acts button')].map((x) => x.id).join(',')));

@@ -1345,7 +1345,8 @@ module.exports = nourish({
       await stepDay(np, 1);
       await np.waitForTimeout(150);
       const canSweep = await np.evaluate(() => !document.getElementById('macroSweep').disabled);
-      await np.click('#macroSweep');
+      await np.click('#macroMore');
+  await np.click('#macroSweep');
       await np.waitForTimeout(300);
       const swept = await np.evaluate((k) => {
         const d = JSON.parse(localStorage.getItem('bsc.macroDays'))[k];

@@ -119,7 +119,7 @@ Split ownership by file so agents work in parallel without merge collisions:
 |---|---|---|---|
 | 1a "You usually have" chips | Done | Claude | #200 |
 | 1b Inline meal view & search split | Done | Antigravity | #206 |
-| 1c Quiet foot + drift banner | Not started | | |
+| 1c Quiet foot + drift banner | Done | Antigravity | #207 |
 | 1d Log bar + local scanner | Not started | | |
 | 1e Eat header (`current/goal` + `left`) | Not started | | |
 | 1f My Foods & Routines manager | Not started | | |

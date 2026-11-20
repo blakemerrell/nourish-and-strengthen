@@ -418,7 +418,8 @@ module.exports = nourish({
     await typ.waitForTimeout(300);
     /* Rebalance is on the day's bar, so it is pressed from the day, and the
        meal's sheet opened afterwards to read the plate. */
-    await typ.click('#macroRebal');
+    await typ.click('#macroMore');
+  await typ.click('#macroRebal');
     await typ.waitForTimeout(700);
     await openMeal(typ, 'b');
     const reb = await plate(0);

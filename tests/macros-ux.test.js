@@ -635,21 +635,28 @@ module.exports = nourish({
          2026-10-04 (a meal's tray is the one way in), and Open all with the
          meal screens it opened. */
       const bar = await pg.evaluate(() => {
-        const tools = [...document.querySelectorAll('.mday-acts .mday-tool')].map((b) => ({
-          w: (b.querySelector('.mday-w') || {}).textContent, svg: !!b.querySelector('svg.mday-ic'),
-          stroke: b.querySelector('svg') ? getComputedStyle(b.querySelector('svg')).stroke : '' }));
+        const btns = [...document.querySelectorAll('.mday-acts button')];
         const fill = document.getElementById('macroFill').getBoundingClientRect();
-        const others = [...document.querySelectorAll('.mday-acts .mday-tool')].map((b) => b.getBoundingClientRect());
-        return { tools, fillText: document.getElementById('macroFill').textContent.trim(), fillH: fill.height,
-          add: !!document.getElementById('macroAdd'), openAll: !!document.getElementById('macroOpenAll'),
-          biggest: others.every((o) => o.width * o.height < fill.width * fill.height),
-          corner: fill.right >= Math.max(...others.map((o) => o.right)) && fill.bottom >= Math.max(...others.map((o) => o.bottom)) - 1 };
+        return { ids: btns.map((b) => b.id), fillText: document.getElementById('macroFill').textContent.trim(),
+          fillH: fill.height, fillW: fill.width, barW: document.querySelector('.mday-acts').getBoundingClientRect().width,
+          add: !!document.getElementById('macroAdd'), openAll: !!document.getElementById('macroOpenAll') };
       });
-      t.ok('the bar’s tools each carry their word under a drawn icon: Rebalance, Sweep, Add meal',
-        bar.tools.map((x) => x.w).join() === 'Rebalance,Sweep,Add meal' && bar.tools.every((x) => x.svg && x.stroke !== 'none'),
-        JSON.stringify(bar.tools));
-      t.ok('and the one primary is the big one, labelled, in the far corner: no Add food, no Open all',
-        !!bar.fillText && bar.fillH >= 44 && bar.biggest && bar.corner && !bar.add && !bar.openAll, JSON.stringify(bar));
+      await pg.click('#macroMore');
+      const menuTools = await pg.evaluate(() =>
+        ['macroRebal', 'macroSweep', 'macroAddMeal'].map((id) => {
+          const b = document.getElementById(id);
+          return { id, inMenu: !!(b && b.closest('#macroMenu')),
+            w: b && b.querySelector('.mday-w') ? b.querySelector('.mday-w').textContent : '',
+            svg: !!(b && b.querySelector('svg.mday-ic')),
+            stroke: b && b.querySelector('svg') ? getComputedStyle(b.querySelector('svg')).stroke : '' };
+        }));
+      await pg.click('#macroMore');
+      t.ok('the quiet tools carry their word and drawn icon inside the day menu: Rebalance, Sweep, Add meal',
+        menuTools.every((x) => x.inMenu && x.svg && x.stroke !== 'none') && menuTools.map((x) => x.w).join() === 'Rebalance,Sweep,Add meal',
+        JSON.stringify(menuTools));
+      t.ok('and the one primary fills the bottom bar on its own: no Add food, no Open all',
+        bar.ids.join() === 'macroFill' && !!bar.fillText && bar.fillH >= 44 && bar.fillW >= bar.barW * 0.9 && !bar.add && !bar.openAll,
+        JSON.stringify(bar));
       /* Drawn icons, each named. They had a word under the drawing too until
          Blake (2026-09-27): "Just use icons and the box size that is in the
          meal/food card uses."

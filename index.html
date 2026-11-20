@@ -285,6 +285,19 @@
             class="mmenu-who mmenu-sync" id="macroSyncSay"></span><span
             class="mmenu-who" id="macroWho"></span></button>
           <button role="menuitem" tabindex="-1" data-mmore="went">How today went</button>
+          <button role="menuitem" tabindex="-1" id="macroRebal"
+            title="Re-size the un-eaten, un-locked plates to land the day back on target"><svg
+            class="mday-ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v14M6.5 17h7M4 5.5h12M4 5.5 1.8 11a2.2 2.2 0 0 0 4.4 0zM16 5.5 13.8 11a2.2 2.2 0 0 0 4.4 0z"/></svg><span
+            class="mday-w">Rebalance</span></button>
+          <button role="menuitem" tabindex="-1" id="macroSweep"
+            title="Clear every plate you have not ticked — what you ate and what you locked stay"><svg
+            class="mday-ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.8v5.2M4.5 7h11l1.4 10.2H3.1z"/><path
+            class="thin" d="M4.9 9.8h10.2M6.7 9.8l-.8 7.4M8.9 9.8l-.3 7.4M11.1 9.8l.3 7.4M13.3 9.8l.8 7.4"/></svg><span
+            class="mday-w">Sweep</span></button>
+          <button role="menuitem" tabindex="-1" id="macroAddMeal" title="Add a meal or snack to your day" aria-expanded="false"><svg
+            class="mday-ic" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><path
+            d="M10 6.5v7M6.5 10h7"/></svg><span
+            class="mday-w">Add meal</span></button>
           <button role="menuitem" tabindex="-1" id="macroCopy" data-mmore="copy"><svg
             class="mday-ic" viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="6.5" width="10" height="11" rx="1.5"/><path
             d="M13 6.5V4a1.5 1.5 0 0 0-1.5-1.5h-7A1.5 1.5 0 0 0 3 4v9a1.5 1.5 0 0 0 1.5 1.5H7"/></svg><span
@@ -343,26 +356,9 @@
          add and select food"), and Open all went with the meal screens it
          opened. -->
     <div class="mday-acts no-print">
-      <button class="ghost mday-tool" id="macroRebal"
-        title="Re-size the un-eaten, un-locked plates to land the day back on target"><svg
-        class="mday-ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v14M6.5 17h7M4 5.5h12M4 5.5 1.8 11a2.2 2.2 0 0 0 4.4 0zM16 5.5 13.8 11a2.2 2.2 0 0 0 4.4 0z"/></svg><span
-        class="mday-w">Rebalance</span></button>
-      <!-- Sweep the day back to what you actually ate: every plate ticked,
-           locked or pinned stays. A broom, upright with its bristles lighter
-           than its outline, so at this size it reads as bristles and not as a
-           head divided into boxes. -->
-      <button class="ghost mday-tool" id="macroSweep"
-        title="Clear every plate you have not ticked — what you ate and what you locked stay"><svg
-        class="mday-ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.8v5.2M4.5 7h11l1.4 10.2H3.1z"/><path
-        class="thin" d="M4.9 9.8h10.2M6.7 9.8l-.8 7.4M8.9 9.8l-.3 7.4M11.1 9.8l.3 7.4M13.3 9.8l.8 7.4"/></svg><span
-        class="mday-w">Sweep</span></button>
-      <button class="ghost mday-tool" id="macroAddMeal" title="Add a meal or snack to your day" aria-expanded="false"><svg
-        class="mday-ic" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><path
-        d="M10 6.5v7M6.5 10h7"/></svg><span
-        class="mday-w">Add meal</span></button>
       <!-- One primary, saying the next thing the day needs: Craft my plan,
            then Fill, then Mark all complete, then Complete the day, then
-           Reopen. It used to go dead once every meal had food on it. -->
+           Reopen. Secondary day tools live under ☰ (#macroMenu). -->
       <button class="btn-primary" id="macroFill">Fill</button>
     </div>
   </div>

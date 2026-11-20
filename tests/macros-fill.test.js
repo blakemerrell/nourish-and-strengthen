@@ -690,7 +690,8 @@ module.exports = nourish({
     /* Rebalance is deliberately NOT narrowed. Pressing ⚖ is asking the
        machine to move things; answering "only my own" would be refusing the
        request. This is what stops the fix above from growing too broad. */
-    await mine.click('#macroRebal');
+    await mine.click('#macroMore');
+  await mine.click('#macroRebal');
     await mine.waitForTimeout(700);
     const rebal = await mine.evaluate(() => {
       const days = JSON.parse(localStorage.getItem('bsc.macroDays'));

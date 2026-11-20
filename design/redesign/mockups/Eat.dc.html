@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Eat: food logging</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#A4461B}a:hover{color:#7E3312}
+button{font-family:inherit}
+.ns-scroll::-webkit-scrollbar{display:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #F4F1EB; color: #1C1A17; font-family: -apple-system, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, sans-serif; border-radius: 44px">
+
+<!-- ============ THE DAY ============ -->
+<div class="ns-scroll" style="height: 844px; overflow-y: auto; box-sizing: border-box; padding: 54px 16px 190px; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: max-content; align-content: start; gap: 14px">
+
+  <div style="display: flex; align-items: center; gap: 4px">
+    <div style="flex: 1; display: flex; flex-direction: column">
+      <span style="font-size: 13px; font-weight: 600; color: #6B645B; letter-spacing: 0.03em">MONDAY, NOV 16</span>
+      <h1 style="margin: 0; font-size: 34px; line-height: 41px; font-weight: 700">Eat</h1>
+    </div>
+    <button aria-label="Previous day" style="width: 44px; height: 44px; border-radius: 22px; border: 0; background: #E9E4DB; color: #1C1A17; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+    <button aria-label="More: my plan, foods I eat, trends, copy a day" style="width: 44px; height: 44px; border-radius: 22px; border: 0; background: #E9E4DB; color: #1C1A17; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg></button>
+  </div>
+
+  <!-- what's left -->
+  <div style="background: #FFFFFF; border-radius: 20px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: baseline; gap: 8px">
+      <span style="font-size: 40px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">{{ kcalLeft }}</span>
+      <span style="font-size: 17px; color: #6B645B">calories left of 2,300</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+      <sc-for list="{{ macros }}" as="m" hint-placeholder-count="3">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: 6px; font-size: 13px; font-weight: 600"><span style="{{ m.labelStyle }}">{{ m.name }}</span><span style="color: #6B645B">{{ m.left }} left</span></div>
+          <div style="height: 8px; border-radius: 4px; background: #EDE8E0; overflow: hidden"><div style="{{ m.bar }}"></div></div>
+          <span style="font-size: 13px; color: #6B645B; font-variant-numeric: tabular-nums">{{ m.have }} / {{ m.goal }} g</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- meals -->
+  <sc-for list="{{ meals }}" as="ml" hint-placeholder-count="4">
+    <div style="{{ ml.card }}">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 14px 16px 6px">
+        <span style="font-size: 17px; font-weight: 700">{{ ml.name }}</span>
+        <sc-if value="{{ ml.now }}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; font-weight: 700; color: #FFFFFF; background: #A4461B; border-radius: 10px; padding: 3px 8px">NOW</span></sc-if>
+        <span style="flex: 1"></span>
+        <span style="font-size: 15px; color: #6B645B; font-variant-numeric: tabular-nums">{{ ml.kcal }}</span>
+      </div>
+      <sc-for list="{{ ml.items }}" as="f" hint-placeholder-count="1">
+        <button onClick="{{ f.open }}" style="width: 100%; border: 0; background: transparent; display: flex; align-items: center; gap: 12px; padding: 10px 16px; min-height: 52px; text-align: left; cursor: pointer">
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 17px; color: #1C1A17">{{ f.n }}</span>
+            <span style="font-size: 14px; color: #6B645B">{{ f.sub }}</span>
+          </span>
+          <span style="font-size: 15px; color: #1C1A17; font-variant-numeric: tabular-nums">{{ f.k }}</span>
+        </button>
+      </sc-for>
+      <sc-if value="{{ ml.planned }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; gap: 12px; margin: 4px 12px 0; padding: 10px 12px; border: 1px dashed #D8C3B3; border-radius: 14px">
+          <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px">Lime &amp; Cumin Chicken</span><span style="font-size: 13px; color: #6B645B">Planned · 388 kcal · 66 g protein</span></span>
+          <button onClick="{{ eatPlanned }}" style="height: 40px; padding: 0 14px; border: 0; border-radius: 20px; background: #E7F1EA; color: #1F5A33; font-size: 15px; font-weight: 600; cursor: pointer">Ate it</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ ml.now }}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 6px 16px 4px; font-size: 13px; font-weight: 600; color: #6B645B">YOU USUALLY HAVE</div>
+        <div class="ns-scroll" style="display: flex; gap: 8px; overflow-x: auto; padding: 4px 16px 6px">
+          <sc-for list="{{ usual }}" as="u" hint-placeholder-count="4">
+            <button onClick="{{ u.add }}" style="flex: none; display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px 0 10px; border-radius: 22px; border: 1px solid #E2D6CB; background: #FBF7F2; cursor: pointer; font-size: 15px; color: #1C1A17">
+              <span style="width: 24px; height: 24px; border-radius: 12px; background: #A4461B; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 17px; line-height: 1">+</span>{{ u.n }}
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+      <div style="height: 10px"></div>
+    </div>
+  </sc-for>
+
+  <div style="display: flex; align-items: center; gap: 12px; background: #FFFFFF; border-radius: 16px; padding: 10px 12px 10px 16px">
+    <span style="flex: 1; font-size: 17px">Water <span style="color: #6B645B; font-size: 15px">· {{ water }} of 100 oz</span></span>
+    <button onClick="{{ addWater }}" style="height: 40px; padding: 0 14px; border: 0; border-radius: 20px; background: #E6EEF7; color: #1D4E89; font-size: 15px; font-weight: 600; cursor: pointer">+16 oz</button>
+  </div>
+</div>
+
+<!-- ============ THE LOG BAR (always there) ============ -->
+<div style="position: absolute; left: 0; right: 0; bottom: 83px; padding: 10px 16px; background: linear-gradient(rgba(244,241,235,0), #F4F1EB 30%)">
+  <div style="display: flex; align-items: center; gap: 8px">
+    <button onClick="{{ openType }}" style="flex: 1; height: 54px; border-radius: 27px; border: 1px solid #DDD5C9; background: #FFFFFF; display: flex; align-items: center; gap: 10px; padding: 0 8px 0 18px; text-align: left; cursor: pointer; box-shadow: 0 4px 16px rgba(28,26,23,0.08)">
+      <span style="flex: 1; font-size: 17px; color: #6B645B">What did you eat?</span>
+      <span style="width: 38px; height: 38px; border-radius: 19px; background: #F4F1EB; display: flex; align-items: center; justify-content: center; color: #1C1A17"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg></span>
+    </button>
+    <button aria-label="Scan a barcode" style="width: 54px; height: 54px; border-radius: 27px; border: 0; background: #1C1A17; color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: none"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M8 9v6M11 9v6M14 9v6M17 9v6"></path></svg></button>
+  </div>
+</div>
+
+<!-- ============ TAB BAR ============ -->
+<nav aria-label="Sections" style="position: absolute; left: 0; right: 0; bottom: 0; height: 83px; box-sizing: border-box; padding: 6px 8px 0; background: #FAF8F4; border-top: 1px solid #E2DCD2; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-radius: 0 0 44px 44px">
+  <a href="Main.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; font-weight: 600; color: #7A7268; text-decoration: none; min-height: 48px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>Today</a>
+  <a href="Main.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; font-weight: 600; color: #7A7268; text-decoration: none; min-height: 48px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-2 6 0 8v10"></path></svg>Cook</a>
+  <span style="display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; font-weight: 600; color: #A4461B; min-height: 48px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"></path><path d="M5 19l8-8"></path></svg>Eat</span>
+  <a href="Main.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; font-weight: 600; color: #7A7268; text-decoration: none; min-height: 48px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"></path></svg>Train</a>
+</nav>
+
+<!-- ============ UNDO TOAST ============ -->
+<sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+  <div role="status" style="position: absolute; left: 16px; right: 16px; bottom: 164px; min-height: 52px; border-radius: 16px; background: #1C1A17; color: #FFFFFF; display: flex; align-items: center; gap: 10px; padding: 0 8px 0 16px; box-shadow: 0 8px 24px rgba(28,26,23,0.3)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8FD1A4" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+    <span style="flex: 1; font-size: 15px">{{ toast }}</span>
+    <button onClick="{{ undo }}" style="height: 40px; padding: 0 12px; border: 0; background: transparent; color: #F2B48F; font-size: 15px; font-weight: 700; cursor: pointer">Undo</button>
+  </div>
+</sc-if>
+
+<!-- ============ TYPE IT SHEET ============ -->
+<sc-if value="{{ typing }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; background: rgba(28,26,23,0.35); display: flex; flex-direction: column; justify-content: flex-end; border-radius: 44px; overflow: hidden">
+  <div style="background: #F4F1EB; border-radius: 22px 22px 0 0; padding: 8px 16px 30px; display: flex; flex-direction: column; gap: 12px">
+    <div style="align-self: center; width: 36px; height: 5px; border-radius: 3px; background: #CFC7BB"></div>
+    <div style="display: flex; align-items: center; gap: 8px">
+      <button onClick="{{ closeAll }}" style="height: 44px; padding: 0 4px; border: 0; background: transparent; color: #A4461B; font-size: 17px; cursor: pointer">Cancel</button>
+      <span style="flex: 1; text-align: center; font-size: 17px; font-weight: 600">Log food</span>
+      <button onClick="{{ cycleMeal }}" aria-label="Change meal" style="height: 36px; padding: 0 12px; border: 0; border-radius: 18px; background: #F6E6DC; color: #7E3312; font-size: 15px; font-weight: 600; cursor: pointer">{{ mealName }} ⌄</button>
+    </div>
+    <label style="display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 14px; background: #FFFFFF; border-radius: 14px; border: 2px solid #A4461B">
+      <span style="position: absolute; width: 1px; height: 1px; overflow: hidden">What did you eat?</span>
+      <input value="2 eggs and toast with butter" style="flex: 1; border: 0; background: transparent; font-size: 17px; outline: none; color: #1C1A17">
+    </label>
+    <div style="font-size: 13px; font-weight: 600; color: #6B645B; padding: 0 4px">HERE IS WHAT I READ · TAP AN AMOUNT TO FIX IT</div>
+    <div style="background: #FFFFFF; border-radius: 16px; overflow: hidden">
+      <sc-for list="{{ parsed }}" as="p" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 16px; min-height: 56px; border-bottom: 1px solid #ECE7DF">
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 17px">{{ p.n }}</span><span style="font-size: 13px; color: #6B645B">{{ p.sub }}</span></span>
+          <button onClick="{{ p.less }}" aria-label="Less {{ p.n }}" style="width: 40px; height: 40px; border-radius: 20px; border: 0; background: #F4F1EB; font-size: 20px; color: #1C1A17; cursor: pointer">−</button>
+          <span style="min-width: 44px; text-align: center; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums">{{ p.q }}</span>
+          <button onClick="{{ p.more }}" aria-label="More {{ p.n }}" style="width: 40px; height: 40px; border-radius: 20px; border: 0; background: #F4F1EB; font-size: 20px; color: #1C1A17; cursor: pointer">+</button>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font-size: 15px; color: #6B645B; padding: 0 4px">This takes protein to <b style="color: #1C1A17">{{ protAfter }} g</b> of 180 and leaves <b style="color: #1C1A17">{{ kcalAfter }}</b> calories.</div>
+    <button onClick="{{ addParsed }}" style="height: 54px; border: 0; border-radius: 16px; background: #A4461B; color: #FFFFFF; font-size: 17px; font-weight: 600; cursor: pointer">Add to {{ mealLower }} · {{ parsedKcal }} kcal</button>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+      <button style="height: 44px; border: 1px solid #D8D1C6; border-radius: 12px; background: #FFFFFF; font-size: 15px; color: #1C1A17">Scan</button>
+      <button style="height: 44px; border: 1px solid #D8D1C6; border-radius: 12px; background: #FFFFFF; font-size: 15px; color: #1C1A17">A recipe</button>
+      <button style="height: 44px; border: 1px solid #D8D1C6; border-radius: 12px; background: #FFFFFF; font-size: 15px; color: #1C1A17">My foods</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ PORTION SHEET ============ -->
+<sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; background: rgba(28,26,23,0.35); display: flex; flex-direction: column; justify-content: flex-end; border-radius: 44px; overflow: hidden">
+  <div style="background: #F4F1EB; border-radius: 22px 22px 0 0; padding: 8px 16px 30px; display: flex; flex-direction: column; gap: 16px">
+    <div style="align-self: center; width: 36px; height: 5px; border-radius: 3px; background: #CFC7BB"></div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 0 4px">
+      <span style="font-size: 13px; font-weight: 600; color: #6B645B">{{ edMeal }}</span>
+      <span style="font-size: 22px; font-weight: 700">{{ edName }}</span>
+    </div>
+    <div style="background: #FFFFFF; border-radius: 20px; padding: 18px; display: flex; flex-direction: column; gap: 14px; align-items: center">
+      <div style="display: flex; align-items: center; gap: 18px">
+        <button onClick="{{ edLess }}" aria-label="Less" style="width: 52px; height: 52px; border-radius: 26px; border: 0; background: #F4F1EB; font-size: 26px; color: #1C1A17; cursor: pointer">−</button>
+        <div style="display: flex; flex-direction: column; align-items: center; min-width: 120px">
+          <span style="font-size: 44px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1">{{ edAmt }}</span>
+          <span style="font-size: 15px; color: #6B645B">{{ edUnit }}</span>
+        </div>
+        <button onClick="{{ edMore }}" aria-label="More" style="width: 52px; height: 52px; border-radius: 26px; border: 0; background: #F4F1EB; font-size: 26px; color: #1C1A17; cursor: pointer">+</button>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; width: 100%">
+        <sc-for list="{{ quick }}" as="q" hint-placeholder-count="4">
+          <button onClick="{{ q.set }}" style="{{ q.style }}">{{ q.l }}</button>
+        </sc-for>
+      </div>
+      <div style="font-size: 15px; color: #6B645B; text-align: center">{{ edMacros }}</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+      <button onClick="{{ edDelete }}" style="height: 52px; border: 0; border-radius: 16px; background: #FBE9E5; color: #9B2C17; font-size: 17px; font-weight: 600; cursor: pointer">Remove</button>
+      <button onClick="{{ edSave }}" style="height: 52px; border: 0; border-radius: 16px; background: #1C1A17; color: #FFFFFF; font-size: 17px; font-weight: 600; cursor: pointer">Done</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      sheet: null, meal: 'Lunch', toast: '', undoLog: null, water: 32, edit: null, edAmt: 1,
+      pq: [2, 1, 1],
+      log: {
+        Breakfast: [{ n: 'Cinnamon Apple Protein Overnight Oats', u: 'serving', a: 1, k: 374, p: 24, c: 56, f: 6, t: '7:10' }],
+        Lunch: [],
+        Dinner: [],
+        Snacks: [{ n: 'Apples', u: 'whole', a: 1, k: 108, p: 1, c: 26, f: 0, t: '10:30' }]
+      },
+      ateDinner: false
+    };
+  }
+  renderVals() {
+    var st = this.state, self = this;
+    var G = { k: 2300, p: 180, c: 230, f: 70 };
+    var sum = function (lg) {
+      var t = { k: 0, p: 0, c: 0, f: 0 };
+      Object.keys(lg).forEach(function (m) { lg[m].forEach(function (x) { t.k += x.k * x.a; t.p += x.p * x.a; t.c += x.c * x.a; t.f += x.f * x.a; }); });
+      return t;
+    };
+    var T = sum(st.log);
+    var fmt = function (n) { return Math.round(n).toLocaleString('en-US'); };
+    var amt = function (a) { return a === 0.5 ? '½' : a === 1.5 ? '1½' : String(a); };
+    var addTo = function (meal, foods, msg) {
+      var lg = {}; Object.keys(st.log).forEach(function (m) { lg[m] = st.log[m].slice(); });
+      lg[meal] = lg[meal].concat(foods);
+      self.setState({ log: lg, undoLog: st.log, toast: msg, sheet: null });
+    };
+
+    var mc = [
+      { name: 'Protein', key: 'p', col: '#2E7044', lc: '#1F5A33' },
+      { name: 'Carbs', key: 'c', col: '#3A6EA5', lc: '#1D4E89' },
+      { name: 'Fat', key: 'f', col: '#B7791F', lc: '#7A4F0E' }
+    ];
+    var macros = mc.map(function (m) {
+      var have = T[m.key], goal = G[m.key];
+      return { name: m.name, have: Math.round(have), goal: goal, left: Math.max(0, Math.round(goal - have)) + ' g',
+        labelStyle: 'color: ' + m.lc,
+        bar: 'height: 8px; border-radius: 4px; background: ' + m.col + '; width: ' + Math.min(100, have / goal * 100).toFixed(0) + '%' };
+    });
+
+    var USUAL = [
+      { n: 'Turkey sandwich', u: 'sandwich', a: 1, k: 360, p: 28, c: 38, f: 10 },
+      { n: 'Protein shake', u: 'scoop with milk', a: 1, k: 250, p: 33, c: 14, f: 6 },
+      { n: 'Greek yogurt', u: 'cup', a: 1, k: 150, p: 20, c: 9, f: 4 },
+      { n: 'Bananas', u: 'whole', a: 1, k: 116, p: 1, c: 27, f: 0 }
+    ];
+    var usual = USUAL.map(function (f) {
+      return { n: f.n, add: function () { addTo('Lunch', [Object.assign({ t: '12:40' }, f)], f.n + ' added to lunch'); } };
+    });
+
+    var order = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
+    var meals = order.map(function (m) {
+      var k = 0;
+      var items = st.log[m].map(function (x, i) {
+        k += x.k * x.a;
+        return { n: x.n, sub: amt(x.a) + ' ' + x.u + ' · ' + Math.round(x.p * x.a) + ' g protein' + (x.t ? ' · ' + x.t : ''), k: fmt(x.k * x.a),
+          open: function () { self.setState({ sheet: 'edit', edit: { m: m, i: i }, edAmt: x.a }); } };
+      });
+      var now = m === 'Lunch';
+      return { name: m, now: now, items: items, kcal: k ? fmt(k) + ' kcal' : (now ? 'nothing yet' : ''),
+        planned: m === 'Dinner' && !st.ateDinner,
+        card: 'background: #FFFFFF; border-radius: 20px; overflow: hidden; ' + (now ? 'box-shadow: 0 0 0 2px #E7C6B1' : '') };
+    });
+
+    var BASE = [
+      { n: 'Eggs, large', u: 'eggs', k: 72, p: 6, c: 0, f: 5 },
+      { n: 'Toast, wheat', u: 'slice', k: 80, p: 4, c: 14, f: 1 },
+      { n: 'Butter', u: 'tsp', k: 34, p: 0, c: 0, f: 4 }
+    ];
+    var pk = 0, pp = 0;
+    var parsed = BASE.map(function (b, i) {
+      var q = st.pq[i]; pk += b.k * q; pp += b.p * q;
+      var bump = function (d) { return function () { var pq = st.pq.slice(); pq[i] = Math.max(0, pq[i] + d); self.setState({ pq: pq }); }; };
+      return { n: b.n, q: q, sub: q + ' ' + b.u + ' · ' + b.k * q + ' kcal · ' + b.p * q + ' g protein', less: bump(-1), more: bump(1) };
+    });
+
+    var ed = st.edit ? st.log[st.edit.m][st.edit.i] : null;
+    var quick = [0.5, 1, 1.5, 2].map(function (v) {
+      var on = st.edAmt === v;
+      return { l: amt(v), set: function () { self.setState({ edAmt: v }); },
+        style: 'height: 44px; border-radius: 12px; font-size: 17px; font-weight: 600; cursor: pointer; border: 0; ' + (on ? 'background: #1C1A17; color: #FFFFFF' : 'background: #F4F1EB; color: #1C1A17') };
+    });
+    var MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
+
+    return {
+      kcalLeft: fmt(Math.max(0, G.k - T.k)), macros: macros, meals: meals, usual: usual, water: st.water,
+      toast: st.toast,
+      typing: st.sheet === 'type', editing: st.sheet === 'edit' && !!ed,
+      mealName: st.meal, mealLower: st.meal.toLowerCase(),
+      parsed: parsed, parsedKcal: fmt(pk), protAfter: Math.round(T.p + pp), kcalAfter: fmt(Math.max(0, G.k - T.k - pk)),
+      edName: ed ? ed.n : '', edMeal: st.edit ? st.edit.m.toUpperCase() : '', edAmt: amt(st.edAmt), edUnit: ed ? ed.u : '',
+      edMacros: ed ? Math.round(ed.k * st.edAmt) + ' kcal · ' + Math.round(ed.p * st.edAmt) + ' g protein · ' + Math.round(ed.c * st.edAmt) + ' g carbs · ' + Math.round(ed.f * st.edAmt) + ' g fat' : '',
+      quick: quick,
+      openType: function () { self.setState({ sheet: 'type', toast: '' }); },
+      closeAll: function () { self.setState({ sheet: null }); },
+      cycleMeal: function () { self.setState({ meal: MEALS[(MEALS.indexOf(st.meal) + 1) % 4] }); },
+      addParsed: function () {
+        var foods = BASE.map(function (b, i) { return Object.assign({ a: st.pq[i], t: '12:40' }, b); }).filter(function (x) { return x.a > 0; });
+        addTo(st.meal, foods, foods.length + ' foods added to ' + st.meal.toLowerCase());
+      },
+      eatPlanned: function () {
+        var lg = {}; Object.keys(st.log).forEach(function (m) { lg[m] = st.log[m].slice(); });
+        lg.Dinner = lg.Dinner.concat([{ n: 'Lime & Cumin Chicken', u: 'serving', a: 1, k: 388, p: 66, c: 13, f: 8, t: 'planned' }]);
+        self.setState({ log: lg, undoLog: st.log, ateDinner: true, toast: 'Dinner logged as planned' });
+      },
+      undo: function () { if (st.undoLog) self.setState({ log: st.undoLog, undoLog: null, toast: '', ateDinner: false }); else self.setState({ toast: '' }); },
+      addWater: function () { self.setState({ water: st.water + 16 }); },
+      edLess: function () { self.setState({ edAmt: Math.max(0.5, st.edAmt - 0.5) }); },
+      edMore: function () { self.setState({ edAmt: st.edAmt + 0.5 }); },
+      edSave: function () {
+        var lg = {}; Object.keys(st.log).forEach(function (m) { lg[m] = st.log[m].slice(); });
+        lg[st.edit.m][st.edit.i] = Object.assign({}, lg[st.edit.m][st.edit.i], { a: st.edAmt });
+        self.setState({ log: lg, sheet: null, edit: null });
+      },
+      edDelete: function () {
+        var lg = {}; Object.keys(st.log).forEach(function (m) { lg[m] = st.log[m].slice(); });
+        var gone = lg[st.edit.m].splice(st.edit.i, 1)[0];
+        self.setState({ log: lg, undoLog: st.log, sheet: null, edit: null, toast: gone.n + ' removed' });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

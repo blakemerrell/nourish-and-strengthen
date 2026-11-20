@@ -6231,7 +6231,7 @@
         return true;
       });
       if (!removed) return;
-      if ((day[sk] || []).length) mEditDay(k, function (d0) { delete d0[sk]; });
+      if ((day[sk] || []).length) mEditDay(k, function (d0) { d0[sk] = []; });
       mRebalanceSlotWeights(slots.list);
       mWriteSlots(slots);
       S.mCardHold = '';
@@ -6859,7 +6859,7 @@
         if (!psrec) return;
         psrec.pins = psrec.pins || [];
         var pat = -1;
-        psrec.pins.forEach(function (p, i2) { if (p.id === pit.id) pat = i2; });
+        psrec.pins.forEach(function (p, i2) { if (String(p.id) === String(pit.id)) pat = i2; });
         if (pat >= 0) psrec.pins.splice(pat, 1);
         else {
           var pinObj = { id: pit.id, x: pit.x };

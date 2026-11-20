@@ -365,7 +365,7 @@
      and a tap on the amount hands them back. */
   function mLineOpenHTML(M, r, it, i) {
     var sk = M.sk, tag = sk + ':' + i, name = esc(r.name);
-    var pinned = M.pins.some(function (p) { return p.id === it.id; });
+    var pinned = M.pins.some(function (p) { return String(p.id) === String(it.id); });
     var spent = it.eaten && S.mEdit !== tag;
     var dialU = mDialG(r) ? 'g' : mDialUnit(r);
     /* The droplet in the shut line's pill sits inside the pill's button, so
@@ -440,7 +440,7 @@
 
   function foodRowHTML(M, r, it, i, mk, open) {
     var sk = M.sk, tag = sk + ':' + i;
-    var pinned = M.pins.some(function (p) { return p.id === it.id; });
+    var pinned = M.pins.some(function (p) { return String(p.id) === String(it.id); });
     var was = mk.was[i], fresh = !!mk.fresh[i];
     var spent = it.eaten && S.mEdit !== tag;
     var moveOpen = S.mMenu === 'move:' + tag;

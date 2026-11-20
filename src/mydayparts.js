@@ -115,7 +115,7 @@
           var remotePlates = v[sk];
           var localPlates = cur[sk];
           if (Array.isArray(remotePlates) && remotePlates.length > 0) {
-            if (!localPlates || !localPlates.length) {
+            if (!Array.isArray(localPlates)) {
               cur[sk] = remotePlates.slice();
               changed = true;
             }
@@ -132,10 +132,7 @@
         var next = Object.assign({}, cur);
         Object.keys(v || {}).forEach(function (sk) {
           var remotePlates = v[sk];
-          var localPlates = cur[sk];
-          if (Array.isArray(remotePlates) && remotePlates.length > 0) {
-            next[sk] = remotePlates;
-          } else if (!localPlates || !localPlates.length) {
+          if (Array.isArray(remotePlates)) {
             next[sk] = remotePlates;
           }
         });

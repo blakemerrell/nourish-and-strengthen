@@ -134,6 +134,66 @@ module.exports = {
       mergedB && mergedB.b && mergedB.l && mergedB.d && mergedB.d.length === 1,
       JSON.stringify(mergedB));
 
+    // Case C: Local explicitly emptied Breakfast (cur.b = [], stamp = 3000); older remote snapshot (stamp 2000) still has Breakfast. Must NOT resurrect Breakfast.
+    await p.evaluate(() => {
+      const k = '2026-09-27';
+      const curDays = JSON.parse(localStorage.getItem('bsc.macroDays') || '{}');
+      curDays[k].b = [];
+      localStorage.setItem('bsc.macroDays', JSON.stringify(curDays));
+      const st = JSON.parse(localStorage.getItem('bsc.myStamps') || '{}');
+      st.d = st.d || {};
+      st.d[k] = 3000;
+      localStorage.setItem('bsc.myStamps', JSON.stringify(st));
+    });
+    await p.reload();
+    await p.waitForTimeout(400);
+    const mergedC = await p.evaluate(() => {
+      const k = '2026-09-27';
+      const enc = k.replace(/-/g, '_');
+      const remotePayload = {
+        d: {
+          [enc]: {
+            at: 2000,
+            v: { b: [{ id: 'plate_b', x: 1 }] }
+          }
+        }
+      };
+      window.__macroLab.merge(remotePayload);
+      const days = JSON.parse(localStorage.getItem('bsc.macroDays') || '{}');
+      return days[k];
+    });
+    t.ok('slot merge never resurrects an explicitly emptied slot from an older remote snapshot',
+      mergedC && Array.isArray(mergedC.b) && mergedC.b.length === 0 && mergedC.l && mergedC.l.length === 1,
+      JSON.stringify(mergedC));
+
+    // Case D: Newer remote explicitly emptied Breakfast (at: 4000, v: { b: [] }) while leaving Lunch and Dinner unmentioned. Breakfast clears, Lunch & Dinner stay.
+    await p.evaluate(() => {
+      const k = '2026-09-27';
+      const curDays = JSON.parse(localStorage.getItem('bsc.macroDays') || '{}');
+      curDays[k].b = [{ id: 'plate_b', x: 1 }];
+      localStorage.setItem('bsc.macroDays', JSON.stringify(curDays));
+    });
+    await p.reload();
+    await p.waitForTimeout(400);
+    const mergedD = await p.evaluate(() => {
+      const k = '2026-09-27';
+      const enc = k.replace(/-/g, '_');
+      const remotePayload = {
+        d: {
+          [enc]: {
+            at: 4000,
+            v: { b: [] }
+          }
+        }
+      };
+      window.__macroLab.merge(remotePayload);
+      const days = JSON.parse(localStorage.getItem('bsc.macroDays') || '{}');
+      return days[k];
+    });
+    t.ok('newer remote explicit empty array clears that slot without wiping unmentioned meals',
+      mergedD && Array.isArray(mergedD.b) && mergedD.b.length === 0 && mergedD.l && mergedD.l.length === 1 && mergedD.d && mergedD.d.length === 1,
+      JSON.stringify(mergedD));
+
     await p.context().close();
   }
 };

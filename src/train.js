@@ -7854,6 +7854,27 @@
     '</button>';
   }
 
+  /* The aim, one line at the top of a lift (redesign 2a): the weight and
+     reps the next working set asks for and how many to leave in the tank,
+     the same numbers the set's own boxes hold faint (ghost, repsPh), said
+     where the eye lands first. Blake, 2026-11-03: "I don't feel like the
+     workout is suggesting the right weight at the rep target" — the answer
+     was there, split across faint placeholders and a box that said "–".
+     Nothing when every set is ticked, and only working sets: a warm-up's
+     numbers are not the aim. */
+  function aimHTML(x, i) {
+    var j = -1;
+    for (var k = 0; k < x.s.length; k++) if (!x.s[k].t && !x.s[k].wu) { j = k; break; }
+    if (j < 0) return '';
+    var s = x.s[j], g = ghost(i, j), bodyOn = onBody(x.e);
+    var reps = repsPh(x, s, g);
+    var load = bodyOn ? (g.w > 0 ? '+' + fmtN(g.w) + ' ' + T.pr.u : 'Bodyweight')
+      : g.w !== null && g.w !== undefined ? fmtN(g.w) + ' ' + T.pr.u : '';
+    var what = (load ? load + ' \u00d7 ' : '') + reps + (load ? '' : ' reps');
+    var rir = fin(x.rir) ? (x.rir > 0 ? 'stop with ' + x.rir + ' to spare' : 'to your last good rep') : '';
+    return '<div class="tr-aim" data-x="' + i + '"><b>Aim: ' + esc(what) + '</b>' + (rir ? '<span> \u00b7 ' + esc(rir) + '</span>' : '') + '</div>';
+  }
+
   function exCard(x, i, label, mv) {
     var ex = lib(x.e);
     var rq = !!T.pr.rq;
@@ -7979,6 +8000,7 @@
           '<span class="tr-cue-ed" aria-hidden="true">' + (note ? 'Edit' : '+ Note') + '</span>' +
         '</button>' : '') +
       '</div>' +
+      aimHTML(x, i) +
       healHTML(i) +
       '<div class="tr-set tr-set-h" aria-hidden="true"><span>Set</span><span>' + (nb ? 'Last time' : 'Previous') + '</span><span>' + (bodyOn ? '+' : '') + T.pr.u + '</span><span>Reps</span>' +
         (rq ? (rpeOn() ? '<span title="Rate of perceived exertion">RPE</span>' : '<span title="Reps to spare: how many more you could have done">Spare</span>') : '') + '<span></span></div>' +

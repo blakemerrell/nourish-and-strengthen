@@ -62,6 +62,8 @@ module.exports = {
       /\d+ matching, \d+ more from sections named for it/.test(count), count);
 
     /* An explicit sort is the reader's decision and outranks relevance. */
+    await p.click('#filtBtn');
+    await p.waitForTimeout(80);
     await p.selectOption('#sortSel', 'protein');
     await p.waitForTimeout(400);
     const byProtein = await p.evaluate(() =>
@@ -72,6 +74,7 @@ module.exports = {
       proteins.every((v, i) => i === 0 || v <= proteins[i - 1]), proteins.join(' '));
 
     await p.selectOption('#sortSel', 'book');
+    await p.click('#filtersDone');
     await p.fill('#search', '');
     await p.waitForTimeout(400);
 

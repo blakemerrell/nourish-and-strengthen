@@ -781,7 +781,14 @@ select { max-width: 280px; }
    named the volumes and never said what they were — you learned there were
    two and had to pick one to find out which you wanted. */
 .view-head-tall { display: block; }
-.view-head-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.view-head-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.brw-head-acts { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.brw-head-acts .favbtn { flex: 0 0 auto; min-height: 44px; padding: 6px 11px; }
+.brw-about { margin-top: 8px; }
+.brw-about > summary {
+  display: inline-block; font-size: 0.78125rem; color: var(--muted); cursor: pointer;
+  padding: 4px 0; user-select: none;
+}
 .view-blurb {
   font-family: var(--serif); font-style: italic; font-size: 0.90625rem; line-height: 1.55;
   color: var(--muted-2); max-width: 60ch; margin-top: 7px; text-wrap: pretty;
@@ -832,26 +839,56 @@ select { max-width: 280px; }
    only part that comes and goes: syncStrip() sets .stripped on the section
    once the filter bar has scrolled out of reach, and the button appears to
    unfold it in place. */
-#view-browse { --brw-strip-h: 48px; }
+#view-browse { --brw-strip-h: 92px; }
+#view-browse > .cook-nav-slot,
+#view-where > .cook-nav-slot,
+#view-book > .cook-nav-slot { max-width: 1240px; margin: 0 auto; padding: 10px 22px 4px; }
+#view-browse > .view { padding-top: 14px; }
+#view-browse .view-head { margin-bottom: 12px; padding-bottom: 6px; }
+.view > .cook-nav-slot,
+.list-view > .cook-nav-slot { padding: 0 0 12px; }
+.cook-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.cook-seg { flex: 1 1 auto; }
+.cook-seg button { flex: 1 1 auto; min-height: 44px; padding: 8px 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.cook-pantry { flex: none; min-height: 44px; padding: 8px 12px; display: inline-flex; align-items: center; }
+.cook-pantry[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+.cook-badge {
+  font-size: 0.6875rem; font-variant-numeric: tabular-nums; line-height: 1;
+  padding: 2px 6px; border-radius: 9px; background: var(--paper-soft); color: var(--muted-2);
+}
+.cook-seg button[aria-pressed="true"] .cook-badge { background: rgba(255, 255, 255, 0.22); color: inherit; }
+
 .brw-strip {
   position: sticky; top: var(--topbar-h, 60px); z-index: var(--z-strip);
   background: var(--paper-soft); border-bottom: 1px solid var(--line);
 }
-.brw-strip-in { height: 48px; }
+.brw-strip-in { padding: 8px 0; }
 .stripped .brw-strip { box-shadow: 0 2px 6px var(--shadow-strip); }
 .brw-strip-c {
-  max-width: 1240px; margin: 0 auto; padding: 0 22px; height: 100%;
+  max-width: 1240px; margin: 0 auto; padding: 0 22px;
   display: flex; align-items: center; gap: 8px;
 }
-.brw-strip .txt { flex: 1 1 auto; min-width: 0; padding: 6px 10px; font-size: 0.875rem; }
+.brw-strip .txt { flex: 1 1 auto; min-width: 0; padding: 7px 10px; font-size: 0.875rem; min-height: 40px; }
 .brw-filt {
-  display: none; flex: none; align-items: center; gap: 6px;
-  padding: 6px 11px; border: 1px solid var(--line-firm); border-radius: 3px;
+  display: inline-flex; flex: none; align-items: center; gap: 6px;
+  min-height: 40px; padding: 6px 11px; border: 1px solid var(--line-firm); border-radius: 3px;
   background: var(--field); font: inherit; font-size: 0.8125rem; cursor: pointer; color: inherit;
   white-space: nowrap;
 }
-.stripped .brw-filt { display: inline-flex; }
 .brw-filt:hover { background: var(--paper); }
+.cook-chips {
+  max-width: 1240px; margin: 7px auto 0; padding: 0 22px;
+  display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none;
+}
+.cook-chips::-webkit-scrollbar { display: none; }
+.cook-chip {
+  flex: none; min-height: 36px; padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--line-firm); background: var(--field); color: var(--ink);
+  font: inherit; font-size: 0.78125rem; font-weight: 500; white-space: nowrap; cursor: pointer;
+}
+.cook-chip[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); font-weight: 600; }
+#view-browse .filters { display: none; }
+#view-browse .filters.pop { display: block; }
 /* How many filters are on, so "Filters" with two set does not look like
    "Filters" with none. */
 .brw-filt-n {
@@ -866,16 +903,18 @@ select { max-width: 280px; }
    header over a scrim, so nothing about what a filter does has a second copy
    to drift from the first. */
 .filters.pop {
-  position: fixed; left: 0; right: 0; top: calc(var(--topbar-h, 60px) + var(--brw-strip-h, 48px)); z-index: var(--z-pop);
-  max-height: calc(100vh - var(--topbar-h, 60px) - var(--brw-strip-h, 48px)); overflow: auto;
+  position: fixed; left: 0; right: 0; top: calc(var(--topbar-h, 60px) + var(--brw-strip-h, 92px)); z-index: var(--z-pop);
+  max-height: calc(100vh - var(--topbar-h, 60px) - var(--brw-strip-h, 92px)); overflow: auto;
   box-shadow: 0 8px 20px var(--shadow-pop);
 }
 .filters-done { display: none; }
 .filters.pop .filters-done { display: inline-flex; justify-content: center; }
 /* Starts under the header so the tabs stay live; a tap anywhere on it folds
    the bar away again. */
-.brw-scrim { position: fixed; left: 0; right: 0; bottom: 0; top: calc(var(--topbar-h, 60px) + var(--brw-strip-h, 48px));
+.brw-scrim { position: fixed; left: 0; right: 0; bottom: 0; top: calc(var(--topbar-h, 60px) + var(--brw-strip-h, 92px));
   background: var(--scrim-soft); z-index: var(--z-pop-scrim); }
+.card-cell { position: relative; display: flex; }
+.card-cell > .card { flex: 1 1 auto; }
 .card {
   background: var(--card); border: 1px solid var(--line); border-radius: 3px;
   padding: 16px 17px 14px; text-align: left; width: 100%;
@@ -883,7 +922,39 @@ select { max-width: 280px; }
   transition: border-color 0.12s, box-shadow 0.12s;
 }
 .card:hover { border-color: var(--ochre); box-shadow: 0 3px 14px var(--shadow-card-hover); }
-.card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding-right: 46px; min-height: 26px; }
+.card-add {
+  position: absolute; top: 8px; right: 8px; z-index: 1;
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--line-firm); background: var(--paper); color: var(--ink);
+  font-size: 1.25rem; font-weight: 500; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.card-add:hover { border-color: var(--ochre); color: var(--ochre-text); }
+.card-add.on { background: var(--tint-green); color: var(--tint-green-ink); border-color: var(--tint-green-line); font-weight: 600; font-size: 1rem; }
+.plan-wm-bar { position: static; margin: 10px 0 0; border: 1px solid var(--line); border-radius: 10px; }
+.cook-next-btn { width: 100%; min-height: 48px; margin: 4px 0 12px; }
+.cook-daygrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin: 0 0 12px; }
+@media (max-width: 640px) { .cook-daygrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.cook-daybtn {
+  min-height: 48px; padding: 8px 10px; text-align: left;
+  border: 1px solid var(--line-firm); border-radius: 8px;
+  background: var(--field); color: var(--ink);
+  display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0;
+}
+.cook-daybtn b { font-size: 0.875rem; }
+.cook-daybtn small { font-size: 0.75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cook-daybtn.on { border-color: var(--tint-green-line); background: var(--tint-green); color: var(--tint-green-ink); }
+.cook-daybtn.on small { color: inherit; opacity: 0.85; }
+.cook-sheet-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.cook-sheet-foot button { min-height: 44px; flex: 1 1 0; }
+@media (max-width: 860px) {
+  #view-browse > .cook-nav-slot,
+  #view-where > .cook-nav-slot,
+  #view-book > .cook-nav-slot { padding: 8px 16px 4px; }
+  .cook-chips { padding: 0 16px; }
+  .brw-head-acts .favbtn { flex: 0 0 auto; }
+}
 .card-num { font-size: 0.6875rem; letter-spacing: 0.12em; color: var(--ochre-text); font-weight: 600; }
 .card-fav {
   font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase;

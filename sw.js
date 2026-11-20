@@ -84,6 +84,7 @@ var CORE = [
   './src/list.js?v=0',
   './src/book.js?v=0',
   './src/strip.js?v=0',
+  './src/cook.js?v=0',
   './src/fold.js?v=0',
   './src/mealtime.js?v=0',
   './src/mydayparts.js?v=0',

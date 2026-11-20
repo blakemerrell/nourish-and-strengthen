@@ -130,19 +130,14 @@
 </section>
 <!-- ------------------------------------------------------------- browse -->
 <section id="view-browse" class="hide" role="tabpanel" aria-labelledby="tab-browse">
-  <!-- The one search box, pinned under the header from the first pixel.
-       There were two — one in the filter bar, one on a strip that appeared
-       once the bar had scrolled away — and on a phone they could sit one
-       above the other. Blake: "two of the same rows to search here.. why?"
-       Now the row is always here and always the same row: the search, and
-       a Filters button that appears once the bar below has scrolled out of
-       reach and unfolds the real bar in place. -->
+  <div class="cook-nav-slot no-print" data-cooknav></div>
   <div class="brw-strip no-print" id="brwStrip">
     <div class="brw-strip-in">
       <div class="brw-strip-c">
         <input type="search" class="txt" id="search" placeholder="Search a dish or ingredient&hellip;" aria-label="Search">
         <button class="brw-filt" id="filtBtn" aria-expanded="false">Filters<span class="brw-filt-n" id="filtCount"></span></button>
       </div>
+      <div class="cook-chips" id="cookChips" role="group" aria-label="Quick filters"></div>
     </div>
   </div>
   <div class="brw-scrim no-print hide" id="brwScrim"></div>
@@ -176,9 +171,6 @@
         <option value="quick">Quickest first</option>
       </select>
       <button class="favbtn" id="favBtn" aria-pressed="false">&#9733; Favorites <span id="favCount"></span></button>
-      <button class="favbtn" id="newRecipe" title="Write a recipe of your own">&#9998; Write a recipe</button>
-      <!-- The books, to print or download. This used to be a tab of its own. -->
-      <button class="favbtn" id="bookBtn" title="The recipe books, to print or download">&#128214; Print the book</button>
       <!-- Only while the bar is unfolded from the strip above; CSS keeps it
            away the rest of the time, when there is nothing to close. -->
       <button class="favbtn filters-done" id="filtersDone">Done</button>
@@ -188,9 +180,16 @@
     <div class="view-head view-head-tall">
       <div class="view-head-row">
         <h1 class="view-title" id="browseTitle">The whole collection</h1>
+        <div class="brw-head-acts no-print">
+          <button class="favbtn" id="newRecipe" title="Write a recipe of your own">&#9998; Write</button>
+          <button class="favbtn" id="bookBtn" title="The recipe books, to print or download">&#128214; Print</button>
+        </div>
         <div class="view-count" id="browseCount" role="status"></div>
       </div>
-      <div class="view-blurb" id="browseBlurb"></div>
+      <details class="brw-about" id="browseAbout">
+        <summary>About the books</summary>
+        <div class="view-blurb" id="browseBlurb"></div>
+      </details>
     </div>
     <div class="grid" id="grid"></div>
     <div class="empty hide" id="browseEmpty" role="status">Nothing matches those filters.</div>
@@ -199,12 +198,14 @@
 
 <!-- ------------------------------------------------------ plan: where -->
 <section id="view-where" class="hide" role="tabpanel" aria-labelledby="tab-plan">
+  <div class="cook-nav-slot no-print" data-cooknav></div>
   <div class="view" id="whereBody"></div>
 </section>
 
 <!-- ---------------------------------------------------------- meal plan -->
 <section id="view-plan" class="hide" role="tabpanel" aria-labelledby="tab-plan">
   <div class="view">
+    <div class="cook-nav-slot no-print" data-cooknav></div>
     <!-- The week is a calendar now: Sunday to Saturday with dates, a week
          on screen by default and a month at a glance. ‹ › (or a swipe) moves;
          the week on screen is this phone's, not the household's. -->
@@ -399,6 +400,7 @@
 <!-- ------------------------------------------------------- shopping list -->
 <section id="view-list" class="hide" role="tabpanel" aria-labelledby="tab-plan">
   <div class="list-view">
+    <div class="cook-nav-slot no-print" data-cooknav></div>
     <header class="step-head">
       <div class="step-k">Plan &middot; the list</div>
       <h1 class="step-h">Shopping for <span id="listWeek"></span></h1>
@@ -415,6 +417,7 @@
 <!-- ---------------------------------------------------------- the pantry -->
 <section id="view-pantry" class="hide" role="tabpanel" aria-labelledby="tab-plan">
   <div class="view">
+    <div class="cook-nav-slot no-print" data-cooknav></div>
     <!-- Every step opens the same way: its label, a title, one status line,
          then its controls. -->
     <header class="step-head">
@@ -431,6 +434,7 @@
 <!-- ----------------------------------------------------------- the book -->
 <section id="view-book" class="hide" role="tabpanel" aria-labelledby="tab-browse">
   <h1 class="sr-only">Print the book</h1>
+  <div class="cook-nav-slot no-print" data-cooknav></div>
   <div class="book-bar no-print">
     <div class="book-bar-in">
       <!-- The books, as books.
@@ -472,6 +476,7 @@
 
 <div id="modalRoot"></div>
 <div id="trainRoot"></div>
+<div id="cookRoot"></div>
 <div id="dialogRoot"></div>
 
 <script src="data/recipes.js?v=0"></script>
@@ -495,6 +500,7 @@
 <script src="src/list.js?v=0"></script>
 <script src="src/book.js?v=0"></script>
 <script src="src/strip.js?v=0"></script>
+<script src="src/cook.js?v=0"></script>
 <script src="src/fold.js?v=0"></script>
 <script src="src/mealtime.js?v=0"></script>
 <script src="src/mydayparts.js?v=0"></script>

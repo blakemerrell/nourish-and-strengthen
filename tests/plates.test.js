@@ -14,6 +14,7 @@ async function seed(p, T) {
     window.Train._.reload();
   }, T);
 }
+const { liftAct, liftHas } = require('./fixtures/liftmenu.js');
 const sheet = (p) => p.evaluate(() => {
   const s = document.querySelector('.tr-sheet') || document.getElementById('modalRoot');
   return {
@@ -47,9 +48,9 @@ module.exports = {
     /* ---- a leg press at the gym: count the plates on, and use the total */
     let p = await open(BASE);
     await start(p, 'leg-press', 'bb-bench', 'cb-row');
-    let r = await p.evaluate(() => ['leg-press', 'bb-bench', 'cb-row'].map((e, i) => !!document.querySelector(`.tr-ex [data-t="plates"][data-x="${i}"]`)).join());
+    let r = [await liftHas(p, 'plates', 0), await liftHas(p, 'plates', 1), await liftHas(p, 'plates', 2)].join();
     t.ok('at the gym, Plates is on the leg press and the bench, not on a cable stack', r === 'true,true,false', r);
-    await p.click('[data-t="plates"][data-x="0"]');
+    await liftAct(p, 'plates', 0);
     r = await sheet(p);
     t.ok('with no weight in the set yet, it opens on counting, at nothing', r.mode === 'Count plates' && r.tot === '0 lb' && r.rail === '' && !r.use, JSON.stringify(r));
     await tap(p, 45, 45, 25);
@@ -63,7 +64,7 @@ module.exports = {
     t.ok('Use puts it in the first set not yet done, and closes', r.w === '180' && r.input === '180' && !r.sheet, JSON.stringify(r));
 
     /* ---- a sled's own weight, if you want it counted */
-    await p.click('[data-t="plates"][data-x="0"]');
+    await liftAct(p, 'plates', 0);
     r = await sheet(p);
     t.ok('the set has a weight now, so it opens on its plates: 180 is two 45s a side', r.mode === 'Plates for a weight' && r.plates === '45,45' && /plates only/.test(r.text) && /Not counted: the weight you log is the plates/.test(r.text), JSON.stringify(r));
     await p.fill('#trSledW', '100');
@@ -81,7 +82,7 @@ module.exports = {
     await p.click('.sheet-x');
 
     /* ---- a bar, the other way round: type it, see it, use it */
-    await p.click('[data-t="plates"][data-x="1"]');
+    await liftAct(p, 'plates', 1);
     await p.click('[data-t="plm"][data-v="w"]');
     await p.fill('#trPlateW', '225');
     r = await sheet(p);
@@ -117,12 +118,12 @@ module.exports = {
     t.ok('Settings, home: the cable is a stack, plates on a 2:1 pulley, or plates 1:1', r.cb === 'p2' && r.chips === 'Weight stack|Plates, 2:1 pulley*|Plates, 1:1', JSON.stringify(r));
     await p.click('.sheet-x');
     await start(p, 'cb-row');
-    r = await p.evaluate(() => !!document.querySelector('.tr-ex [data-t="plates"][data-x="0"]'));
+    r = await liftHas(p, 'plates', 0);
     t.ok('at the gym the cable row is still a stack, with no Plates', !r);
     await p.click('[data-t="gyat"][data-v="home"]');
-    r = await p.evaluate(() => !!document.querySelector('.tr-ex [data-t="plates"][data-x="0"]'));
+    r = await liftHas(p, 'plates', 0);
     t.ok('at home it has Plates', r);
-    await p.click('[data-t="plates"][data-x="0"]');
+    await liftAct(p, 'plates', 0);
     r = await p.evaluate(() => [...document.querySelectorAll('[data-t="pladd"]')].map((b) => b.dataset.v).join());
     t.ok('at home the plates to tap are the ones you own', r === '45,25,10,5', r);
     await tap(p, 25, 10, 5);

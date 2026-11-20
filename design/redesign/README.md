@@ -36,9 +36,10 @@ https://claude.ai/artifact/8bmu2EX5DvW2QNB45cBVY5 (private to Blake).
 Numbers in the mockups are a sample day, not real data.
 
 The mockups use the phone's system font and a flatter look. **The app
-keeps its own look** (its fonts, `src/style.css` tokens, dark mode) unless
-Blake decides otherwise in step 6; take the structure from the mockups,
-not the styling.
+permanently keeps its own Warm Editorial Look 1** (`src/style.css`
+tokens, `Source Serif 4` + `Work Sans`, warm cream/dark surfaces, and
+real-iron plate colours). Take structure and simplification from the
+mockups and RP Diet ergonomics, not visual restyling.
 
 ## What was wrong (the review, short)
 
@@ -55,83 +56,92 @@ not the styling.
 5. **Paragraphs instead of clarity.** Screens that open with a paragraph
    explaining themselves.
 
+## Non-Negotiable Preservation Invariants
+
+Enforced by `tests/redesign-invariants.test.js` and audit gates across every step:
+
+1. **Look 1 (Warm Editorial) stays permanently.** Do not replace `src/style.css` typography, warm paper/dark tokens, or plate colours in Step 6.
+2. **Strengthen set row & rest timer (`src/train.js`) stay intact:**
+   - Keep the **6-column set row**: `Set | Previous + Live Colored Plate Stack (plCell / stackHTML) | lb | Reps | Spare (Target RIR via rqSel) | ✓`. Never collapse set rows to 3 columns and never remove Target RIR (card cue or per-set `Spare` selector) or the inline barbell plate stack.
+   - Keep the **inline divider line + centered rest timer pill** (`.tr-rdiv` / `.tr-rdiv-b`) between working sets. Tapping the pill may offer `−30s / +30s / Skip`; **Step `2d` (floating bottom rest bar) is dropped**.
+3. **Cook → Shopping List → Automatic Walmart Cart (`src/walmart.js`, `src/list.js`, `src/today.js`) stays front-and-center:**
+   - Keep the full Recipes / `Plan my week` → `buildList()` gram aggregation (`In your kitchen` subtraction + `From the storehouse` split) → `Mark what I have` → `Check the products ›` (`sh.wm` item-# overrides) → **Pinned `#0053E2` blue + `#FFC220` yellow spark `Add N items to Walmart cart`** (`walmart.com/sc/cart/addToCart?items=ID_QTY,...`) across **Today**, **Cook › This week**, and **Cook › List**. Never bury Walmart under `⋯`.
+4. **Eat / Nourish logging & pin semantics (`src/myday.js`, `src/mydayparts.js`, `src/picksheet.js`):**
+   - Newly added foods ALWAYS arrive **unchecked** (`M_ADDS_EATEN` stays off) until explicitly ticked.
+   - Delete (`data-mdel`) removes from **today only**; only `Unpin` (`data-mpin`) removes an everyday pin (`#204`).
+   - `Lock` (`data-mlock`) holds an item's amount during automatic `Balance` / `Rebalance` while still allowing manual `− / +` or typed edits.
+
 ## The plan, in order
 
 Small steps, one PR each, each one useful on its own. Ship the cheap,
-high-value ones first; the navigation change is last because it is the
-biggest and riskiest.
+high-value ones first; the 4-tab navigation switch (`Today · Cook · Eat · Train`)
+with legacy hash redirects (`#recipes`, `#plan`, `#list`, `#pantry`, `#macros`, `#train`)
+ships last.
 
 ### Step 1 — Eat (Blake uses this most)
 - 1a. **"You usually have"** one-tap chips with Undo on the meal happening
   now. **Done: #200.**
-- 1b. **Amount sheet**: tap a logged food → big − / +, ½ · 1 · 1½ · 2,
-  macros update live, Remove / Done (`eat-4-amount.png`). Today a tap
-  opens the line's own controls (`src/myday.js` `mOpenRow`); this is a
-  bigger, simpler version of that.
-- 1c. **Quiet the foot**: one primary button (Fill / Mark all complete /
-  Complete the day, as now); Rebalance, Sweep and Add meal move under ⋯.
-- 1d. **Log bar**: an always-there "What did you eat?" bar above the foot
-  that opens typed logging (#198 already reads a whole meal typed into the
-  picker's search; this puts that box on the day itself) plus barcode.
-- 1e. **What's left at the top** (calories left and P/C/F bars). Ask
-  Blake first: the header shows eaten / target today.
+- 1b. **RP-Style Inline Meal View & Separated Food Search** (`data-mode="meal" | "find" | "scan"` on `.msheet`):
+  - **Mode transitions**:
+    - Tapping a populated meal card (`.mtray-b[data-mopen]`) opens `data-mode="meal"`: per-meal `current / target` + `"N kcal left/over"` badge, every food row open simultaneously with 1-tap `🔒 Lock`, tappable `grams/servings` + `− / +` steppers, 1-tap `Split into N foods` badge on composite saved meals (`data-mexplode` + toast Undo), row `⋯` menu, and bottom `+ Add foods` | `Balance` | `Done` (food search list stays hidden until `+ Add foods` is tapped).
+    - Tapping an empty meal (`items.length === 0`), a meal card's `+` icon (`.mtray-ib[data-mopen][data-madd="1"]`), `[data-msaved]`, or `addFood` / `eatOut` opens `data-mode="find"` (`#mpFind` visible).
+    - Tapping `+ Add foods` from `meal` mode enters `find` mode (`S.mpFromMeal = true`) with `&lsaquo; Back to <Meal>`. Pressing Android Back, `&lsaquo; Back to <Meal>`, or `Done` returns to `meal` mode instead of closing the sheet. Deleting the last food via `data-mdel` while in `meal` mode stays calmly in `meal` mode (empty state + `+ Add foods`).
+- 1c. **Quiet the foot + Smart Drift Banner**: one primary button (`Craft my plan` / `Fill` / `Mark all complete` / `Complete the day`); `Rebalance`, `Sweep` and `Add meal` move under `⋯`, plus a dismissible 1-line `"Meals are off target — tap to rebalance"` banner when earlier meals drift >10% from target.
+- 1d. **Log bar & local scanner**: an always-there `"What did you eat?"` bar above the foot (`#198` typed meal parsing) plus camera button opening local Barcode scanner + Nutrition Facts manual entry (`src/camera.js`; cloud AI photo scan deferred).
+- 1e. **Eat Day Header (`current / goal` + `left/over`)**: show both eaten/target and a highlighted `"N left/over"` badge side-by-side at the top of Eat.
+- 1f. **My Foods & Routines Manager**: opened from `⋯` on Eat to manage `Everyday Pins`, `Saved Meals`, and `Custom Foods` in one sheet.
 
 ### Step 2 — Workout (Strengthen live logger)
-- 2a. The **aim line** at the top of each lift card: weight × reps and the
-  reps to spare, in one line, plus "last time" under the sets.
-- 2b. Warm, Swap, Note, Plates, Remove move under the card's ⋯; **+ Add
-  set** stays.
-- 2c. **Weigh-in** leaves the workout (it belongs on Today in the morning).
-- 2d. Rest timer as a bar at the bottom with −30 s and Skip.
+- 2a. The **aim line** at the top of each lift card (preserving the 6-column set row, Target RIR `Spare` column, and live `plCell` barbell plate stack).
+- 2b. Prune leftover duplicate inline buttons (`Warm`, `Swap`, `Note`, `Plates`, `Remove`) from `.tr-ex-a` at the bottom of the card (`#trPop` `⋯` already holds them from `#194`); **+ Set** and **− Set** stay.
+- 2c. **Weigh-in** leaves the live workout into **Step 5 (Today)** (never remove until Today's morning weigh-in card lands; fall back to last logged bodyweight on weighted bodyweight lifts).
+- ~~2d. Bottom rest bar~~ — **Dropped** (keep `.tr-rdiv` inline rest divider pill between sets; tapping the pill offers `−30s / +30s / Skip`).
 
 ### Step 3 — Train home
-- Four boxes for this week instead of the 24-cell grid on the first view
-  (the grid stays one tap away), one sentence about effort, one Start.
+- Four boxes for this week above the collapsible full-block calendar (`#194`), one sentence about effort, one Start button.
 
 ### Step 4 — Cook
-- Recipes, Plan, List and Pantry become one **Cook** tab with a Recipes /
-  This week / List switch. One row of filter chips replaces the four
-  dropdowns; the rest goes in a Filter sheet.
+- Recipes, Plan, List and Pantry become one **Cook** tab (`Recipes | This week | List` + `Pantry` access within 2 taps), one row of filter chips + Filter sheet, **100% preserving `src/walmart.js` + `src/list.js` auto-cart & hash redirects**.
 
 ### Step 5 — Today
-- Three cards: next workout with Start, what's left to eat with Log food,
-  tonight's dinner and the shopping list.
+- Cards for morning weigh-in (old `2c`), next workout + Start, today's macros (`current / goal` + `left`) + Log food, tonight's dinner, and Shopping (`Add N items to Walmart cart` + `Open list`).
 
-### Step 6 — Navigation and look (last)
-- Four tabs at the bottom: **Today · Cook · Eat · Train**.
-- Then decide the visual pass with Blake (keep the serif / cream look, or
-  move toward the system font). Do not start this without asking him.
+### Step 6 — 4-Tab Bottom Navigation (last)
+- Four tabs at the bottom: **Today · Cook · Eat · Train**, preserving Look 1 and adding hash redirects from legacy tab routes.
 
-## Status
+## Status & File Ownership
 
-Update this table in the same PR as the work. Claim a step by putting
-your name and the branch in it before you start, so two agents never
-build the same thing.
+Split ownership by file so agents work in parallel without merge collisions:
+- **Antigravity**: Owns `src/myday.js`, `src/mydayparts.js`, `src/picksheet.js` (Eat `1b`–`1f`).
+- **Claude**: Owns `src/train.js` (`2a`, `2b`, `3`) and Steps `4–6` prep (`Cook`, `Today`, bottom nav).
 
-| Step | Status | Who | PR |
+| Step | Status | Who | PR / Branch |
 |---|---|---|---|
 | 1a "You usually have" chips | Done | Claude | #200 |
-| 1b Amount sheet | Not started | | |
-| 1c Quiet the foot | Not started | | |
-| 1d Log bar | Not started | | |
-| 1e What's left at the top | Waiting on Blake | | |
-| 2a Aim line | Not started | | |
-| 2b Card buttons under ⋯ | Not started | | |
-| 2c Weigh-in out of the workout | Not started | | |
-| 2d Rest bar | Not started | | |
-| 3 Train home | Not started | | |
-| 4 Cook | Not started | | |
-| 5 Today | Not started | | |
-| 6 Navigation and look | Ask Blake first | | |
+| 1b Inline meal view & search split | In progress | Antigravity | feat/redesign-1b-inline-meal |
+| 1c Quiet foot + drift banner | Not started | | |
+| 1d Log bar + local scanner | Not started | | |
+| 1e Eat header (`current/goal` + `left`) | Not started | | |
+| 1f My Foods & Routines manager | Not started | | |
+| 2a Aim line (keep plates & RIR) | Not started | | |
+| 2b Prune duplicate `.tr-ex-a` buttons | Not started | | |
+| 2c Weigh-in to Today (with Step 5) | Bundled into 5 | | |
+| 2d Bottom rest bar | Dropped | | Keep `.tr-rdiv` pill |
+| 3 Train 4-box week summary | Not started | | |
+| 4 Cook (preserve Walmart flow) | Not started | | |
+| 5 Today (includes 2c weigh-in) | Not started | | |
+| 6 4-tab bottom bar (Look 1 kept) | Not started | | |
 
-## Questions waiting on Blake
+## Resolved decisions (2026-11-19)
 
-- Should tapping a "You usually have" chip mark the food eaten at once?
-  (Today nothing arrives eaten until ticked: `src/mealtime.js`,
-  `M_ADDS_EATEN`, his rule since 2026-09-27.)
-- Should the chips count food he logged but never ticked?
-- Should the top of Eat say "calories left" instead of eaten / target?
-- Step 6's look: keep the app's own fonts and colours, or go flatter?
+- **Look 1 stays permanently** (`src/style.css` warm editorial cream/dark palette & fonts).
+- **Separated Meal View vs Search** (`1b`): populated meals open cleanly on open inline RP rows (`Lock`, grams, `− / +`, `Split into foods`); search opens only for empty meals or `+ Add foods`.
+- **Unchecked until eaten**: `M_ADDS_EATEN` stays off everywhere (habit chips, picker, scanner, `"What did you eat?"` bar).
+- **Headers**: show both `current / goal` and `"N left"` together.
+- **Rebalance banner**: show a quiet 1-line dismissible banner when meals drift off target.
+- **Scanner**: local Barcode + Nutrition Facts label entry first (AI plate photo scan deferred).
+- **Workout invariants**: keep Look 1, 6-column set row, Target RIR (`Spare`), live row plate stacks (`plCell`), and inline rest divider pill (`.tr-rdiv`).
+- **Shopping invariants**: keep automatic Recipes → Aisle List → Pinned Blue/Spark Walmart Cart pipeline across Today, This week, and List.
 
 ## How to work on this (both agents)
 

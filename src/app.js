@@ -892,7 +892,7 @@
       } catch (e) { return 'today'; }
     })(),
     bookF: 'all', secF: 'all', diffF: 'all', pantryF: 'all',
-    favOnly: false, qy: '', sort: 'book', openId: null, scale: 1, printSet: 'all',
+    favOnly: false, qy: '', sort: 'book', quickF: '', openId: null, scale: 1, printSet: 'all',
     filtPop: false,
     /* The list's folds and the one line whose source switch is open; a
        day's dinner opened on the week. None of it is saved. */
@@ -1132,6 +1132,7 @@
       if (S.pantryF === 'base' && missingFor(r).length) return false;
       if (S.pantryF === 'extras' && !missingFor(r).length) return false;
       if (S.favOnly && !window.Store.isFav(r.id)) return false;
+      if (!cookMatchQuick(r)) return false;
       if (qs && !(rank[r.id] = matchRank(r, qs))) return false;
       return true;
     }).sort(function (a, b) {
@@ -1226,6 +1227,7 @@
        longer about a book and the line under it is in the way of the answer. */
     $('browseBlurb').textContent = qs ? ''
       : fillCounts(BOOKS[S.bookF] ? (APP_BLURB[S.bookF] || BOOKS[S.bookF].blurb) : COLLECTION_BLURB, RECIPES);
+    if ($('browseAbout')) $('browseAbout').classList.toggle('hide', !$('browseBlurb').textContent);
     /* Say how many are here on their own merits and how many arrived because
        their section is named for the search. Without it, "breakfast" returning
        fifty recipes reads as fifty breakfasts, and the reader scrolls looking
@@ -1264,6 +1266,7 @@
     list.forEach(function (r) { secCount[secKey(r)] = (secCount[secKey(r)] || 0) + 1; });
     var showSecs = S.sort === 'book' && !qs && Object.keys(secCount).length > 1;
     var lastSec = null;
+    var onWeek = COOK.weekIds();
 
     $('grid').innerHTML = list.map(function (r) {
       var head = '';
@@ -1297,8 +1300,10 @@
           chip +
         '</span>' +
       '</button>';
-      return head + card;
+      return head + COOK.cardCellHTML(r, card, !!onWeek[String(r.id)]);
     }).join('');
+    COOK.renderChips();
+    COOK.renderNav();
     /* A search that leaves twelve cards can pull the page back up past the
        rail, and the strip should go with it. */
     syncStrip();
@@ -1441,12 +1446,13 @@
     if ($('planNext')) $('planNext').innerHTML = ents.length && !past ?
       '<button class="plan-next" data-stepgo="list"><b>The list</b><span>' +
         (nBuy ? nBuy + ' to buy' + (cost >= 0.5 ? ', ~' + pwMoney(cost) : '') : 'nothing to buy') +
-        (nSrc ? ' \u00b7 ' + nSrc + ' from ' + srcW().the : '') + '</span></button>' : '';
+        (nSrc ? ' \u00b7 ' + nSrc + ' from ' + srcW().the : '') + '</span></button>' + COOK.planWalmartHTML(built) : '';
     if ($('calActs')) $('calActs').innerHTML =
       (past ? '' : '<button class="nut-ask" data-calagain="1" aria-expanded="' + !!S.calAgain + '">Cook this again…</button>') +
       (ents.length ? '<button class="nut-ask" data-caltpl="1">Save as a template</button>' : '') +
       (past ? '' : '<button class="nut-ask" id="clearPlan">Clear week</button>');
     if ($('calAgain')) $('calAgain').innerHTML = S.calAgain && !past ? calAgainHTML() : '';
+    COOK.renderNav();
   }
   /* Cook this again: a template or a week gone by, onto this one. */
   function calAgainHTML() {
@@ -2578,6 +2584,7 @@
     if (bar) bar.classList.add('hide');
   }
   function goStep(v) {
+    COOK.closeQuickAdd(true);
     if (v === 'plan' && (S.view === 'pantry' || S.view === 'where')) window.Store.setOpt('setup', true);
     S.view = v;
     try { localStorage.setItem('sh.view', S.view); } catch (e) { /* private mode */ }
@@ -4026,6 +4033,31 @@
   function onScrollStrip() { return STRIP.onScrollStrip(); }
   function filtersPop(open) { return STRIP.filtersPop(open); }
 
+  var COOK = window.HiveParts.cook({
+    S: S,
+    LIVE: LIVE,
+    DAYS: DAYS,
+    CAL_DAYS: CAL_DAYS,
+    esc: esc,
+    idOf: idOf,
+    timeMins: timeMins,
+    pwIsDinner: pwIsDinner,
+    pwAnswers: pwAnswers,
+    pwX: pwX,
+    canBuy: canBuy,
+    planEntries: planEntries,
+    buildList: buildList,
+    calPastDay: calPastDay,
+    openRecipe: openRecipe,
+    goView: goView,
+    goStep: goStep,
+    renderBrowse: renderBrowse,
+    renderSections: renderSections,
+    rememberOpener: rememberOpener,
+    restoreOpener: restoreOpener
+  });
+  function cookMatchQuick(r) { return COOK.matchQuick(r); }
+
   /* src/fold.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
   var FOLD = window.HiveParts.fold({ S: S });
@@ -4294,7 +4326,7 @@
   var FOCUS_ATTRS = ['data-am', 'data-check', 'data-add', 'data-day', 'data-fav', 'data-why', 'data-td',
     'data-pwq', 'data-pwing', 'data-pwingx', 'data-wmid',
     'data-src', 'data-srcpick', 'data-weekbuy', 'data-near', 'data-low', 'data-kitmore', 'data-kitpill', 'data-copyorder', 'data-stepgo',
-    'data-cal', 'data-calweek', 'data-calagain', 'data-calfrom', 'data-caltpl',
+    'data-cal', 'data-calweek', 'data-calagain', 'data-calfrom', 'data-caltpl', 'data-cookgo', 'data-qchip', 'data-cardadd', 'data-cookday', 'data-cooknext', 'data-cookopen', 'data-cookclose',
     'data-addday', 'data-pswap', 'data-prate', 'data-adf', 'data-adadd', 'data-adsw', 'data-adopen', 'data-pwpick', 'data-pwsee', 'data-pwback', 'data-pwpre', 'data-pwmore', 'data-pwwant', 'data-pwopen', 'data-dayopen', 'data-dsact', 'data-listmark', 'data-fold',
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mslotdel', 'data-mslotmove', 'data-mholdclose', 'data-maddslot', 'data-mslotpreset', 'data-maddpop', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
@@ -5898,6 +5930,8 @@
     if (S.view === 'list') renderList();
     if (S.view === 'pantry') renderPantry();
     if (S.view === 'book') renderBook();
+    if (S.view !== 'browse') filtersPop(false);
+    COOK.renderNav();
     renderShareHint();
     syncShrunk();
     syncStrip();
@@ -5958,6 +5992,7 @@
     renderSyncBadge();
     renderView();
     renderModal();
+    COOK.syncModal();
   }
 
   // ----------------------------------------------------------------- events
@@ -5975,6 +6010,7 @@
     document.addEventListener('pointercancel', function () { mcDown = null; });
     document.querySelectorAll('.tab').forEach(function (b) {
       b.addEventListener('click', function () {
+        COOK.closeQuickAdd(true);
         S.view = b.dataset.view;
         try { localStorage.setItem('sh.view', S.view); viewSeen(); } catch (e) { /* private mode */ }
         renderView();
@@ -6052,11 +6088,13 @@
     });
 
     $('grid').addEventListener('click', function (e) {
+      if (e.target.closest('[data-cardadd]')) return;
       var c = e.target.closest('[data-open]');
       if (!c) return;
       rememberOpener();
       openRecipe(idOf(c.dataset.open));
     });
+    COOK.wire();
 
     $('planGrid').addEventListener('click', function (e) {
       var ad = e.target.closest('[data-addday]');
@@ -10074,6 +10112,7 @@
   });
   window.addEventListener('pagehide', viewSeen);
   function goView(v) {
+    COOK.closeQuickAdd(true);
     if (PLAN_STEPS.some(function (p) { return p[0] === v; }) && v !== 'plan') { goStep(v); viewSeen(); return; }
     S.view = v;
     try { localStorage.setItem('sh.view', v); } catch (e) { /* private mode */ }
@@ -10746,6 +10785,7 @@
   // before anything can have something to say: see mToastEls
   mToastEls();
   wire();
+  COOK.applyInitialHash();
   window.Store.init(function () { renderAll(); mHouseWatch(); mJoinBack(); mHouseNotices(); dinerWatch(); });
   renderAll();
   if (window.Health && window.Health.available() && window.Health.state() === 'granted') {

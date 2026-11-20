@@ -695,6 +695,7 @@ src/mealtools.js      one meal: its portions balanced, and kept as a food of you
 src/sync.js           saving, and sharing between devices
 src/train.js          the Strengthen tab: the block, the logger, records and the review
 src/today.js          Today: the one screen a busy person opens, each card a door into its tab
+src/cook.js           Cook: shared sub-nav, quick filter chips, card + planning, Walmart on This week, hash routes
 src/door.js           the front door: a few questions, once, on a phone that has never opened the app
 src/config.js         the only file you edit for sharing (see SETUP.md)
 src/boot.js           registers the service worker, reloads onto a new build once nothing is being edited, and keeps the browser's install offer

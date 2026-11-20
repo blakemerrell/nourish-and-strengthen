@@ -107,7 +107,10 @@ module.exports = {
     await p.fill('#search', '');
 
     // ---- changing a printed recipe ----------------------------------------
+    await p.click('#filtBtn');
+    await p.waitForTimeout(80);
     await p.click('[data-book="1"]');
+    await p.click('#filtersDone');
     await p.waitForTimeout(200);
     await p.click('#grid .card >> nth=0');
     await p.click('[data-edit]');

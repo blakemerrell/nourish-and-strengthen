@@ -1,7 +1,7 @@
 /* The top of the page, held still: the header's height for everything that
- * pins under it (syncStick), and on Recipes the search row whose Filters
- * button appears once the filter bar has scrolled up under it, and unfolds
- * that same bar in place (filtCount, syncStrip, onScrollStrip, filtersPop).
+ * pins under it (syncStick), and on Recipes the search + quick-chip strip
+ * whose Filters button is always ready to unfold the filter drawer right below
+ * it (filtCount, syncStrip, onScrollStrip, filtersPop).
  *
  * A part of app.js in a file of its own. app.js calls HiveParts.strip(app)
  * once, as it starts, handing over the one thing of its own it reads, the
@@ -16,6 +16,13 @@
 
   function $(id) { return document.getElementById(id); }
 
+  function syncStripH() {
+    var st = $('brwStrip'), sec = $('view-browse');
+    if (!st || !sec || S.view !== 'browse') return;
+    var sh = Math.round(st.getBoundingClientRect().height);
+    if (sh > 0) sec.style.setProperty('--brw-strip-h', sh + 'px');
+  }
+
   function syncStick() {
     var tb = document.querySelector('.topbar');
     if (!tb) return;
@@ -23,14 +30,10 @@
        nothing, and nothing is what every view would then pin to. */
     var h = Math.round(tb.getBoundingClientRect().height);
     if (h) document.documentElement.style.setProperty('--topbar-h', h + 'px');
+    syncStripH();
   }
 
-  /* ---- The search row on Recipes ----
-
-     One box, pinned under the header from the top of the page. What comes
-     and goes is the Filters button beside it: once the filter bar below has
-     scrolled up under the row, the button appears and unfolds the real bar
-     in place. Nothing is measured but where the bar is. */
+  /* ---- The search + quick-chip row on Recipes ---- */
   var stripRaf = 0;
   function filtCount() {
     var n = 0;
@@ -40,6 +43,7 @@
     if (S.pantryF !== 'all') n++;
     if (S.sort !== 'book') n++;
     if (S.favOnly) n++;
+    if (S.quickF) n++;
     return n;
   }
   function syncStrip() {
@@ -47,31 +51,41 @@
     var st = $('brwStrip'), sec = $('view-browse');
     var bar = document.querySelector('#view-browse .filters');
     if (!st || !sec || !bar) return;
-    /* Unfolded, the bar is a fixed panel and its edges say nothing about
-       the page; a redraw under it — picking a filter — must not read it as
-       "scrolled back to the top" and fold it away mid-choice. */
-    if (bar.classList.contains('pop') && S.view === 'browse') return;
-    var on = S.view === 'browse' &&
-      bar.getBoundingClientRect().bottom <= st.getBoundingClientRect().bottom + 1;
-    if (on === sec.classList.contains('stripped')) return;
-    sec.classList.toggle('stripped', on);
-    /* Fold the bar away with the button that opened it; a fixed panel over a
-       page that has scrolled back to its own copy of the same controls is
-       the one arrangement that would confuse. */
-    if (!on) filtersPop(false);
+    if (S.view !== 'browse') {
+      sec.classList.remove('stripped');
+      filtersPop(false);
+      return;
+    }
+    syncStripH();
+    if (bar.classList.contains('pop')) return;
+    var on = (window.scrollY || window.pageYOffset || 0) > 4;
+    if (on !== sec.classList.contains('stripped')) sec.classList.toggle('stripped', on);
   }
   function onScrollStrip() {
     if (stripRaf) return;
     stripRaf = requestAnimationFrame(syncStrip);
   }
-  /* The real filter bar, unfolded under the header. Same element, so every
-     control keeps its wiring and its state; only where it sits changes. */
+  /* The real filter drawer, unfolded right below the search + quick-chip strip. */
   function filtersPop(open) {
+    var bar = document.querySelector('#view-browse .filters');
+    var scrim = $('brwScrim');
+    var btn = $('filtBtn');
+    var st = $('brwStrip');
+    if (open && bar && st) {
+      var top = Math.round(st.getBoundingClientRect().bottom);
+      bar.style.top = top + 'px';
+      bar.style.maxHeight = 'calc(100vh - ' + top + 'px)';
+      if (scrim) scrim.style.top = top + 'px';
+    } else if (bar) {
+      bar.style.top = '';
+      bar.style.maxHeight = '';
+      if (scrim) scrim.style.top = '';
+    }
     if (open === S.filtPop) return;
     S.filtPop = open;
-    document.querySelector('#view-browse .filters').classList.toggle('pop', open);
-    $('brwScrim').classList.toggle('hide', !open);
-    $('filtBtn').setAttribute('aria-expanded', String(open));
+    if (bar) bar.classList.toggle('pop', open);
+    if (scrim) scrim.classList.toggle('hide', !open);
+    if (btn) btn.setAttribute('aria-expanded', String(open));
   }
 
   return { syncStick: syncStick, filtCount: filtCount, syncStrip: syncStrip, onScrollStrip: onScrollStrip, filtersPop: filtersPop };

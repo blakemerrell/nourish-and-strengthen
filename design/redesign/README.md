@@ -133,8 +133,8 @@ Split ownership by file so agents work in parallel without merge collisions:
 | 2c Weigh-in to Today (with Step 5) | Bundled into 5 | | |
 | 2d Bottom rest bar | Dropped | | Keep `.tr-rdiv` pill |
 | 3 Train 4-box week summary | Not started | | |
-| 4 Cook (preserve Walmart flow) | Not started | | |
-| 5 Today (includes 2c weigh-in) | Not started | | |
+| 4 Cook (preserve Walmart flow) | Done | Antigravity | `redesign/4-cook` |
+| 5 Today (includes 2c weigh-in) | Claimed | Antigravity | |
 | 6 4-tab bottom bar (Look 1 kept) | Not started | | |
 
 ## Decisions from Blake, 2026-11-20 (these override the 2026-11-19 list where they differ)

@@ -24,7 +24,17 @@ module.exports = {
       /Run and Not Be Weary/.test(await blurb()) && /Around the Table/.test(await blurb()),
       await blurb());
 
+    const openFilters = async (pg) => {
+      const popped = await pg.evaluate(() => document.querySelector('#view-browse .filters').classList.contains('pop'));
+      if (!popped) { await pg.click('#filtBtn'); await pg.waitForTimeout(80); }
+    };
+    const closeFilters = async (pg) => {
+      const popped = await pg.evaluate(() => document.querySelector('#view-browse .filters').classList.contains('pop'));
+      if (popped) { await pg.click('#filtersDone'); await pg.waitForTimeout(80); }
+    };
+
     // filters
+    await openFilters(p);
     await p.click('[data-book="1"]');
     await p.waitForTimeout(150);
     /* However many Volume One holds. Written down as 100 it went red the day
@@ -125,8 +135,8 @@ module.exports = {
       JSON.stringify(inOrder.filter((d) => d.says !== d.cards)));
 
     for (const [why, act] of [
-      ['sorted by score', async () => { await p.selectOption('#sortSel', 'healthy'); }],
-      ['searching', async () => { await p.selectOption('#sortSel', 'book'); await p.fill('#search', 'chicken'); }],
+      ['sorted by score', async () => { await openFilters(p); await p.selectOption('#sortSel', 'healthy'); }],
+      ['searching', async () => { await openFilters(p); await p.selectOption('#sortSel', 'book'); await closeFilters(p); await p.fill('#search', 'chicken'); }],
     ]) {
       await act();
       await p.waitForTimeout(450);
@@ -134,6 +144,7 @@ module.exports = {
         (await divs()).length === 0, why);
     }
     await p.fill('#search', '');
+    await openFilters(p);
     await p.selectOption('#sortSel', 'book');
     await p.waitForTimeout(400);
 
@@ -143,6 +154,7 @@ module.exports = {
     t.ok('but a search puts the line away', (await blurb()) === '', await blurb());
     await p.fill('#search', ''); await p.waitForTimeout(400);
 
+    await openFilters(p);
     await p.click('[data-book="all"]');
     await p.selectOption('#diffSel', 'In-Depth');
     await p.waitForTimeout(150);
@@ -192,6 +204,7 @@ module.exports = {
     const first = await p.textContent('.card-meta');
     t.ok('quickest first starts at the quickest', /^[1-5] mins?\b/.test(first), first);
     await p.selectOption('#sortSel', 'book');
+    await closeFilters(p);
 
     // search covers names, ingredients and sections
     await p.fill('#search', 'buttermilk');
@@ -532,32 +545,33 @@ module.exports = {
 
     await phone.context().close();
 
-    /* The one search row.
+    /* The search + quick-chip strip and on-demand filter drawer.
      *
-     * There were two boxes — one in the filter bar, one on a strip that
-     * appeared once the bar had scrolled away — and on a phone they could sit
-     * one above the other. Blake: "two of the same rows to search here..
-     * why?" One box now, pinned under the header from the first pixel; what
-     * comes and goes is the Filters button beside it, which appears once the
-     * bar has scrolled out of reach and unfolds the real bar in place. */
+     * There is one search box and a single row of quick filter chips pinned
+     * under the header; the full multi-filter drawer sits behind Filters right
+     * from the top of the page so cards appear immediately without scrolling
+     * past four dropdowns. */
     {
       const sp = await t.fresh({ viewport: { width: 390, height: 780 } });
       await sp.click('.tab[data-view="browse"]');
       await sp.waitForTimeout(200);
       const on = () => sp.evaluate(() => document.getElementById('view-browse').classList.contains('stripped'));
       const filt = () => sp.evaluate(() => { const b = document.getElementById('filtBtn'); return !!b && b.offsetParent !== null; });
+      const drawerClosed = () => sp.evaluate(() => {
+        const f = document.querySelector('#view-browse .filters');
+        return !!f && f.offsetParent === null && !f.classList.contains('pop');
+      });
       t.ok('there is exactly one search box on Recipes',
         await sp.evaluate(() => document.querySelectorAll('#view-browse input[type="search"]').length === 1));
-      /* At the top the row sits in the flow — under the share hint on a first
-         visit — with no Filters button yet: the bar is right there below it. */
-      t.ok('at the top it is on screen with no Filters button beside it yet',
+      t.ok('at the top the strip shows quick chips and Filters, with the full filter drawer tucked away',
         await sp.evaluate(() => {
           const s = document.querySelector('.brw-strip').getBoundingClientRect();
-          return s.top >= 0 && s.bottom <= window.innerHeight;
-        }) && !(await on()) && !(await filt()));
+          const chips = document.querySelectorAll('#cookChips .cook-chip').length;
+          return s.top >= 0 && s.bottom <= window.innerHeight && chips >= 5;
+        }) && !(await on()) && (await filt()) && (await drawerClosed()));
       await sp.evaluate(() => window.scrollTo(0, 1600));
       await sp.waitForTimeout(150);
-      t.ok('scroll the filter bar away and the row is still there, now with Filters',
+      t.ok('scroll down and the search + chip strip stays pinned under the header',
         await sp.evaluate(() => {
           const s = document.querySelector('.brw-strip').getBoundingClientRect(), h = document.querySelector('.topbar').getBoundingClientRect();
           return Math.abs(s.top - h.bottom) <= 1;
@@ -608,11 +622,11 @@ module.exports = {
       });
       t.ok('and a filter picked there is the same filter', easy);
       t.ok('the button counts what is on', (await sp.textContent('#filtCount')) === '1', await sp.textContent('#filtCount'));
+      await sp.selectOption('#diffSel', 'all');
+      await sp.waitForTimeout(200);
       await sp.click('#filtersDone');
       await sp.waitForTimeout(100);
       t.ok('Done folds it away', !(await popped()));
-      await sp.selectOption('#diffSel', 'all');
-      await sp.waitForTimeout(200);
 
       await sp.evaluate(() => window.scrollTo(0, 1600));
       await sp.waitForTimeout(150);

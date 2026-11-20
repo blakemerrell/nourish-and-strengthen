@@ -288,6 +288,9 @@
 
   function mBuildFoods() {
     MFOODS = [];
+    Object.keys(BY_ID).forEach(function (bk) {
+      if (String(bk).indexOf('f:my:') === 0) delete BY_ID[bk];
+    });
     var mine = mReadMyFoods();
     Object.keys(mine).forEach(function (key) {
       var f = mine[key];
@@ -3637,7 +3640,7 @@
 
   /* src/favpick.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var FAVPICK = window.HiveParts.favpick({ MNEVER: MNEVER, S: S, mExtOk: mExtOk, mInfoBtn: mInfoBtn, mInfoText: mInfoText, mIsFav: mIsFav, mPretty: mPretty, mShelfKey: mShelfKey, LIVE: LIVE });
+  var FAVPICK = window.HiveParts.favpick({ MNEVER: MNEVER, S: S, fmtNum: fmtNum, idOf: idOf, mExtOk: mExtOk, mInfoBtn: mInfoBtn, mInfoText: mInfoText, mIsFav: mIsFav, mMacLine: mMacLine, mPortionText: mPortionText, mPretty: mPretty, mReadSlots: mReadSlots, mShelfKey: mShelfKey, LIVE: LIVE });
   function mFavDoneLabel() { return FAVPICK.mFavDoneLabel(); }
   function mFavChipSync(btn, r) { return FAVPICK.mFavChipSync(btn, r); }
   function mFavMoreSync(btn, key) { return FAVPICK.mFavMoreSync(btn, key); }
@@ -4288,7 +4291,7 @@
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mslotdel', 'data-mslotmove', 'data-mholdclose', 'data-maddslot', 'data-mslotpreset', 'data-maddpop', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
-    'data-mmore', 'data-fppick', 'data-fpmore', 'data-fpstaples', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mwtiles', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd', 'data-hydmodal', 'data-hyd', 'data-hydmg', 'data-hydoz', 'data-mdrift', 'data-mlog', 'data-mpslot', 'data-mheardundo'];
+    'data-mmore', 'data-fppick', 'data-fpmore', 'data-fpstaples', 'data-mfsec', 'data-mfunpin', 'data-mfedit', 'data-mfdel', 'data-mfnew', 'data-mfadd', 'data-mffood', 'data-mfundo', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mwtiles', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd', 'data-hydmodal', 'data-hyd', 'data-hydmg', 'data-hydoz', 'data-mdrift', 'data-mlog', 'data-mpslot', 'data-mheardundo'];
 
   function focusKey(el) {
     if (!el || el === document.body || !el.getAttribute) return null;
@@ -4449,6 +4452,17 @@
       return;
     }
 
+    if (S.foodOpen) {
+      root.innerHTML = mFoodSheetHTML();
+      if (!root.innerHTML) { S.foodOpen = null; }       // the food is gone; nothing to show
+      else {
+        if (S.foodOpen.fix) mFsFixRefresh();            // what the fix changes, read off the boxes just drawn
+        document.body.style.overflow = 'hidden';
+        if (keepScroll) root.querySelector('.scrim').scrollTop = keepScroll;
+        return;
+      }
+    }
+
     if (S.favPick) {
       root.innerHTML = mFavPickHTML();
       document.body.style.overflow = 'hidden';
@@ -4461,17 +4475,6 @@
       document.body.style.overflow = 'hidden';
       if (keepScroll) root.querySelector('.scrim').scrollTop = keepScroll;
       return;
-    }
-
-    if (S.foodOpen) {
-      root.innerHTML = mFoodSheetHTML();
-      if (!root.innerHTML) { S.foodOpen = null; }       // the food is gone; nothing to show
-      else {
-        if (S.foodOpen.fix) mFsFixRefresh();            // what the fix changes, read off the boxes just drawn
-        document.body.style.overflow = 'hidden';
-        if (keepScroll) root.querySelector('.scrim').scrollTop = keepScroll;
-        return;
-      }
     }
 
     if (S.macroPick && !S.openId) {
@@ -7367,7 +7370,8 @@
       rememberOpener();
       S.macroTargOpen = true;
       if (b.dataset.mmore === 'foods') {
-        S.macroTargOpen = false; S.favPick = true; S.fpOpen = {};
+        S.macroTargOpen = false; S.favPick = true; S.fpOpen = {}; S.mfSec = 'all';
+        pushSheet({ fp: 1 });
         renderModal();
         return;
       }
@@ -8089,6 +8093,12 @@
         return;
       }
       if (e.target.closest('[data-mffno]') && S.foodOpen) {
+        if (S.foodOpen.fromFav && S.favPick) {
+          S.foodOpen = null;
+          S.mFavBackPending = true;
+          close();
+          return;
+        }
         S.foodOpen.fix = 0;
         renderModal();
         return;
@@ -8103,6 +8113,7 @@
         /* Over the food's own unit, so every plate keeps its amount. The
            calories typed are kept for a food with no macros to count them
            from; with macros, the day counts four, four and nine (mBuildFoods). */
+        if (xgot.name) xrec.name = xgot.name;
         xrec.kcal = xp.kcal || 0; xrec.p = xp.p; xrec.f = xp.f; xrec.c = xp.c;
         ['na', 'fib'].forEach(function (k4) { if (xp[k4] === undefined) delete xrec[k4]; else xrec[k4] = xp[k4]; });
         var xlab = {};
@@ -8112,9 +8123,18 @@
         if (xgot.code) xrec.code = xgot.code; else delete xrec.code;
         mWriteMyFoods(xmine);
         mBuildFoods();
+        if (S.foodOpen.fromFav && S.favPick) {
+          var savedNm = xrec.name || xr.name;
+          S.foodOpen = null;
+          S.mFavBackPending = true;
+          renderMacros();
+          close();
+          mToast(esc(savedNm) + ' updated.');
+          return;
+        }
         S.foodOpen.fix = 0;
         S.foodOpen.amt = undefined;
-        mToast(esc(xr.name) + ' fixed. Every day it is on counts the label’s numbers now.');
+        mToast(esc(xrec.name || xr.name) + ' fixed. Every day it is on counts the label’s numbers now.');
         renderMacros();
         renderModal();
         return;
@@ -8125,9 +8145,11 @@
         var fr = BY_ID[S.foodOpen.id], fx = fr && mFsState(fr).x, fsk = fsa.dataset.mfsadd, fk = mViewKey();
         if (!fr || !fx || !fsk) return;
         var fate = mAddsEaten(fk, fsk);
+        var backToFav = !!(S.foodOpen.fromFav && S.favPick);
         // disarmed first: close() lands later, and a second tap in between added it again
         S.foodOpen = null;
         S.mBackPending = !!S.macroPick;
+        S.mFavBackPending = backToFav;
         mEditDay(fk, function (d5) {
           (d5[fsk] = d5[fsk] || []).push({ id: fr.id, x: fx, eaten: fate });
         });
@@ -8363,6 +8385,101 @@
         return;
       }
 
+      var mfsecEl = e.target.closest('[data-mfsec]');
+      if (mfsecEl && S.favPick) {
+        S.mfSec = mfsecEl.dataset.mfsec || 'all';
+        keepingFocus(renderModal);
+        return;
+      }
+      var mfnewEl = e.target.closest('[data-mfnew]');
+      if (mfnewEl && S.favPick) {
+        S.newFood = { slot: (mNextMeal() || {}).k || 'b', fromFav: 1 };
+        pushSheet({ fp: 1 });
+        renderModal();
+        return;
+      }
+      var mffoodEl = e.target.closest('[data-mffood]');
+      if (mffoodEl && S.favPick) {
+        var mfr = BY_ID[idOf(mffoodEl.dataset.mffood)];
+        if (!mfr) return;
+        if (!mfr.food) { openRecipe(mfr.id, 1); return; }
+        S.foodOpen = { id: mfr.id, x: 1, onPlate: false, fromFav: 1 };
+        pushSheet({ fp: 1 });
+        renderModal();
+        return;
+      }
+      var mfeditEl = e.target.closest('[data-mfedit]');
+      if (mfeditEl && S.favPick) {
+        var mer = BY_ID[idOf(mfeditEl.dataset.mfedit)];
+        if (!mer || String(mer.id).indexOf('f:my:') !== 0) return;
+        S.foodOpen = { id: mer.id, x: 1, onPlate: false, fix: 1, fromFav: 1 };
+        pushSheet({ fp: 1 });
+        renderModal();
+        return;
+      }
+      var mfaddEl = e.target.closest('[data-mfadd]');
+      if (mfaddEl && S.favPick) {
+        var mar = BY_ID[idOf(mfaddEl.dataset.mfadd)];
+        var slotsNow = mReadSlots().list;
+        var mask = ((mNextMeal() || slotsNow[0]) || {}).k, mavk = mViewKey();
+        if (mar && mask) {
+          var maSnap = JSON.parse(JSON.stringify(mDay(mavk)[mask] || []));
+          var maAte = mAddsEaten(mavk, mask);
+          mEditDay(mavk, function (d) { (d[mask] = d[mask] || []).push({ id: mar.id, x: 1, eaten: maAte }); });
+          S.mLastFoodsUndo = { kind: 'log', k: mavk, sk: mask, snap: maSnap };
+          close();
+          renderMacros();
+          mToast('Added ' + esc(mar.name) + ' to ' + esc(mSlotName(mask)) + '.', '1', 'data-mfundo');
+        }
+        return;
+      }
+      var mfunpinEl = e.target.closest('[data-mfunpin]');
+      if (mfunpinEl && S.favPick) {
+        var upParts = mfunpinEl.dataset.mfunpin.split('|');
+        var upSk = upParts[0], upId = upParts.slice(1).join('|');
+        var upSlots = mReadSlots(), upSlot = null;
+        upSlots.list.forEach(function (sl) { if (sl.k === upSk) upSlot = sl; });
+        if (upSlot && upSlot.pins && upSlot.pins.length) {
+          var upIdx = -1;
+          upSlot.pins.forEach(function (p, i2) { if (upIdx < 0 && String(p.id) === String(upId)) upIdx = i2; });
+          if (upIdx >= 0) {
+            var removedPin = upSlot.pins.splice(upIdx, 1)[0];
+            mWriteSlots(upSlots);
+            var upR = BY_ID[idOf(upId)];
+            S.mLastFoodsUndo = { kind: 'pin', sk: upSk, idx: upIdx, pin: removedPin };
+            keepingFocus(renderModal);
+            if (S.view === 'macros') renderMacros();
+            mToast('Unpinned ' + esc(upR ? upR.name : upId) + ' from ' + esc(upSlot.n) + '.', '1', 'data-mfundo');
+          }
+        }
+        return;
+      }
+      var mfdelEl = e.target.closest('[data-mfdel]');
+      if (mfdelEl && S.favPick) {
+        var delId = mfdelEl.dataset.mfdel, delR = BY_ID[idOf(delId)];
+        if (String(delId).indexOf('f:my:') === 0) {
+          var dKey = String(delId).slice(5), dMine = mReadMyFoods(), dRaw = dMine[dKey];
+          if (!dRaw) return;
+          S.mLastFoodsUndo = { kind: 'my', key: dKey, raw: JSON.parse(JSON.stringify(dRaw)) };
+          delete dMine[dKey];
+          mWriteMyFoods(dMine);
+          mBuildFoods();
+          keepingFocus(renderModal);
+          if (S.view === 'macros') renderMacros();
+          mToast('Deleted ' + esc(delR ? delR.name : dRaw.name || dKey) + '.', '1', 'data-mfundo');
+          return;
+        }
+        if (delR && delR.own) {
+          S.mLastFoodsUndo = { kind: 'own', rec: JSON.parse(JSON.stringify(delR)) };
+          window.Store.deleteRecipe(delR.id);
+          keepingFocus(renderModal);
+          if (S.view === 'macros') renderMacros();
+          mToast('Deleted ' + esc(delR.name) + '.', '1', 'data-mfundo');
+          return;
+        }
+        return;
+      }
+
       var fpp = e.target.closest('[data-fppick]');
       if (fpp) {
         var fpr = BY_ID[idOf(fpp.dataset.fppick)];
@@ -8488,6 +8605,12 @@
       if (nf && (S.newFood || S.macroPick)) {
         if (nf.dataset.nf === 'cancel') {
           mScanStop();
+          if (S.newFood && S.newFood.fromFav && S.favPick) {
+            S.newFood = null;
+            S.mFavBackPending = true;
+            close();
+            return;
+          }
           var wasBack = S.newFood && S.newFood.back && S.macroPick;
           S.newFood = null;
           // back to the meal's sheet, not out of it
@@ -8590,6 +8713,14 @@
         }
         mWriteMyFoods(allF);
         mBuildFoods();
+        if (S.newFood.fromFav && S.favPick) {
+          S.newFood = null;
+          S.mFavBackPending = true;
+          renderMacros();
+          close();
+          mToast(esc(nm) + ' saved to custom foods.');
+          return;
+        }
         /* Named from inside a meal's sheet, so it goes on that meal, the way
            a tap on any row does, and the sheet comes back with it ticked. */
         if (S.newFood.back && S.macroPick) {
@@ -9690,6 +9821,17 @@
       depth = Math.max(0, depth - 1);
       S.openId = null;
       renderModal();
+    } else if (st && st.fp && S.favPick && (mOverFav() || S.mFavBackPending)) {
+      /* Back from a custom food, saved meal, or + New food opened over My foods
+         returns to My foods & routines instead of closing to the day. */
+      depth = Math.max(0, depth - 1);
+      S.mFavBackPending = false;
+      S.openId = null;
+      S.foodOpen = null;
+      if (S.newFood) mScanStop();
+      S.newFood = null;
+      renderModal();
+      if (S.view === 'macros') renderMacros();
     } else {
       depth = 0;
       close();
@@ -9698,6 +9840,7 @@
   });
 
   /* A sheet standing over a meal's sheet, and taking it down. */
+  function mOverFav() { return !!(S.openId || S.foodOpen || S.newFood); }
   function mOverMeal() { return !!(S.openId || S.foodOpen || S.keepMeal || S.mCopyFrom || S.newFood); }
   function mOffMeal() {
     S.mMenu = '';
@@ -9717,7 +9860,12 @@
       history.back();
       return;
     }
+    if (S.favPick && (mOverFav() || S.mFavBackPending) && depth > 1 && !popping) {
+      history.back();
+      return;
+    }
     S.mBackPending = false;
+    S.mFavBackPending = false;
     /* Unwind every entry this modal pushed, so one press of × does not leave
        a trail of recipes behind the back gesture. */
     if (depth > 0 && !popping) {
@@ -9761,6 +9909,7 @@
        doesn't let me go anywhere." Exactly the failure the note above this
        block describes, made again four sheets later. */
     S.favPick = false;
+    S.mfSec = 'all';
     S.fpOpen = null;
     if (S.newFood) mScanStop();
     S.newFood = null;
@@ -10422,6 +10571,34 @@
       var tt3 = $('mToast');
       if (tt3) tt3.hidden = true;
       if (S.macroPick) renderModal();
+      if (S.view === 'macros') renderMacros();
+      return;
+    }
+    var mfu = e.target.closest && e.target.closest('[data-mfundo]');
+    if (mfu && S.mLastFoodsUndo) {
+      var fu = S.mLastFoodsUndo;
+      S.mLastFoodsUndo = null;
+      if (fu.kind === 'pin' && fu.pin) {
+        var rSlots = mReadSlots(), rSlot = null;
+        rSlots.list.forEach(function (sl) { if (sl.k === fu.sk) rSlot = sl; });
+        if (rSlot) {
+          rSlot.pins = rSlot.pins || [];
+          rSlot.pins.splice(Math.min(fu.idx, rSlot.pins.length), 0, fu.pin);
+          mWriteSlots(rSlots);
+        }
+      } else if (fu.kind === 'my' && fu.key && fu.raw) {
+        var rMine = mReadMyFoods();
+        rMine[fu.key] = fu.raw;
+        mWriteMyFoods(rMine);
+        mBuildFoods();
+      } else if (fu.kind === 'own' && fu.rec) {
+        window.Store.saveRecipe(fu.rec);
+      } else if (fu.kind === 'log' && fu.k && fu.sk) {
+        mEditDay(fu.k, function (day) { day[fu.sk] = fu.snap || []; });
+      }
+      var tt4 = $('mToast');
+      if (tt4) tt4.hidden = true;
+      if (S.favPick) renderModal();
       if (S.view === 'macros') renderMacros();
       return;
     }

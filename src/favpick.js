@@ -14,14 +14,19 @@
 (window.HiveParts = window.HiveParts || {}).favpick = function (app) {
   'use strict';
 
-  // what it reads of the app's, and (LIVE) what the app replaces as it goes: BY_ID, MFOODS, MSHELF
+  // what it reads of the app's, and (LIVE) what the app replaces as it goes: BY_ID, MFOODS, MSHELF, RECIPES
   var MNEVER = app.MNEVER;
   var S = app.S;
+  var fmtNum = app.fmtNum;
+  var idOf = app.idOf;
   var mExtOk = app.mExtOk;
   var mInfoBtn = app.mInfoBtn;
   var mInfoText = app.mInfoText;
   var mIsFav = app.mIsFav;
+  var mMacLine = app.mMacLine;
+  var mPortionText = app.mPortionText;
   var mPretty = app.mPretty;
+  var mReadSlots = app.mReadSlots;
   var mShelfKey = app.mShelfKey;
   var LIVE = app.LIVE;
 
@@ -218,35 +223,155 @@
   function mFavPickHTML() {
     var inner = mFavPickInner();
     var total = inner.total;
-    return '<div class="scrim no-print" data-close="1">' +
-      '<div class="sheet mt-sheet" role="dialog" aria-modal="true" aria-label="What you eat">' +
-        '<div class="sheet-top">' +
-          '<div class="sheet-eyebrow m-eyei">What do you actually eat?' + mInfoBtn('fp', 'How this list is used') + '</div>' +
-          '<button class="sheet-x" data-close="1" aria-label="Close">&times;</button>' +
-        '</div>' +
+    var sec = S.mfSec || 'all';
+    var slots = mReadSlots ? mReadSlots() : { list: [] };
+    var pinsList = [];
+    (slots.list || []).forEach(function (sl) {
+      (sl.pins || []).forEach(function (pn) {
+        var pr = LIVE.BY_ID[idOf(pn.id)];
+        if (!pr) return;
+        pinsList.push({ sk: sl.k, sn: sl.n, id: pn.id, x: Number(pn.x) || 1, r: pr });
+      });
+    });
+
+    var mealsList = [];
+    var customList = [];
+    (LIVE.MFOODS || []).forEach(function (r) {
+      if (r.parts && r.parts.length && !r.eatout) {
+        mealsList.push(r);
+      } else if (String(r.id).indexOf('f:my:') === 0 && !r.eatout) {
+        customList.push(r);
+      }
+    });
+    (LIVE.RECIPES || []).forEach(function (r) {
+      if (r.own && r.typedMacro && !(r.steps || []).length && (r.ing || []).length) {
+        mealsList.push(r);
+      }
+    });
+
+    var tabBtn = function (k, label, n) {
+      var on = sec === k;
+      return '<button type="button" class="mf-tab' + (on ? ' on' : '') + '" data-mfsec="' + k + '" aria-pressed="' + (on ? 'true' : 'false') + '">' +
+        esc(label) + (typeof n === 'number' && n > 0 ? ' <span class="mf-cnt num">' + n + '</span>' : '') +
+      '</button>';
+    };
+    var tabsHTML = '<div class="mf-tabs" role="group" aria-label="Filter foods and routines">' +
+      tabBtn('all', 'All', null) +
+      tabBtn('pins', 'Pins', pinsList.length) +
+      tabBtn('meals', 'Saved meals', mealsList.length) +
+      tabBtn('custom', 'Custom foods', customList.length) +
+      tabBtn('staples', 'Staples', total) +
+    '</div>';
+
+    var pinsHTML = '';
+    if (sec === 'all' || sec === 'pins') {
+      pinsHTML = '<div id="mfPins">' +
+        '<div class="mt-div mf-sec-h"><span>Everyday pins</span></div>' +
+        (pinsList.length
+          ? '<div class="mf-list">' + pinsList.map(function (p) {
+              return '<div class="mf-row" data-mfpin="' + esc(p.sk + '|' + String(p.id)) + '">' +
+                '<div class="mf-info">' +
+                  '<div class="mf-title"><b>' + esc(p.r.name) + '</b> <span class="mf-badge">' + esc(p.sn) + '</span></div>' +
+                  '<div class="mf-sub num">' + esc(mPortionText(p.r, p.x)) + ' &middot; ' + mMacLine(p.r, p.x) + '</div>' +
+                '</div>' +
+                '<div class="mf-acts">' +
+                  '<button type="button" class="ghost mf-btn mf-danger" data-mfunpin="' + esc(p.sk + '|' + String(p.id)) + '" aria-label="Unpin ' + esc(p.r.name) + ' from ' + esc(p.sn) + '">Unpin</button>' +
+                '</div>' +
+              '</div>';
+            }).join('') + '</div>'
+          : '<div class="mf-empty">No everyday pins yet. Pin any food from a meal\u2019s row menu so Fill includes it every day.</div>') +
+      '</div>';
+    }
+
+    var mealsHTML = '';
+    if (sec === 'all' || sec === 'meals') {
+      mealsHTML = '<div id="mfMeals">' +
+        '<div class="mt-div mf-sec-h"><span>Saved meals</span></div>' +
+        (mealsList.length
+          ? '<div class="mf-list">' + mealsList.map(function (r) {
+              var comp = r.parts && r.parts.length
+                ? r.parts.slice(0, 3).map(function (pt) { return fmtNum(pt.x || 1) + '\u00d7 ' + pt.name; }).join(', ') + (r.parts.length > 3 ? '\u2026' : '')
+                : (r.ing || []).slice(0, 3).join(', ');
+              return '<div class="mf-row" data-mfmeal="' + esc(String(r.id)) + '">' +
+                '<button type="button" class="mf-name" data-mffood="' + esc(String(r.id)) + '">' +
+                  '<span class="mf-title"><b>' + esc(r.name) + '</b></span>' +
+                  (comp ? '<span class="mf-comp">' + esc(comp) + '</span>' : '') +
+                  '<span class="mf-sub num">' + mMacLine(r, 1) + '</span>' +
+                '</button>' +
+                '<div class="mf-acts">' +
+                  '<button type="button" class="ghost mf-btn" data-mfadd="' + esc(String(r.id)) + '" aria-label="Log ' + esc(r.name) + '">+ Log</button>' +
+                  '<button type="button" class="ghost mf-btn mf-danger" data-mfdel="' + esc(String(r.id)) + '" aria-label="Delete ' + esc(r.name) + '">Delete</button>' +
+                '</div>' +
+              '</div>';
+            }).join('') + '</div>'
+          : '<div class="mf-empty">No saved meals yet. Build a plate on any meal, then choose <b>Save meal</b> in its &hellip; menu.</div>') +
+      '</div>';
+    }
+
+    var customHTML = '';
+    if (sec === 'all' || sec === 'custom') {
+      customHTML = '<div id="mfCustom">' +
+        '<div class="mt-div mf-sec-h"><span>Custom foods</span><button type="button" class="ghost mf-newbtn" data-mfnew="1">+ New food</button></div>' +
+        (customList.length
+          ? '<div class="mf-list">' + customList.map(function (r) {
+              return '<div class="mf-row" data-mfcustom="' + esc(String(r.id)) + '">' +
+                '<button type="button" class="mf-name" data-mffood="' + esc(String(r.id)) + '">' +
+                  '<span class="mf-title"><b>' + esc(r.name) + '</b></span>' +
+                  '<span class="mf-sub num">' + esc(mPortionText(r, 1)) + ' &middot; ' + mMacLine(r, 1) + '</span>' +
+                '</button>' +
+                '<div class="mf-acts">' +
+                  '<button type="button" class="ghost mf-btn" data-mfedit="' + esc(String(r.id)) + '" aria-label="Edit ' + esc(r.name) + '">Edit</button>' +
+                  '<button type="button" class="ghost mf-btn mf-danger" data-mfdel="' + esc(String(r.id)) + '" aria-label="Delete ' + esc(r.name) + '">Delete</button>' +
+                '</div>' +
+              '</div>';
+            }).join('') + '</div>'
+          : '<div class="mf-empty">No custom foods yet. Tap <b>+ New food</b> to add a Nutrition Facts label of your own.</div>') +
+      '</div>';
+    }
+
+    var neverHTML = (function () {
+      var ids = Object.keys(MNEVER);
+      if (!ids.length) return '';
+      return '<div class="mt-div m-divi">Not suggested' + mInfoBtn('never', 'What this means') + '</div>' +
+        mInfoText('never', 'Fill won\u2019t add these. You can still add them yourself by searching.', 'mt-cap') +
+        ids.map(function (id) {
+          var rr = LIVE.BY_ID[id] || LIVE.BY_ID[Number(id)];
+          return '<div class="mnv-row"><span class="mnv-n">' + esc(rr ? rr.name : id) +
+            '<small>since ' + esc(mPretty(MNEVER[id])) + '</small></span>' +
+            '<button class="ghost" data-mallow="' + esc(id) + '">Allow</button></div>';
+        }).join('');
+    })();
+
+    var staplesHTML = '';
+    if (sec === 'all' || sec === 'staples') {
+      staplesHTML = '<div id="mfStaples">' +
+        '<div class="mt-div m-divi">What do you actually eat?' + mInfoBtn('fp', 'How this list is used') + '</div>' +
         mInfoText('fp', 'Tap anything you eat regularly. Nourish leans toward ' +
           'these when it suggests food &mdash; it does not stop offering anything ' +
           'else. You can change your mind on any food, any time.', 'mt-cap') +
         inner.blocks +
-        (function () {
-          var ids = Object.keys(MNEVER);
-          if (!ids.length) return '';
-          return '<div class="mt-div m-divi">Not suggested' + mInfoBtn('never', 'What this means') + '</div>' +
-            mInfoText('never', 'Fill won\u2019t add these. You can still add them yourself by searching.', 'mt-cap') +
-            ids.map(function (id) {
-              var rr = LIVE.BY_ID[id] || LIVE.BY_ID[Number(id)];
-              return '<div class="mnv-row"><span class="mnv-n">' + esc(rr ? rr.name : id) +
-                '<small>since ' + esc(mPretty(MNEVER[id])) + '</small></span>' +
-                '<button class="ghost" data-mallow="' + esc(id) + '">Allow</button></div>';
-            }).join('');
-        })() +
+        neverHTML +
+      '</div>';
+    }
+
+    return '<div class="scrim no-print" data-close="1">' +
+      '<div class="sheet mt-sheet mf-sheet" id="mFoodsSheet" role="dialog" aria-modal="true" aria-label="My foods and routines">' +
+        '<div class="sheet-top">' +
+          '<div class="sheet-eyebrow m-eyei">My foods &amp; routines</div>' +
+          '<button class="sheet-x" data-close="1" aria-label="Close">&times;</button>' +
+        '</div>' +
+        tabsHTML +
+        pinsHTML +
+        mealsHTML +
+        customHTML +
+        staplesHTML +
         /* sheet-done, not data-close. The attribute is decorative — it sits
            on the scrim too, so closest() would find it from anywhere inside
            the card and every tap would shut the sheet. The class is the wire.
            The note on that handler says so, and says it was written because
            a Done button had already been built wearing the decoration once. */
         '<div class="sync-row"><button class="btn-primary sheet-done">' +
-          (total ? 'Done &middot; ' + total + ' chosen' : 'Skip for now') +
+          (total ? 'Done &middot; ' + total + ' chosen' : 'Done') +
         '</button></div>' +
       '</div></div>';
   }

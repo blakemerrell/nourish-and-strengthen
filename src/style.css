@@ -10347,3 +10347,58 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
 .mh-impact + .mh-acts { border-top: 0; padding-top: 6px; }
 .mpick-new .mp-sub { display: block; font-size: 0.8125rem; color: var(--muted); font-weight: 400; margin-top: 2px; }
 .msheet[data-mode="scan"] .msh-acts { grid-template-columns: minmax(0, 1fr); padding: 6px 0 0; }
+
+/* ---- Step 1f: My Foods & Routines Manager (#mFoodsSheet) ---- */
+.mf-tabs {
+  display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 10px; margin-bottom: 4px;
+  scrollbar-width: none;
+}
+.mf-tabs::-webkit-scrollbar { display: none; }
+.mf-tab {
+  flex: none; min-height: 44px; min-width: 44px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid var(--line-control); background: var(--paper-soft); color: var(--ink-2);
+  font: 600 0.8125rem/1.2 var(--sans); white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+}
+.mf-tab.on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.mf-cnt {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; font-size: 0.8125rem;
+  background: color-mix(in oklab, currentColor 14%, transparent);
+}
+.mf-sec-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mf-newbtn { min-height: 44px; padding: 0 12px; font-size: 0.8125rem; font-weight: 700; white-space: nowrap; }
+.mf-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.mf-row {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line-soft); background: var(--paper-soft);
+}
+.mf-info, .mf-name {
+  flex: 1 1 160px; min-width: 0; display: flex; flex-direction: column; align-items: flex-start;
+  gap: 2px; text-align: left;
+}
+button.mf-name {
+  min-height: 44px; justify-content: center; padding: 2px 4px; border: 0; border-radius: 8px;
+  background: transparent; color: var(--ink); font: inherit; cursor: pointer;
+}
+button.mf-name:hover { background: var(--card); }
+.mf-title {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  font-size: 0.9375rem; line-height: 1.25; color: var(--ink);
+}
+.mf-badge {
+  display: inline-flex; align-items: center; padding: 1px 7px; border-radius: 999px;
+  font-size: 0.8125rem; font-weight: 600; background: var(--card);
+  border: 1px solid var(--line-soft); color: var(--muted-2);
+}
+.mf-comp, .mf-sub { font-size: 0.8125rem; line-height: 1.3; color: var(--muted-2); }
+.mf-acts { display: flex; align-items: center; gap: 6px; flex: none; margin-left: auto; }
+.mf-btn {
+  min-height: 44px; min-width: 44px; padding: 0 10px; border-radius: 10px;
+  font-size: 0.8125rem; font-weight: 600; white-space: nowrap;
+}
+.mf-danger { color: var(--dial-over); }
+.mf-empty {
+  padding: 10px 12px; margin-bottom: 8px; border-radius: 10px;
+  border: 1px dashed var(--line-control); font-size: 0.8125rem; line-height: 1.4; color: var(--muted-2);
+}

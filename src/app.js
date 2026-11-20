@@ -916,7 +916,7 @@
     // each meal's view on the day, by day (myday.js, mViewOf); the skip a card is asking about; Undo's copy
     mView: {}, mViewAll: 0, mFoldSoon: '', mSkipAsk: '', mSkipUndo: null, mUsualUndo: null,
     // a meal said into the picker's box (heard.js): the band's choices; foods to keep as one; a meal a new recipe goes on
-    mpHeard: null, mpMicHint: false, keepItems: null, editAddTo: null,
+    mpHeard: null, mpMicHint: false, keepItems: null, editAddTo: null, mLastHeard: null,
     // which empty meals have their line of ways to fill them open, by day (myday.js, emptyHTML)
     mEmptyOpen: {},
     chartOpen: false, chartWhich: 'weight', mcRange: 'all', keepMeal: '',
@@ -3705,7 +3705,7 @@
      names here, as declarations, so they answer from anywhere in this file. */
   var PICKSHEET = window.HiveParts.picksheet({ S: S, mDay: mDay, mMealSheetParts: mMealSheetParts, mNowMins: mNowMins, mReadSlots: mReadSlots, mSlotOpens: mSlotOpens, mSlotSecs: mSlotSecs, mSlotW: mSlotW, mViewKey: mViewKey, mpHomeBodyHTML: mpHomeBodyHTML, mpIcon: mpIcon, mpShelvesHTML: mpShelvesHTML, pushSheet: pushSheet, rememberOpener: rememberOpener, renderModal: renderModal, todayKey: todayKey });
   function mNextMeal() { return PICKSHEET.mNextMeal(); }
-  function mOpenPicker(slotKey, mode) { return PICKSHEET.mOpenPicker(slotKey, mode); }
+  function mOpenPicker(slotKey, mode) { if (mode === 'scan') mCamDone = false; return PICKSHEET.mOpenPicker(slotKey, mode); }
   function macroPickerHTML() { return PICKSHEET.macroPickerHTML(); }
 
   /* src/pickgap.js, handed what it reads of the app's and kept under its own
@@ -3733,7 +3733,7 @@
      a meal said in one breath into the picker's box, and its band. */
   var HEARD = window.HiveParts.heard({ S: S, fmtNum: fmtNum, mMacLine: mMacLine, mReadSlots: mReadSlots, searchScore: searchScore, LIVE: LIVE });
   function mHeard(q) { return HEARD.mHeard(q); }
-  function mHeardHTML(q) { return HEARD.mHeardHTML(q); }
+  function mHeardHTML(q, day, targets) { return HEARD.mHeardHTML(q, day, targets); }
   function mHeardTotals(H) { return HEARD.mHeardTotals(H); }
   function mHeardIng(l) { return HEARD.mHeardIng(l); }
   /* The box emptied after a heard meal went on: the band, its choices and
@@ -4288,7 +4288,7 @@
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mslotdel', 'data-mslotmove', 'data-mholdclose', 'data-maddslot', 'data-mslotpreset', 'data-maddpop', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
-    'data-mmore', 'data-fppick', 'data-fpmore', 'data-fpstaples', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mwtiles', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd', 'data-hydmodal', 'data-hyd', 'data-hydmg', 'data-hydoz', 'data-mdrift'];
+    'data-mmore', 'data-fppick', 'data-fpmore', 'data-fpstaples', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mwtiles', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd', 'data-hydmodal', 'data-hyd', 'data-hydmg', 'data-hydoz', 'data-mdrift', 'data-mlog', 'data-mpslot', 'data-mheardundo'];
 
   function focusKey(el) {
     if (!el || el === document.body || !el.getAttribute) return null;
@@ -6076,7 +6076,7 @@
       if (!S.macroPick || S.openId || S.foodOpen || S.keepMeal || S.mCopyFrom || S.newFood) return;
       if (!e.target.closest || !e.target.closest('.msheet')) return;
       // ×, Done and mode switches pass to document's listener intact when a menu is open
-      if (e.target.closest('.sheet-x, .sheet-done, [data-mpmode]')) return;
+      if (e.target.closest('.sheet-x, .sheet-done, [data-mpmode], [data-mpslot]')) return;
       /* A food opened because it was just added stays open once you use it:
          its dial, its amount or its ⋯ pin it open, so the first − does not
          shut it as the "just added" mark is cleared. Here, before an open
@@ -7270,6 +7270,31 @@
         }
       });
     }
+    if ($('macroLogBar')) {
+      $('macroLogBar').addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-mlog]');
+        if (!btn) return;
+        mMenu(false);
+        S.mEdit = null;
+        var act = btn.dataset.mlog;
+        if (act === 'scan') {
+          mOpenPicker('', 'scan');
+          return;
+        }
+        mOpenPicker('', 'home');
+        if (act === 'mic') {
+          S.mpMicHint = true;
+          var mbox = $('mpFind');
+          if (mbox && !$('mpMicHint')) {
+            mbox.closest('.mp-find').insertAdjacentHTML('afterend',
+              '<div class="mp-mic-hint" id="mpMicHint" role="status">Now tap the mic on your keyboard and say what you ate: ' +
+              '\u201ctwo eggs, toast with butter, coffee with half and half.\u201d</div>');
+          }
+        }
+        var mf = $('mpFind');
+        if (mf && mf.focus) mf.focus();
+      });
+    }
     if ($('macroAddPop')) {
       $('macroAddPop').addEventListener('click', function (e) {
         var cl = e.target.closest('[data-maddpop="close"]');
@@ -8251,6 +8276,46 @@
         return;
       }
 
+      var mpsl = e.target.closest('[data-mpslot]');
+      if (mpsl && S.macroPick) {
+        var wantSk = mpsl.dataset.mpslot, srec2 = null;
+        mReadSlots().list.forEach(function (sl) { if (sl.k === wantSk) srec2 = sl; });
+        if (srec2 && srec2.k !== S.macroPick.slot) {
+          S.mMenu = '';
+          S.mpSwap = null;
+          S.macroPick.slot = srec2.k;
+          S.macroPick.n = srec2.n;
+          S.macroPick.secs = mSlotSecs(srec2);
+          S.macroPick.w = mSlotW(srec2);
+          if (S.mpMode === 'scan' && $('scanRoot')) {
+            var P2 = mMealSheetParts(srec2.k);
+            var mtop2 = document.querySelector('#modalRoot .msh-top');
+            var msht2 = document.querySelector('#modalRoot .msheet');
+            if (mtop2) mtop2.innerHTML = P2.head + (P2.stick || '');
+            if (msht2) {
+              msht2.setAttribute('aria-label', P2.name);
+              if (mtop2) msht2.style.setProperty('--msh-top', mtop2.offsetHeight + 'px');
+            }
+          } else {
+            var fIn = $('mpFind');
+            var wasFoc = document.activeElement && fIn && document.activeElement === fIn;
+            var selStart = wasFoc ? fIn.selectionStart : null;
+            var selEnd = wasFoc ? fIn.selectionEnd : null;
+            renderModal();
+            if (wasFoc) {
+              var fIn2 = $('mpFind');
+              if (fIn2) {
+                fIn2.focus();
+                if (selStart !== null) {
+                  try { fIn2.setSelectionRange(selStart, selEnd); } catch (err) {}
+                }
+              }
+            }
+          }
+        }
+        return;
+      }
+
       var mpm = e.target.closest('[data-mpmode]');
       if (mpm && S.macroPick) {
         S.mMenu = '';
@@ -8628,15 +8693,23 @@
           return;
         }
         if (what === 'all') {
-          var ate = mAddsEaten(dk, dsk);
+          var ate = mAddsEaten(dk, dsk), hSnap = null;
+          var closeAfter = !!(S.macroPick && S.macroPick.fromBar);
           mEditDay(dk, function (day) {
             var list = (day[dsk] = day[dsk] || []);
+            hSnap = JSON.parse(JSON.stringify(list));
             parts.forEach(function (pt) { list.push({ id: pt.id, x: pt.x, eaten: ate }); });
           });
+          S.mLastHeard = { k: dk, sk: dsk, snap: hSnap };
           mHeardDone();
-          renderMacros();
-          renderModal();
-          mToast('Added ' + parts.length + ' to ' + esc(mSlotName(dsk)));
+          if (closeAfter) {
+            close();
+            renderMacros();
+          } else {
+            renderMacros();
+            renderModal();
+          }
+          mToast('Added ' + parts.length + ' to ' + esc(mSlotName(dsk)), '1', 'data-mheardundo');
           return;
         }
         /* Kept as one food: the keep sheet (keep.js), asked about these
@@ -10335,6 +10408,19 @@
       });
       var tt2 = $('mToast');
       if (tt2) tt2.hidden = true;
+      if (S.macroPick) renderModal();
+      if (S.view === 'macros') renderMacros();
+      return;
+    }
+    var hdu = e.target.closest && e.target.closest('[data-mheardundo]');
+    if (hdu && S.mLastHeard) {
+      var lh = S.mLastHeard;
+      S.mLastHeard = null;
+      mEditDay(lh.k, function (day) {
+        day[lh.sk] = lh.snap || [];
+      });
+      var tt3 = $('mToast');
+      if (tt3) tt3.hidden = true;
       if (S.macroPick) renderModal();
       if (S.view === 'macros') renderMacros();
       return;

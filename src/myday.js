@@ -533,7 +533,14 @@
           (items.length >= 2 ? '<button class="mfood-mi mslot-keep" role="menuitem" data-mkeep="' + esc(sk) + '" aria-label="Save these plates as one food you can reuse">' + mIcon('keep') + 'Save meal</button>' : '') +
           '<button class="mfood-mi mslot-from" role="menuitem" data-mfrom="' + esc(sk) + '" aria-label="Repeat ' + esc(name) + ' from another day">' + mIcon('fromday') + 'Repeat a day</button>' +
         '</div>' : '') +
-      '</div>';
+      '</div>' +
+      (S.macroPick && S.macroPick.fromBar && slots.list.length > 1
+        ? '<div class="msh-slots no-print" role="group" aria-label="Log to meal">' +
+          slots.list.map(function (s) {
+            var on = s.k === sk;
+            return '<button type="button" class="msh-slot' + (on ? ' on' : '') + '" data-mpslot="' + esc(s.k) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(s.n) + '</button>';
+          }).join('') + '</div>'
+        : '');
     if (skipped) {
       return { name: name, head: head, skipped: true,
         body: '<div class="msh-skipped">' + esc(name) + ' is skipped today. Its share went to the rest.' +
@@ -877,6 +884,8 @@
     /* A day that has not happened cannot be finished with, and there is
        nothing to draft against on it either. */
     fillBtn.disabled = future && mode !== 'fill';
+    var logBar = $('macroLogBar');
+    if (logBar) logBar.classList.toggle('hide', noPlan || dayDone);
 
     /* The gear and its menu are static markup, so a state change paints them
        once and they stay painted. Painting again here costs a class check and

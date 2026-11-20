@@ -141,7 +141,8 @@
        With it showing, the USDA box is not drawn, so the whole sentence is
        never sent off as one food's name, and the list does not say that
        nothing matches a sentence it was never going to match. */
-    var heard = mHeardHTML(S.mpQuery);
+    var dayNow = mDay(mViewKey()), targNow = mDayTargets(mViewKey());
+    var heard = mHeardHTML(S.mpQuery, dayNow, targNow);
     var look = heard ? '' : mpLookFootHTML();
     var body = favs + pins + recent + named + fits + closers + (only ? '' : mpElseHTML(shown));
     /* Judged on the ROWS, not on the string. A barcode with nothing behind it
@@ -161,7 +162,7 @@
           : 'Nothing to offer for this meal yet.') + '</div>';
     }
     // the USDA's box after the app's own "nothing matches", not above it
-    return mQueryTopHTML(S.mpQuery, mDay(mViewKey()), mDayTargets(mViewKey()),
+    return mQueryTopHTML(S.mpQuery, dayNow, targNow,
       { k: S.macroPick.slot, w: S.macroPick.w }) + heard + body + look;
   }
 

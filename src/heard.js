@@ -237,9 +237,13 @@
     return fmtNum(l.qty) + u + ' ' + l.r.name + (l.grams ? ' (' + Math.round(l.grams) + ' g)' : '');
   }
 
+  function fmtComma(n) {
+    return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
   /* The band, above the list, the way a recipe number's band is: it does not
      take the list away, because the sentence may have been meant as a name. */
-  function mHeardHTML(q) {
+  function mHeardHTML(q, day, targets) {
     var H = mHeard(q);
     if (!H) return '';
     var set = S.mpHeard, t = mHeardTotals(H), n = H.known.length;
@@ -267,6 +271,25 @@
     });
     if (n) {
       var sv = set.serves || 1;
+      var tK = targets ? Math.round(targets.kcal || (4 * (targets.p || 0) + 9 * (targets.f || 0) + 4 * (targets.c || 0))) : 0;
+      var tP = targets ? Math.round(targets.p || 0) : 0;
+      if (tK > 0) {
+        var haveP = 0, haveK = 0;
+        Object.keys(day || {}).forEach(function (sk0) {
+          var arr0 = day[sk0];
+          if (!Array.isArray(arr0)) return;
+          arr0.forEach(function (it0) {
+            var r0 = LIVE.BY_ID[it0.id];
+            if (!r0 || !r0.macro) return;
+            haveP += (r0.macro.p || 0) * (it0.x || 0);
+            haveK += (r0.macro.kcal || 0) * (it0.x || 0);
+          });
+        });
+        var afterP = Math.round(haveP + t.p), remK = Math.round(tK - (haveK + t.kcal));
+        h += '<p class="mh-impact num" id="mpHeardImpact">This takes protein to <b>' + fmtComma(afterP) + ' g</b>' +
+          (tP > 0 ? ' of ' + fmtComma(tP) : '') + ' and ' +
+          (remK >= 0 ? 'leaves <b>' + fmtComma(remK) + ' kcal</b>.' : 'puts the day <b>' + fmtComma(-remK) + ' kcal</b> over.') + '</p>';
+      }
       h += '<div class="mh-acts">' +
         '<button class="btn-primary mh-all" data-mhdo="all">Add ' + (n === 1 ? 'it' : 'all ' + n) + ' to ' + esc(meal) + '</button>' +
         '<div class="mh-two"><button class="ghost" data-mhdo="keep">Keep as one food</button>' +

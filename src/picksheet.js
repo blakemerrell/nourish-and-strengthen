@@ -63,6 +63,7 @@
   }
 
   function mOpenPicker(slotKey, mode) {
+    var fromBar = !slotKey;
     var slots = mReadSlots(), srec = null;
     slots.list.forEach(function (sl) { if (sl.k === slotKey) srec = sl; });
     /* A meal taken off the plan still has its plates on the days it was
@@ -75,7 +76,7 @@
       if (!srec) srec = mNextMeal();
       if (!srec) return;
       rememberOpener();
-      S.macroPick = { slot: srec.k, n: srec.n, secs: mSlotSecs(srec), w: mSlotW(srec) };
+      S.macroPick = { slot: srec.k, n: srec.n, secs: mSlotSecs(srec), w: mSlotW(srec), fromBar: fromBar };
       S.mRowOpen = null;
     }
     S.mpSec = 'meal';
@@ -85,6 +86,7 @@
        no shared state, so typing "chicken" into one and switching to the
        other silently threw the word away and asked for it again. */
     S.mpQuery = '';
+    S.mpMicHint = false;
     S.mpShelf = '';
     S.mpSpot = '';
     S.mpKind = '';
@@ -157,7 +159,9 @@
         '</div>' +
         '<div id="nfResults"></div>' +
         '<button class="mpick-row mpick-new" data-mpnew="1">' +
-          '<span class="mp-body"><span class="mp-name">&#43; Type it in yourself</span></span></button>', 'scan');
+          '<span class="mp-body"><span class="mp-name">&#43; Type it in yourself</span>' +
+            '<span class="mp-sub">Enter a Nutrition Facts label manually</span></span></button>' +
+        '<div class="msh-acts no-print"><button type="button" class="ghost msh-done sheet-done" data-close="1">Close</button></div>', 'scan');
     }
 
     if (S.mpMode === 'meal') {

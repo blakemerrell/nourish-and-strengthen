@@ -201,10 +201,17 @@ module.exports = {
     t.ok('Autofill drafts Snacks from the plan, there on the day, and it is a card with food on it',
       auto.length === 1 && auto[0].by === 'f' && auto[0].eaten === 0 &&
       await p.evaluate((sel) => !document.querySelector(sel).classList.contains('mtray-empty'), card('s')), JSON.stringify(auto));
-    await p.click(card('s') + ' .mtray-ib[data-mtry="s"]');
+    /* ↻ left the card header for the meal's ⋯ (1j, 2026-11-20). */
+    t.ok('once filled, the card header has no ↻ of its own', !(await p.$(card('s') + ' .mtray-ib[data-mtry]')));
+    await p.evaluate((sel) => document.querySelector(sel + ' .mtray-b[data-mopen]').click(), card('s'));
+    await p.waitForTimeout(400);
+    await p.click('#modalRoot [data-mmenu="s"]');
+    await p.waitForTimeout(200);
+    await p.click('#modalRoot [data-mtry="s"]');
     await p.waitForTimeout(350);
     const auto2 = (await dayOf(p)).s || [];
-    t.ok('and once filled, the header’s ↻ beside + toggles through another suggestion on the card',
+    await shutSheet();
+    t.ok('and the meal\u2019s ⋯ › Try another moves on to another suggestion',
       auto2.length === 1 && auto2[0].id !== auto[0].id, JSON.stringify({ auto, auto2 }));
 
     /* ---- the narrowest phone: one line a head, a thumb a button, no sideways scroll ---- */

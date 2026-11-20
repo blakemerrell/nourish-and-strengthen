@@ -126,8 +126,8 @@ Split ownership by file so agents work in parallel without merge collisions:
 | 1g "What's left" big at the top; week strip folds | Claimed | Claude | |
 | 1h Amount sheet: servings for recipes, grams for single foods | Claimed | Claude | |
 | 1i Remove the rebalance banner | Done | Claude | #214 |
-| 1j Meal card header: ↻ moves under ⋯ (keep pills, ⚖, ⊘) | Claimed | Claude | |
-| 1k Chips count logged food, ticked or not (still add unticked) | Done | Claude | `claude/gallant-rubin-mbsbh7` |
+| 1j Meal card header: ↻ moves under ⋯ (keep pills, ⚖, ⊘) | Done | Claude | `claude/gallant-rubin-mbsbh7` |
+| 1k Chips count logged food, ticked or not (still add unticked) | Done | Claude | #216 |
 | 2a Aim line (keep plates & RIR) | Not started | | |
 | 2b Prune duplicate `.tr-ex-a` buttons | Not started | | |
 | 2c Weigh-in to Today (with Step 5) | Bundled into 5 | | |

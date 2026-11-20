@@ -4,20 +4,23 @@
  *
  * Part of the Nourish suite, split out of tests/macros.test.js: the page
  * helpers and the plan every page starts with are in tests/fixtures/nourish.js. */
-const { nourish, goDay, stepDay, openRow } = require('./fixtures/nourish.js');
+const { nourish, goDay, stepDay, openRow, openFind } = require('./fixtures/nourish.js');
 
 /* Back to the day from a meal's sheet. While a meal's sheet is up (the
    trays and the meal sheet, 2026-10-04) the day's header — the day picker,
    the arrows — and the bar sit under it, so anything that reaches for them
    comes home first, the way Done takes a thumb there. */
 const homeDay = async (pg) => {
-  const was = await pg.evaluate(() => {
-    // by Done in the tray since 2026-10-05; a skipped or bygone meal keeps its ×
-    const b = document.querySelector('#modalRoot .msheet .msh-done') || document.querySelector('#modalRoot .msheet .sheet-x');
-    if (b) b.click();
-    return !!b;
-  });
-  if (was) await pg.waitForTimeout(300);
+  for (let i = 0; i < 2; i++) {
+    const was = await pg.evaluate(() => {
+      const b = document.querySelector('#modalRoot .msheet .msh-done') || document.querySelector('#modalRoot .msheet .sheet-x');
+      if (b) b.click();
+      return !!b;
+    });
+    if (!was) return;
+    await pg.waitForTimeout(250);
+    if (!(await pg.$('#modalRoot .msheet'))) return;
+  }
 };
 
 module.exports = nourish({
@@ -657,6 +660,7 @@ module.exports = nourish({
          the foods. Read on breakfast's sheet, its menu shown. */
       await pg.evaluate(() => { const a = document.querySelector('#macroSlots [data-mopen="b"]'); a.scrollIntoView({ block: 'center' }); a.click(); });
       await pg.waitForTimeout(400);
+      await openFind(pg);
       await pg.evaluate(() => { const b = document.querySelector('#modalRoot .msheet [data-mmenu]'); if (b) b.click(); });
       await pg.waitForTimeout(200);
       const verbs = await pg.evaluate(() => [...document.querySelectorAll('#modalRoot .msh-h .msh-i:not(.sheet-x), #modalRoot .msh-menu button')].map((b) =>
@@ -977,11 +981,11 @@ module.exports = nourish({
         await homeDay(pg);
         await pg.evaluate((sk) => { const a = document.querySelector('#macroSlots [data-mopen="' + sk + '"]'); a.scrollIntoView({ block: 'center' }); a.click(); }, sk);
         await pg.waitForTimeout(400);
-        // the plates in the tray along the sheet's bottom, opened (2026-10-05)
         if (await pg.isVisible('#modalRoot .msh-tray .msh-trn')) {
           await pg.click('#modalRoot .msh-tray .msh-trn');
           await pg.waitForTimeout(250);
         }
+        await openFind(pg);
       };
       await openAdd('d');
       const dinnerRecent = await recent();

@@ -412,33 +412,7 @@
      dial: the keys go quiet and a tap on the grams hands them back.
      .mstep, .mstep-x and .mstep-in keep their names — they are what the
      portion tests reach for. */
-  /* Which of a meal's foods is open in its sheet: one at most, the rest a
-     line each (name, amount, calories). Blake chose this on 2026-10-24
-     (mockup https://claude.ai/artifact/UbVye3DEoQptDXF7bMxUa9, "B") over
-     rows that always showed their stepper: those rows were cramped enough
-     that the macro line ran out of its box, long names were cut short, and
-     four foods filled the box so the first scrolled half out of sight. A
-     row being typed into, with its menu open or being swapped is open
-     whatever else is; then the one tapped open; then a food just added, so
-     its amount is right there to set. */
-  function mOpenRow(M, mk) {
-    var items = M.items, pre = M.sk + ':', live = [S.mType, S.mEdit, typeof S.mMenu === 'string' ? S.mMenu.replace(/^move:/, '') : ''];
-    for (var a = 0; a < live.length; a++) {
-      var v = live[a];
-      if (typeof v === 'string' && v.indexOf(pre) === 0 && items[+v.slice(pre.length)]) return +v.slice(pre.length);
-    }
-    if (S.mpSwap && S.mpSwap.slot === M.sk && items[S.mpSwap.i]) return S.mpSwap.i;
-    var o = S.mRowOpen;
-    if (o && o.k === M.k && o.sk === M.sk) {
-      if (o.id === null) return -1;
-      if (items[o.i] && String(items[o.i].id) === String(o.id)) return o.i;
-      for (var j = 0; j < items.length; j++) if (String(items[j].id) === String(o.id)) return j;
-      return -1;
-    }
-    return -1;
-  }
-
-  function foodRowHTML(M, r, it, i, mk, open) {
+  function foodRowHTML(M, r, it, i, mk) {
     var sk = M.sk, tag = sk + ':' + i;
     var pinned = M.pins.some(function (p) { return String(p.id) === String(it.id); });
     var was = mk.was[i], fresh = !!mk.fresh[i];
@@ -459,22 +433,20 @@
       }).join('');
     }
     var swapping = !!(S.mpSwap && S.mpSwap.slot === sk && S.mpSwap.i === i);
-    var kc = Math.round(((r.macro || {}).kcal || 0) * it.x);
-    var sum = '<button class="mrow-sum" data-mrowopen="' + tag + '" aria-expanded="' + !!open + '" aria-label="' + esc(r.name) + ', ' +
-        esc(mDialText(r, it.x)) + ', ' + kc + ' kcal. ' + (open ? 'Close' : 'Open to change it') + '">' +
+    var sum = '<div class="mrow-sum">' +
         (r.score === null || r.score === undefined ? '' : leaf(r.score, 'leaf-sm')) +
         '<span class="mrow-nm">' + esc(r.name) + '</span>' +
         (it.l ? '<span class="mrow-mk kept">' + LOCK_SM + (it.l === 2 ? 'Locked' : 'Kept') + '</span>' : '') +
         (pinned ? '<span class="mrow-mk kept">Pinned</span>' : '') +
-        '<span class="mrow-sg num">' + esc(mDialText(r, it.x)) + '</span>' +
-        '<span class="mrow-sk num">' + kc + ' kcal</span>' +
-      '</button>';
-    var cls = 'mitem mfood mrow mrow-x ' + (open ? 'mrow-open' : 'mrow-shut') + (it.eaten ? ' eaten' : '') + (it.l ? ' held' : '') +
+      '</div>';
+    var cls = 'mitem mfood mrow mrow-x mrow-open' + (it.eaten ? ' eaten' : '') + (it.l ? ' held' : '') +
       (was !== undefined ? ' moved' : fresh ? ' fresh' : '') + (swapping ? ' swapping' : '');
     var doorAttr = (r.food
       ? 'class="mfood-mi mitem-name mitem-food mrow-door" data-mfood="' + esc(String(r.id)) + '" data-mx="' + it.x + '" data-mfslot="' + esc(sk) + '"'
       : 'class="mfood-mi mitem-name mrow-door" data-open="' + esc(String(r.id)) + '" data-mx="' + it.x + '"') +
       ' role="menuitem" aria-label="' + esc(r.name) + ', ' + (r.food ? 'the food' : 'the recipe') + '"';
+    var partCount = isSavedMeal ? (r.parts || []).filter(function (pt) { return LIVE.BY_ID[pt.id]; }).length : 0;
+    var partsLabel = partCount + (partCount === 1 ? ' food' : ' foods');
     return '<div class="' + cls + '">' +
       (swapping ? '<div class="mrow-swap">Tap its replacement below<button class="ghost" data-mswapx="1">Cancel</button></div>' : '') +
       sum +
@@ -482,6 +454,8 @@
       '<span class="mrow-m mitem-r2">' + (measure ? '<span class="mitem-uom">' + esc(measure) + '</span> &middot; ' : '') +
         '<span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mHydChip(r, it.x, it.nh) + mSaltChip(r, it.x) + mWhyChip(it, tag) + '</span>' +
       (menuOpen ? '' : '<button ' + doorAttr + ' hidden>' + I_INFO + 'Details</button>') +
+      (M.onPlan ? '<button type="button" class="mrow-lock no-print' + (it.l ? ' on' : '') + '" data-mlock="' + tag + '" aria-pressed="' + (it.l ? 'true' : 'false') + '" aria-label="' +
+        (it.l ? 'Let ' + esc(r.name) + ' move' : 'Lock the amount of ' + esc(r.name)) + '">' + (it.l ? I_LOCK : I_OPEN) + '</button>' : '') +
       /* Typing opens an EMPTY box with the amount shown faint behind it, so
          what you type is the amount. Opened holding the number, it relied on
          the phone selecting it, and an iPhone often does not: Blake had to
@@ -499,6 +473,8 @@
         '<button class="mrow-k" data-mstep="' + tag + ':up"' + (spent ? ' disabled' : '') + ' aria-label="More ' + esc(r.name) + '">' + I_PLUS + '</button>' +
       '</span>' +
       (M.onPlan ? '<button class="mrow-more mfood-more no-print" data-mfmenu="' + tag + '" aria-haspopup="true" aria-expanded="' + menuOpen + '" aria-label="More for ' + esc(r.name) + '">' + I_DOTS + '</button>' : '<span></span>') +
+      (isSavedMeal && partCount > 0 ? '<button type="button" class="mrow-split no-print" data-mexplode="' + tag + '" aria-label="Split ' + esc(r.name) + ' into ' + esc(partsLabel) + '">' +
+        I_EXPLODE + '<span>Recipe with ' + esc(partsLabel) + ' &middot; Split into foods</span></button>' : '') +
       // the why and Weigh the batch open the row's full width, under it
       mWhyStrip(it, tag) + mBatchStrip(r, it, tag) +
       (menuOpen ? '<div class="mfood-menu mrow-menu no-print" role="menu">' +
@@ -563,15 +539,20 @@
         body: '<div class="msh-skipped">' + esc(name) + ' is skipped today. Its share went to the rest.' +
           '<button class="ghost mslot-unskip" data-mskip="' + esc(sk) + '">Put ' + esc(name) + ' back</button></div>' };
     }
-    var stick = '<div class="mcaps">' + capsHTML(M.sub, M.aim, M.ask && M.ask.spent, !!(M.ask && M.ask.capped)) + '</div>';
-    var openI = mOpenRow(M, mk);
+    var remK = M.aim && M.aim.kcal > 0 ? Math.round(M.aim.kcal) - Math.round(M.sub.kcal) : 0;
+    var deltaHTML = M.aim && M.aim.kcal > 0
+      ? '<div class="msh-delta"><span class="msh-dsub num"><b>' + fmtK(M.sub.kcal) + '</b> / ' + fmtK(M.aim.kcal) + ' kcal</span>' +
+        '<span class="msh-rem num' + (remK < 0 ? ' over' : '') + '">' + (remK >= 0 ? fmtK(remK) + ' kcal left' : fmtK(-remK) + ' kcal over') + '</span></div>'
+      : '';
+    var stick = deltaHTML + '<div class="mcaps">' + capsHTML(M.sub, M.aim, M.ask && M.ask.spent, !!(M.ask && M.ask.capped)) + '</div>';
     var rows = items.map(function (it, i) {
       var r = LIVE.BY_ID[it.id];
-      return r ? foodRowHTML(M, r, it, i, mk, i === openI) : '';
+      return r ? foodRowHTML(M, r, it, i, mk) : '';
     }).join('');
-    rows = '<div class="mrows mslot-items">' + (rows || '<div class="mscreen-empty">Nothing on ' + esc(name.toLowerCase()) + ' yet. Tap a food above.</div>') + '</div>';
-    return { name: name, head: head, stick: stick, skipped: false, onPlan: M.onPlan, rows: rows,
-      on: sheetOnHTML(M, rows), tray: sheetTrayHTML(M, mk) };
+    rows = '<div class="mrows mslot-items">' + (rows || '<div class="mscreen-empty">Nothing on ' + esc(name.toLowerCase()) + ' yet.' +
+      (M.onPlan && S.mpMode === 'meal' ? ' Tap Add foods below.' : '') + '</div>') + '</div>';
+    return { name: name, head: head, stick: stick, skipped: false, onPlan: M.onPlan, live: M.live, rows: rows,
+      on: sheetOnHTML(M, rows), tray: sheetTrayHTML(M, mk), mealTray: sheetMealTrayHTML(M), findBar: sheetFindBarHTML(M) };
   }
 
   /* The meal's foods, open, in the page: under the pills and above the
@@ -613,7 +594,8 @@
       var yestK = yd ? dayKey(yd) : '';
       var yestItems = yestK ? mCopyItems(yestK, M.sk) : [];
       return '<section class="msh-on msh-on-empty no-print" aria-label="On ' + esc(M.name) + '">' +
-        '<div class="msh-trh"><span class="msh-trt"><b>On ' + esc(M.name) + '</b><small class="num">0 foods &middot; Tap a food below to add it</small></span>' +
+        '<div class="msh-trh"><span class="msh-trt"><b>On ' + esc(M.name) + '</b><small class="num">' +
+          (S.mpMode === 'meal' ? '0 foods &middot; Tap Add foods below' : '0 foods &middot; Tap a food below to add it') + '</small></span>' +
         '<span class="msh-trh-r">' +
         (yestItems.length ? '<button class="ghost msh-yest" data-mcopy="' + esc(yestK) + '" aria-label="Same as yesterday, copy yesterday\u2019s ' + esc(M.name) + ' (' + yestItems.length + (yestItems.length === 1 ? ' food' : ' foods') + ')">' +
           mIcon('fromday') + 'Same as yesterday</button>' : wChip) +
@@ -625,17 +607,39 @@
       rows + '</section>';
   }
 
-  /* The tray along the bottom: Balance and Done only (no bottom basket or
-     collapse/expand flip-flopping). */
+  /* The tray along the bottom: Balance and Done in find mode; Add foods,
+     Balance and Done in separated meal view. */
   function sheetTrayHTML(M) {
     var sk = M.sk, n = 0;
     M.items.forEach(function (it) { if (!it.eaten && it.l !== 2 && LIVE.BY_ID[it.id]) n++; });
+    var doneBtn = S.mpFromMeal
+      ? '<button type="button" class="btn-primary msh-done" data-mpmode="meal">Done</button>'
+      : '<button class="btn-primary msh-done sheet-done">Done</button>';
     return '<div class="msh-tray open no-print">' +
       '<div class="msh-acts">' +
         '<button class="msh-bal" data-mbal="' + esc(sk) + '"' + (n ? '' : ' disabled') +
           ' aria-label="Balance every food on ' + esc(M.name) + ', the amounts you set included">' + mIcon('scales') + 'Balance</button>' +
+        doneBtn +
+      '</div></div>';
+  }
+
+  function sheetMealTrayHTML(M) {
+    var sk = M.sk, n = 0;
+    M.items.forEach(function (it) { if (!it.eaten && it.l !== 2 && LIVE.BY_ID[it.id]) n++; });
+    return '<div class="msh-tray open no-print">' +
+      '<div class="msh-acts' + (M.onPlan ? ' three' : '') + '">' +
+        (M.onPlan ? '<button type="button" class="msh-addfoods" data-mpmode="home" aria-label="Add foods to ' + esc(M.name) + '">+ Add foods</button>' : '') +
+        '<button class="msh-bal" data-mbal="' + esc(sk) + '"' + (n ? '' : ' disabled') +
+          ' aria-label="Balance every food on ' + esc(M.name) + ', the amounts you set included">' + mIcon('scales') + 'Balance</button>' +
         '<button class="btn-primary msh-done sheet-done">Done</button>' +
       '</div></div>';
+  }
+
+  function sheetFindBarHTML(M) {
+    if (!S.mpFromMeal) return '';
+    return '<div class="msh-findbar no-print">' +
+      '<button type="button" class="mp-back msh-backmeal" data-mpmode="meal">&lsaquo; Back to ' + esc(M.name) + '</button>' +
+    '</div>';
   }
 
   function mRenderDay() {
@@ -1095,7 +1099,7 @@
       var canTry = onPlan && items.some(function (it) {
         return !it.eaten && !it.l && pinnedIds.indexOf(String(it.id)) < 0 && LIVE.BY_ID[it.id];
       });
-      var verbs = (view === 1 || !onPlan ? '' : '<button class="mtray-ib" data-mopen="' + esc(sk) + '" aria-label="Add food to ' + esc(name) + '" title="Add food">' + mIcon('plus') + '</button>') +
+      var verbs = (view === 1 || !onPlan ? '' : '<button class="mtray-ib" data-mopen="' + esc(sk) + '" data-madd="1" aria-label="Add food to ' + esc(name) + '" title="Add food">' + mIcon('plus') + '</button>') +
         (view !== 1 && canTry ? '<button class="mtray-ib" data-mtry="' + esc(sk) + '" aria-label="Try another suggestion for ' + esc(name) + '" title="Try another">' + mIcon('another') + '</button>' : '') +
         (view !== 1 && canBal ? '<button class="mtray-ib" data-mbal="' + esc(sk) + '" aria-label="Balance every food on ' + esc(name) +
           ', the amounts you set included" title="Balance">' + mIcon('scales') + '</button>' : '') +

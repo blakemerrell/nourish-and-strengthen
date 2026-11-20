@@ -39,7 +39,8 @@ const openMeal = async (pg, sk) => {
   if (open) { await openTray(pg); return; }
   await home(pg);
   await pg.evaluate((k) => {
-    const b = document.querySelector('#macroSlots [data-mopen="' + k + '"]');
+    const b = document.querySelector('#macroSlots [data-mopen="' + k + '"]:not([data-madd])') ||
+      document.querySelector('#macroSlots [data-mopen="' + k + '"]');
     if (b) { b.scrollIntoView({ block: 'center' }); b.click(); }
   }, key);
   await pg.waitForTimeout(300);

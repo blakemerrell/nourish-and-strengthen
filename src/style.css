@@ -7977,30 +7977,51 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 }
 .mrow-nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* A food a line in the meal's sheet, one tapped open at a time (myday.js,
-   mOpenRow; Blake's "B", 2026-10-24): shut, its name, amount and calories;
-   open, the whole name and a drawer of its macros, dial and ⋯. */
+/* Every food on a meal stays open with its Lock button, gram stepper,
+   and ⋯ side by side (2026-11-19 RP inline meal view). */
 .msheet .mrow.mrow-x { display: block; flex: none; min-height: 0; padding: 0; }
 .msheet .mrow-sum {
-  width: 100%; min-height: 44px; margin: 0; display: flex; align-items: center; gap: 8px;
-  padding: 0 10px 0 8px; border: 0; border-radius: inherit; background: none; color: var(--ink);
-  font-family: var(--sans); font-size: 0.90625rem; text-align: left; cursor: pointer;
+  width: 100%; min-height: 28px; margin: 0; display: flex; align-items: baseline; gap: 8px;
+  padding: 6px 8px 2px; border: 0; border-radius: inherit; background: none; color: var(--ink);
+  font-family: var(--sans); font-size: 0.90625rem; line-height: 1.25; text-align: left;
 }
-.msheet .mrow-sum .mrow-nm { flex: 1 1 auto; min-width: 0; font-weight: 600; }
-.msheet .mrow-open .mrow-sum {
-  position: relative; z-index: 1; min-height: 28px; margin: 0; padding: 6px 8px 1px; font-size: 0.90625rem; line-height: 1.25; align-items: baseline;
-}
-.msheet .mrow-open .mrow-sum::after {
-  content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 44px; margin-top: -22px;
-}
-.msheet .mrow-open .mrow-sum .mrow-nm {
+.msheet .mrow-sum .mrow-nm {
+  flex: 1 1 auto; min-width: 0; font-weight: 600;
   white-space: normal; overflow-wrap: break-word; overflow: clip;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-clamp: 2;
 }
-.msheet .mrow-open .mrow-sg, .msheet .mrow-open .mrow-sk { display: none; }
 .msheet .mrow-sum .mrow-mk, .msheet .mrow-sum .leaf { flex: none; }
-.msheet .mrow-sg { flex: none; max-width: 38%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.msheet .mrow-sk { flex: none; min-width: 4.4em; text-align: right; color: var(--note); font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+.mrow-lock {
+  position: relative; z-index: 2; flex: none; width: 44px; height: 44px; min-width: 34px; min-height: 44px;
+  margin: 0; padding: 0; border: 1px solid var(--line-firm); border-radius: 10px;
+  background: var(--paper-soft); color: var(--label); display: grid; place-items: center; cursor: pointer;
+}
+.mrow-lock svg { width: 17px; height: 17px; }
+.mrow-lock.on {
+  border-color: var(--ochre); background: color-mix(in oklab, var(--ochre) 16%, var(--card));
+  color: var(--ochre-text);
+}
+.mrow-split {
+  flex: 1 1 100%; width: 100%; min-height: 44px; margin-top: 4px; padding: 6px 12px;
+  border: 1px solid var(--line-firm); border-radius: 10px; background: var(--paper-soft);
+  color: var(--ochre-text); font: inherit; font-size: 0.8125rem; font-weight: 600;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+}
+.mrow-split svg { width: 16px; height: 16px; flex: none; }
+.msh-delta {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+  padding: 2px 4px 4px; margin: 0; font-size: 0.8125rem;
+}
+.msh-dsub { color: var(--note); }
+.msh-dsub b { color: var(--ink); }
+.msh-rem {
+  display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px;
+  font-size: 0.8125rem; font-weight: 700;
+  background: color-mix(in oklab, var(--green) 14%, var(--card)); color: var(--green);
+}
+.msh-rem.over {
+  background: color-mix(in oklab, var(--dial-over) 16%, var(--card)); color: var(--dial-over);
+}
 /* Expanded card body: full-width macro line under the food name so P/F/C never
    wrap, followed by a contained pill stepper bar and ⋯ on the bottom row. */
 .msheet .mrow-dr {
@@ -8059,7 +8080,7 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .msheet .mrow .mitem-typing i { font-style: normal; font-size: 0.75rem; color: var(--note); }
 .mrow-g small { font-size: 0.6875rem; color: var(--ochre-text); line-height: 1.1; margin-top: -8px; padding-bottom: 2px; }
 .mrow-g small:empty { display: none; }
-.msheet .mrow-more { position: relative; z-index: 2; width: 38px; height: 44px; min-width: 0; min-height: 0; margin: 0; border: 0; background: none; border-radius: 8px; padding: 0; flex: none; display: grid; place-items: center; color: var(--note); cursor: pointer; }
+.msheet .mrow-more { position: relative; z-index: 2; width: 44px; height: 44px; min-width: 0; min-height: 0; margin: 0; border: 0; background: none; border-radius: 8px; padding: 0; flex: none; display: grid; place-items: center; color: var(--note); cursor: pointer; }
 .msheet .mrow-more svg { width: 17px; height: 17px; }
 .msheet .mrow-more[aria-expanded="true"], .msheet .mrow-more:hover { background: var(--hint); }
 .msheet .mrow .mwhy-strip { grid-column: 1 / -1; margin: 4px 0 2px; }
@@ -8133,11 +8154,13 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   flex-direction: column;
   gap: 4px;
 }
+.msheet[data-mode="find"] .msh-on:not(:has(.mrow-menu)) .mrows,
 .msheet.mpq .msh-on:not(:has(.mrow-menu)) .mrows {
-  max-height: 260px;
+  max-height: 240px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+.msheet-meal .msh-on:has(.mrow-menu) { margin-bottom: 340px; }
 /* No box of its own to scroll any more (2026-10-24): with a food a line,
    six foods are shorter than the 25vh box was, and the box hid the first
    of four half out of sight. */
@@ -8204,6 +8227,13 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .mp-spsep { flex: none; width: 1px; margin: 12px 3px; background: var(--line-firm); }
 .mp-spot.on .mp-spn { color: inherit; opacity: 0.75; }
 .msh-acts { display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; padding: 6px 12px 0; }
+.msh-acts.three { display: flex; align-items: stretch; gap: 6px; padding: 6px 10px 0; }
+.msh-addfoods {
+  flex: 1.2 1 0; min-width: 0; min-height: 50px; margin: 0; padding: 0 10px;
+  border-radius: 11px; border: 1px solid var(--line-firm); background: var(--paper-soft); color: var(--ink);
+  font: inherit; font-weight: 600; font-size: 0.875rem; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
 .msh-bal {
   min-height: 50px; margin: 0; border-radius: 11px; border: 1px solid var(--line-firm); background: var(--card); color: var(--ink);
   font-weight: 600; font-size: 0.96875rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
@@ -8211,6 +8241,17 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .msh-bal svg { width: 21px; height: 21px; }
 .msh-bal:disabled { opacity: 0.4; cursor: default; }
 .msh-done { min-height: 50px; margin: 0; border-radius: 11px; font-size: 1rem; }
+.msh-acts.three .msh-bal, .msh-acts.three .msh-done { flex: 1 1 0; min-width: 0; padding: 0 8px; font-size: 0.875rem; gap: 5px; }
+.msh-findbar { padding: 4px 2px 2px; display: flex; flex-direction: column; gap: 4px; }
+.msh-findbar .mp-back { margin: 0; min-height: 44px; font-size: 0.875rem; }
+@media (max-width: 360px) {
+  .msheet .mrow .mrow-k { width: 36px; }
+  .msheet .mrow .mrow-k::before { left: 4px; }
+  .mrow-g { min-width: 52px; padding: 0 3px; }
+  .mrow-lock { width: 38px; }
+  .msheet .mrow-more { width: 36px; }
+  .msh-acts.three .msh-addfoods, .msh-acts.three .msh-bal, .msh-acts.three .msh-done { font-size: 0.8125rem; padding: 0 6px; }
+}
 /* After the rule above, not in the phone block earlier in the file, or
    the desktop margin wins: a phone's sheet is padded 18px, not 34px. */
 @media (max-width: 860px) { .msh-tray { margin: auto -18px 0; } }
@@ -8250,7 +8291,7 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 /* No type under 13 px (Blake, 2026-09-27), in the trays and the sheet too. */
 .mtray-n, .mtray-k, .mtray-f em, .mtray-sw, .msh-t small, .mrow-mk, .mrow-g small,
 .msheet .mrow .mrow-m, .msheet .mrow .mrow-m .msalt, .msheet .mrow .mitem-typing i { font-size: 0.8125rem; }
-.msheet .mrow .mrow-m .mitem-uom { white-space: nowrap; font-size: 0.75rem; }
+.msheet .mrow .mrow-m .mitem-uom { white-space: nowrap; font-size: 0.8125rem; }
 .mrow-mk { letter-spacing: 0.03em; }
 .mrow-g small { line-height: 1.1; }
 .msheet .mcap.mcap-max { border-color: var(--dial-over); }

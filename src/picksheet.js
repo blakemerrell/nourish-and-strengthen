@@ -89,6 +89,11 @@
     S.mpSpot = '';
     S.mpKind = '';
     S.mpMode = mode || 'home';
+    if (!mode && !S.macroPick.gone) {
+      var P0 = mMealSheetParts(S.macroPick.slot);
+      if (P0 && P0.live > 0) S.mpMode = 'meal';
+    }
+    S.mpFromMeal = false;
     /* What a tap put on the meal during THIS visit, by id: the rows that
        wear the ✓, and what a second tap takes back off (app.js). */
     S.mpBasket = {};
@@ -130,17 +135,15 @@
   function macroPickerHTML() {
     var sk = S.macroPick.slot;
     var P = mMealSheetParts(sk);
-    /* .mpq marks when a word is in the search (app.js keeps it in step as
-       you type, without a redraw). Since 2026-10-15 .msh-on stays anchored
-       at the top even while .mpq is set, unless collapsed with [data-mtray="0"]. */
-    var wrap = function (inner) {
+    var wrap = function (inner, dm) {
+      var modeName = dm || 'find';
       return '<div class="scrim no-print" data-close="1">' +
-        '<div class="sheet mp-sheet msheet' + (String(S.mpQuery || '').trim() ? ' mpq' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(P.name) + '">' +
+        '<div class="sheet mp-sheet msheet' + (modeName === 'meal' ? ' msheet-meal' : '') + (String(S.mpQuery || '').trim() ? ' mpq' : '') + '" data-mode="' + modeName + '" role="dialog" aria-modal="true" aria-label="' + esc(P.name) + '">' +
         '<div class="msh-top">' + P.head + (P.stick || '') + '</div>' + inner + '</div></div>';
     };
-    if (P.skipped) return wrap(P.body);
+    if (P.skipped) return wrap(P.body, 'meal');
     // a meal off the plan: what it held, and no way to add to it
-    if (!P.onPlan) return wrap(P.rows);
+    if (!P.onPlan) return wrap(P.rows, 'meal');
 
     if (S.mpMode === 'scan') {
       /* One way back, because the three tiles that used to offer it are gone.
@@ -154,17 +157,18 @@
         '</div>' +
         '<div id="nfResults"></div>' +
         '<button class="mpick-row mpick-new" data-mpnew="1">' +
-          '<span class="mp-body"><span class="mp-name">&#43; Type it in yourself</span></span></button>');
+          '<span class="mp-body"><span class="mp-name">&#43; Type it in yourself</span></span></button>', 'scan');
     }
 
-    /* Everything that is not the camera. 'look' and 'recipes' fall through
-       to here: S.mpMode can still hold either — a phone that reloads
-       mid-session, an old value read back from anywhere — and neither
-       should be an error. */
+    if (S.mpMode === 'meal') {
+      return wrap((P.on || '') + P.mealTray, 'meal');
+    }
+
+    /* Everything that is not the camera or Meal View: Food Search ('find' mode). */
     var body = mpHomeBodyHTML();
     return '<div class="scrim no-print" data-close="1">' +
-      '<div class="sheet mp-sheet msheet' + (String(S.mpQuery || '').trim() ? ' mpq' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(P.name) + '">' +
-      '<div class="msh-top">' + P.head + (P.stick || '') + (P.on || '') + '</div>' +
+      '<div class="sheet mp-sheet msheet' + (String(S.mpQuery || '').trim() ? ' mpq' : '') + '" data-mode="find" role="dialog" aria-modal="true" aria-label="' + esc(P.name) + '">' +
+      '<div class="msh-top">' + P.head + (P.stick || '') + (P.findBar || '') + (P.on || '') + '</div>' +
       /* The camera sits INSIDE the field rather than beside it. As a flex
          sibling it drops onto its own row on every phone. */
       '<div class="mp-stick msh-find">' +

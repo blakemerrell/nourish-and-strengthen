@@ -909,7 +909,7 @@
        where the ways are the screen — scanning used to be the fourth button
        on a second sheet, which is three taps of ceremony in front of the
        fastest way to name a food. */
-    mpMode: 'home', mpAt: {},
+    mpMode: 'home', mpFromMeal: false, mpAt: {},
     /* Which meals you have pressed open or shut, against the default of
        folding one you have eaten. Ephemeral: a new day starts fresh. */
     mFold: {}, mFoldFor: '', mTouched: '', mtOpen: '',
@@ -6075,18 +6075,20 @@
     $('modalRoot').addEventListener('click', function (e) {
       if (!S.macroPick || S.openId || S.foodOpen || S.keepMeal || S.mCopyFrom || S.newFood) return;
       if (!e.target.closest || !e.target.closest('.msheet')) return;
-      // × closes the sheet, menu or no menu: the document's listener does it
-      if (e.target.closest('.sheet-x, .sheet-done')) return;
+      // ×, Done and mode switches pass to document's listener intact when a menu is open
+      if (e.target.closest('.sheet-x, .sheet-done, [data-mpmode]')) return;
       /* A food opened because it was just added stays open once you use it:
          its dial, its amount or its ⋯ pin it open, so the first − does not
          shut it as the "just added" mark is cleared. Here, before an open
          menu is shut and the sheet drawn again, or the tap's own button is
          no longer in the page to say which food it was. */
-      var inRow = e.target.closest('#modalRoot .mrow-open [data-mstep], #modalRoot .mrow-open [data-mtype], #modalRoot .mrow-open [data-mfmenu]');
+      var inRow = e.target.closest('#modalRoot .mrow-open [data-mstep], #modalRoot .mrow-open [data-mtype], #modalRoot .mrow-open [data-mfmenu], #modalRoot .mrow-open [data-mlock], #modalRoot .mrow-open [data-mexplode]');
       if (inRow) {
-        var pinB = inRow.closest('.mrow').querySelector('[data-mrowopen]');
-        if (pinB) {
-          var pp = pinB.dataset.mrowopen.split(':'), pi = Number(pp.pop()), psk = pp.join(':');
+        var rowEl = inRow.closest('.mrow');
+        var tagEl = rowEl && (rowEl.querySelector('[data-mfmenu]') || rowEl.querySelector('[data-mtype]') || rowEl.querySelector('[data-mlock]'));
+        var rawTag = tagEl && (tagEl.dataset.mfmenu || tagEl.dataset.mtype || tagEl.dataset.mlock);
+        if (rawTag) {
+          var pp = rawTag.split(':'), pi = Number(pp.pop()), psk = pp.join(':');
           var pit = (mDay(mViewKey())[psk] || [])[pi];
           if (pit) S.mRowOpen = { k: mViewKey(), sk: psk, i: pi, id: pit.id };
         }
@@ -6113,7 +6115,7 @@
         if (S.mTrayOpen) { var tsc = document.querySelector('#modalRoot .scrim'); if (tsc) tsc.scrollTop = 0; }
         return;
       }
-      if (e.target.closest('.msh-top, .mrows, .msh-tray, .msh-skipped')) mDayClick(e);
+      if (e.target.closest('.msh-top, .msh-on, .mrows, .msh-tray, .msh-skipped')) mDayClick(e);
     });
 
     /* Skip, from the meal's card (Blake, 2026-10-10: "I need a way to
@@ -6413,13 +6415,14 @@
       if (mop) {
         rememberOpener();
         S.mEdit = null;
-        mOpenPicker(mop.dataset.mopen, 'home');
+        mOpenPicker(mop.dataset.mopen, mop.dataset.madd ? 'home' : '');
         return;
       }
       /* The name is a door to the recipe itself. It goes through openRecipe
          like every other door, so the back gesture walks home to the day. */
       var op = e.target.closest('[data-open]');
       if (op) {
+        S.mMenu = '';
         rememberOpener();
         var opr = BY_ID[idOf(op.dataset.open)];
         /* The sheet opens scaled to MAKE the portion on the plan, not to the
@@ -6638,12 +6641,27 @@
         S.mMenu = '';
         if (!sit) return;
         S.mpSwap = { slot: sq[0], i: Number(sq[1]), id: sit.id, n: (BY_ID[sit.id] || {}).name || '' };
+        if (S.macroPick && S.mpMode === 'meal') {
+          S.mpFromMeal = true;
+          S.mpMode = 'home';
+          pushSheet({ m: 1, mpFind: 1 });
+        }
         renderModal();
         var fnd = $('mpFind');
-        if (fnd && fnd.scrollIntoView) fnd.scrollIntoView({ block: 'start' });
+        if (fnd && fnd.focus) fnd.focus();
+        else if (fnd && fnd.scrollIntoView) fnd.scrollIntoView({ block: 'start' });
         return;
       }
-      if (e.target.closest('[data-mswapx]')) { S.mpSwap = null; renderModal(); return; }
+      if (e.target.closest('[data-mswapx]')) {
+        S.mpSwap = null;
+        if (S.macroPick && S.mpFromMeal) {
+          if (depth > 1) { history.back(); return; }
+          S.mpFromMeal = false;
+          S.mpMode = 'meal';
+        }
+        renderModal();
+        return;
+      }
 
       var mv = e.target.closest('[data-mmove]');
       if (mv) {
@@ -6739,6 +6757,7 @@
 
       var fd = e.target.closest('[data-mfood]');
       if (fd) {
+        S.mMenu = '';
         rememberOpener();
         S.foodOpen = { id: fd.dataset.mfood, x: Number(fd.dataset.mx) || 1, slot: fd.dataset.mfslot || '' };
         pushSheet({ m: 1 });
@@ -8189,9 +8208,30 @@
 
       var mpm = e.target.closest('[data-mpmode]');
       if (mpm && S.macroPick) {
+        S.mMenu = '';
+        var targetMode = mpm.dataset.mpmode;
         // leaving scan means letting go of the camera, whichever way you leave
         if (S.mpMode === 'scan') mScanStop();
-        S.mpMode = mpm.dataset.mpmode === S.mpMode ? 'home' : mpm.dataset.mpmode;
+        if (targetMode === 'meal') {
+          S.mpSwap = null;
+          if (S.mpFromMeal && depth > 1) { history.back(); return; }
+          S.mpFromMeal = false;
+          S.mpMode = 'meal';
+          mCamDone = false;
+          renderModal();
+          return;
+        }
+        if (S.mpMode === 'meal' && targetMode === 'home') {
+          S.mpFromMeal = true;
+          S.mpMode = 'home';
+          mCamDone = false;
+          pushSheet({ m: 1, mpFind: 1 });
+          renderModal();
+          var mpF = $('mpFind');
+          if (mpF && mpF.focus) mpF.focus();
+          return;
+        }
+        S.mpMode = targetMode === S.mpMode ? 'home' : targetMode;
         mCamDone = false;               // a fresh visit to scan opens the lens again
         renderModal();
         return;
@@ -8589,6 +8629,7 @@
 
       var mp = e.target.closest('[data-mpick]');
       if (mp && S.macroPick) {
+        var swappedFrom = false;
         var pel = mp;
         var pid = idOf(pel.dataset.mpick), px = Number(pel.dataset.mpx) || 1;
         var pk = mViewKey(), psk = S.macroPick.slot, held = S.mpBasket[pid];
@@ -8608,6 +8649,7 @@
               at2 = swap.i;
             } else { list.push(plate); at2 = list.length - 1; }
           });
+          swappedFrom = !!swap;
           S.mpSwap = null;
           S.mpAt[pid] = at2;
           S.mMarks = { k: pk, sk: psk, was: mRefitMeal(pk, psk, undefined, false, at2), fresh: mpFresh(at2, pid), snap: null };
@@ -8615,6 +8657,11 @@
           S.mpBasket[pid] = ((mDay(pk)[psk] || [])[at2] || {}).x || px;
         }
         if (S.mAmt && S.mAmt !== '*') S.mAmt = '';
+        if (swappedFrom && S.mpFromMeal) {
+          if (depth > 1) { renderMacros(); history.back(); }
+          else { S.mpFromMeal = false; S.mpMode = 'meal'; renderMacros(); renderModal(); }
+          return;
+        }
         var pSel = '#mpList [data-mpick="' + String(pid).replace(/"/g, '') + '"]';
         var pBefore = (document.querySelector(pSel) || pel).getBoundingClientRect().top;
         renderMacros();
@@ -9510,6 +9557,15 @@
       mOffMeal();
       renderModal();
       if (S.view === 'macros') renderMacros();
+    } else if (st && st.m && !st.mpFind && S.macroPick && S.mpFromMeal && !mOverMeal()) {
+      /* Back (or Find's Done) returns cleanly from Food Search to Meal View. */
+      depth = Math.max(0, depth - 1);
+      if (S.mpMode === 'scan') mScanStop();
+      S.mpSwap = null;
+      S.mpFromMeal = false;
+      S.mpMode = 'meal';
+      renderModal();
+      if (S.view === 'macros') renderMacros();
     } else if (st && ((st.pw && S.pwOpen) || (st.ad && S.addOpen) || (st.ds && S.daySheet) || (st.td && S.tdSheet))) {
       /* Back from a recipe opened over Plan my week's list, + Add or a day's
          sheet lands on that sheet, not on the page under all of them. */
@@ -9526,6 +9582,7 @@
   /* A sheet standing over a meal's sheet, and taking it down. */
   function mOverMeal() { return !!(S.openId || S.foodOpen || S.keepMeal || S.mCopyFrom || S.newFood); }
   function mOffMeal() {
+    S.mMenu = '';
     S.openId = null;
     S.foodOpen = null;
     S.keepMeal = '';
@@ -9569,6 +9626,7 @@
     // and the Macros sheets, for exactly the same reason
     if (S.macroPick) mScanStop();        // never leave the camera running
     S.macroPick = null;
+    S.mpFromMeal = false;
     S.mpSwap = null;
     S.mpHeard = null;
     S.mpMicHint = false;

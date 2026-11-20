@@ -412,7 +412,24 @@
      dial: the keys go quiet and a tap on the grams hands them back.
      .mstep, .mstep-x and .mstep-in keep their names — they are what the
      portion tests reach for. */
-  function foodRowHTML(M, r, it, i, mk) {
+  function mOpenRow(M) {
+    var items = M.items, pre = M.sk + ':', live = [S.mType, S.mEdit, typeof S.mMenu === 'string' ? S.mMenu.replace(/^move:/, '') : ''];
+    for (var a = 0; a < live.length; a++) {
+      var v = live[a];
+      if (typeof v === 'string' && v.indexOf(pre) === 0 && items[+v.slice(pre.length)]) return +v.slice(pre.length);
+    }
+    if (S.mpSwap && S.mpSwap.slot === M.sk && items[S.mpSwap.i]) return S.mpSwap.i;
+    var o = S.mRowOpen;
+    if (o && o.k === M.k && o.sk === M.sk) {
+      if (o.id === null) return -1;
+      if (items[o.i] && String(items[o.i].id) === String(o.id)) return o.i;
+      for (var j = 0; j < items.length; j++) if (String(items[j].id) === String(o.id)) return j;
+      return -1;
+    }
+    return -1;
+  }
+
+  function foodRowHTML(M, r, it, i, mk, open, inlineAll) {
     var sk = M.sk, tag = sk + ':' + i;
     var pinned = M.pins.some(function (p) { return String(p.id) === String(it.id); });
     var was = mk.was[i], fresh = !!mk.fresh[i];
@@ -433,13 +450,24 @@
       }).join('');
     }
     var swapping = !!(S.mpSwap && S.mpSwap.slot === sk && S.mpSwap.i === i);
-    var sum = '<div class="mrow-sum">' +
-        (r.score === null || r.score === undefined ? '' : leaf(r.score, 'leaf-sm')) +
-        '<span class="mrow-nm">' + esc(r.name) + '</span>' +
-        (it.l ? '<span class="mrow-mk kept">' + LOCK_SM + (it.l === 2 ? 'Locked' : 'Kept') + '</span>' : '') +
-        (pinned ? '<span class="mrow-mk kept">Pinned</span>' : '') +
-      '</div>';
-    var cls = 'mitem mfood mrow mrow-x mrow-open' + (it.eaten ? ' eaten' : '') + (it.l ? ' held' : '') +
+    var kc = Math.round(((r.macro || {}).kcal || 0) * it.x);
+    var sum = inlineAll
+      ? '<div class="mrow-sum">' +
+          (r.score === null || r.score === undefined ? '' : leaf(r.score, 'leaf-sm')) +
+          '<span class="mrow-nm">' + esc(r.name) + '</span>' +
+          (it.l ? '<span class="mrow-mk kept">' + LOCK_SM + (it.l === 2 ? 'Locked' : 'Kept') + '</span>' : '') +
+          (pinned ? '<span class="mrow-mk kept">Pinned</span>' : '') +
+        '</div>'
+      : '<button type="button" class="mrow-sum" data-mrowopen="' + tag + '" aria-expanded="' + (open ? 'true' : 'false') + '" aria-label="' + esc(r.name) + ', ' +
+          esc(mDialText(r, it.x)) + ', ' + kc + ' kcal. ' + (open ? 'Close' : 'Open to change it') + '">' +
+          (r.score === null || r.score === undefined ? '' : leaf(r.score, 'leaf-sm')) +
+          '<span class="mrow-nm">' + esc(r.name) + '</span>' +
+          (it.l ? '<span class="mrow-mk kept">' + LOCK_SM + (it.l === 2 ? 'Locked' : 'Kept') + '</span>' : '') +
+          (pinned ? '<span class="mrow-mk kept">Pinned</span>' : '') +
+          '<span class="mrow-sg num">' + esc(mDialText(r, it.x)) + '</span>' +
+          '<span class="mrow-sk num">' + kc + ' kcal</span>' +
+        '</button>';
+    var cls = 'mitem mfood mrow mrow-x ' + (open ? 'mrow-open' : 'mrow-shut') + (it.eaten ? ' eaten' : '') + (it.l ? ' held' : '') +
       (was !== undefined ? ' moved' : fresh ? ' fresh' : '') + (swapping ? ' swapping' : '');
     var doorAttr = (r.food
       ? 'class="mfood-mi mitem-name mitem-food mrow-door" data-mfood="' + esc(String(r.id)) + '" data-mx="' + it.x + '" data-mfslot="' + esc(sk) + '"'
@@ -546,15 +574,17 @@
         body: '<div class="msh-skipped">' + esc(name) + ' is skipped today. Its share went to the rest.' +
           '<button class="ghost mslot-unskip" data-mskip="' + esc(sk) + '">Put ' + esc(name) + ' back</button></div>' };
     }
+    var isMealView = S.mpMode === 'meal';
     var remK = M.aim && M.aim.kcal > 0 ? Math.round(M.aim.kcal) - Math.round(M.sub.kcal) : 0;
-    var deltaHTML = M.aim && M.aim.kcal > 0
+    var deltaHTML = isMealView && M.aim && M.aim.kcal > 0
       ? '<div class="msh-delta"><span class="msh-dsub num"><b>' + fmtK(M.sub.kcal) + '</b> / ' + fmtK(M.aim.kcal) + ' kcal</span>' +
         '<span class="msh-rem num' + (remK < 0 ? ' over' : '') + '">' + (remK >= 0 ? fmtK(remK) + ' kcal left' : fmtK(-remK) + ' kcal over') + '</span></div>'
       : '';
     var stick = deltaHTML + '<div class="mcaps">' + capsHTML(M.sub, M.aim, M.ask && M.ask.spent, !!(M.ask && M.ask.capped)) + '</div>';
+    var openIdx = isMealView ? -1 : mOpenRow(M);
     var rows = items.map(function (it, i) {
       var r = LIVE.BY_ID[it.id];
-      return r ? foodRowHTML(M, r, it, i, mk) : '';
+      return r ? foodRowHTML(M, r, it, i, mk, isMealView || openIdx === i, isMealView) : '';
     }).join('');
     rows = '<div class="mrows mslot-items">' + (rows || '<div class="mscreen-empty">Nothing on ' + esc(name.toLowerCase()) + ' yet.' +
       (M.onPlan && S.mpMode === 'meal' ? ' Tap Add foods below.' : '') + '</div>') + '</div>';
@@ -587,10 +617,12 @@
   function sheetOnHTML(M, rows) {
     var n = 0;
     M.items.forEach(function (it) { if (LIVE.BY_ID[it.id]) n++; });
-    var wChip = '<span class="msh-wchips">' +
-      '<button type="button" class="ghost msh-wbtn" data-hyd="wt:8" aria-label="Add 8 oz water">+8 oz \ud83d\udca7</button>' +
-      '<button type="button" class="ghost msh-wbtn" data-hyd="wt:16" aria-label="Add 16 oz water">+16 oz \ud83d\udca7</button>' +
-    '</span>';
+    var wChip = S.mpMode === 'meal'
+      ? '<span class="msh-wchips">' +
+          '<button type="button" class="ghost msh-wbtn" data-hyd="wt:8" aria-label="Add 8 oz water">+8 oz \ud83d\udca7</button>' +
+          '<button type="button" class="ghost msh-wbtn" data-hyd="wt:16" aria-label="Add 16 oz water">+16 oz \ud83d\udca7</button>' +
+        '</span>'
+      : '';
     if (!n) {
       /* One-tap repeat from yesterday when opening an empty meal sheet.
          Reuses mCopyItems and keyDate so its count and filter never diverge

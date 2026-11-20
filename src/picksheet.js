@@ -180,6 +180,8 @@
           '<input type="search" class="txt" id="mpFind" ' +
             'placeholder="Search or say a meal&hellip;" ' +
             'aria-label="Search" value="' + esc(S.mpQuery) + '">' +
+          '<button type="button" class="mp-clear" data-mpclear="1" aria-label="Clear search"' +
+            (String(S.mpQuery || '').trim() ? '' : ' hidden') + '>&times;</button>' +
           /* The microphone cannot listen by itself: a web page has no way to
              start the keyboard's own dictation, and the browser's speech
              recognition sends the sound to Google and needs a signal, which

@@ -1553,6 +1553,19 @@ select { max-width: 280px; }
 .mp-find:not(:has(.mp-cam)) .mp-mic:not(#u#u) { right: 2px; }
 .mp-mic svg { width: 19px; height: 19px; }
 .mp-mic:focus-visible { outline: 2px solid var(--ochre); outline-offset: -2px; border-radius: 8px; }
+#mpFind::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
+.mp-clear {
+  position: absolute; right: 2px; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px; min-width: 44px; min-height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0; padding: 0; border: 0; border-radius: 8px;
+  background: none; color: var(--label); font-size: 1.375rem; line-height: 1; cursor: pointer;
+}
+.mp-clear[hidden] { display: none; }
+.mp-clear:hover { background: var(--hint); color: var(--ink); }
+.mp-clear:focus-visible { outline: 2px solid var(--ochre); outline-offset: -2px; }
+.msheet.mpq .mp-mic, .msheet.mpq .mp-cam { display: none; }
+.msheet.mpq .mp-find .txt:not(#u#u) { padding-right: 48px; }
 .mp-mic-hint { margin: 6px 0 2px; padding: 8px 10px; border-radius: 10px; background: var(--ochre-soft); color: var(--ochre-text); font-size: 0.8125rem; line-height: 1.4; }
 
 /* A meal said in one breath (heard.js): its band, above the list. Ringed in
@@ -7985,16 +7998,30 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
    and ⋯ side by side (2026-11-19 RP inline meal view). */
 .msheet .mrow.mrow-x { display: block; flex: none; min-height: 0; padding: 0; }
 .msheet .mrow-sum {
-  width: 100%; min-height: 28px; margin: 0; display: flex; align-items: baseline; gap: 8px;
-  padding: 6px 8px 2px; border: 0; border-radius: inherit; background: none; color: var(--ink);
+  width: 100%; min-height: 44px; margin: 0; display: flex; align-items: center; gap: 8px;
+  padding: 0 10px 0 8px; border: 0; border-radius: inherit; background: none; color: var(--ink);
   font-family: var(--sans); font-size: 0.90625rem; line-height: 1.25; text-align: left;
 }
-.msheet .mrow-sum .mrow-nm {
+button.mrow-sum { cursor: pointer; }
+.msheet .mrow-shut .mrow-sum .mrow-nm {
+  flex: 1 1 auto; min-width: 0; font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.msheet .mrow-open .mrow-sum {
+  position: relative; z-index: 1; min-height: 28px; padding: 6px 8px 2px; align-items: baseline;
+}
+.msheet .mrow-open button.mrow-sum::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 44px; margin-top: -22px;
+}
+.msheet .mrow-open .mrow-sum .mrow-nm {
   flex: 1 1 auto; min-width: 0; font-weight: 600;
   white-space: normal; overflow-wrap: break-word; overflow: clip;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-clamp: 2;
 }
+.msheet .mrow-open .mrow-sg, .msheet .mrow-open .mrow-sk { display: none; }
 .msheet .mrow-sum .mrow-mk, .msheet .mrow-sum .leaf { flex: none; }
+.msheet .mrow-sg { flex: none; max-width: 38%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.msheet .mrow-sk { flex: none; min-width: 4.4em; text-align: right; color: var(--note); font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
 .mrow-lock {
   position: relative; z-index: 2; flex: none; width: 44px; height: 44px; min-width: 34px; min-height: 44px;
   margin: 0; padding: 0; border: 1px solid var(--line-firm); border-radius: 10px;
@@ -8264,6 +8291,16 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
    have scrolled away */
 .msheet .msh-find { top: var(--msh-top); padding-top: 8px; margin-top: 4px; }
 .msheet .msh-find .mp-controls { margin: 0; }
+@media (max-height: 600px) {
+  .msheet[data-mode="find"] { padding-bottom: 55vh; }
+  .msheet[data-mode="find"] .msh-top { position: static; }
+  .msheet[data-mode="find"] .msh-find { top: 0; z-index: var(--z-sticky-card); padding-top: 6px; margin-top: 0; }
+  .msheet[data-mode="find"] .msh-tray { position: static; box-shadow: none; margin-top: 12px; }
+}
+.msheet.msheet-cramped[data-mode="find"] { padding-bottom: 55vh; }
+.msheet.msheet-cramped[data-mode="find"] .msh-top { position: static; }
+.msheet.msheet-cramped[data-mode="find"] .msh-find { top: 0; z-index: var(--z-sticky-card); padding-top: 6px; margin-top: 0; }
+.msheet.msheet-cramped[data-mode="find"] .msh-tray { position: static; box-shadow: none; margin-top: 12px; }
 @media print { .msheet .msh-top, .msheet .msh-find { position: static; } }
 /* the small print stays small: the measure is words here, not a chip, and
    salt is a word in the line rather than a badge */

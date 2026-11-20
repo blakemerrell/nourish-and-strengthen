@@ -104,31 +104,23 @@ module.exports = {
       const rows = [...s.querySelectorAll('.mrows .mrow')];
       return { caps: s.querySelectorAll('.msh-top .mcap').length, rows: rows.length,
         ticks: s.querySelectorAll('.mrows [data-meat], .mrows .mday-dot').length,
-        /* A line a food since 2026-10-24 (Blake's "B"): its name, grams and
-           calories, with its dial and ⋯ behind a tap, so none is in sight
-           until one is opened. */
-        lines: rows.every((r) => { const b = r.querySelector('[data-mrowopen]');
-          return b && b.offsetHeight >= 44 && / g/.test(b.querySelector('.mrow-sg').textContent) && /kcal/.test(b.querySelector('.mrow-sk').textContent); }),
-        shut: rows.every((r) => !r.querySelector('.mrow-dial').offsetParent && !r.querySelector('[data-mfmenu]').offsetParent),
+        /* Step 1b: every food opens inline with Lock, − grams +, and ⋯ visible,
+           and no tick of its own. */
+        inline: rows.every((r) => r.classList.contains('mrow-open') && !!r.querySelector('.mrow-lock')?.offsetParent &&
+          !!r.querySelector('.mrow-dial')?.offsetParent && / g/.test(r.querySelector('.mstep-x')?.textContent || '') &&
+          !!r.querySelector('[data-mfmenu]')?.offsetParent),
         find: !!s.querySelector('.msh-find #mpFind'), shelves: !!s.querySelector('.msh-find #mpShelves'),
         basket: !!s.querySelector('[data-mpdone], [data-mpbasket]'), tall: Math.max.apply(null, rows.map((r) => r.offsetHeight)) };
     });
     t.ok('opened, the tray is one row a food, under the meal\'s four pills', !!sh && sh.caps === 4 && sh.rows === 7, JSON.stringify(sh));
-    t.ok('every food is a line, its grams and calories, its dial and ⋯ behind a tap, and no tick of its own',
-      sh && sh.lines && sh.shut && sh.ticks === 0, JSON.stringify(sh));
-    await openRow(p, 'l:2');
-    const one = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows .mrow')].map((r) =>
-      (r.querySelector('[data-mrowopen]').getAttribute('aria-expanded') === 'true' ? 'O' : '-') +
-      (r.querySelector('[data-mstep$=":down"]').offsetParent && r.querySelector('[data-mstep$=":up"]').offsetParent &&
-        r.querySelector('[data-mfmenu]').offsetParent && / g$/.test(r.querySelector('.mstep-x').textContent) ? 'd' : '')).join());
-    t.ok('a tap opens that one: − grams + and ⋯ on two tight rows, the rest still a line', one === '-,-,Od,-,-,-,-', one);
-    await openRow(p, 'l:4');
-    const shifted = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows [data-mrowopen]')].map((b) => b.getAttribute('aria-expanded') === 'true' ? 'O' : '-').join(''));
-    await p.click('#modalRoot [data-mrowopen="l:4"]');
-    await p.waitForTimeout(150);
-    const none = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows [data-mrowopen]')].every((b) => b.getAttribute('aria-expanded') === 'false'));
-    t.ok('one open at a time: another tap moves it, a tap on the open one shuts it', shifted === '----O--' && none, JSON.stringify({ shifted, none }));
-    t.ok('the rows are compact', sh && sh.tall <= 72, JSON.stringify(sh));
+    t.ok('every food renders inline with Lock, − grams +, and ⋯ visible, and no tick of its own',
+      sh && sh.inline && sh.ticks === 0, JSON.stringify(sh));
+    const dials = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows .mrow')].every((r) =>
+      r.classList.contains('mrow-open') && r.querySelector('[data-mstep$=":down"]').offsetParent &&
+      r.querySelector('[data-mstep$=":up"]').offsetParent && r.querySelector('[data-mfmenu]').offsetParent &&
+      / g$/.test(r.querySelector('.mstep-x').textContent)));
+    t.ok('all seven rows stay open simultaneously for rapid portion dialing', dials);
+    t.ok('the rows are compact', sh && sh.tall <= 108, JSON.stringify(sh));
     t.ok('under them, the picker: the search box and the shelves, and no basket or Add', sh && sh.find && sh.shelves && !sh.basket, JSON.stringify(sh));
 
     /* + dials five grams */
@@ -287,19 +279,17 @@ module.exports = {
     t.ok('a food added from the list goes up with the others, and the list holds still under the thumb',
       at0.s > 0 && at1.n === at0.n + 1 && Math.abs(at1.y - at0.y) <= 1, JSON.stringify({ at0, at1 }));
 
-    /* A newly added food stays collapsed until tapped (since auto-balance fits
-       its portion automatically), and once tapped open, − leaves it open. */
-    const eggShut = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows .mrow')].every((x) => x.classList.contains('mrow-shut')));
+    /* Newly added food arrives ready to dial (always-open inline row), and − keeps it open. */
+    const eggOpen = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .mrows .mrow')].every((x) => x.classList.contains('mrow-open')));
     const eggTag = await p.evaluate(() => { const r = [...document.querySelectorAll('#modalRoot .mrows .mrow')].find((x) => x.classList.contains('fresh'));
-      return r ? r.querySelector('[data-mrowopen]').dataset.mrowopen : null; });
+      const btn = r && r.querySelector('[data-mfmenu]'); return btn ? btn.dataset.mfmenu : null; });
     if (eggTag) {
       await openRow(p, eggTag);
       await p.click('#modalRoot [data-mstep="' + eggTag + ':down"]');
       await p.waitForTimeout(250);
     }
-    const stillOpen = await p.evaluate((tg) => !!tg && (document.querySelector('#modalRoot [data-mrowopen="' + tg + '"]') || {}).getAttribute &&
-      document.querySelector('#modalRoot [data-mrowopen="' + tg + '"]').getAttribute('aria-expanded') === 'true', eggTag);
-    t.ok('a food just added stays collapsed until tapped, and a − on it leaves it open', eggShut && !!eggTag && stillOpen, eggTag);
+    const stillOpen = await p.evaluate((tg) => !!tg && !!(document.querySelector('#modalRoot [data-mstep="' + tg + ':down"]') || {}).offsetParent, eggTag);
+    t.ok('a food just added arrives ready to dial inline, and a − on it leaves it open', eggOpen && !!eggTag && stillOpen, eggTag);
 
     /* a recipe's Details (its name, until its line became the way to open
        it) opens the recipe; back lands on the meal's sheet */

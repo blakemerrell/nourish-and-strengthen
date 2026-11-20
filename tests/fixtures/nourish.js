@@ -106,8 +106,8 @@ async function revealPlanFields(pg) {
     await pg.waitForTimeout(150);
     await pg.click('#macroSlots [data-addon]');
     await pg.waitForTimeout(250);
-    // the meal's rows are in its tray, which opens shut
     await openTray(pg);
+    await openFind(pg);
   }
 
   /* A plate added to a meal whose time has come arrives eaten, and an eaten
@@ -140,27 +140,37 @@ async function revealPlanFields(pg) {
      kept as a no-op so a suite that opened it still reads. */
   async function openBasket() {}
 
-  /* One meal's sheet, by key: its tray's door. */
+  /* Step from separated meal view into the food picker when a test asks for
+     #mpFind or #mpList after opening a populated meal. */
+  async function openFind(pg) {
+    const addBtn = await pg.$('#modalRoot .msheet[data-mode="meal"] [data-mpmode="home"]');
+    if (addBtn) { await addBtn.click(); await pg.waitForTimeout(250); }
+  }
+
+  /* One meal's sheet, by key: its tray's door (populated meals open in meal mode). */
   async function openMeal(pg, sk) {
     await pg.evaluate((k) => {
-      const b = document.querySelector('#macroSlots [data-mopen="' + k + '"]');
+      const b = document.querySelector('#macroSlots [data-mopen="' + k + '"]:not([data-madd])') ||
+        document.querySelector('#macroSlots [data-mopen="' + k + '"]');
       if (b) { b.scrollIntoView({ block: 'center' }); b.click(); }
     }, sk);
     await pg.waitForTimeout(250);
     await openTray(pg);
   }
 
-  /* Out of the meal's sheet, by Done in its tray (the × left the header on
-     2026-10-05; a skipped or bygone meal, with no tray, keeps one). */
+  /* Out of the meal's sheet, by Done (two passes if find mode was opened from meal mode). */
   async function closeSheet(pg) {
-    /* By selector, not by a handle: the sheet can redraw between finding
-       the button and pressing it, and a handle would be to a node now gone. */
-    for (const sel of ['#modalRoot .msheet .msh-done', '#modalRoot .msheet .sheet-x']) {
-      if (await pg.$(sel)) {
-        await pg.click(sel);
-        await pg.waitForTimeout(250);
-        return;
+    for (let i = 0; i < 2; i++) {
+      let clicked = false;
+      for (const sel of ['#modalRoot .msheet .msh-done', '#modalRoot .msheet .sheet-x']) {
+        if (await pg.$(sel)) {
+          await pg.click(sel);
+          await pg.waitForTimeout(250);
+          clicked = true;
+          break;
+        }
       }
+      if (!clicked || !(await pg.$('#modalRoot .msheet'))) return;
     }
   }
 
@@ -178,6 +188,7 @@ async function revealPlanFields(pg) {
   }
 
   async function pickRecipe(pg) {
+    await openFind(pg);
     await pg.evaluate(() => {
       const r = [...document.querySelectorAll('.mpick-row[data-mpx]')]
         .find((x) => !/^f:/.test(x.dataset.mpick));
@@ -187,6 +198,7 @@ async function revealPlanFields(pg) {
   }
 
   async function pickerList(pg) {
+    await openFind(pg);
     await pg.evaluate(() => {
       const on = document.querySelector('.mp-shelf.on[data-mpshelf]');
       if (on && on.dataset.mpshelf) on.click();
@@ -314,8 +326,11 @@ async function openRow(pg, tag) {
 /* The same, for the line that holds `inner` (a selector inside a food's
    drawer, say its Details door), wherever in the sheet that food is. */
 async function openRowOf(pg, inner) {
-  const tag = await pg.evaluate((q) => { const e = document.querySelector(q), row = e && e.closest('.mrow');
-    const b = row && row.querySelector('[data-mrowopen]'); return b ? b.dataset.mrowopen : null; }, inner);
+  const tag = await pg.evaluate((q) => {
+    const e = document.querySelector(q), row = e && e.closest('.mrow');
+    const b = row && (row.querySelector('[data-mfmenu]') || row.querySelector('[data-mrowopen]'));
+    return b ? (b.dataset.mfmenu || b.dataset.mrowopen) : null;
+  }, inner);
   if (tag) {
     await openRow(pg, tag);
     const inMenu = await pg.evaluate((q) => { const e = document.querySelector(q); return !!e && e.hidden; }, inner);
@@ -333,4 +348,4 @@ async function openSync(pg) {
   await pg.click('#macroMenu [data-mmore="you"]');
 }
 
-module.exports = { openSync, openRowOf, openRow, goDay, stepDay, nourish, openWeigh, openPlan, revealPlanFields, addOn, asPlanned, openBasket, openMeal, closeSheet, openTray, pickRecipe, pickerList, addTo, storedDay, weighIn, todayOn, openDay };
+module.exports = { openSync, openRowOf, openRow, goDay, stepDay, nourish, openWeigh, openPlan, revealPlanFields, addOn, asPlanned, openBasket, openFind, openMeal, closeSheet, openTray, pickRecipe, pickerList, addTo, storedDay, weighIn, todayOn, openDay };

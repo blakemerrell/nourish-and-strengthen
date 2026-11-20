@@ -14,12 +14,17 @@ const { nourish, goDay, stepDay, openWeigh, openPlan, pickerList, openTray, open
    sheet's head for Done in its tray on 2026-10-05; a skipped or bygone meal,
    with no tray, keeps its ×). */
 async function toDay(pg) {
-  for (const sel of ['#modalRoot .msheet .msh-done', '#modalRoot .msheet .sheet-x']) {
-    if (await pg.$(sel)) {
-      await pg.click(sel);
-      await pg.waitForTimeout(250);
-      return;
+  for (let i = 0; i < 2; i++) {
+    let clicked = false;
+    for (const sel of ['#modalRoot .msheet .msh-done', '#modalRoot .msheet .sheet-x']) {
+      if (await pg.$(sel)) {
+        await pg.click(sel);
+        await pg.waitForTimeout(250);
+        clicked = true;
+        break;
+      }
     }
+    if (!clicked || !(await pg.$('#modalRoot .msheet'))) return;
   }
 }
 /* Opens one meal's sheet: out of any other meal's first, then that meal's
@@ -33,7 +38,8 @@ async function openMeal(pg, sk) {
   if (open === sk) { await openTray(pg); return; }
   if (open) await toDay(pg);
   await pg.evaluate((k) => {
-    const b = document.querySelector('#macroSlots [data-mopen="' + k + '"]');
+    const b = document.querySelector('#macroSlots [data-mopen="' + k + '"]:not([data-madd])') ||
+      document.querySelector('#macroSlots [data-mopen="' + k + '"]');
     if (b) { b.scrollIntoView({ block: 'center' }); b.click(); }
   }, sk);
   await pg.waitForTimeout(300);
@@ -690,13 +696,12 @@ module.exports = nourish({
        bottom, shut to a chip a food (2026-10-05). */
     t.ok('the tray shows what is on the meal, and opens it again',
       await p.evaluate(async () => {
-        const b = document.querySelector('#macroSlots [data-mopen="s"]');
+        const b = document.querySelector('#macroSlots .mtray-b[data-mopen="s"]');
         const tray = b && b.closest('.mtray');
         if (!tray || tray.querySelectorAll('.mtray-f').length !== 2) return false;
         b.click();
         await new Promise((r) => setTimeout(r, 300));
-        // its foods as rows in the pinned On box; the chip strip along the bottom went in #102
-        return document.querySelectorAll('#modalRoot .msheet .msh-top .msh-on .mrows .mrow').length === 2;
+        return document.querySelectorAll('#modalRoot .msheet .msh-on .mrows .mrow').length === 2;
       }), await p.evaluate(() => {
         const b = document.querySelector('#macroSlots [data-mopen="s"]');
         const tr = b && b.closest('.mtray');

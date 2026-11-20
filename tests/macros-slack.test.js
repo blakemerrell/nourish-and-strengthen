@@ -281,14 +281,21 @@ module.exports = nourish({
     t.ok('the sheet’s head starts with the meal’s tick, a thumb square, at its left edge',
       !!dotK && /mday-dot/.test(dotK.c) && dotK.w >= 44 && dotK.h >= 44 && dotK.x <= headRow.pad + 1,
       JSON.stringify(headRow));
+    await fold.click('#modalRoot .msheet [data-mpmode="home"]');
+    await fold.waitForTimeout(200);
+    const findLineWide = await fold.evaluate(() => {
+      const f = document.querySelector('#modalRoot .msheet #mpFind');
+      const s = document.querySelector('#modalRoot .msheet');
+      return !!f && f.closest('.mp-find').getBoundingClientRect().width >= s.getBoundingClientRect().width - 48;
+    });
+    await fold.click('#modalRoot .msheet [data-mpmode="meal"]');
+    await fold.waitForTimeout(200);
     t.ok('and only the ⋯ sits at the right edge, Balance and Done in the tray below, with the search box a line of its own',
       !!headRow && headRow.kids.length === 3 && /msh-i/.test(headRow.kids[2].c) &&
         headRow.kids[2].right <= headRow.padR + 1 &&
         await fold.evaluate(() => !!document.querySelector('#modalRoot .msheet .msh-tray .msh-bal') &&
           !!document.querySelector('#modalRoot .msheet .msh-tray .msh-done')) &&
-        await fold.evaluate(() => { const f = document.querySelector('#modalRoot .msheet #mpFind');
-          const s = document.querySelector('#modalRoot .msheet');
-          return !!f && f.closest('.mp-find').getBoundingClientRect().width >= s.getBoundingClientRect().width - 48; }),
+        findLineWide,
       JSON.stringify(headRow));
 
     /* On the narrowest phone in common use. Blake (2026-09-27): "get all the
@@ -720,13 +727,15 @@ module.exports = nourish({
     await reachPage.waitForTimeout(400);
     await openTray(reachPage);
     await openRow(reachPage);
-    Object.assign(reach, { key: await hit('#modalRoot .msheet .mrow-open [data-mstep$=":up"]'),
-      add: await box('#modalRoot .msheet .mp-find') });
+    Object.assign(reach, { key: await hit('#modalRoot .msheet .mrow-open [data-mstep$=":up"]') });
     await reachPage.click('#modalRoot .msheet [data-mmenu]');
     await reachPage.waitForTimeout(250);
     Object.assign(reach, {
       retry: await box('#modalRoot .msheet .msh-menu .mslot-try'),
       icon: await box('#modalRoot .msheet .msh-h [data-mmenu]'), back: await box('#modalRoot .msheet .msh-done') });
+    await reachPage.click('#modalRoot .msheet [data-mpmode="home"]');
+    await reachPage.waitForTimeout(250);
+    reach.add = await box('#modalRoot .msheet .mp-find');
     /* Against the BAR, not against a number — and then against a PLATE KEY
        (Blake, 2026-09-27: "Just use icons and the box size that is in the
        meal/food card uses"), and his rule for the sheet (2026-10-04): "Rows

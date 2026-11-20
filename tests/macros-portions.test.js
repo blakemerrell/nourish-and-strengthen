@@ -321,7 +321,7 @@ module.exports = nourish({
     // by position among the food rows of the meal's sheet, its line tapped open first
     const typeOn = async (i) => {
       const row = typ.locator('#modalRoot .mrows .mitem').nth(i), line = row.locator('[data-mrowopen]');
-      if ((await line.getAttribute('aria-expanded')) !== 'true') { await line.click(); await typ.waitForTimeout(150); }
+      if ((await line.count()) && (await line.getAttribute('aria-expanded')) !== 'true') { await line.click(); await typ.waitForTimeout(150); }
       await row.locator('[data-mtype]').click();
     };
     await typeOn(0);

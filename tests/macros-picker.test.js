@@ -22,7 +22,8 @@ async function openMeal(pg, sk) {
     await closeSheet(pg);
   }
   await pg.evaluate((k) => {
-    const b = document.querySelector('#macroSlots [data-mopen="' + k + '"]');
+    const b = document.querySelector('#macroSlots [data-mopen="' + k + '"]:not([data-madd])') ||
+      document.querySelector('#macroSlots [data-mopen="' + k + '"]');
     if (b) { b.scrollIntoView({ block: 'center' }); b.click(); }
   }, sk);
   await pg.waitForTimeout(300);
@@ -616,9 +617,8 @@ module.exports = nourish({
         return { w: lf + rt + 1, h: up + dn + 1, what: (el.getAttribute('data-mstep') ? 'key ' + el.getAttribute('data-mstep')
           : el.className.split(' ')[0] || el.tagName) };
       };
-      /* What is on screen: every food's line, and the dial, Details and ⋯ of
-         the one open (a shut line keeps its drawer unseen since 2026-10-24). */
-      const els = [...document.querySelectorAll('#modalRoot .mrows .mrow [data-mrowopen], #modalRoot .mrows .mrow [data-mstep], #modalRoot .mrows .mrow .mstep-x, ' +
+      /* What is on screen: every always-open inline row's Lock, dial, Details and ⋯. */
+      const els = [...document.querySelectorAll('#modalRoot .mrows .mrow [data-mlock], #modalRoot .mrows .mrow [data-mstep], #modalRoot .mrows .mrow .mstep-x, ' +
         '#modalRoot .mrows .mrow [data-mfmenu], #modalRoot .mrows .mrow .mrow-door, #modalRoot .msh-h button, #modalRoot .msh-acts button')]
         .filter((e) => e.getClientRects().length);
       const all = els.map(reach);
@@ -641,7 +641,7 @@ module.exports = nourish({
         fits: row.scrollWidth <= row.clientWidth + 1, amt: Math.round(R(parts[1]).width) };
     }));
     t.ok('a food’s dial fits one line at 320, each control clear of the one before',
-      strip320.length === 1 && strip320.every((x) => !x.missing && x.sameLine && x.clear && x.fits),
+      strip320.length >= 1 && strip320.every((x) => !x.missing && x.sameLine && x.clear && x.fits),
       JSON.stringify(strip320));
 
     /* The meal's own verbs on the sheet's head, drawn without words, each
@@ -1559,13 +1559,13 @@ module.exports = nourish({
     const cvTag = await lookPage.evaluate(() => {
       const row = [...document.querySelectorAll('#modalRoot .mrows .mrow')]
         .find((r) => /Costa Vida/.test(r.textContent));
-      const b = row && row.querySelector('[data-mrowopen]');
-      return b ? b.dataset.mrowopen : null;
+      const b = row && row.querySelector('[data-mfmenu]');
+      return b ? b.dataset.mfmenu : null;
     });
     await openRow(lookPage, cvTag);
-    await lookPage.click('#modalRoot .mrows .mrow:not(.mrow-shut) [data-mfmenu]');
+    await lookPage.click('#modalRoot [data-mfmenu="' + cvTag + '"]');
     await lookPage.waitForTimeout(200);
-    await lookPage.click('#modalRoot .mrows [data-mexplode]');
+    await lookPage.click('#modalRoot .mrow-menu [data-mexplode="' + cvTag + '"]');
     await lookPage.waitForTimeout(300);
     const afterExplode = await lookPage.evaluate((sk) => {
       const m = window.__macroLab.read().meals.find((ml) => ml.k === sk);

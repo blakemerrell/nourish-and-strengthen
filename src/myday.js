@@ -1277,6 +1277,13 @@
     var readout = macroFootHTML(day, targets, slots);
     if ($('macroPillHead')) $('macroPillHead').innerHTML = readout.head || '';
     $('macroFoot').innerHTML = readout.foot;
+    /* What's left (1g) leads the box, and the week strip folds behind its
+       "This week" button, which says in aria-expanded whether it is open. */
+    if ($('macroLeft')) {
+      $('macroLeft').innerHTML = readout.left || '';
+      var wkb = $('macroLeft').querySelector('[data-mweekfold]');
+      $('macroWeek').hidden = !!wkb && wkb.getAttribute('aria-expanded') !== 'true';
+    }
     var stickEl = document.querySelector('#view-macros .mday-stick');
     if (stickEl) stickEl.classList.toggle('tray-open', !!S.mPillTrayOpen);
     /* Contents only — the region itself must outlive the redraw or it

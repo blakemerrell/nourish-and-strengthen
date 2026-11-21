@@ -742,9 +742,42 @@
        label a listener needs. */
     var footHint = '<div class="mpillwk-a11y">' + bars + '</div>' +
     trayHTML;
+
+    /* What's left, big (redesign 1g). Blake, 2026-11-20, asked what he looks
+       at first when Eat opens, the week of capsules or how much is left:
+       "What's left, big". The same arithmetic as the head's "N left" badge
+       (target less everything on the day, eaten or still to eat, so the two
+       never disagree, the review of 2026-09-28), at display size, then
+       protein, fat and carbohydrate the same way, each a bar filled to what
+       is on the day with the eaten part darker (the "have / target" figures
+       are a tap away, in the day's tray). The week strip under it
+       folds behind "This week" (src/myday.js) instead of leading the screen. */
+    var leftRow = function (m, label) {
+      var tg = Math.max(1, Math.round(targets[m] || 0)), have = tot.all[m] || 0, ate = tot.eaten[m] || 0;
+      var lft = Math.round(tg - have);
+      return '<div class="mleft-row" data-mleft="' + m + '">' +
+        '<span class="mleft-rl"><span class="mleft-rk mb-' + m + '">' + label + '</span>' +
+          '<span class="mleft-rv num' + (lft < 0 ? ' over' : '') + '"><b>' + Math.abs(lft) + '</b> g ' + (lft < 0 ? 'over' : 'left') + '</span></span>' +
+        '<span class="mleft-tr mb-' + m + '" aria-hidden="true">' +
+          '<i class="mleft-pl" style="width:' + Math.min(100, Math.round(100 * have / tg)) + '%"></i>' +
+          '<i class="mleft-at" style="width:' + Math.min(100, Math.round(100 * ate / tg)) + '%"></i></span>' +
+      '</div>';
+    };
+    /* Folded unless he opened it on this phone: a reading of the screen, not
+       of the day, so it stays here (sh.) and never goes to the account. */
+    var weekOpen = false;
+    try { weekOpen = localStorage.getItem('sh.mweek') === '1'; } catch (e) { /* no storage: folded */ }
+    var leftHTML = '<section class="mleft" aria-label="What is left today">' +
+        '<div class="mleft-k"><b class="serif num' + remCls + '">' + Math.abs(remKcal).toLocaleString() + '</b>' +
+          '<span class="mleft-kt">' + (remKcal >= 0 ? 'calories left' : 'calories over') + '<small class="num"> of ' + goalKcal.toLocaleString() + '</small></span>' +
+          '<button type="button" class="mleft-wk" data-mweekfold="1" aria-expanded="' + weekOpen + '" aria-controls="macroWeek">This week<svg viewBox="0 0 12 12" aria-hidden="true"><path d="' + (weekOpen ? 'M2.5 7.5 6 4l3.5 3.5' : 'M2.5 4.5 6 8l3.5-3.5') + '" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+        '</div>' +
+        '<div class="mleft-rows">' + leftRow('p', 'Protein') + leftRow('f', 'Fat') + leftRow('c', 'Carbs') + '</div>' +
+      '</section>';
     return {
       head: headBar,
       foot: footHint,
+      left: leftHTML,
       /* Handed back separately, because the element it goes into is static
          markup in the page. A live region has to be on the page and watched
          BEFORE it gains content; building it here would mean a new region

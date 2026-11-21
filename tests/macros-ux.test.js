@@ -52,6 +52,7 @@ module.exports = nourish({
           const key = (d) => d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
           localStorage.clear();
           localStorage.setItem('bsc.hintDone', '1');
+          localStorage.setItem('sh.mweek', '1');   // the week strip, open (folded behind This week since 1g)
           const ws = {};
           for (let i = 0; i <= 6; i++) { const d = new Date(); d.setDate(d.getDate() - i); ws[key(d)] = 212; }
           localStorage.setItem('bsc.macroWeights', JSON.stringify(ws));
@@ -559,6 +560,7 @@ module.exports = nourish({
           const key = (d) => d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
           localStorage.clear();
           localStorage.setItem('bsc.hintDone', '1');
+          localStorage.setItem('sh.mweek', '1');   // the week strip, open (folded behind This week since 1g)
           const ws = {};
           for (let i = 0; i <= 6; i++) { const d = new Date(); d.setDate(d.getDate() - i); ws[key(d)] = 212; }
           localStorage.setItem('bsc.macroWeights', JSON.stringify(o.ws || ws));

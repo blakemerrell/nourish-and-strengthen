@@ -10510,3 +10510,38 @@ button.mf-name:hover { background: var(--card); }
   padding: 10px 12px; margin-bottom: 8px; border-radius: 10px;
   border: 1px dashed var(--line-control); font-size: 0.8125rem; line-height: 1.4; color: var(--muted-2);
 }
+
+/* What's left, big (redesign 1g, src/dayfoot.js): the day's calories left at
+   display size with "This week" beside them, then protein, fat and carbs as
+   a row each, what is left to the right and a bar under it, filled to what
+   is on the day with the eaten part darker. Inside #macroFold, so it rolls
+   up into the pills on scroll like the week strip it replaces at the top. */
+#macroLeft { margin: 4px 0 10px; }
+#macroWeek[hidden] { display: none; }
+.mleft {
+  position: relative; background: var(--card); border: 1px solid var(--line-soft); border-radius: 14px;
+  padding: 8px 12px 10px; display: flex; flex-direction: column; gap: 6px;
+}
+.mleft-k { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; padding-right: 104px; min-height: 44px; }
+.mleft-k > b { font-size: 2.25rem; line-height: 1.05; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+.mleft-k > b.over { color: var(--dial-over); }
+.mleft-kt { font: 500 0.9375rem/1.2 var(--sans); color: var(--note); flex: 1 1 auto; }
+.mleft-kt small { font-size: 0.8125rem; }
+.mleft-wk {
+  position: absolute; top: 8px; right: 8px; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 10px;
+  border: 1px solid var(--line); border-radius: 22px; background: var(--paper-soft); color: var(--control-ink);
+  font: 600 0.8125rem/1 var(--sans); cursor: pointer;
+}
+.mleft-wk svg { width: 12px; height: 12px; }
+.mleft-wk:hover, .mleft-wk:focus-visible { background: var(--hint); }
+.mleft-rows { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.mleft-row { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.mleft-rl { display: flex; flex-direction: column; gap: 1px; }
+.mleft-rk { font: 700 0.8125rem/1.2 var(--sans); }
+.mleft-rv { font: 500 0.8125rem/1.2 var(--sans); color: var(--note); }
+.mleft-rv b { font-weight: 700; color: var(--ink); }
+.mleft-rv.over b { color: var(--dial-over); }
+.mleft-tr { position: relative; height: 8px; border-radius: 4px; overflow: hidden; background: color-mix(in oklab, currentColor 14%, var(--card)); }
+.mleft-tr i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; }
+.mleft-pl { background: color-mix(in oklab, currentColor 42%, var(--card)); }
+.mleft-at { background: currentColor; }

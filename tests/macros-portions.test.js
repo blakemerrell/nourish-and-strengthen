@@ -76,6 +76,8 @@ module.exports = nourish({
     await reopen.click('#macroFill');
     await reopen.waitForTimeout(700);
     const beforeReopen = await reopen.evaluate(() => document.documentElement.scrollHeight);
+    // the week strip folded, as it opens for him since 1g: the fixture opens it for the strip's own suites
+    await reopen.evaluate(() => localStorage.removeItem('sh.mweek'));
     await reopen.evaluate(() => window.scrollTo(0, 600));
     await reopen.waitForTimeout(400);
     await reopen.reload();
@@ -680,6 +682,9 @@ module.exports = nourish({
      * the two-threshold version was buying with hysteresis. `.shrunk` marks
      * the far end of the fold and nothing in between. */
     const ph = await t.fresh({ viewport: { width: 390, height: 720 } });
+    // the week strip folded, as he sees it since 1g (the fixture opens it for the strip's own suites)
+    await ph.evaluate(() => localStorage.removeItem('sh.mweek'));
+    await ph.reload();
     await ph.click('.tab[data-view="macros"]');
     await ph.waitForTimeout(200);
     await openPlan(ph);

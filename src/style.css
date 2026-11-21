@@ -10561,3 +10561,6 @@ button.mf-name:hover { background: var(--card); }
 }
 .tr-aim b { font-weight: 700; }
 .tr-aim span { color: var(--note); }
+
+/* "Whole block" under this week's row on the Train home (redesign 3). */
+.tr-gall { display: inline-flex; align-items: center; min-height: 44px; margin: 2px 0 0; font-weight: 600; }

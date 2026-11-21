@@ -43,8 +43,8 @@ module.exports = nourish({
       const chipTops = new Set([...chipRow.querySelectorAll('.cook-chip')].map((c) => Math.round(c.getBoundingClientRect().top)));
       return { labels, minH, tabs, cookTabs, cardTop, chipCount: chipRow.querySelectorAll('.cook-chip').length, chipRows: chipTops.size };
     });
-    t.ok('Cook sub-bar keeps 5 visible app tabs, 0 Cook tabs, >=44px targets, 1-row quick chips, and first card near the top on Pixel 9 Pro',
-      nav.tabs === 5 && nav.cookTabs === 0 && nav.minH >= 44 && nav.chipCount >= 6 && nav.chipRows === 1 && nav.cardTop < 410 &&
+    t.ok('Cook sub-bar keeps 4 visible app tabs, 0 Cook tabs, >=44px targets, 1-row quick chips, and first card near the top on Pixel 9 Pro',
+      nav.tabs === 4 && nav.cookTabs === 0 && nav.minH >= 44 && nav.chipCount >= 6 && nav.chipRows === 1 && nav.cardTop < 410 &&
       nav.labels.slice(0, 3).join('|') === 'Recipes|This week|List' && nav.labels[3] === 'On hand',
       JSON.stringify(nav));
 

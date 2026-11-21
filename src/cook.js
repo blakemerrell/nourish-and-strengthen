@@ -34,7 +34,9 @@
 
   var HASH_MAP = {
     cook: 'browse', recipes: 'browse', browse: 'browse',
+    book: 'book',
     plan: 'plan', week: 'plan', 'this-week': 'plan',
+    where: 'where',
     list: 'list',
     pantry: 'pantry', 'on-hand': 'pantry',
     eat: 'macros', macros: 'macros', nourish: 'macros',

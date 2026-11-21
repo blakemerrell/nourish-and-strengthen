@@ -65,16 +65,17 @@ module.exports = {
       Number((s.btn.match(/^Add (\d+) items? to Walmart cart$/) || [])[1]) === s.cart && s.cart > 0 && s.cart + s.named === s.bought,
       JSON.stringify({ btn: s.btn, cart: s.cart, bought: s.bought, named: s.named, lines: s.lines }));
 
-    /* Pinned: on the first screen, before any scrolling, the button sits on
-       the foot of the screen, inside the To buy box. */
+    /* Pinned: on the first screen, before any scrolling, the button sits cleanly
+       above the bottom tab bar, inside the To buy box. */
     const pin = await p.evaluate(() => {
       window.scrollTo(0, 0);
       const bar = document.querySelector('.list-group.where-b > .wm-bar');
       const r = bar.getBoundingClientRect(), last = [...document.querySelectorAll('.where-b .list-line')].pop().getBoundingClientRect();
-      return { bottom: Math.round(r.bottom), vh: innerHeight, lastBelow: last.top > innerHeight };
+      const navTop = Math.round(document.querySelector('.bottom-tabs').getBoundingClientRect().top);
+      return { bottom: Math.round(r.bottom), navTop, vh: innerHeight, lastBelow: last.top > innerHeight };
     });
-    t.ok('the Walmart button is pinned to the foot of the screen while the list goes on below it',
-      pin.lastBelow && Math.abs(pin.bottom - pin.vh) <= 1, JSON.stringify(pin));
+    t.ok('the Walmart button is pinned cleanly above the bottom tabs while the list goes on below it',
+      pin.lastBelow && Math.abs(pin.bottom - pin.navTop) <= 1, JSON.stringify(pin));
 
     /* Mark what I have: the switch on every line, one tap to Have, and the
        line leaves To buy and the cart. */

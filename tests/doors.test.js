@@ -89,6 +89,7 @@ module.exports = {
     // the pills are the meal's door, the name steps the card; a food's line is the line's own
     const at = await p.evaluate(() => {
       const tr = document.querySelector('[data-mopen="d"]').closest('.mtray');
+      tr.scrollIntoView({ block: 'center' });
       const f = [...tr.querySelectorAll('.mtray-f')].find((x) => /yogurt/i.test(x.textContent)).getBoundingClientRect();
       const g = tr.querySelector('.mtray-go .mtray-fn').getBoundingClientRect();
       const h = tr.querySelector('.mtray-n').getBoundingClientRect();

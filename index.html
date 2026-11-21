@@ -36,11 +36,11 @@
 
 <header class="topbar no-print">
   <div class="topbar-in">
-    <div class="brand sr-only">
+    <div class="brand">
       <div class="brand-name">Nourish &amp; Strengthen</div>
       <div class="brand-sub">365 recipes &middot; two volumes</div>
     </div>
-    <!-- The skep logo is the Share & settings button on one row with the tabs:
+    <!-- The skep logo is the Share & settings button on one row with the title:
          tinted green when synced, amber while sending or without signal, red
          when sync has stopped, and warm cream when kept on this phone only. -->
     <button class="synbtn" id="syncBtn" data-tone="local" title="Saving on this phone only. Tap to share one list with another phone.">
@@ -53,50 +53,6 @@
         <path d="M230 366v-22q0-26 26-26t26 26v22z" fill="currentColor" stroke-width="16"/>
       </svg><span class="sr-only">Nourish &amp; Strengthen — </span><span class="sr-only" id="syncLabel" role="status">Share</span>
     </button>
-    <!-- Two labels each, and the media query picks one. A tab called "Shopping
-         List" on a 390px screen is a tab you cannot see; "List" beside a basket
-         of other short words is unambiguous, and the long form is right where
-         there is room for it. -->
-    <!-- A real tablist: each tab names the view it shows (aria-controls) and
-         each view says which tab it belongs to (role=tabpanel). One tab is in
-         the Tab order — the lit one — and Left and Right walk the rest, Home
-         and End jump to the ends; Enter or Space shows the one you are on,
-         as a button always has. Plan's panel is four views, its steps, and
-         Recipes also owns the book. See wire() in src/app.js. -->
-    <div class="tabs" role="tablist" aria-label="Views">
-      <!-- The label is Recipes, the view is still "browse". A tab called
-           Browse names the verb; the other four name the thing you get —
-           Plan, List, Pantry, Book. This one was the odd one out. The
-           data-view is untouched because it is a key, not a word. -->
-      <!-- Today, first: the one screen a day is run from, drawn by src/today.js
-           out of what Plan, Nourish, Strengthen and the list already hold. -->
-      <button class="tab" role="tab" id="tab-today" aria-controls="view-today" data-view="today" aria-selected="false" tabindex="-1">Today</button>
-      <button class="tab" role="tab" id="tab-browse" aria-controls="view-browse view-book" data-view="browse" aria-selected="false" tabindex="-1">Recipes</button>
-      <button class="tab" role="tab" id="tab-plan" aria-controls="view-plan view-where view-list view-pantry" data-view="plan" aria-selected="false" tabindex="-1"><span class="t-long">Meal Plan</span><span class="t-short">Plan</span></button>
-      <button class="tab" role="tab" id="tab-list" aria-controls="view-list" data-view="list" aria-selected="false" tabindex="-1"><span class="t-long">Shopping List</span><span class="t-short">List</span></button>
-      <button class="tab" role="tab" id="tab-pantry" aria-controls="view-pantry" data-view="pantry" aria-selected="false" tabindex="-1">Pantry</button>
-      <!-- The household's tabs end here, and yours begin: a rule between them,
-           and the two of yours pushed to the right-hand end of the row. The
-           book is no longer a tab — it is a thing you do with the recipes, so
-           it opens from a button on Recipes, and Recipes stays lit while it is
-           up (see renderView). Its tab was the room these two names needed. -->
-      <span class="tab-sep" aria-hidden="true"></span>
-      <!-- "Nourish", the label; "macros", the key. The tab began life named
-           for the numbers, grew into a personal day — routine, portions, the
-           morning weigh-in — and was renamed for what it is for. data-view
-           stays macros because it is a key, not a word, the same bargain the
-           Recipes tab struck with "browse". -->
-      <button class="tab" role="tab" id="tab-macros" aria-controls="view-macros" data-view="macros" aria-selected="false" tabindex="-1">Nourish</button>
-      <!-- Beside Nourish, the other thing on this row that is only ever
-           yours: a training block, the log you keep at the gym, and a review
-           of it against the research. data-view is the key; the screen is
-           drawn by src/train.js. -->
-      <button class="tab" role="tab" id="tab-train" aria-controls="view-train" data-view="train" aria-selected="false" tabindex="-1">Strengthen</button>
-    </div>
-    <!-- Shown only when the row genuinely overflows; see syncTabsFade(). A fade
-         over the last tab when there is nothing past it is a worse lie than no
-         fade at all. -->
-    <div class="tabs-fade hide" id="tabsFade" aria-hidden="true"></div>
   </div>
 </header>
 <!-- Plan is four steps, one bar: where the food comes from, what is kept on
@@ -197,13 +153,13 @@
 </section>
 
 <!-- ------------------------------------------------------ plan: where -->
-<section id="view-where" class="hide" role="tabpanel" aria-labelledby="tab-plan">
+<section id="view-where" class="hide" role="tabpanel" aria-labelledby="tab-browse">
   <div class="cook-nav-slot no-print" data-cooknav></div>
   <div class="view" id="whereBody"></div>
 </section>
 
 <!-- ---------------------------------------------------------- meal plan -->
-<section id="view-plan" class="hide" role="tabpanel" aria-labelledby="tab-plan">
+<section id="view-plan" class="hide" role="tabpanel" aria-labelledby="tab-browse">
   <div class="view">
     <div class="cook-nav-slot no-print" data-cooknav></div>
     <!-- The week is a calendar now: Sunday to Saturday with dates, a week
@@ -401,7 +357,7 @@
 </section>
 
 <!-- ------------------------------------------------------- shopping list -->
-<section id="view-list" class="hide" role="tabpanel" aria-labelledby="tab-plan">
+<section id="view-list" class="hide" role="tabpanel" aria-labelledby="tab-browse">
   <div class="list-view">
     <div class="cook-nav-slot no-print" data-cooknav></div>
     <header class="step-head">
@@ -418,7 +374,7 @@
 </section>
 
 <!-- ---------------------------------------------------------- the pantry -->
-<section id="view-pantry" class="hide" role="tabpanel" aria-labelledby="tab-plan">
+<section id="view-pantry" class="hide" role="tabpanel" aria-labelledby="tab-browse">
   <div class="view">
     <div class="cook-nav-slot no-print" data-cooknav></div>
     <!-- Every step opens the same way: its label, a title, one status line,
@@ -476,6 +432,29 @@
   <div class="printwrap" id="pages"></div>
 </section>
 </main>
+
+<!-- Four-tab bottom navigation: Today · Cook · Eat · Train.
+     Cook owns Recipes, the printed Book, This week, Where, List and On hand. -->
+<nav class="bottom-tabs no-print" aria-label="Views">
+  <div class="tabs" role="tablist" aria-label="Views">
+    <button class="tab" role="tab" id="tab-today" aria-controls="view-today" data-view="today" aria-selected="false" tabindex="-1">
+      <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <span class="tab-lbl">Today</span>
+    </button>
+    <button class="tab" role="tab" id="tab-browse" aria-controls="view-browse view-book view-plan view-where view-list view-pantry" data-view="browse" aria-selected="false" tabindex="-1">
+      <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-2 6 0 8v10"/></svg>
+      <span class="tab-lbl">Cook</span>
+    </button>
+    <button class="tab" role="tab" id="tab-macros" aria-controls="view-macros" data-view="macros" aria-selected="false" tabindex="-1">
+      <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/><path d="M5 19l8-8"/></svg>
+      <span class="tab-lbl">Eat</span>
+    </button>
+    <button class="tab" role="tab" id="tab-train" aria-controls="view-train" data-view="train" aria-selected="false" tabindex="-1">
+      <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/></svg>
+      <span class="tab-lbl">Train</span>
+    </button>
+  </div>
+</nav>
 
 <div id="modalRoot"></div>
 <div id="trainRoot"></div>

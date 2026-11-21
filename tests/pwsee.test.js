@@ -20,7 +20,7 @@ module.exports = {
     /* Nights are kept for the week they were picked for (wk), so the four
        asked for here are this week's. */
     await p.evaluate(() => localStorage.setItem('sh.pw', JSON.stringify({ days: ['mon', 'tue', 'wed', 'thu'], ppl: 4, t: 45, prot: ['Chicken'], lo: 0, shelf: true, wk: window.Store.activeWeek().id })));
-    await p.click('.tab[data-view="plan"]');
+    await p.evaluate(() => window.Hive.go('plan'));
     await p.waitForTimeout(300);
     await p.click('#planMyWeek');
     await p.waitForTimeout(300);
@@ -113,7 +113,7 @@ module.exports = {
     const plain = await p.evaluate(() => ({ fresh: document.querySelectorAll('#planGrid .day-new').length, toast: (document.querySelector('#mToast:not([hidden])') || {}).textContent || '' }));
     t.ok('picked for you, the four are marked New and the toast says so', plain.fresh === 4 && /^4 dinners added/.test(plain.toast) && /Picked for you/.test(plain.toast), JSON.stringify(plain));
     await p.click('.tab[data-view="browse"]');
-    await p.click('.tab[data-view="plan"]');
+    await p.evaluate(() => window.Hive.go('plan'));
     await p.waitForTimeout(300);
     t.ok('New is for the visit: away and back, the marks are gone', await p.evaluate(() => document.querySelectorAll('#planGrid .day-new').length === 0));
 

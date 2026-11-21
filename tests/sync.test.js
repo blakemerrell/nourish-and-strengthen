@@ -111,7 +111,7 @@ module.exports = {
           window.Store.state.favs.join() === '4,11'),
         await A.evaluate(() => JSON.stringify(window.Store.state.weeks)));
 
-      await A.click('.tab[data-view="plan"]');
+      await A.evaluate(() => window.Hive.go('plan'));
       await A.click('[data-neww="new"]');
       await A.click('#renameWeek');
       await A.waitForSelector('#dlgInput');
@@ -138,17 +138,17 @@ module.exports = {
         await waitFor(B, () => (window.Store.state.plan.thu || []).length === 1),
         await B.evaluate(() => JSON.stringify(window.Store.state.plan)));
 
-      await B.click('.tab[data-view="plan"]');
+      await B.evaluate(() => window.Hive.go('plan'));
       await B.click('#weekBar .wk >> nth=0');
       t.ok('switching week moves both of you',
         await waitFor(A, () => window.Store.activeWeek().name === 'This Week' &&
           (window.Store.state.plan.mon || []).join() === '1'),
         await A.evaluate(() => window.Store.activeWeek().name));
 
-      await B.click('.tab[data-view="plan"]').then(() => B.evaluate(() => window.Hive.go('list')));
+      await B.evaluate(() => window.Hive.go('list'));
       await B.waitForSelector('.list-row', { timeout: 8000 });
       await B.click('.list-row:not(.done) >> nth=0');
-      await A.click('.tab[data-view="plan"]').then(() => A.evaluate(() => window.Hive.go('list')));
+      await A.evaluate(() => window.Hive.go('list'));
       t.ok('a tick in the shop greys out on the other phone',
         await waitFor(A, () => document.querySelectorAll('.list-row.done').length === 1),
         await A.evaluate(() => document.querySelectorAll('.list-row.done').length));
@@ -170,7 +170,7 @@ module.exports = {
       await A.click('.sheet-x');
 
       // ---- both at once, on different fields --------------------------------
-      await B.click('.tab[data-view="plan"]');
+      await B.evaluate(() => window.Hive.go('plan'));
       await Promise.all([
         A.evaluate(() => window.Store.addToDay(20, 'sat')),
         B.evaluate(() => window.Store.renameWeek('Renamed by B')),

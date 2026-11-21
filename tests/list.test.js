@@ -13,7 +13,7 @@ module.exports = {
     const all = await p.evaluate(() => {
       const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
       window.RECIPES.forEach((r, i) => window.Store.addToDay(r.id, days[i % 7]));
-      document.querySelector('.tab[data-view="list"]').click();
+      window.Hive.go('list');
       return [...document.querySelectorAll('.list-row span:not(.qty)')].map((e) => e.textContent);
     });
     t.ok('every recipe in both books makes one list, not a heap',
@@ -91,7 +91,7 @@ module.exports = {
       days.forEach((d) => window.Store.day(d).forEach((e) =>
         window.Store.removeFromDay(e.id !== undefined ? e.id : e, d)));
       window.Store.addToDay(r.id, 'mon');
-      document.querySelector('.tab[data-view="list"]').click();
+      window.Hive.go('list');
       const hit = r.ingp.find(buyX) || {};
       const name = ((window.PANTRY || {})[hit.k] || {}).l || hit.a || String(hit.k).replace(/_/g, ' ');
       const groups = [...document.querySelectorAll('.list-group')].map((g) => ({
@@ -121,7 +121,7 @@ module.exports = {
         window.Store.removeFromDay(e.id !== undefined ? e.id : e, d)));
       const r = window.RECIPES.find((x) => (x.ingp || []).some((i) => i && i.k === 'ground_beef'));
       window.Store.addToDay(r.id, 'mon');
-      document.querySelector('.tab[data-view="list"]').click();
+      window.Hive.go('list');
       await new Promise((ok) => setTimeout(ok, 400));
       const row = [...document.querySelectorAll('.list-row')]
         .find((x) => /ground beef/i.test(x.textContent));

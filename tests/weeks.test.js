@@ -52,7 +52,7 @@ module.exports = {
     });
     await p.reload();
     await p.waitForTimeout(700);
-    await p.click('.tab[data-view="plan"]');
+    await p.evaluate(() => window.Hive.go('plan'));
     await p.waitForTimeout(250);
     const look = () => p.evaluate(() => ({
       id: window.Store.activeWeek().id,
@@ -191,7 +191,7 @@ module.exports = {
     await p.click('.sheet-x');
 
     /* ---- cook this again, and templates ---------------------------------- */
-    await p.click('.tab[data-view="plan"]');
+    await p.evaluate(() => window.Hive.go('plan'));
     await p.click('#calNext');
     await p.waitForTimeout(150);
     await p.click('[data-calagain]');
@@ -225,7 +225,7 @@ module.exports = {
     /* ---- reload ---------------------------------------------------------- */
     await p.reload();
     await p.waitForTimeout(700);
-    await p.click('.tab[data-view="plan"]');
+    await p.evaluate(() => window.Hive.go('plan'));
     await p.waitForTimeout(200);
     s = await p.evaluate(() => ({ id: window.Store.activeWeek().id, weeks: Object.keys(window.Store.state.weeks).length }));
     t.ok('all of which survives a reload, opening on this week', s.id === 'd20260927' && s.weeks === 3, JSON.stringify(s));
@@ -248,7 +248,7 @@ module.exports = {
         window.Store.addToDay(r.id, 'thu', 1, true);
         return { id: r.id, x: Math.max(1, Math.round((6 / (Number(r.servN) || 4)) * 2) / 2) * 2 };
       });
-      await q.click('.tab[data-view="plan"]');
+      await q.evaluate(() => window.Hive.go('plan'));
       await q.waitForTimeout(250);
       const sheet = async (d) => {
         await q.click('#planGrid [data-dayopen][data-day="' + d + '"]');
@@ -291,7 +291,7 @@ module.exports = {
         window.Store.addToDay(rs[0].id, 'sat', 1);
         return rs.slice(0, 2).map((r) => r.id);
       });
-      await q.click('.tab[data-view="plan"]');
+      await q.evaluate(() => window.Hive.go('plan'));
       await q.waitForTimeout(250);
       const NEXT = 'd20261004';
       const acts = async (d) => {
@@ -363,7 +363,7 @@ module.exports = {
     await p.context().close();
 
     p = await t.fresh({ viewport: { width: 390, height: 780 } });
-    await p.click('.tab[data-view="plan"]');
+    await p.evaluate(() => window.Hive.go('plan'));
     await p.click('#calNext');
     await p.click('[data-cal="m"]');
     await p.waitForTimeout(200);
@@ -371,32 +371,27 @@ module.exports = {
       document.documentElement.scrollWidth - document.documentElement.clientWidth);
     t.ok('and nothing runs off the side of a phone, week or month', over <= 0, over + 'px');
 
-    /* Every tab reachable without knowing to swipe. Five tabs and the sync
-       button shared one row, which put 230px of it off the right-hand edge at
-       390px: "Pantry" cut to "Pant", "Print Book" not on screen at all, and no
-       scrollbar or fade to say there was more. Two of the five were, in
-       practice, undiscoverable.
-
-       Asserted by geometry rather than by overflow, because the fix is not
-       "it scrolls" — it is that nothing needs to. */
+    /* Every bottom tab reachable without scrolling or clipping. Four tabs live
+       along the foot while the skep Share button leads in the top header. */
     const tabs = await p.evaluate(() => {
       const t = document.querySelector('.tabs');
       const box = t.getBoundingClientRect();
       const s = document.querySelector('.synbtn').getBoundingClientRect();
+      const tb = document.querySelector('.topbar').getBoundingClientRect();
       return {
         labels: [...t.querySelectorAll('.tab')].filter((b) => b.offsetParent).map((b) => b.innerText.trim()),
         offscreen: [...t.querySelectorAll('.tab')]
           .filter((b) => b.getBoundingClientRect().right > box.right + 1)
           .map((b) => b.innerText.trim()),
-        // the skep logo button leads on the left of the same single row
-        sameRow: s.right <= box.left + 1 && Math.abs((s.top + s.height / 2) - (box.top + box.height / 2)) < 8,
+        atBottom: box.bottom >= window.innerHeight - 2,
+        skepInTop: s.left >= tb.left && s.top >= tb.top && s.bottom <= tb.bottom + 1 && s.bottom < box.top,
       };
     });
     t.ok('every tab is on the screen without scrolling for it',
-      tabs.offscreen.length === 0, 'off the edge: ' + tabs.offscreen.join(', '));
+      tabs.offscreen.length === 0 && tabs.atBottom, 'off the edge: ' + tabs.offscreen.join(', '));
     t.ok('under a short name each, on a phone',
-      tabs.labels.join('|') === 'Today|Recipes|Plan|Nourish|Strengthen', tabs.labels.join(' '));
-    t.ok('with the skep logo button leading the same single row on the left', tabs.sameRow);
+      tabs.labels.join('|') === 'Today|Cook|Eat|Train', tabs.labels.join(' '));
+    t.ok('with the skep logo button in the slim header above', tabs.skepInTop);
 
     /* It used to say "Local", which is a state and not an invitation, and
        nothing on the screen said that pressing it was how two phones end up on
@@ -450,15 +445,13 @@ module.exports = {
     t.ok('and it stays away across a reload',
       await p.evaluate(() => document.getElementById('shareHint').classList.contains('hide')));
 
-    // and the long names come back where there is room for them
+    // and the four bottom tab names stay consistent on a wider screen
     await p.setViewportSize({ width: 1280, height: 900 });
     await p.waitForTimeout(400);
     const wide = await p.evaluate(() =>
       [...document.querySelectorAll('.tab')].filter((b) => b.offsetParent).map((b) => b.innerText.trim()));
-    t.ok('and the full names return on a wider screen',
-      // Nourish and Strengthen have no short forms — the book left the row
-      // to make room for them
-      wide.join('|') === 'Today|Recipes|Meal Plan|Nourish|Strengthen', wide.join(' '));
+    t.ok('and the four names stay consistent on a wider screen',
+      wide.join('|') === 'Today|Cook|Eat|Train', wide.join(' '));
 
     /* ---- text somebody typed is text, not markup -------------------------
      *
@@ -481,7 +474,7 @@ module.exports = {
       window.Store.addPantryItem(s, 'Yours');
     }, HOSTILE);
     await p.waitForTimeout(300);
-    await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('pantry'))).then(() => p.evaluate(() => { const d = document.getElementById('storePart'); if (d) d.open = true; }));
+    await p.evaluate(() => window.Hive.go('pantry')).then(() => p.evaluate(() => { const d = document.getElementById('storePart'); if (d) d.open = true; }));
     await p.waitForTimeout(300);
 
     const hostile = await p.evaluate((s) => ({
@@ -519,7 +512,7 @@ module.exports = {
         localStorage.setItem('bsc.pantryNew', JSON.stringify({ a: { l: 5, c: 'constructor' }, b: { l: 'Rice', c: 'Grains' }, c: 'x' }));
       });
       await q.reload();
-      await q.click('.tab[data-view="plan"]');
+      await q.evaluate(() => window.Hive.go('plan'));
       await q.waitForTimeout(300);
       const r = await q.evaluate(() => ({
         ran: !!window.__idRan || !!document.querySelector('img[src="x"]'),
@@ -544,7 +537,7 @@ module.exports = {
       await q.evaluate(() => localStorage.clear());
       await q.reload();
       await q.waitForTimeout(500);
-      await q.click('.tab[data-view="plan"]').then(() => q.evaluate(() => window.Hive.go('where')));
+      await q.evaluate(() => window.Hive.go('where'));
       await q.waitForTimeout(300);
       await q.evaluate(() => window.Store.setPantry('cottage_cheese', false));
       await q.waitForTimeout(300);
@@ -564,7 +557,7 @@ module.exports = {
       ['the Share sheet', async (q) => { await q.click('#syncBtn'); await q.waitForTimeout(350); }],
       ['the editor', async (q) => { await q.click('.tab[data-view="browse"]'); await q.click('#newRecipe'); await q.waitForTimeout(450); }],
       ['a confirm dialog', async (q) => {
-        await q.click('.tab[data-view="plan"]').then(() => q.evaluate(() => window.Hive.go('where'))); await q.waitForTimeout(350);
+        await q.evaluate(() => window.Hive.go('where')); await q.waitForTimeout(350);
         await q.evaluate(() => window.Store.setPantry('cottage_cheese', false));
         await q.waitForTimeout(350);
         await q.click('#pantryReset'); await q.waitForTimeout(350);

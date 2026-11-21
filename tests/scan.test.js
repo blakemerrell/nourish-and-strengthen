@@ -153,7 +153,7 @@ module.exports = {
     // ---- your own recipes are in the day's + Add ----------------------------
     await e.evaluate(() => window.Store.saveRecipe({ id: 'uownsoup', book: 3, secNum: 1, secName: 'Ours', own: true,
       name: 'Zanzibar pepper soup', ing: ['pepper'], steps: ['simmer'], servings: '4 Servings', servN: 4, time: '30 mins', diff: 'Easy', macro: null, ingp: [] }));
-    await e.click('.tab[data-view="plan"]');
+    await e.evaluate(() => window.Hive.go('plan'));
     await e.waitForTimeout(300);
     /* Today's + Add rather than Thursday's: days gone by have none, and this
        runs on the real clock, so on a Friday a Thursday button is not there. */

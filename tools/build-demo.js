@@ -170,7 +170,7 @@ function serve() {
   await page.click('.card'); await page.waitForTimeout(700);
   await shot('app-2-recipe');
   await page.click('.sheet-x'); await page.waitForTimeout(300);
-  await page.click('.tab[data-view="plan"]'); await page.waitForTimeout(600);
+  await page.click('#view-browse [data-cookgo="plan"]'); await page.waitForTimeout(600);
   await shot('app-3-plan');
   // the step row went; the plan's own "The list" button is the way on now
   await page.click('[data-stepgo="list"]'); await page.waitForTimeout(700);

@@ -193,7 +193,7 @@
     draw(true);
   }
   function behind(off) {
-    var els = document.querySelectorAll('#main, .topbar, #shareHint');
+    var els = document.querySelectorAll('#main, .topbar, .bottom-tabs, #shareHint');
     for (var i = 0; i < els.length; i++) els[i].inert = off;
   }
   /* Closed on this page: Today's "Cooking with someone else?" waits for

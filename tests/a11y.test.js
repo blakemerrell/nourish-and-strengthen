@@ -42,7 +42,8 @@ module.exports = {
       localStorage.setItem('bsc.active', JSON.stringify('w1'));
     });
     await p.reload();
-    await p.click('.tab[data-view="plan"]');
+    await p.click('.tab[data-view="browse"]');
+    await p.click('#view-browse [data-cookgo="plan"]');
     await p.click('#clearPlan');
     await p.waitForTimeout(150);
     const inside = () => p.evaluate(() => {
@@ -147,7 +148,7 @@ module.exports = {
     await p.keyboard.press('ArrowLeft'); walk.push(await at());
     await p.keyboard.press('Home'); walk.push(await at());
     t.ok('Right and Left walk the tabs that are shown, wrapping; Home and End go to the ends',
-      walk.join() === 'browse,plan,train,today,train,today', walk.join());
+      walk.join() === 'browse,macros,train,today,train,today', walk.join());
     const moved = await p.evaluate(() => document.querySelector('#view-today').classList.contains('hide'));
     t.ok('and walking only moves the focus: the view does not change under you', !moved);
     await p.keyboard.press('End');
@@ -340,7 +341,7 @@ module.exports = {
     // the tabs are as tall as a thumb; their width is the row's, and the row may not grow
     let rs = await q.evaluate(() => [...document.querySelectorAll('.tabs .tab')].filter((e) => e.offsetParent)
       .map((e) => ({ k: e.dataset.view, h: e.getBoundingClientRect().height, hit: e.getBoundingClientRect().height >= 44 })));
-    t.ok('on a phone every tab is a thumb tall, Today included', rs.length === 5 && rs.every((r) => r.hit), JSON.stringify(rs));
+    t.ok('on a phone every tab is a thumb tall, Today included', rs.length === 4 && rs.every((r) => r.hit), JSON.stringify(rs));
     rs = await reach('#syncBtn', true);
     t.ok('and so is Share', rs.length === 1 && rs[0].hit, JSON.stringify(rs));
     await q.click('.tab[data-view="macros"]');
@@ -382,8 +383,8 @@ module.exports = {
     }
     await q.keyboard.press('Escape');
     // the pantry's pills (On hand)
-    await q.click('.tab[data-view="plan"]');
-    await q.evaluate(() => window.Hive.go('pantry'));
+    await q.click('.tab[data-view="browse"]');
+    await q.click('#view-browse [data-stepgo="pantry"]');
     await q.waitForTimeout(200);
     await q.evaluate(() => { const e = document.querySelector('#view-pantry .kit-pill'); if (e) e.scrollIntoView({ block: 'center' }); });
     rs = await reach('#view-pantry .kit-pill', true);

@@ -26,7 +26,6 @@ module.exports = {
     });
 
     const step1 = async () => {
-      await p.click('.tab[data-view="plan"]');
       await p.evaluate(() => window.Hive.go('where'));
       await p.waitForTimeout(250);
       return p.evaluate(() => ({

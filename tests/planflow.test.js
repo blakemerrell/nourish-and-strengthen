@@ -21,7 +21,8 @@ module.exports = {
       const d = window.RECIPES.filter((r) => r.book === 2 && r.secNum === 3).slice(4, 8);
       ['mon', 'tue', 'wed', 'thu'].forEach((day, i) => window.Store.addToDay(d[i].id, day, 1));
     });
-    await p.click('.tab[data-view="plan"]');
+    await p.click('.tab[data-view="browse"]');
+    await p.click('#view-browse [data-cookgo="plan"]');
     await p.waitForTimeout(300);
     const s0 = await p.evaluate(() => ({
       steps: document.querySelectorAll('.pstep, #planSteps').length,
@@ -33,7 +34,7 @@ module.exports = {
       tabs: [...document.querySelectorAll('.tabs .tab')].filter((b) => b.offsetParent).map((b) => b.dataset.view),
     }));
     t.ok('Plan opens on the week, with no step bar, List and Pantry no longer tabs of their own, and Today first',
-      s0.steps === 0 && s0.k === 'Plan · the week' && s0.tabs.join() === 'today,browse,plan,macros,train', JSON.stringify(s0));
+      s0.steps === 0 && s0.k === 'Plan · the week' && s0.tabs.join() === 'today,browse,macros,train', JSON.stringify(s0));
     t.ok('each dinner is one button that opens its day; the ×N, × and rating are off the rows',
       s0.rows.length === 4 && s0.rows.every((r) => r.open && r.day) && s0.ctl === 0, JSON.stringify(s0.rows));
     t.ok('the foot is the list: what to buy and what comes from the staples list', /^The list/.test(s0.next) && /from the staples list/.test(s0.next), s0.next);
@@ -45,8 +46,8 @@ module.exports = {
     await p.waitForTimeout(250);
     const where = await p.evaluate(() => ({ mode: window.__flow.mode(), near: !!document.querySelector('[data-near]'),
       lit: document.querySelector('.tab[aria-selected="true"]').dataset.view }));
-    t.ok('Only what I have (the storehouse and my shelf) is remembered, offers the one-or-two allowance, and Plan stays the lit tab',
-      where.mode === 'sh' && where.near && where.lit === 'plan', JSON.stringify(where));
+    t.ok('Only what I have (the storehouse and my shelf) is remembered, offers the one-or-two allowance, and Cook stays the lit tab',
+      where.mode === 'sh' && where.near && where.lit === 'browse', JSON.stringify(where));
 
     /* Storehouse only: every suggestion can be made without a store. */
     const only = await p.evaluate(() => {

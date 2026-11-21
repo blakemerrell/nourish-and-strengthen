@@ -24,7 +24,7 @@ module.exports = {
 
     /* What the storehouse carries is step 1's question now, asked with the
        same pills as everything else: on means it carries it. */
-    await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('where')));
+    await p.evaluate(() => window.Hive.go('where'));
     await p.waitForTimeout(400);
     /* Every shelf opened, so every food is on screen to be counted. */
     await p.evaluate(() => {
@@ -85,7 +85,7 @@ module.exports = {
       (await foot()) === '', dish.name);
 
     // stop keeping one of its ingredients
-    await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('where'))); await p.waitForTimeout(300);
+    await p.evaluate(() => window.Hive.go('where')); await p.waitForTimeout(300);
     await p.click('#whereBody [data-carry="cottage_cheese"]'); await p.waitForTimeout(400);
 
     /* One fewer than the storehouse list, whatever that list happens to hold.
@@ -205,7 +205,7 @@ module.exports = {
 
     // and so does the shopping list
     await p.evaluate(() => window.Store.addToDay(1, 'mon'));
-    await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('list'))); await p.waitForTimeout(600);
+    await p.evaluate(() => window.Hive.go('list')); await p.waitForTimeout(600);
     const list = await p.evaluate(() => {
       const g = [...document.querySelectorAll('.list-group')];
       return g.map((x) => ({
@@ -226,13 +226,13 @@ module.exports = {
 
     // something of your own, which the books have never heard of: typed
     // into On hand's search, and added from there
-    await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('pantry'))); await p.waitForTimeout(300);
+    await p.evaluate(() => window.Hive.go('pantry')); await p.waitForTimeout(300);
     await p.fill('#kitFind', 'Olive oil');
     await p.waitForTimeout(200);
     await p.click('[data-kitnew]');
     await p.waitForTimeout(300);
     await p.reload(); await p.waitForTimeout(700);
-    await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('pantry'))); await p.waitForTimeout(400);
+    await p.evaluate(() => window.Hive.go('pantry')); await p.waitForTimeout(400);
     const own = await p.evaluate(() => {
       const g = [...document.querySelectorAll('#view-pantry .kit-grp')].find((x) => (x.querySelector('.kit-gh span') || {}).textContent === 'Yours');
       return { shelf: !!g, oil: !!g && [...g.querySelectorAll('.kit-pill')].some((b) => b.textContent === 'Olive oil' && b.getAttribute('aria-pressed') === 'true') };
@@ -276,7 +276,7 @@ module.exports = {
     const tp = await touch.newPage();
     await tp.goto(t.base + 'index.html');
     await tp.waitForTimeout(700);
-    await tp.click('.tab[data-view="plan"]').then(() => tp.evaluate(() => window.Hive.go('pantry'))); await tp.waitForTimeout(400);
+    await tp.evaluate(() => window.Hive.go('pantry')); await tp.waitForTimeout(400);
     const thumb = await tp.evaluate(() => {
       const x = document.querySelector('#view-pantry .kit-pill');
       return { h: x.getBoundingClientRect().height, seen: getComputedStyle(x).opacity };

@@ -66,7 +66,7 @@ module.exports = nourish({
       const d = window.RECIPES.filter((r) => r.book === 2 && r.secNum === 3).slice(0, 3);
       ['mon', 'tue', 'wed'].forEach((day, i) => window.Store.addToDay(d[i].id, day, 1));
     });
-    await wm.click('.tab[data-view="plan"]');
+    await wm.click('.tab[data-view="browse"]');
     await wm.evaluate(() => window.Hive.go('where'));
     await wm.waitForTimeout(200);
     await wm.click('[data-srcpick="own"]');

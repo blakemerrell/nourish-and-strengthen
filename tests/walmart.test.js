@@ -58,7 +58,7 @@ module.exports = {
       const d = window.RECIPES.filter((r) => r.book === 2 && r.secNum === 3).slice(0, 3);
       ['mon', 'tue', 'wed'].forEach((day, i) => window.Store.addToDay(d[i].id, day, 1));
     });
-    await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('list')));
+    await p.evaluate(() => window.Hive.go('list'));
     await p.waitForTimeout(300);
     const read = () => p.evaluate(() => {
       const a = document.querySelector('#view-list .wm-btn');
@@ -70,11 +70,11 @@ module.exports = {
     /* Those three come wholly from the storehouse: nothing to send, until
        the household stops shopping it (step 1 of Plan: I keep my own). */
     const shelf = await read();
-    await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('where')));
+    await p.evaluate(() => window.Hive.go('where'));
     await p.waitForTimeout(250);
     await p.click('[data-srcpick="own"]');
     await p.waitForTimeout(250);
-    await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('list')));
+    await p.evaluate(() => window.Hive.go('list'));
     await p.waitForTimeout(250);
     const first = await read();
     t.ok('from the storehouse, nothing goes to Walmart; not shopping it, it all does',
@@ -144,7 +144,7 @@ module.exports = {
 
     /* Plan my week's list carries the same button. */
     await p.evaluate(() => localStorage.setItem('sh.pw', JSON.stringify({ days: ['thu', 'fri'], shelf: false, wk: window.Store.activeWeek().id })));
-    await p.click('.tab[data-view="plan"]');
+    await p.evaluate(() => window.Hive.go('plan'));
     await p.waitForTimeout(250);
     await p.click('#planMyWeek');
     await p.waitForTimeout(250);

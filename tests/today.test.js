@@ -50,8 +50,12 @@ module.exports = {
     // the doors
     await p.click('#todayRoot [data-td="planweek"]');
     await p.waitForTimeout(300);
-    let d = await p.evaluate(() => ({ view: document.querySelector('.tab[aria-selected="true"]').dataset.view, pw: !!document.querySelector('[data-pwq]') }));
-    t.ok('Plan my week opens Plan with Plan my week up', d.view === 'plan' && d.pw, JSON.stringify(d));
+    let d = await p.evaluate(() => ({
+      lit: document.querySelector('.tab[aria-selected="true"]').dataset.view,
+      planShown: !document.getElementById('view-plan').classList.contains('hide'),
+      pw: !!document.querySelector('[data-pwq]'),
+    }));
+    t.ok('Plan my week opens Plan with Plan my week up', d.lit === 'browse' && d.planShown && d.pw, JSON.stringify(d));
     await p.click('.sheet-x');
     await p.waitForTimeout(250);
     await p.click('.tab[data-view="today"]');

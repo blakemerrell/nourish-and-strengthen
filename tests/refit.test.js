@@ -83,7 +83,8 @@ module.exports = {
         say: !!s.querySelector('.mscreen-say'), trayBal: !!s.querySelector('.msh-tray .msh-bal'), done: !!s.querySelector('.msh-tray .msh-done'),
         chip: document.querySelectorAll('#mpList .mp-fitx').length };
     });
-    t.ok('Balance and Done ride in the tray along the bottom; the top keeps no ⚖ and no ×', !top.bal && !top.x && top.trayBal && top.done, JSON.stringify(top));
+    t.ok('on an empty meal, Done fills the tray while Balance hides until there are foods to balance; the top keeps no ⚖ and no ×',
+      !top.bal && !top.x && !top.trayBal && top.done, JSON.stringify(top));
     t.ok('and no line under the pills: the pills say it', !top.say, JSON.stringify(top));
     t.ok('no row carries a Fits chip: a tap does that job now', top.chip === 0, JSON.stringify(top));
 

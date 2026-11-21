@@ -8329,6 +8329,7 @@ button.mrow-sum { cursor: pointer; }
 .mp-spsep { flex: none; width: 1px; margin: 12px 3px; background: var(--line-firm); }
 .mp-spot.on .mp-spn { color: inherit; opacity: 0.75; }
 .msh-acts { display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; padding: 6px 12px 0; }
+.msh-acts.single { grid-template-columns: 1fr; }
 .msh-acts.three { display: flex; align-items: stretch; gap: 6px; padding: 6px 10px 0; }
 .msh-addfoods {
   flex: 1.2 1 0; min-width: 0; min-height: 50px; margin: 0; padding: 0 10px;

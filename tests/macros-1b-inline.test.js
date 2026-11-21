@@ -2,11 +2,11 @@
  *
  * Verifies:
  *  1) Populated meal card opens separated Meal View (data-mode="meal"), hiding #mpFind/#mpList
- *     and rendering every food open simultaneously with Lock, dial, dot menu, and kcal delta.
+ *     and rendering every food open simultaneously with dial and dot menu (omitting .msh-delta & .mrow-lock).
  *  2) Empty meal / + icon / Saved meals open Food Search (data-mode="find") with #mpFind.
  *  3) meal -> + Add foods -> find transitions cleanly back to meal on Back to <Meal>, Done, or goBack().
- *  4) 1-tap Lock (l === 2) holds during Balance while permitting manual - / + edits.
- *  5) 1-tap Saved Meal Split (.mrow-split[data-mexplode]) explodes composite meal + toast Undo restores.
+ *  4) Lock (l === 2) in row ⋯ holds during Balance while permitting manual - / + edits.
+ *  5) Explode into foods in row ⋯ (.mrow-menu [data-mexplode]) splits composite meal + toast Undo restores.
  *  6) Deleting the last food in meal mode stays in meal mode and preserves everyday pins.
  *  7) Narrow 320px touch viewport has zero horizontal overflow, >= 44x34 tap targets, single-line dials,
  *     and >= 13px visible text. */
@@ -64,10 +64,10 @@ module.exports = nourish({
         hasFind: !!document.querySelector('#modalRoot #mpFind'),
         hasList: !!document.querySelector('#modalRoot #mpList'),
         hasDelta: !!document.querySelector('#modalRoot .msh-delta'),
-        remText: (document.querySelector('#modalRoot .msh-rem') || {}).textContent || '',
+        hasTrh: !!document.querySelector('#modalRoot .msh-trh'),
         nRows: rows.length,
         allOpen: rows.every((r) => r.classList.contains('mrow-open') &&
-          !!r.querySelector('.mrow-lock') &&
+          !r.querySelector('.mrow-lock') &&
           !!r.querySelector('.mrow-dial') &&
           !!r.querySelector('[data-mfmenu]') &&
           !r.querySelector('[data-mrowopen]')),
@@ -77,8 +77,8 @@ module.exports = nourish({
     t.ok('populated meal card opens separated meal mode with no #mpFind/#mpList',
       mealView.mode === 'meal' && !mealView.hasFind && !mealView.hasList,
       JSON.stringify(mealView));
-    t.ok('meal header displays kcal delta pill and every food row opens simultaneously',
-      mealView.hasDelta && /kcal (left|over)/.test(mealView.remText) &&
+    t.ok('clean meal view omits duplicate delta/trh headers and permanent .mrow-lock while keeping every row open',
+      !mealView.hasDelta && !mealView.hasTrh &&
         mealView.nRows === 3 && mealView.allOpen,
       JSON.stringify(mealView));
     t.ok('bottom bar offers + Add foods, Balance, and Done',
@@ -117,13 +117,15 @@ module.exports = nourish({
     t.ok('browser/Android back inside find opened from meal returns to meal mode',
       await p.evaluate(() => document.querySelector('#modalRoot .msheet')?.getAttribute('data-mode') === 'meal'));
 
-    /* 4) 1-tap Lock holds during Balance while permitting manual +/- */
-    await p.click('#modalRoot .mrow-lock[data-mlock="b:0"]');
+    /* 4) Lock in row ⋯ holds during Balance while permitting manual +/- */
+    await p.click('#modalRoot [data-mfmenu="b:0"]');
+    await p.waitForTimeout(150);
+    await p.click('#modalRoot .mrow-menu [data-mlock="b:0"]');
     await p.waitForTimeout(200);
     const locked0 = await p.evaluate((dk) => {
-      const btn = document.querySelector('#modalRoot .mrow-lock[data-mlock="b:0"]');
+      const badge = document.querySelector('#modalRoot .mrows .mrow:first-child .mrow-mk.kept');
       const b = JSON.parse(localStorage.getItem('bsc.macroDays'))[dk].b;
-      return { pressed: btn?.getAttribute('aria-pressed'), l: b[0].l, x0: b[0].x };
+      return { badge: badge ? badge.textContent.trim() : '', l: b[0].l, x0: b[0].x };
     }, dayKey);
     await p.click('#modalRoot [data-mstep="b:0:up"]');
     await p.waitForTimeout(200);
@@ -137,8 +139,8 @@ module.exports = nourish({
       const b = JSON.parse(localStorage.getItem('bsc.macroDays'))[dk].b;
       return { l: b[0].l, x: b[0].x, x1: b[1].x };
     }, dayKey);
-    t.ok('1-tap Lock allows manual +/- adjustments while keeping l === 2 and holding during Balance',
-      locked0.pressed === 'true' && locked0.l === 2 &&
+    t.ok('Lock in row ⋯ shows Locked badge, allows manual +/- adjustments, and holds during Balance',
+      locked0.badge === 'Locked' && locked0.l === 2 &&
         steppedWhileLocked.x > locked0.x0 && steppedWhileLocked.l === 2 &&
         Math.abs(afterBalance.x - steppedWhileLocked.x) < 1e-9 &&
         Math.abs(afterBalance.x1 - steppedWhileLocked.x1) > 1e-4,
@@ -167,7 +169,7 @@ module.exports = nourish({
     await p.click('#modalRoot .msh-done');
     await p.waitForTimeout(250);
 
-    /* 5) 1-tap Saved Meal Split (.mrow-split[data-mexplode]) + toast Undo */
+    /* 5) Saved Meal Explode into foods inside row ⋯ + toast Undo */
     await p.evaluate(() => {
       const b = document.querySelector('#macroSlots .mtray-b[data-mopen="b"]');
       if (b) { b.scrollIntoView({ block: 'center' }); b.click(); }
@@ -181,19 +183,22 @@ module.exports = nourish({
     await p.click('[data-mkdo="mine"]');
     await p.waitForTimeout(350);
 
+    await p.click('#modalRoot [data-mfmenu="b:0"]');
+    await p.waitForTimeout(150);
     const splitShown = await p.evaluate(() => {
-      const btn = document.querySelector('#modalRoot .mrow-split[data-mexplode="b:0"]');
-      return { exists: !!btn, text: btn ? btn.textContent.trim() : '' };
+      const inlineBtn = document.querySelector('#modalRoot .mrow-split');
+      const btn = document.querySelector('#modalRoot .mrow-menu [data-mexplode="b:0"]');
+      return { noInline: !inlineBtn, exists: !!btn, text: btn ? btn.textContent.trim() : '' };
     });
-    t.ok('saved composite meal displays a 1-tap Split into foods button directly on the row',
-      splitShown.exists && /Recipe with 3 foods/.test(splitShown.text) && /Split into foods/.test(splitShown.text),
+    t.ok('saved composite meal keeps Explode into foods cleanly inside row ⋯ (no inline .mrow-split clutter)',
+      splitShown.noInline && splitShown.exists && /Explode into foods/.test(splitShown.text),
       JSON.stringify(splitShown));
 
-    await p.click('#modalRoot .mrow-split[data-mexplode="b:0"]');
+    await p.click('#modalRoot .mrow-menu [data-mexplode="b:0"]');
     await p.waitForTimeout(300);
     const explodedIds = await p.evaluate((dk) =>
       JSON.parse(localStorage.getItem('bsc.macroDays'))[dk].b.map((x) => x.id), dayKey);
-    t.ok('1-tap Split breaks the saved meal into its 3 component foods',
+    t.ok('Explode breaks the saved meal into its 3 component foods',
       explodedIds.join(',') === 'f:egg_white,f:oats,f:peanut_butter',
       JSON.stringify(explodedIds));
 

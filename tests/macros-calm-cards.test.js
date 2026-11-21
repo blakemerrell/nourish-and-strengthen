@@ -139,14 +139,24 @@ module.exports = nourish({
     t.ok('tapping + on the newly logged eaten food adjusts its portion immediately',
       xAfterStep > lunchCard.x0, JSON.stringify({ before: lunchCard.x0, after: xAfterStep }));
 
-    /* 4) Explicit Balance in the meal sheet works on manually logged (eaten: 1) meals too */
+    /* 4) Balance hides on a single manually logged food and appears once 2+ unlocked foods are on the meal */
     await p.evaluate(() => document.querySelector('#macroSlots [data-mslot="l"] .mtray-b[data-mopen]').click());
+    await p.waitForTimeout(300);
+    const balSingle = await p.evaluate(() => !!document.querySelector('#modalRoot .msh-acts [data-mbal="l"]'));
+    t.ok('Balance hides cleanly when a meal holds just one manually logged food', !balSingle);
+    await p.click('#modalRoot .msh-acts [data-mpmode="home"]');
+    await p.waitForTimeout(250);
+    await p.fill('#mpFind', 'egg white');
+    await p.waitForTimeout(250);
+    await p.click('#mpList [data-mpick="f:egg_white"]');
     await p.waitForTimeout(300);
     const balEnabled = await p.evaluate(() => {
       const b = document.querySelector('#modalRoot .msh-acts [data-mbal="l"]');
       return !!b && !b.disabled;
     });
-    t.ok('Balance inside the meal sheet stays enabled for unlocked manually logged meals', balEnabled);
+    t.ok('Balance inside the meal sheet appears and stays enabled once 2+ unlocked manually logged foods are present', balEnabled);
+    await p.click('#modalRoot [data-mpmode="meal"]');
+    await p.waitForTimeout(200);
     await p.click('#modalRoot .msh-done');
     await p.waitForTimeout(250);
 

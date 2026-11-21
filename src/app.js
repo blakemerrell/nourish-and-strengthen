@@ -4329,7 +4329,7 @@
     'data-cal', 'data-calweek', 'data-calagain', 'data-calfrom', 'data-caltpl', 'data-cookgo', 'data-qchip', 'data-cardadd', 'data-cookday', 'data-cooknext', 'data-cookopen', 'data-cookclose',
     'data-addday', 'data-pswap', 'data-prate', 'data-adf', 'data-adadd', 'data-adsw', 'data-adopen', 'data-pwpick', 'data-pwsee', 'data-pwback', 'data-pwpre', 'data-pwmore', 'data-pwwant', 'data-pwopen', 'data-dayopen', 'data-dsact', 'data-listmark', 'data-fold',
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
-    'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mslotdel', 'data-mslotmove', 'data-mholdclose', 'data-maddslot', 'data-mslotpreset', 'data-maddpop', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
+    'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mslotdel', 'data-mslotmove', 'data-mholdclose', 'data-maddslot', 'data-mslotpreset', 'data-maddpop', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mset', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
     'data-mmore', 'data-fppick', 'data-fpmore', 'data-fpstaples', 'data-mfsec', 'data-mfunpin', 'data-mfedit', 'data-mfdel', 'data-mfnew', 'data-mfadd', 'data-mffood', 'data-mfundo', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mwtiles', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd', 'data-hydmodal', 'data-hyd', 'data-hydmg', 'data-hydoz', 'data-mweekfold', 'data-mlog', 'data-mpslot', 'data-mheardundo', 'data-mrowopen', 'data-mpclear'];
 
@@ -6865,6 +6865,22 @@
         return;
       }
 
+      /* ½ · 1 · 1½ · 2 under a dish's dial (myday.js, 1h): the amount set
+         outright, under the same rules as − and + (an eaten plate only while
+         it is being corrected; set by hand in the sheet, it holds). */
+      var mset = e.target.closest('[data-mset]');
+      if (mset) {
+        var qp = mset.dataset.mset.split(':');           // slot : index : servings
+        mEditDay(mViewKey(), function (day) {
+          var it = (day[qp[0]] || [])[Number(qp[1])];
+          if (!it) return;
+          if (it.eaten && S.mEdit !== qp.slice(0, 2).join(':')) return;
+          it.x = Number(qp[2]) || it.x;
+          if (S.macroPick && S.macroPick.slot === qp[0] && !it.l) it.l = 1;
+        });
+        mRedraw();
+        return;
+      }
       var st = e.target.closest('[data-mstep]');
       if (st) {
         var sp = st.dataset.mstep.split(':');           // slot : index : direction

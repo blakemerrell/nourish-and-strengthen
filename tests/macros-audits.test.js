@@ -1369,14 +1369,18 @@ module.exports = nourish({
       await np.reload();
       await np.click('.tab[data-view="macros"]');
       await np.waitForTimeout(300);
-      /* The weight is the plate's dial now (2026-10-04), "~N g" until the
-         batch is weighed; Weigh the batch is in the plate's ⋯. */
+      /* The weight was the plate's dial from 2026-10-04; since 1h (2026-11-20,
+         Blake: "depends on the food") a dish is dialled in servings and its
+         weight is the small print beside its macros, "~N g" until the batch
+         is weighed. Weigh the batch is in the plate's ⋯. */
       await openMeal(np, 'l');
-      const est = await np.evaluate(() => { const b = document.querySelector('#modalRoot [data-mtype="l:0"]');
-        return b ? { t: b.textContent.trim().replace(/^~/, '~'), est: /^~/.test(b.textContent.trim()) } : null; });
+      const wOf = () => np.evaluate(() => { const b = document.querySelector('#modalRoot [data-mtype="l:0"]');
+        const w = b && b.closest('.mrow').querySelector('.mitem-uom');
+        return w ? { t: w.textContent.trim(), est: /^~/.test(w.textContent.trim()), dial: b.textContent.trim() } : null; });
+      const est = await wOf();
       const rawHalf = Math.round(pork.ingp.reduce((a, x) => a + x.g * (x.pe > 0 ? x.pe : 1), 0) / pork.servN * 0.5);
       t.ok('a recipe plate shows its weight, marked as an estimate until weighed',
-        est && est.est && est.t === '~' + rawHalf + ' g', JSON.stringify({ est, rawHalf }));
+        est && est.est && est.t === '~' + rawHalf + ' g' && est.dial === '\u00bd serving', JSON.stringify({ est, rawHalf }));
       await openRow(np, 'l:0');
       await np.click('#modalRoot [data-mfmenu="l:0"]');
       await np.waitForTimeout(150);
@@ -1385,10 +1389,9 @@ module.exports = nourish({
       await np.fill('#mBatchIn', '1800');
       await np.click('[data-mbsave="l:0"]');
       await np.waitForTimeout(250);
-      const weighed = await np.evaluate((id) => { const b = document.querySelector('#modalRoot [data-mtype="l:0"]');
-        return { t: b && b.textContent.trim(), est: !!b && /^~/.test(b.textContent.trim()),
+      const weighed = Object.assign(await wOf() || {}, await np.evaluate((id) => ({
           stored: JSON.parse(localStorage.getItem('bsc.macroBatchG') || '{}')[String(id)],
-          sent: !!(window.__macroLab.payload().bg || {}).v }; }, pork.id);
+          sent: !!(window.__macroLab.payload().bg || {}).v }), pork.id));
       t.ok('weighing the batch once makes it exact: 1,800 g for 10 is 90 g on a half-serving plate',
         weighed.t === '90 g' && !weighed.est && weighed.stored && weighed.stored.s === 180 && weighed.sent,
         JSON.stringify(weighed));

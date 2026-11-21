@@ -265,26 +265,36 @@
     return !!(sg && sg.est);
   }
   // the dial's own words: "~212 g", or the unit when there is no weight
+  /* What the dial counts by: a single food's grams, and a dish's servings.
+     Asked how he thinks about an amount, Blake (2026-11-20) answered
+     "depends on the food": a pot of chilli is "one and a half", chicken
+     breast is grams. A dish was dialled by the gram from 2026-10-04 to
+     then, "~623 g" of something he only ever eats by the bowl, so a dish's
+     dial is its servings again (a quarter a step, mStepX, with ½ · 1 · 1½
+     · 2 beside it in the meal: src/myday.js), and its weight stays in the
+     small print (mDialMeasure) for weighing it out. mDialG is still the
+     weight of one x for everything that wants a weight. */
+  function mDialBase(r) {
+    return r && !r.food ? 0 : mDialG(r);
+  }
   function mDialText(r, x) {
-    var g = mDialG(r);
+    var g = mDialBase(r);
     if (!g) return mPortion(r, x).head;
     return (mDialEst(r) ? '~' : '') + Math.round(x * g).toLocaleString('en-US') + ' g';
   }
   // the kitchen's word for the same amount, for the small print
   function mDialMeasure(r, x) {
     var p = mPortion(r, x);
-    if (!mDialG(r)) return p.detail;
-    /* A recipe dialled by the gram lands between servings — 215 g of a
-       212 g serving is 1.01 of it — so the word is said to the nearest
-       quarter and counted by what is shown: "1 serving", not "1 servings". */
-    if (!r.food) {
-      var q = Math.round(x * 4) / 4;
-      return q > 0 ? fmtNum(q) + ' ' + mFixNoun(mUnitWord(r), q) : 'less than ¼ ' + mFixNoun(mUnitWord(r), 1);
+    /* A dish's small print is its weight, now its dial is its servings. */
+    if (r && !r.food) {
+      var dg = mDialG(r);
+      return dg ? (mDialEst(r) ? '~' : '') + Math.round(x * dg).toLocaleString('en-US') + ' g' : p.detail;
     }
+    if (!mDialG(r)) return p.detail;
     return /\d g$/.test(p.head) ? p.detail : p.head;
   }
   function mDialStep(r, x, dir) {
-    var G = mDialG(r);
+    var G = mDialBase(r);
     var unit = String(mUnitWord(r) || '').toLowerCase();
     if (!G || (r.food && MSTEP_COUNT[unit])) return mStepX(r, x, dir);
     var g = Math.round((Number(x) || 0) * G), st = MGRAM_STEP;
@@ -293,11 +303,11 @@
     return Math.round(g / G * 10000) / 10000;
   }
   function mDialFromX(r, x) {
-    var G = mDialG(r);
+    var G = mDialBase(r);
     return G ? Math.round((Number(x) || 0) * G) : mTypedFromX(r, x);
   }
   function mXFromDial(r, n) {
-    var G = mDialG(r);
+    var G = mDialBase(r);
     if (!G) return mXFromTyped(r, n);
     var v = (Number(n) || 0) / G;
     if (!isFinite(v) || v <= 0) return null;

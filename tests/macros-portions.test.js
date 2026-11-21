@@ -568,10 +568,10 @@ module.exports = nourish({
       const row = document.querySelector('#modalRoot .mrows .mitem');
       if (!row) return null;
       return {
-        /* The dial is grams since 2026-10-04 (recipes too, from their serving
-           weight); the portion in servings is the small print beside it. */
-        amount: (row.querySelector('.mitem-uom') || {}).textContent.trim(),
-        dial: row.querySelector('.mstep-x').textContent.trim(),
+        /* A dish is dialled in servings since 1h (2026-11-20), so the part
+           is on the dial and the weight is the small print beside it. */
+        amount: row.querySelector('.mstep-x').textContent.trim(),
+        dial: (row.querySelector('.mitem-uom') || {}).textContent.trim(),
         chips: [...row.querySelectorAll('.mchip')].map((c) => c.textContent.trim()),
         from: (row.querySelector('.mitem-from') || {}).textContent || '',
         mac: (row.querySelector('.mitem-mac') || {}).textContent || ''

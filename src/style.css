@@ -10545,3 +10545,11 @@ button.mf-name:hover { background: var(--card); }
 .mleft-tr i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; }
 .mleft-pl { background: color-mix(in oklab, currentColor 42%, var(--card)); }
 .mleft-at { background: currentColor; }
+/* ½ · 1 · 1½ · 2 under a dish's dial (redesign 1h, src/myday.js). */
+.mfl-qs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 6px; flex: 1 0 100%; }
+.mfl-q {
+  min-height: 44px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper-soft);
+  font: 600 0.9375rem/1 var(--sans); color: var(--control-ink); cursor: pointer;
+}
+.mfl-q.on { background: var(--ink); border-color: var(--ink); color: var(--card); }
+.mfl-q:hover, .mfl-q:focus-visible { border-color: var(--line-firm); }

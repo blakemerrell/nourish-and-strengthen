@@ -69,8 +69,8 @@ module.exports = nourish({
     await pg.waitForTimeout(200);
     const added = await lunch(pg);
     const toast = await pg.evaluate(() => { const e = document.getElementById('mToast'); return e && !e.hidden ? e.textContent : ''; });
-    t.ok('one tap puts it on lunch, planned like any add, at its portion',
-      added.length === 1 && added[0].id === 3 && added[0].x === 1 && !added[0].eaten, JSON.stringify(added));
+    t.ok('one tap puts it on lunch, marked eaten immediately at its portion',
+      added.length === 1 && added[0].id === 3 && added[0].x === 1 && added[0].eaten === 1, JSON.stringify(added));
     t.ok('and says so, with Undo', /Quick Canned Chicken/.test(toast) && /Lunch/.test(toast) && /Undo/.test(toast), toast);
     t.ok('lunch is under way now, so the chips go', (await chips(pg)).length === 0);
 

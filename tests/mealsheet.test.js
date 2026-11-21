@@ -71,15 +71,9 @@ module.exports = {
     t.ok('a tray: the tick, the meal\u2019s four pills, and its foods as lines ending in grams', day.tick && day.lines.length === 7 &&
       day.grams && day.caps === 4, JSON.stringify(day));
     t.ok('each food in the kitchen\u2019s words before its weight (Blake: "if I just want to eyeball it I can")', day.measured === 7, JSON.stringify(day.lines));
-    /* Since 2026-10-08 each food is a line of its own (tests/daylines.test.js):
-       its name, the line itself and its own tick. Since 2026-10-10 the
-       card's head is its name (which opens and folds it) and its drawings:
-       +, ↻, the scale and ⊘. Lunch is open on its foods, and since
-       2026-11-06 an open card carries the scale (it waited for Details,
-       the third view, until that went). ↻ left the card for the meal's ⋯
-       on 2026-11-20 (1j): Blake uses the pills, the scale and ⊘, not ↻. */
-    t.ok('and nothing else to press on it: the tick, its name, + ⚖ ⊘, the tray itself, and each food’s name, line and tick',
-      day.controls === 6 + 2 * day.lines.length && day.ticks === day.lines.length, JSON.stringify(day));
+    /* Calm card keeps the tick, its name, +, the tray door, and each food's name, line and tick. */
+    t.ok('and nothing else to press on it: the tick, its name, +, the tray itself, and each food’s name, line and tick',
+      day.controls === 4 + 2 * day.lines.length && day.ticks === day.lines.length, JSON.stringify(day));
     t.ok('the bar holds the one primary and Rebalance, Sweep, Add meal live in the day menu', !day.add && !day.openAll &&
       day.bar.join() === 'macroFill' && day.menuTools.join() === 'macroRebal,macroSweep,macroAddMeal', JSON.stringify(day));
 
@@ -170,17 +164,17 @@ module.exports = {
     await p.click('#modalRoot [data-mmenu="l"]');
     await p.waitForTimeout(250);
     const mm = await p.evaluate(() => [...document.querySelectorAll('#modalRoot .msh-menu .mfood-mi')].map((b) => b.textContent.trim()));
-    t.ok('the meal\'s ⋯ holds Try another, Save meal and Repeat a day', mm.join('|') === 'Try another|Save meal|Repeat a day', JSON.stringify(mm));
+    t.ok('the planned meal\'s ⋯ holds Try another, Save meal, Repeat a day and Skip today', mm.join('|') === 'Try another|Save meal|Repeat a day|Skip today', JSON.stringify(mm));
     await p.click('#modalRoot .msh-t');
     await p.waitForTimeout(200);
     t.ok('a tap elsewhere closes it', !(await p.$('#modalRoot .msh-menu')));
 
-    /* the tick, in the sheet, completes the meal; Done goes back to the day */
+    /* the tick, in the sheet, completes the meal while keeping dials live on an active day; Done goes back to the day */
     await p.click('#modalRoot .msh-h [data-mdot="l"]');
     await p.waitForTimeout(300);
     t.ok('the sheet\'s tick marks every food on the meal eaten', (await mealOf(p, 'l')).every((it) => it.eaten));
-    const spent = await p.evaluate(() => [...document.querySelectorAll('#modalRoot [data-mstep="l:0:up"]')].every((b) => b.disabled));
-    t.ok('and an eaten meal\'s dials go quiet', spent);
+    const stillLive = await p.evaluate(() => [...document.querySelectorAll('#modalRoot [data-mstep="l:0:up"]')].every((b) => !b.disabled));
+    t.ok('and on an active day an eaten meal\'s dials remain live to adjust', stillLive);
     await p.click('#modalRoot .msheet .msh-done');
     await p.waitForTimeout(400);
     t.ok('Done goes back to the day, the tray ticked', !(await p.$('#modalRoot .msheet')) &&

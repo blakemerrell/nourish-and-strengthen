@@ -147,15 +147,15 @@ module.exports = {
     t.ok('and folds it on the next press: two views, never a third', (await views(p)) === '111', await views(p));
     await p.click('#macroSlots [data-mview="d"]');
 
-    /* What the third view held moved: the scale (Balance) is on an open
-       card now, and no shut food carries a line of numbers under it. */
+    /* Card header keeps only + on open populated meals; Balance and Skip live in the meal sheet. */
     const opened = await p.evaluate(() => {
       const d = document.querySelector('#macroSlots .mtray[data-mslot="d"]');
-      return { bal: !!d.querySelector('[data-mbal]'), quiet: document.querySelectorAll('#macroSlots .mfl-q').length,
+      return { plus: !!d.querySelector('.mtray-vbs [data-mopen][data-madd]'), bal: !!d.querySelector('[data-mbal]'),
+        skip: !!d.querySelector('[data-mskipask]'), quiet: document.querySelectorAll('#macroSlots .mfl-q').length,
         chev: !!d.querySelector('.mtray-hd .mtray-chev') };
     });
-    t.ok('an open meal has the scale beside + and ⊘, a chevron on its name, and no line of numbers under its shut foods',
-      opened.bal && opened.quiet === 0 && opened.chev, JSON.stringify(opened));
+    t.ok('an open meal has +, a chevron on its name, no card-level ⚖ or ⊘, and no line of numbers under its shut foods',
+      opened.plus && !opened.bal && !opened.skip && opened.quiet === 0 && opened.chev, JSON.stringify(opened));
 
     /* Ticking a meal's last food folds it to its rings, a beat later, so
        the tick is seen landing first; a meal opened or folded by its own

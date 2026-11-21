@@ -67,7 +67,8 @@ Enforced by `tests/redesign-invariants.test.js` and audit gates across every ste
 3. **Cook → Shopping List → Automatic Walmart Cart (`src/walmart.js`, `src/list.js`, `src/today.js`) stays front-and-center:**
    - Keep the full Recipes / `Plan my week` → `buildList()` gram aggregation (`In your kitchen` subtraction + `From the storehouse` split) → `Mark what I have` → `Check the products ›` (`sh.wm` item-# overrides) → **Pinned `#0053E2` blue + `#FFC220` yellow spark `Add N items to Walmart cart`** (`walmart.com/sc/cart/addToCart?items=ID_QTY,...`) across **Today**, **Cook › This week**, and **Cook › List**. Never bury Walmart under `⋯`.
 4. **Eat / Nourish logging & pin semantics (`src/myday.js`, `src/mydayparts.js`, `src/picksheet.js`):**
-   - Newly added foods ALWAYS arrive **unchecked** (`M_ADDS_EATEN` stays off) until explicitly ticked.
+   - **Smart `eaten` split (2026-11-21 — Invisible Power pass)**: manual user adds (picker, `"What did you eat?"`, `"You usually have"` chips, barcode / custom food, saved meal log, Repeat a day) on today or past days count as **`eaten: 1` immediately** (no redundant checkboxes on manually logged meals, while remaining editable until the day closes); **Fill**, **Autofill**, **Everyday pins**, **Week dinners**, and **future days (`k > today`)** stay planned **`eaten: 0`** with per-row checkboxes until ticked.
+   - Calm Eat cards keep each populated meal's 4 colored macro pills while removing card-level clutter (empty 4-button expansion wall, card-header `⚖` and `⊘`, superscript score leaves, shut-line droplets); `Autofill`, `Repeat a day`, and `Skip today` live cleanly inside the meal sheet `⋯`.
    - Delete (`data-mdel`) removes from **today only**; only `Unpin` (`data-mpin`) removes an everyday pin (`#204`).
    - `Lock` (`data-mlock`) holds an item's amount during automatic `Balance` / `Rebalance` while still allowing manual `− / +` or typed edits.
 

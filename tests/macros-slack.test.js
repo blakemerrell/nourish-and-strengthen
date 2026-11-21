@@ -594,13 +594,14 @@ module.exports = nourish({
           return f ? Math.round(f.closest('.mp-find').getBoundingClientRect().width) : 0; })(),
       };
     });
-    /* Skip and "Repeat a day" (2026-09-27: a meal again, in one tap, is what
-       an empty meal most wants); adding is the picker in the sheet itself. */
-    t.ok('an empty meal offers Skip, not two verbs it cannot use',
-      !!emptyVerbs && !!emptyVerbs.verbs && emptyVerbs.verbs.length === 2 &&
-        /skip/i.test(emptyVerbs.verbs[0].t) && !emptyVerbs.verbs[0].off &&
-        /* at the START of a name: Repeat's is "... from another day" */
-        !emptyVerbs.verbs.some((v) => /^(another|try another|balance)/i.test(v.t)) && !emptyVerbs.scalesLive,
+    /* Autofill, Repeat a day, and Skip today live cleanly in the empty meal's ⋯ menu. */
+    t.ok('an empty meal offers Autofill, Repeat a day, and Skip today under ⋯ while Balance stays disabled',
+      !!emptyVerbs && !!emptyVerbs.verbs && emptyVerbs.verbs.length === 3 &&
+        /autofill/i.test(emptyVerbs.verbs[0].t) &&
+        /repeat/i.test(emptyVerbs.verbs[1].t) &&
+        /skip/i.test(emptyVerbs.verbs[2].t) &&
+        emptyVerbs.verbs.every((v) => !v.off) &&
+        !emptyVerbs.scalesLive,
       JSON.stringify(emptyVerbs));
     t.ok('and skip is no longer a glyph in the header',
       !!emptyVerbs && !emptyVerbs.skipInHeader, JSON.stringify(emptyVerbs));

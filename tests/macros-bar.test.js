@@ -98,7 +98,20 @@ module.exports = nourish({
        the wake-to-correct button this guard is about. */
     await wakePg.click('#modalRoot .msh-h [data-mdot="l"]');
     await wakePg.waitForTimeout(350);
-    t.ok('the meal\'s tick leaves every plate on it eaten, its portion the wake-to-correct button',
+    /* Since 2026-11-21 eaten items stay editable until the day is closed (mDoneAt > 0).
+       Close today so the sheet shows the .mstep-wake button we are guarding. */
+    await wakePg.evaluate(() => {
+      const p2 = (n) => (n < 10 ? '0' : '') + n;
+      const d = new Date();
+      const k = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+      localStorage.setItem('bsc.macroDone', JSON.stringify({ [k]: Date.now() }));
+    });
+    await wakePg.reload();
+    await wakePg.waitForTimeout(400);
+    await wakePg.click('.tab[data-view="macros"]');
+    await wakePg.waitForTimeout(300);
+    await openMeal(wakePg, 'l');
+    t.ok('on a closed day, the meal\'s tick leaves every plate on it with a wake-to-correct button',
       await wakePg.evaluate(() => {
         const rows = [...document.querySelectorAll('#modalRoot .mrows .mitem')];
         return rows.length === 2 && rows.every((r) => r.classList.contains('eaten') &&

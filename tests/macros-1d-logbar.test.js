@@ -166,14 +166,14 @@ module.exports = nourish({
       return {
         sheetGone: !document.querySelector('#modalRoot .msheet'),
         dinnerIds: (d.d || []).map((it) => it.id),
-        allUnchecked: (d.d || []).length === 3 && (d.d || []).every((it) => !it.eaten),
+        allEaten: (d.d || []).length === 3 && (d.d || []).every((it) => it.eaten === 1),
         toastText: toast && !toast.hidden ? toast.textContent : '',
         hasUndo: !!(toast && toast.querySelector('[data-mheardundo]')),
       };
     }, dayKey);
-    t.ok('Add all from bar closes sheet, adds unchecked items to Dinner, and shows Undo toast',
+    t.ok('Add all from bar closes sheet, adds eaten items to Dinner on today, and shows Undo toast',
       afterAdd.sheetGone && afterAdd.dinnerIds.join() === 'f:egg,f:bread,f:butter' &&
-        afterAdd.allUnchecked && /Added 3 to Dinner/.test(afterAdd.toastText) && afterAdd.hasUndo,
+        afterAdd.allEaten && /Added 3 to Dinner/.test(afterAdd.toastText) && afterAdd.hasUndo,
       JSON.stringify(afterAdd));
 
     await p.click('#mToast [data-mheardundo]');
@@ -236,7 +236,7 @@ module.exports = nourish({
     t.ok('switching meal chips clears basket so adding & tapping the same food does not delete eaten items on the new meal',
       pressedAfterSwitch !== 'true' && lunchAfter.b.length === 1 &&
         lunchAfter.l.length === 2 && lunchAfter.l[0].id === 'f:apple' && lunchAfter.l[0].eaten === 1 &&
-        lunchAfter.l[1].id === 'f:apple' && !lunchAfter.l[1].eaten,
+        lunchAfter.l[1].id === 'f:apple' && lunchAfter.l[1].eaten === 1,
       JSON.stringify({ pressedAfterSwitch, lunchAfter }));
     await p.click('#modalRoot .msh-done');
     await p.waitForTimeout(200);
@@ -320,8 +320,8 @@ module.exports = nourish({
       const sItems = (JSON.parse(localStorage.getItem('bsc.macroDays'))[dk] || {}).s || [];
       return { count: sItems.length, item: sItems[0] || null };
     }, scDay);
-    t.ok('saving manual Nutrition Facts adds unchecked food to the selected meal (Snacks)',
-      nfSaved.count === 1 && /^f:my:/.test(nfSaved.item.id) && !nfSaved.item.eaten,
+    t.ok('saving manual Nutrition Facts adds eaten food on today to the selected meal (Snacks)',
+      nfSaved.count === 1 && /^f:my:/.test(nfSaved.item.id) && nfSaved.item.eaten === 1,
       JSON.stringify(nfSaved));
     await sc.context().close();
 

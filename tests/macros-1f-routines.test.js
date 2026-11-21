@@ -286,9 +286,9 @@ module.exports = nourish({
         hasUndo: !!document.querySelector('#mToast [data-mfundo]'),
       };
     }, dk);
-    t.ok('+ Log closes #mFoodsSheet to Eat, adds unchecked item to next meal (Lunch), and offers Undo',
+    t.ok('+ Log closes #mFoodsSheet to Eat, adds eaten item to next meal on today (Lunch), and offers Undo',
       afterMealLog.sheetClosed && afterMealLog.lItems.length === 1 &&
-        afterMealLog.lItems[0].id === 'f:my:morning_bowl' && !afterMealLog.lItems[0].eaten &&
+        afterMealLog.lItems[0].id === 'f:my:morning_bowl' && afterMealLog.lItems[0].eaten === 1 &&
         afterMealLog.hasUndo,
       JSON.stringify(afterMealLog));
 

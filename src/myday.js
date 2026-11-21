@@ -322,13 +322,6 @@
     if (S.mFoldSoon === k + '|' + sk) return 2;
     return M.eatenAll ? 1 : 2;
   }
-  /* A food's mark beside its name: the leaf, or for a meal you saved, the
-     two links Save meal is drawn with. */
-  function mBadgeHTML(r) {
-    if (r.score !== null && r.score !== undefined) return leaf(r.score, 'leaf-sm');
-    if (r.eatout) return '';
-    return r.parts && r.parts.length ? '<span class="mtray-kept" role="img" aria-label="A saved meal" title="A saved meal">' + mIcon('keep') + '</span>' : '';
-  }
 
   /* Everything the tray and the sheet say about one meal, worked out once. */
   function mMealModel(k, sk, name, onPlan, day, targets, slots) {
@@ -382,12 +375,11 @@
   function mLineOpenHTML(M, r, it, i) {
     var sk = M.sk, tag = sk + ':' + i, name = esc(r.name);
     var pinned = M.pins.some(function (p) { return String(p.id) === String(it.id); });
-    var spent = it.eaten && S.mEdit !== tag;
+    var spent = !!(it.eaten && mDoneAt(M.k) > 0 && S.mEdit !== tag);
     var dialU = r.food && mDialG(r) ? 'g' : mDialUnit(r);
-    /* The droplet in the shut line's pill sits inside the pill's button, so
-       it cannot take focus of its own; a keyboard or a screen reader had no
-       way to mute a drink's water. The open line carries the same switch as
-       one of its keys (the click handler is the pill droplet's). */
+    /* A drink's water badge stays off the shut day line so the card stays
+       calm; opening the line shows its fluid chip beside its macros and
+       exposes the droplet toggle button directly underneath. */
     var fOz = mItemFluidOz(r, it.x);
     var amount = S.mType === tag
       ? '<span class="mstep-x mitem-amt mitem-typing"><input class="mstep-in" type="text" inputmode="decimal" autocomplete="off" data-mtypein="' + tag + '" ' +
@@ -396,11 +388,7 @@
           name + ', ' + esc(mDialText(r, it.x)) + '. ' + (spent ? 'Correct it' : 'Type an amount') + '">' + esc(mDialText(r, it.x)) + '</button>';
     return '<div class="mfl-x no-print">' +
         '<div class="mfl-mac"><span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' +
-          /* The water a drink adds rides in its portion pill already (the
-             droplet), so this line leaves it off, as Details did (Blake,
-             2026-10-30: "Water hydration is duplicated"). The open line is
-             the one place a food's numbers are said since Details went. */
-          (mItemFluidOz(r, it.x) > 0 ? '' : mHydChip(r, it.x, it.nh)) + mSaltChip(r, it.x) + '</div>' +
+          mHydChip(r, it.x, it.nh) + mSaltChip(r, it.x) + '</div>' +
         '<div class="mfl-ctl">' +
           '<span class="mfl-ics">' +
             '<button class="mfl-ic" data-mdel="' + tag + '" aria-label="Remove ' + name + '">' + I_BIN + '</button>' +
@@ -450,7 +438,7 @@
     var sk = M.sk, tag = sk + ':' + i;
     var pinned = M.pins.some(function (p) { return String(p.id) === String(it.id); });
     var was = mk.was[i], fresh = !!mk.fresh[i];
-    var spent = it.eaten && S.mEdit !== tag;
+    var spent = !!(it.eaten && mDoneAt(M.k) > 0 && S.mEdit !== tag);
     var moveOpen = S.mMenu === 'move:' + tag;
     var menuOpen = S.mMenu === tag || moveOpen;
     var isSavedMeal = !!(r.parts && (r.parts.length > 1 || (r.parts.length === 1 && r.parts[0].x !== 1)) && r.parts.some(function (pt) { return LIVE.BY_ID[pt.id]; }));
@@ -566,6 +554,7 @@
     if (!M) M = mMealModel(k, sk, name, true, day, targets, slots);
     var items = M.items, mk = marksFor(k, sk, items);
     var skipped = !items.length && mSkipped(k, sk);
+    var anyEaten = items.some(function (it) { return it.eaten && LIVE.BY_ID[it.id]; });
     var menuOpen = S.mMenu === 'meal:' + sk;
     var head = '<div class="msh-h">' +
         (skipped ? '<span class="msh-gap"></span>' : M.dot) +
@@ -575,9 +564,10 @@
         (menuOpen ? '<div class="mfood-menu msh-menu no-print" role="menu">' +
           (items.length
             ? '<button class="mfood-mi mslot-try" role="menuitem" data-mtry="' + esc(sk) + '">' + mIcon('another') + 'Try another</button>'
-            : '<button class="mfood-mi mslot-skip" role="menuitem" data-mskip="' + esc(sk) + '">' + mIcon('skip') + 'Skip today</button>') +
+            : '<button class="mfood-mi mslot-try" role="menuitem" data-mtry="' + esc(sk) + '" aria-label="Autofill ' + esc(name) + ' from your plan">' + mIcon('another') + 'Autofill</button>') +
           (items.length >= 2 ? '<button class="mfood-mi mslot-keep" role="menuitem" data-mkeep="' + esc(sk) + '" aria-label="Save these plates as one food you can reuse">' + mIcon('keep') + 'Save meal</button>' : '') +
           '<button class="mfood-mi mslot-from" role="menuitem" data-mfrom="' + esc(sk) + '" aria-label="Repeat ' + esc(name) + ' from another day">' + mIcon('fromday') + 'Repeat a day</button>' +
+          (!anyEaten ? '<button class="mfood-mi mslot-skip" role="menuitem" data-mskip="' + esc(sk) + '">' + mIcon('skip') + 'Skip today</button>' : '') +
         '</div>' : '') +
       '</div>' +
       (S.macroPick && S.macroPick.fromBar && slots.list.length > 1
@@ -668,7 +658,10 @@
      Balance and Done in separated meal view. */
   function sheetTrayHTML(M) {
     var sk = M.sk, n = 0;
-    M.items.forEach(function (it) { if (!it.eaten && it.l !== 2 && LIVE.BY_ID[it.id]) n++; });
+    M.items.forEach(function (it) {
+      var r = LIVE.BY_ID[it.id];
+      if (it.l !== 2 && r && !r.eatout && r.macro && r.macro.kcal > 0) n++;
+    });
     var doneBtn = S.mpFromMeal
       ? '<button type="button" class="btn-primary msh-done" data-mpmode="meal">Done</button>'
       : '<button class="btn-primary msh-done sheet-done">Done</button>';
@@ -682,7 +675,10 @@
 
   function sheetMealTrayHTML(M) {
     var sk = M.sk, n = 0;
-    M.items.forEach(function (it) { if (!it.eaten && it.l !== 2 && LIVE.BY_ID[it.id]) n++; });
+    M.items.forEach(function (it) {
+      var r = LIVE.BY_ID[it.id];
+      if (it.l !== 2 && r && !r.eatout && r.macro && r.macro.kcal > 0) n++;
+    });
     return '<div class="msh-tray open no-print">' +
       '<div class="msh-acts' + (M.onPlan ? ' three' : '') + '">' +
         (M.onPlan ? '<button type="button" class="msh-addfoods" data-mpmode="home" aria-label="Add foods to ' + esc(M.name) + '">+ Add foods</button>' : '') +
@@ -943,38 +939,27 @@
       '</div>';
     };
     var emptyHTML = function (M, sk, name) {
-      var open = !!(S.mEmptyOpen[k] && S.mEmptyOpen[k][sk]);
       /* The faint target is the calorie pill's figure, worked the same way
          (capsHTML), and carries the same data-want the pill did, so whatever
          read a meal's share off its pill reads it here. A day whose calories
          are spent shows none, as the pill showed a dash. */
       var spent = (M.ask && M.ask.spent) || {};
       var want = M.aim && !spent.kcal ? (M.aim.kcal || (4 * M.aim.p + 9 * M.aim.f + 4 * M.aim.c)) : 0;
-      return '<div class="mslot mtray mtray-empty' + (open ? ' open' : '') + '" data-mslot="' + esc(sk) + '">' +
+      return '<div class="mslot mtray mtray-empty" data-mslot="' + esc(sk) + '">' +
           M.dot +
           '<div class="mtray-c">' +
             '<div class="mtray-hr">' +
-              '<button class="mtray-hd" data-meopen="' + esc(sk) + '" aria-expanded="' + open + '" aria-label="' + esc(name) +
-                ', nothing on it yet' + (want > 0 ? ', ' + fmtK(want) + ' kcal to plan' : '') + '. ' + (open ? 'Hide' : 'Show') + ' the ways to fill it">' +
+              '<button class="mtray-hd" data-mopen="' + esc(sk) + '" aria-label="' + esc(name) +
+                ', nothing on it yet' + (want > 0 ? ', ' + fmtK(want) + ' kcal to plan' : '') + '. Add food">' +
                 '<span class="mtray-n">' + esc(name) + '</span>' + (want > 0 ? '<span class="mtray-aim num" data-want="' + Math.round(want) + '">' + fmtK(want) + ' kcal</span>' : '') + '</button>' +
               '<span class="mtray-vbs">' +
-                '<button class="mtray-ib mtray-hold" data-mopen="' + esc(sk) + '" data-mhold="' + esc(sk) + '" aria-label="Add food to ' + esc(name) +
-                  '. Press and hold for more ways to fill it" title="Add food">' + mIcon('plus') + '</button>' +
-                '<button class="mtray-ib" data-mskipask="' + esc(sk) + '" aria-label="Skip ' + esc(name) + ' today" title="Skip today">' + mIcon('skip') + '</button>' +
+                '<button class="mtray-ib" data-mopen="' + esc(sk) + '" data-madd="1" aria-label="Add food to ' + esc(name) + '" title="Add food">' + mIcon('plus') + '</button>' +
               '</span>' +
             '</div>' +
             /* The door every card has, kept so a meal is found the same way
-               whatever it holds, but drawn to nothing here: the + beside the
-               name is this card's way in. Out of the tab order and the
-               accessibility tree too, or a keyboard stopped on an invisible
-               button on every empty meal. */
+               whatever it holds, but drawn to nothing here: the name and + are
+               this card's clean way in. */
             '<button class="mtray-b" data-mopen="' + esc(sk) + '" tabindex="-1" aria-hidden="true" aria-label="Open ' + esc(name) + (M.pillsSay ? ' — ' + esc(M.pillsSay) : '') + '"></button>' +
-            (!open ? '' : '<div class="mtray-acts">' +
-              '<button data-mopen="' + esc(sk) + '">Add food</button>' +
-              '<button data-mtry="' + esc(sk) + '" aria-label="Autofill ' + esc(name) + ' from your plan">Autofill</button>' +
-              '<button data-mfrom="' + esc(sk) + '" aria-label="Repeat ' + esc(name) + ' from another day">Repeat<span class="mtray-lg"> a day</span></button>' +
-              '<button data-msaved="' + esc(sk) + '" aria-label="Saved meals, for ' + esc(name) + '">Saved<span class="mtray-lg"> meals</span></button>' +
-            '</div>') +
             mUsualHTML(k, sk, name, day) +
             mSlotHoldBarHTML(sk, name, false) +
           '</div>' +
@@ -1074,6 +1059,7 @@
          lines. */
       var live = M.live, anyEaten = items.some(function (it) { return it.eaten; });
       if (!live && onPlan) return emptyHTML(M, sk, name) + mCascadeLineHTML(sk, targets, slots);
+      var showTicks = items.some(function (it) { return !it.eaten && LIVE.BY_ID[it.id]; });
       var view = mViewOf(k, sk, M, nextSk);
       var lines = '';
       if (view === 2) {
@@ -1092,37 +1078,19 @@
             ? '<button class="mtray-fn" data-mfood="' + esc(String(r.id)) + '" data-mx="' + it.x + '" data-mfslot="' + esc(sk) + '" aria-label="' + name + ', the food">'
             : '<button class="mtray-fn" data-open="' + esc(String(r.id)) + '" data-mx="' + it.x + '" aria-label="' + name + ', the recipe">';
           var single = !kitchen && !it.l;
-          /* The water a line adds rides inside the right half of its portion
-             pill next to the metric measure (Blake, 2026-10-31: "move it
-             inside the little pill next to the milliliters. Then let me tap
-             it to turn it off if it's not applicable in that drink"). Tapping
-             the droplet toggles `it.nh` so a powder mixed into already-counted
-             Crio Bru and milk can be muted for that drink. */
-          var fOz = mItemFluidOz(r, it.x);
-          var hydOff = !!(fOz > 0 && it.nh);
-          var hydTag = fOz > 0
-            ? '<span class="mfl-hyd num' + (hydOff ? ' off' : '') + '" data-mhydtoggle="' + esc(tag) + '" role="button" tabindex="-1" aria-pressed="' + (!hydOff) + '" title="' +
-                (hydOff ? 'Hydration off (' + fOz + ' oz) — tap to count toward hydration' : fOz + ' oz hydration — tap to turn off for this drink') +
-                '" aria-label="' + (hydOff ? 'Hydration off, ' + fOz + ' oz. Tap to count toward hydration' : fOz + ' oz hydration. Tap to turn off for this drink') + '">' +
-                '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2C8 2 3.8 6.8 3.8 10a4.2 4.2 0 0 0 8.4 0C12.2 6.8 8 2 8 2Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>' +
-                (hydOff ? '<path d="M3 13L13 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' : '') +
-                '</svg><span class="vis-hidden">' + fOz + ' oz</span></span>'
-            : '';
-          /* The leaf rides after the name, small and raised like a footnote
-             mark, rather than in a column of its own (Blake, 2026-11-06: "put
-             the text of the food all the way to the [left] and the leaf as a
-             superscript"). The column cost every line 46px of a phone's
-             width, foods with no leaf included, and pushed long recipe names
-             onto three lines. */
-          var badge = mBadgeHTML(r);
-          var line = '<div class="mfl-r">' +
-              door + '<span class="mfl-nm">' + name + (badge ? '<sup class="mfl-sup">' + badge + '</sup>' : '') + '</span></button>' +
-              '<button class="mfl-amt split-pill' + (it.l ? ' locked' : '') + (single ? ' single' : '') + (fOz > 0 ? ' has-hyd' : '') + (hydOff ? ' hyd-off' : '') + '" data-mamt="' + esc(k + '|' + tag) + '" aria-expanded="' + open + '" aria-label="' + name + ', ' +
-                esc(kitchen ? kitchen + ', ' + metric : metric) + (fOz > 0 ? (hydOff ? ', hydration off' : ', ' + fOz + ' oz hydration') : '') + (it.l ? ', locked' : '') + '. ' + (open ? 'Close' : 'Change it') + '">' +
+          /* Calm day lines (2026-11-21): omit superscript health leaves and shut-line
+             hydration droplets on the card face; show per-row eaten checkboxes only when
+             this meal still has planned (!eaten) items to check off. */
+          var line = '<div class="mfl-r' + (showTicks ? '' : ' mfl-notick') + '">' +
+              door + '<span class="mfl-nm">' + name + '</span></button>' +
+              '<button class="mfl-amt split-pill' + (it.l ? ' locked' : '') + (single ? ' single' : '') + '" data-mamt="' + esc(k + '|' + tag) + '" aria-expanded="' + open + '" aria-label="' + name + ', ' +
+                esc(kitchen ? kitchen + ', ' + metric : metric) + (it.l ? ', locked' : '') + '. ' + (open ? 'Close' : 'Change it') + '">' +
                 '<span class="mtray-fm sp-k"><b>' + (it.l ? LOCK_SM : '') + esc(kitchen) + '</b></span>' +
-                '<span class="sp-r">' + hydTag + '<em class="num sp-g">' + esc(metric) + '</em></span></button>' +
-              '<input class="mitem-ate" type="checkbox" data-meat="' + esc(tag) + '" aria-label="Eaten, ' + name + '"' +
-                (it.eaten ? ' checked' : '') + (ahead ? ' disabled' : '') + '>' +
+                '<span class="sp-r"><em class="num sp-g">' + esc(metric) + '</em></span></button>' +
+              (showTicks
+                ? '<input class="mitem-ate" type="checkbox" data-meat="' + esc(tag) + '" aria-label="Eaten, ' + name + '"' +
+                    (it.eaten ? ' checked' : '') + (ahead ? ' disabled' : '') + '>'
+                : '') +
             '</div>';
           /* What a food costs is on its own open line (mLineOpenHTML), one
              open at a time. Details used to put a quiet line of numbers
@@ -1146,24 +1114,9 @@
             (view !== 1 ? '' : M.aim ? mBeadsHTML(B) : '<span class="mtray-k num"><b>' + fmtK(M.sub.kcal) + '</b> kcal</span>') + '</button>'
         : '<button class="mtray-hd" data-mopen="' + esc(sk) + '" aria-label="' + esc(name) + ', nothing on it yet. Add food">' +
             '<span class="mtray-n">' + esc(name) + '</span></button>';
-      /* The card's own verbs, drawings alone, "minimal inside the cards":
-         + adds (the meal's sheet, where food is found), the scale balances
-         this meal (the sheet's Balance), and ⊘ skips it. The bar along the
-         bottom names the scale and the rest. Folded keeps only Skip; open
-         has all of them, the scale beside the amounts it moves (it was in
-         Details alone, until that view went). A meal anything was eaten
-         from is not skippable: that food happened.
-       *
-         ↻ Try another sat between + and the scale until 2026-11-20. Asked
-         which of the card's controls he taps in a week, Blake named the
-         pills, the scale and ⊘, not ↻, so it lives in the meal's own ⋯
-         (mMealSheetParts) with Save meal and Repeat a day, one tap further
-         in, and the card keeps three drawings instead of four. */
-      var canBal = items.some(function (it) { return !it.eaten && it.l !== 2 && LIVE.BY_ID[it.id]; });
-      var verbs = (view === 1 || !onPlan ? '' : '<button class="mtray-ib" data-mopen="' + esc(sk) + '" data-madd="1" aria-label="Add food to ' + esc(name) + '" title="Add food">' + mIcon('plus') + '</button>') +
-        (view !== 1 && canBal ? '<button class="mtray-ib" data-mbal="' + esc(sk) + '" aria-label="Balance every food on ' + esc(name) +
-          ', the amounts you set included" title="Balance">' + mIcon('scales') + '</button>' : '') +
-        (onPlan && !anyEaten ? '<button class="mtray-ib" data-mskipask="' + esc(sk) + '" aria-label="Skip ' + esc(name) + ' today" title="Skip today">' + mIcon('skip') + '</button>' : '');
+      /* Calm populated card header (2026-11-21): keep + when open; Balance and
+         Skip today live inside the meal sheet and its ⋯ menu. */
+      var verbs = (view === 1 || !onPlan ? '' : '<button class="mtray-ib" data-mopen="' + esc(sk) + '" data-madd="1" aria-label="Add food to ' + esc(name) + '" title="Add food">' + mIcon('plus') + '</button>');
 
       /* Skipping a meal with food on it asks first, on the card, and says
          what goes: its plates come off and its share moves to the meals

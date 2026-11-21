@@ -8005,18 +8005,15 @@
       '<div class="tr-set tr-set-h" aria-hidden="true"><span>Set</span><span>' + (nb ? 'Last time' : 'Previous') + '</span><span>' + (bodyOn ? '+' : '') + T.pr.u + '</span><span>Reps</span>' +
         (rq ? (rpeOn() ? '<span title="Rate of perceived exertion">RPE</span>' : '<span title="Reps to spare: how many more you could have done">Spare</span>') : '') + '<span></span></div>' +
       rows +
-      /* One row, each with its picture and its word: another set first and
-         dark, as the thing done most, and Remove, the one that takes
-         something away, last and red. */
+      /* Under the sets, only what is done to the sets: another set, first and
+         dark as the thing done most, and one fewer. Warm-ups, Plates, Swap,
+         Note and Remove were a row of seven beside them, the same five the
+         lift's ⋯ already holds (#trPop, since #194); the redesign's review
+         (2026-11-07) counted seven equal buttons on a card as the thing to
+         cut, and 2b moves them to the ⋯ alone. */
       '<div class="tr-ex-a">' +
         '<button class="tr-ea tr-ea-add" data-t="addset" data-x="' + i + '" aria-label="Add a set of ' + esc(ex.n) + '">' + EA_ICO.plus + '<span>Set</span></button>' +
         (x.s.length > 1 ? eaBtn('dropset', 'minus', 'Set', ' data-x="' + i + '"', 'Take off the last set') : '') +
-        (ex.k === 'c' && ex.q !== 'bw' ? eaBtn('warm', 'warm', 'Warm', ' data-x="' + i + '"', 'Add warm-up sets') : '') +
-        (plateLoaded(ex) ? eaBtn('plates', 'plates', 'Plates', ' data-x="' + i + '"', 'What plates to load, or count the ones you loaded') : '') +
-        eaBtn('swap', 'swap', 'Swap', ' data-x="' + i + '"', 'Swap ' + ex.n + ' for another exercise') +
-        (note ? '' : eaBtn('note', 'note', 'Note', ' data-e="' + esc(x.e) + '"', 'Add a note to ' + ex.n)) +
-        '<button class="tr-ea tr-ea-rm' + (armed ? ' tr-lnk-arm' : '') + '" data-t="rmex" data-x="' + i + '">' + EA_ICO.rm +
-          '<span>' + (armed ? 'Tap again: remove it and its ' + nDone + ' done set' + (nDone === 1 ? '' : 's') : 'Remove') + '</span></button>' +
       '</div>' +
       /* Done, at the foot of the card (Blake, 2026-11-06). Beside the name it
          shared a line with the "14 reps vs last" badge and the menu, and on a

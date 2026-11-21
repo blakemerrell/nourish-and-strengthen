@@ -5904,14 +5904,14 @@
     ['today', 'browse', 'plan', 'macros', 'train', 'list', 'pantry', 'book', 'where'].forEach(function (v) {
       $('view-' + v).classList.toggle('hide', S.view !== v);
     });
-    /* The book has no tab of its own any more; it opens from Recipes, so
-       Recipes is the tab that stays lit while it is up. Plan stays lit
-       through all four of its steps. */
-    var lit = S.view === 'book' ? 'browse' : PLAN_STEPS.some(function (p) { return p[0] === S.view; }) ? 'plan' : S.view;
+    /* The book and all of Cook's steps (Recipes, This week, Where, List,
+       On hand) keep the Cook bottom tab lit. */
+    var inPlan = PLAN_STEPS.some(function (p) { return p[0] === S.view; });
+    var lit = (S.view === 'book' || inPlan) ? 'browse' : S.view;
     renderSteps();
-    /* Anywhere but Plan, "the week" is this week: a recipe added from
-       Recipes, or the list, must not land in a week you had scrolled back to. */
-    if (lit !== 'plan' && S.view !== 'list' && window.Store.activeWeek().id !== window.Store.thisWeek()) {
+    /* Anywhere outside Cook's week/list/pantry flow, "the week" is this week:
+       a recipe added from Recipes must not land in a week you had scrolled back to. */
+    if (!inPlan && S.view !== 'list' && window.Store.activeWeek().id !== window.Store.thisWeek()) {
       window.Store.setWeek(window.Store.thisWeek());
       return;
     }
@@ -5935,17 +5935,6 @@
     renderShareHint();
     syncShrunk();
     syncStrip();
-  }
-
-  /* The six tabs fit a 360px phone, so the fade would be a lie there. It
-     appears only where the row is actually wider than its box — the narrowest
-     phones — and only until you have scrolled to the end of it. */
-  function syncTabsFade() {
-    var tabs = document.querySelector('.tabs');
-    var fade = $('tabsFade');
-    if (!tabs || !fade) return;
-    var over = tabs.scrollWidth - tabs.clientWidth;
-    fade.classList.toggle('hide', over <= 1 || tabs.scrollLeft >= over - 1);
   }
 
   function renderModal() {
@@ -8040,7 +8029,6 @@
     // the browser's install offer arrives when it likes, often after the sheet is open
     window.addEventListener('hiveinstall', function () { if (S.syncOpen) renderModal(); });
     window.addEventListener('resize', fitPages);
-    window.addEventListener('resize', syncTabsFade);
     window.addEventListener('resize', syncStick);
     syncStick();
     /* The app draws itself after the page loads, so a scroll position the
@@ -8061,8 +8049,6 @@
     };
     window.addEventListener('resize', onPickerViewport);
     if (window.visualViewport) window.visualViewport.addEventListener('resize', onPickerViewport);
-    document.querySelector('.tabs').addEventListener('scroll', syncTabsFade, { passive: true });
-    syncTabsFade();
 
     /* The hint is the door as well as the sign — "where do I go" should be
        answered by going there, not by being pointed at a corner. Opening it

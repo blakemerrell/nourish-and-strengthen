@@ -632,7 +632,7 @@ module.exports = {
       await sp.waitForTimeout(150);
       await sp.click('#filtBtn');
       await sp.waitForTimeout(100);
-      await sp.click('.tab[data-view="plan"]');
+      await sp.click('.tab[data-view="today"]');
       await sp.waitForTimeout(150);
       t.ok('leaving Recipes puts the bar and the button away', !(await popped()) && !(await on()));
       await sp.context().close();

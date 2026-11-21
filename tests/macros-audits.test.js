@@ -985,7 +985,7 @@ module.exports = nourish({
         localStorage.setItem('bsc.train', JSON.stringify(T));
         window.Train._.reload();
       });
-      await sp.click('.tab[data-view="plan"]');
+      await sp.click('.tab[data-view="browse"]');
       await sp.click('.tab[data-view="macros"]');
       await sp.waitForTimeout(250);
       const f2 = await sp.$('[data-mfold="weigh"][aria-expanded="false"]');

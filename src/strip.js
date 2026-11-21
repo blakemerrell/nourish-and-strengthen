@@ -25,11 +25,17 @@
 
   function syncStick() {
     var tb = document.querySelector('.topbar');
-    if (!tb) return;
-    /* Hidden, as it is while a workout runs full screen, it measures
-       nothing, and nothing is what every view would then pin to. */
-    var h = Math.round(tb.getBoundingClientRect().height);
-    if (h) document.documentElement.style.setProperty('--topbar-h', h + 'px');
+    if (tb) {
+      /* Hidden, as it is while a workout runs full screen, it measures
+         nothing, and nothing is what every view would then pin to. */
+      var h = Math.round(tb.getBoundingClientRect().height);
+      if (h) document.documentElement.style.setProperty('--topbar-h', h + 'px');
+    }
+    var bn = document.querySelector('.bottom-tabs');
+    if (bn) {
+      var bh = Math.round(bn.getBoundingClientRect().height);
+      if (bh) document.documentElement.style.setProperty('--bottom-nav-h', bh + 'px');
+    }
     syncStripH();
   }
 
@@ -73,13 +79,21 @@
     var st = $('brwStrip');
     if (open && bar && st) {
       var top = Math.round(st.getBoundingClientRect().bottom);
+      var bn = document.querySelector('.bottom-tabs');
+      var bh = bn ? Math.round(bn.getBoundingClientRect().height) : 0;
       bar.style.top = top + 'px';
-      bar.style.maxHeight = 'calc(100vh - ' + top + 'px)';
-      if (scrim) scrim.style.top = top + 'px';
+      bar.style.maxHeight = 'calc(100vh - ' + (top + bh) + 'px)';
+      if (scrim) {
+        scrim.style.top = top + 'px';
+        scrim.style.bottom = bh + 'px';
+      }
     } else if (bar) {
       bar.style.top = '';
       bar.style.maxHeight = '';
-      if (scrim) scrim.style.top = '';
+      if (scrim) {
+        scrim.style.top = '';
+        scrim.style.bottom = '';
+      }
     }
     if (open === S.filtPop) return;
     S.filtPop = open;

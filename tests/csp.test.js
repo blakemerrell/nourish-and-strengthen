@@ -100,9 +100,9 @@ module.exports = {
       return true;
     };
     const walked = [];
-    for (const v of ['today', 'browse', 'plan', 'macros', 'train']) walked.push(v + ':' + await go('.tab[data-view="' + v + '"]'));
-    // the list and the pantry are Plan's steps, not tabs of their own
-    for (const v of ['list', 'pantry']) {
+    for (const v of ['today', 'browse', 'macros', 'train']) walked.push(v + ':' + await go('.tab[data-view="' + v + '"]'));
+    // the week, list and pantry live inside Cook now
+    for (const v of ['plan', 'list', 'pantry']) {
       await q.evaluate((v) => window.Hive.go(v), v);
       await q.waitForTimeout(250);
       walked.push(v + ':' + await q.evaluate((v) => !document.getElementById('view-' + v).classList.contains('hide'), v));
@@ -110,7 +110,7 @@ module.exports = {
     await go('.tab[data-view="browse"]');
     walked.push('recipe:' + await go('#grid .card'));
     await go('.sheet-x');
-    await go('.tab[data-view="plan"]');
+    await go('#view-browse [data-cookgo="plan"]');
     walked.push('planweek:' + await go('#planMyWeek'));
     await q.keyboard.press('Escape');
     walked.push('sync:' + await go('#syncBtn'));

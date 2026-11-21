@@ -1641,28 +1641,27 @@ module.exports = {
     t.ok('a workout that was only a circuit is still saved, with its score', r && r.mc && r.mc.r === 5 && r.mc.x === 7 && r.x.length === 0, JSON.stringify(r && r.mc));
     await p.close();
 
-    // ---- the tab row: the household's, a rule, and yours --------------------------
+    // ---- the tab row: four bottom tabs, and the book stays under Cook ----
     p = await t.fresh({ viewport: { width: 360, height: 740 } });
     r = await p.evaluate(() => {
       const t = document.querySelector('.tabs'), box = t.getBoundingClientRect();
       const tabs = [...t.querySelectorAll('.tab')].filter((b) => b.offsetParent);
-      const sep = t.querySelector('.tab-sep');
       return {
         labels: tabs.map((b) => b.innerText.trim()).join('|'),
         off: tabs.filter((b) => b.getBoundingClientRect().right > box.right + 1).length,
-        sepBefore: !!sep && sep.nextElementSibling === t.querySelector('.tab[data-view="macros"]'),
+        atBottom: box.bottom >= window.innerHeight - 2,
         noBookTab: !t.querySelector('.tab[data-view="book"]'),
       };
     });
-    t.ok('the tabs are Today, Recipes and Plan (with List and Pantry as its steps), then Nourish and Strengthen', r.labels === 'Today|Recipes|Plan|Nourish|Strengthen', r.labels);
-    t.ok('with a rule before yours, and every one on a 360px screen', r.sepBefore && r.off === 0, JSON.stringify(r));
+    t.ok('the bottom tabs are Today, Cook (owning Recipes, Book, Plan, List and On hand), Eat and Train', r.labels === 'Today|Cook|Eat|Train', r.labels);
+    t.ok('and every one fits cleanly at the bottom on a 360px screen', r.atBottom && r.off === 0, JSON.stringify(r));
     t.ok('and the book is no longer a tab', r.noBookTab);
     await p.click('.tab[data-view="browse"]');   // the book's button is on Recipes; the app opens on Today
     await p.click('#bookBtn');
     await p.waitForTimeout(300);
     r = await p.evaluate(() => ({ book: !document.getElementById('view-book').classList.contains('hide'),
       lit: document.querySelector('.tab[aria-selected="true"]').dataset.view }));
-    t.ok('it opens from Recipes, and Recipes stays lit while it is up', r.book && r.lit === 'browse', JSON.stringify(r));
+    t.ok('it opens from Cook › Recipes, and Cook stays lit while it is up', r.book && r.lit === 'browse', JSON.stringify(r));
     await p.close();
 
     // ---- feedback: tidy, and out of the way once answered or passed ---------------

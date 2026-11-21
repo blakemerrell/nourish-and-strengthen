@@ -35,19 +35,19 @@ module.exports = {
       const i = document.querySelector('#listBody [data-check="' + k + '"]');
       return i ? i.closest('.list-group').querySelector('.list-group-title').textContent.trim() : '';
     }, k);
-    await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('list')));
+    await p.evaluate(() => window.Hive.go('list'));
     await p.waitForTimeout(300);
     const g0 = { buy: await groupOf(pick.k), store: await groupOf(pick.s) };
 
     /* Into the kitchen from the Pantry tab's search. */
-    await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('pantry'))).then(() => p.evaluate(() => { const d = document.getElementById('storePart'); if (d) d.open = true; }));
+    await p.evaluate(() => window.Hive.go('pantry')).then(() => p.evaluate(() => { const d = document.getElementById('storePart'); if (d) d.open = true; }));
     await p.waitForTimeout(250);
     await p.fill('#kitFind', pick.kl.slice(0, 5));
     await p.waitForTimeout(150);
     await p.click('[data-kitpill="' + pick.k + '"]');
     await p.waitForTimeout(250);
     const chip = await p.evaluate((k) => (document.querySelector('[data-kitpill="' + k + '"]') || {}).getAttribute('aria-pressed') === 'true', pick.k);
-    await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('list')));
+    await p.evaluate(() => window.Hive.go('list'));
     await p.waitForTimeout(250);
     const g1 = await groupOf(pick.k);
     const need = await p.evaluate(([id, l]) => {
@@ -71,7 +71,7 @@ module.exports = {
       if (m) { m.click(); await new Promise((r) => setTimeout(r, 150)); }
       document.querySelector('#listBody [data-src="' + k + '"][data-v="' + v + '"]').click();
     }, [k, v]);
-    await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('list')));
+    await p.evaluate(() => window.Hive.go('list'));
     await p.waitForTimeout(250);
     await srcTap(pick.s, 'b');
     await p.waitForTimeout(250);
@@ -101,13 +101,13 @@ module.exports = {
     await p.waitForTimeout(200);
 
     /* Off the kitchen: tap its pill again. */
-    await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('pantry'))).then(() => p.evaluate(() => { const d = document.getElementById('storePart'); if (d) d.open = true; }));
+    await p.evaluate(() => window.Hive.go('pantry')).then(() => p.evaluate(() => { const d = document.getElementById('storePart'); if (d) d.open = true; }));
     await p.waitForTimeout(250);
     await p.fill('#kitFind', pick.kl.slice(0, 5));
     await p.waitForTimeout(150);
     await p.click('[data-kitpill="' + pick.k + '"]');
     await p.waitForTimeout(250);
-    await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('list')));
+    await p.evaluate(() => window.Hive.go('list'));
     await p.waitForTimeout(250);
     t.ok('taken out of the kitchen, it is bought again', await groupOf(pick.k) === 'To buy');
 
@@ -116,7 +116,7 @@ module.exports = {
       window.Store.clearPlan();
       localStorage.setItem('sh.pw', JSON.stringify({ days: ['mon', 'tue', 'wed', 'thu'], ppl: 4, t: 0, lo: 1, shelf: true, wk: window.Store.activeWeek().id }));
     });
-    await p.click('.tab[data-view="plan"]');
+    await p.evaluate(() => window.Hive.go('plan'));
     await p.waitForTimeout(250);
     await p.click('#planMyWeek');
     await p.waitForTimeout(250);

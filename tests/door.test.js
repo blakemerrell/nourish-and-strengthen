@@ -213,11 +213,11 @@ module.exports = {
     // a modal in fact: Tab never leaves it for the app behind
     const trail = [];
     for (let i = 0; i < 8; i++) { await m.keyboard.press('Tab'); trail.push(await m.evaluate(() => document.getElementById('doorRoot').contains(document.activeElement))); }
-    const inert = await m.evaluate(() => ['#main', '.topbar'].every((s) => document.querySelector(s).inert));
+    const inert = await m.evaluate(() => ['#main', '.topbar', '.bottom-tabs'].every((s) => document.querySelector(s).inert));
     t.ok('Tab stays inside the door, however many times it is pressed; the app behind is inert', trail.every(Boolean) && inert, JSON.stringify({ trail, inert }));
     await m.click('[data-dr="skip"]');
     await m.waitForTimeout(200);
-    t.ok('and the app behind wakes when the door closes', await m.evaluate(() => ['#main', '.topbar'].every((s) => !document.querySelector(s).inert)));
+    t.ok('and the app behind wakes when the door closes', await m.evaluate(() => ['#main', '.topbar', '.bottom-tabs'].every((s) => !document.querySelector(s).inert)));
     await m.context().close();
 
     t.ok('no page errors', errs.length === 0, errs.join(' | '));

@@ -18,7 +18,7 @@ module.exports = {
     const errs = [];
     p.on('pageerror', (e) => errs.push(e.message));
     const open = async () => {
-      if (!await p.$('#planMyWeek:visible')) { await p.click('.tab[data-view="plan"]'); await p.waitForTimeout(300); }
+      if (!await p.$('#planMyWeek:visible')) { await p.evaluate(() => window.Hive.go('plan')); await p.waitForTimeout(300); }
       await p.click('#planMyWeek');
       await p.waitForTimeout(300);
     };
@@ -126,7 +126,7 @@ module.exports = {
     await q.clock.setFixedTime(new Date(2026, 9, 12, 9, 0, 0));
     await q.reload();
     await q.waitForTimeout(900);
-    await q.click('.tab[data-view="plan"]');
+    await q.evaluate(() => window.Hive.go('plan'));
     await q.waitForTimeout(300);
     await q.click('#planMyWeek');
     await q.waitForTimeout(300);

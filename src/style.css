@@ -548,38 +548,51 @@ h1, h2, h3 { margin: 0; }
   border-bottom: 3px solid var(--ochre);
 }
 .topbar-in {
-  max-width: 1240px; margin: 0 auto; padding: 10px 22px;
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 14px; flex-wrap: nowrap;
+  max-width: 1240px; margin: 0 auto; padding: 6px 22px;
+  display: flex; align-items: center; justify-content: flex-start;
+  gap: 12px; flex-wrap: nowrap;
 }
-.brand { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.brand {
+  order: 2; flex: 1 1 auto; min-width: 0;
+  display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+}
 .brand-name {
-  font-family: var(--serif); font-size: 1.3125rem; font-weight: 700; letter-spacing: -0.01em;
+  font-family: var(--serif); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .brand-sub {
-  font-size: 0.71875rem; letter-spacing: 0.14em; text-transform: uppercase;
+  font-size: 0.8125rem; letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--on-chrome-faint);
 }
-/* One row on every screen: the beehive skep logo leads on the left as the
-   Share & settings button, and the tabs follow on the same row. */
-.tabs { display: flex; gap: 6px; align-items: center; order: 2; margin-left: 0; flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-.tabs::-webkit-scrollbar { display: none; }
-.t-short { display: none; }
-/* Between the household's tabs and yours: a hairline, and everything after
-   it pushed to the far end of the row. Where the row is full, the auto
-   margin is nothing and the rule simply sits between Pantry and Nourish. */
-.tab-sep {
-  flex: 0 0 auto; width: 1px; height: 18px; margin: 0 8px 0 auto;
-  background: var(--chrome-rule);
+/* Pinned four-tab bottom navigation: Today · Cook · Eat · Train (Step 6). */
+.bottom-tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-header);
+  background: var(--card); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -2px 10px color-mix(in oklab, var(--ink) 6%, transparent);
+}
+.tabs {
+  max-width: 760px; margin: 0 auto; padding: 4px 6px 6px;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px;
 }
 .tab {
-  background: transparent; color: var(--on-chrome-2); border: none; border-radius: 3px;
-  padding: 7px 14px; font-size: 0.78125rem; font-weight: 500; letter-spacing: 0.02em;
-  white-space: nowrap;
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  min-height: 52px; padding: 6px 4px 5px; border: 0; border-radius: 10px;
+  background: transparent; color: var(--muted-2);
+  font-family: var(--sans); font-size: 0.8125rem; font-weight: 600; line-height: 1.1;
+  letter-spacing: 0.01em; white-space: nowrap;
 }
+.tab:hover { color: var(--ink); background: color-mix(in oklab, var(--ink) 4%, transparent); }
+.tab-ico { width: 22px; height: 22px; flex: none; display: block; }
 .tab[aria-selected="true"] {
-  background: var(--ochre); color: var(--on-ochre); font-weight: 600;
+  background: transparent; color: var(--ochre-text); font-weight: 700;
 }
+.tab[aria-selected="true"]::before {
+  content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 28px; height: 3px; border-radius: 0 0 3px 3px; background: var(--ochre);
+}
+main { padding-bottom: var(--bottom-nav-h, 64px); }
 .synbtn {
   order: 1; flex: 0 0 44px; width: 44px; height: 44px;
   background: transparent; color: var(--on-chrome-2);
@@ -904,14 +917,14 @@ select { max-width: 280px; }
    to drift from the first. */
 .filters.pop {
   position: fixed; left: 0; right: 0; top: calc(var(--topbar-h, 60px) + var(--brw-strip-h, 92px)); z-index: var(--z-pop);
-  max-height: calc(100vh - var(--topbar-h, 60px) - var(--brw-strip-h, 92px)); overflow: auto;
+  max-height: calc(100vh - var(--topbar-h, 60px) - var(--brw-strip-h, 92px) - var(--bottom-nav-h, 64px)); overflow: auto;
   box-shadow: 0 8px 20px var(--shadow-pop);
 }
 .filters-done { display: none; }
 .filters.pop .filters-done { display: inline-flex; justify-content: center; }
-/* Starts under the header so the tabs stay live; a tap anywhere on it folds
+/* Starts under the header so the header and bottom tabs stay live; a tap anywhere on it folds
    the bar away again. */
-.brw-scrim { position: fixed; left: 0; right: 0; bottom: 0; top: calc(var(--topbar-h, 60px) + var(--brw-strip-h, 92px));
+.brw-scrim { position: fixed; left: 0; right: 0; bottom: var(--bottom-nav-h, 64px); top: calc(var(--topbar-h, 60px) + var(--brw-strip-h, 92px));
   background: var(--scrim-soft); z-index: var(--z-pop-scrim); }
 .card-cell { position: relative; display: flex; }
 .card-cell > .card { flex: 1 1 auto; }
@@ -2830,7 +2843,7 @@ select { max-width: 280px; }
   grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: stretch;
   position: sticky;
-  bottom: 0;
+  bottom: var(--bottom-nav-h, 64px);
   z-index: var(--z-dock);
   background: linear-gradient(to top, var(--paper) 86%, transparent);
   /* The fade and the gaps are paint, not a wall: a tap there reaches the
@@ -2847,13 +2860,13 @@ select { max-width: 280px; }
      went. */
   margin-top: 10px;
   gap: 5px;
-  padding: 5px 0 calc(5px + env(safe-area-inset-bottom, 0px));
+  padding: 5px 0;
 }
 .mday-acts > * { pointer-events: auto; }
 /* A plate's control scrolled to — a focused box, a tick reached by the
    keyboard — stops above the bar rather than behind it. On the controls,
    not on the page: the bar's own buttons must not scroll the day. */
-#macroSlots :is(button, input, select), #macroWeigh :is(button, input) { scroll-margin-bottom: 120px; }
+#macroSlots :is(button, input, select), #macroWeigh :is(button, input) { scroll-margin-bottom: 160px; }
 .mday-acts .mday-tool {
   display: flex;
   flex-direction: column;
@@ -3979,8 +3992,8 @@ p.sync-diner { font-size: 0.8125rem; line-height: 1.6; color: var(--muted); }
   .mp-body { flex-direction: column; align-items: flex-start; gap: 2px; }
   .mp-body .mp-name { flex: 0 0 auto; }
   .topbar-in {
-    padding: 8px 10px;
-    gap: 6px;
+    padding: 6px 10px;
+    gap: 8px;
     position: relative;
   }
   .brand-name { font-size: 1.125rem; }
@@ -4014,24 +4027,6 @@ p.sync-diner { font-size: 0.8125rem; line-height: 1.6; color: var(--muted); }
   .sheet-ing { grid-template-columns: 1fr; }
   .list-row { padding: 12px 2px; }
   .list-row input { width: 18px; height: 18px; }
-  /* One row on a phone: the 44x44 skep logo button leads on the left and all
-     five tabs fit beside it from 360px up; below that, the tabs scroll with a
-     fade at the right edge. */
-  .tabs {
-    order: 2; flex: 1 1 auto; min-width: 0; flex-wrap: nowrap;
-    overflow-x: auto; -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; margin: 0; padding: 0; gap: 2px;
-  }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tabs .tab { flex: 0 0 auto; padding: 7px 6px; letter-spacing: 0; }
-  .tab-sep { margin-right: 6px; }
-  .tabs-fade {
-    position: absolute; right: 0; bottom: 8px; width: 26px; height: 32px;
-    pointer-events: none;
-    background: linear-gradient(to right, transparent, var(--chrome) 78%);
-  }
-  .t-long { display: none; }
-  .t-short { display: inline; }
   .book-bar-in { padding: 12px 16px; }
   .book-bar-in select { flex: 1 1 100%; max-width: none; }
   .printwrap { padding: 20px 8px 60px; }
@@ -4081,6 +4076,7 @@ p.sync-diner { font-size: 0.8125rem; line-height: 1.6; color: var(--muted); }
      They are also the committed books, which this stylesheet does not get to
      restyle by accident. */
   .no-print { display: none !important; }
+  main { padding-bottom: 0 !important; }
   body { background: var(--page) !important; }
   .printwrap {
     display: block !important; padding: 0 !important; gap: 0 !important;
@@ -5082,17 +5078,21 @@ button.tr-card:hover { border-color: var(--line-firm); background: var(--field);
    tab twelve pixels wider and pushed itself off a 390px phone. */
 .tab.tr-tab-live { position: relative; }
 .tab.tr-tab-live::after {
-  content: ''; position: absolute; top: 3px; right: 2px;
-  width: 6px; height: 6px; border-radius: 50%; background: var(--dot-on);
+  content: ''; position: absolute; top: 6px; right: calc(50% - 16px);
+  width: 7px; height: 7px; border-radius: 50%; background: var(--dot-on);
 }
 
 /* The rest bar: the header's ink, pinned to the foot, filling left to right
-   as the rest runs out. */
+   as the rest runs out. Above the bottom tab bar whenever a workout is minimized. */
 .tr-rest {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-rest);
   background: var(--chrome); color: var(--on-chrome);
   border-top: 3px solid var(--ochre);
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+body:not(:has(#view-train.tr-focus:not(.hide))) .tr-rest {
+  bottom: var(--bottom-nav-h, 64px);
+  padding-bottom: 0;
 }
 .tr-rest-fill {
   position: absolute; left: 0; top: 0; bottom: 0;
@@ -5374,7 +5374,7 @@ button.tr-card:hover { border-color: var(--line-firm); background: var(--field);
 .mwhy-acts .ghost { font-size: 0.8125rem; padding: 5px 11px; }
 .m-toast {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(118px + env(safe-area-inset-bottom, 0px)); z-index: var(--z-toast);
+  bottom: calc(var(--bottom-nav-h, 64px) + 70px); z-index: var(--z-toast);
   display: flex; align-items: baseline; gap: 12px; max-width: calc(100% - 32px);
   background: var(--ink); color: var(--paper); border-radius: 6px; padding: 10px 14px;
   font-size: 0.875rem; box-shadow: 0 8px 22px -10px var(--shadow-toast);
@@ -5389,16 +5389,10 @@ button.tr-card:hover { border-color: var(--line-firm); background: var(--field);
 .mnv-n { flex: 1; }
 .mnv-n small { display: block; font-size: 0.8125rem; color: var(--muted); }
 
-/* Six tabs and a rule on the narrowest common phones. Two pixels less a side
-   buys 360px back its last 19; List, the narrowest tab, is still 30px wide,
-   past the 24px a target has to clear. Below that the row scrolls, with the
-   fade to say so. */
+/* A plate on the narrowest phones: no indent, so the dial can take a line
+   of its own rather than be clipped — see "The narrowest phones" by the
+   plate's rules. */
 @media (max-width: 380px) {
-  .tabs .tab { padding: 7px 4px; }
-  .tab-sep { margin-right: 4px; }
-  /* A plate on the narrowest phones: no indent, so the dial can take a line
-     of its own rather than be clipped — see "The narrowest phones" by the
-     plate's rules. */
   .mitem-r2 { margin-left: 0; }
 }
 
@@ -5771,7 +5765,9 @@ span.tr-fm { cursor: default; }
    the clock and Finish. Where :has() is not understood the header simply
    stays, which is how it was. */
 body:has(#view-train.tr-focus:not(.hide)) .topbar,
+body:has(#view-train.tr-focus:not(.hide)) .bottom-tabs,
 body:has(#view-train.tr-focus:not(.hide)) #shareHint { display: none; }
+body:has(#view-train.tr-focus:not(.hide)) main { padding-bottom: 0; }
 #view-train.tr-focus .view-head,
 #view-train.tr-focus .tr-seg,
 #view-train.tr-focus .tr-live-h .tr-title { display: none; }
@@ -6538,8 +6534,7 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
 
 /* ------------------------------------------------------------ plan steps
    Plan, one flow: Where · On hand · Meals · Shop. List and Pantry are its
-   steps, reached from this bar, not tabs of their own. */
-.tabs .tab[data-view="list"], .tabs .tab[data-view="pantry"] { display: none; }
+   steps, reached from Cook's sub-bar, not bottom tabs of their own. */
 .pstep { flex: 1; min-width: 0; min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 5px;
   border: 0; background: none; font: inherit; font-size: 0.78125rem; color: var(--muted); cursor: pointer; padding: 0; white-space: nowrap; }
 .pstep::before { content: ''; width: 100%; height: 4px; border-radius: 9px; background: var(--line); }
@@ -6580,29 +6575,13 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
 
 /* ---- a thumb's reach, for the controls that were still short of it --------
    44px is the size a fingertip needs, and on a phone these were 13 to 34:
-   the header's tabs and Share on every screen, a meal's verbs, the recipe
-   sheet's star and pencil, the cups/grams and scale switches, "How is this
-   scored?", a pantry item's ×, the toast's Undo. Each keeps the size it is
-   drawn at — the reach grows, not the paint — and none of them makes a row
-   wider than it was.
- *
-   The tabs cannot hang an invisible band above and below themselves, because
-   their row scrolls sideways on the narrowest phones and a scroller clips in
-   both directions. So the button itself grows to 44 and the lit tab's ochre
-   is drawn behind the word at the height it has always been; the header is
-   sixteen pixels taller on a touch screen, and nothing in it is wider. */
+   Share on every screen, a meal's verbs, the recipe sheet's star and pencil,
+   the cups/grams and scale switches, "How is this scored?", a pantry item's
+   ×, the toast's Undo. Each keeps the size it is drawn at — the reach grows,
+   not the paint — and none of them makes a row wider than it was. (The four
+   bottom tabs are already >=52px tall.) */
 @media (pointer: coarse) {
-  .tabs .tab {
-    position: relative; z-index: 0; background: none;
-    padding-top: 15px; padding-bottom: 15px;
-  }
-  .tabs .tab::before {
-    content: ''; position: absolute; z-index: -1; left: 0; right: 0; top: 8px; bottom: 8px;
-    border-radius: 3px;
-  }
-  .tabs .tab[aria-selected="true"]::before { background: var(--ochre); }
-  .tab.tr-tab-live::after { top: 11px; }
-  /* The rest are bands hung off the control, which the finger cannot see. */
+  /* Bands hung off small controls, which the finger cannot see. */
   .synbtn, .m-toast button, .scaler-box button { position: relative; }
   .synbtn::after, .m-toast button::after, .scaler-box button::after {
     content: ''; position: absolute; left: 50%; top: 50%;
@@ -7070,8 +7049,8 @@ details[open] > summary.list-aisle-h span::after { content: ' \2304'; }
 /* The Walmart button, pinned to the foot of the screen while To buy is on
    it, and last in the box once the box has scrolled by. */
 .wm-bar {
-  position: sticky; bottom: 0; z-index: var(--z-lift); margin: 12px -12px -4px;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  position: sticky; bottom: var(--bottom-nav-h, 64px); z-index: var(--z-lift); margin: 12px -12px -4px;
+  padding: 10px 12px;
   background: var(--card); border-top: 1px solid var(--line); border-radius: 0 0 10px 10px;
 }
 .wm-bar .wm-sub { margin-top: 5px; }
@@ -10253,7 +10232,7 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
 
 /* RP Bottom-Sheet Modal styling for Post-Muscle Feedback */
 .tr-fbc-modal {
-  position: relative; z-index: var(--z-pop, 45);
+  position: relative; z-index: var(--z-dock-over, 4);
   background: var(--bg-card, var(--card));
   border: 2px solid var(--ochre); border-radius: 18px;
   box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.18), 0 12px 32px rgba(0, 0, 0, 0.22);
@@ -10381,9 +10360,9 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
 
 /* Always-there quick food log bar docked beside #macroFill in one 58px sticky row (Step 1d) */
 .mday-dock {
-  display: flex; align-items: stretch; gap: 6px; position: sticky; bottom: 0;
+  display: flex; align-items: stretch; gap: 6px; position: sticky; bottom: var(--bottom-nav-h, 64px);
   z-index: var(--z-dock); margin-top: 10px;
-  padding: 5px 0 calc(5px + env(safe-area-inset-bottom, 0px));
+  padding: 5px 0;
   background: linear-gradient(to top, var(--paper) 86%, transparent); pointer-events: none;
 }
 .mday-dock > * { pointer-events: auto; }

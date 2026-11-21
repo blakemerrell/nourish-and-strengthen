@@ -27,7 +27,7 @@ module.exports = {
       window.Store.addToDay(r.id, 'tue', 1);
       return r.id;
     });
-    await p.click('.tab[data-view="plan"]');
+    await p.evaluate(() => window.Hive.go('plan'));
     await p.waitForTimeout(300);
     await p.click('#planMyWeek');
     await p.waitForTimeout(300);
@@ -290,7 +290,7 @@ module.exports = {
       }, [share, pw]);
       await p.reload();
       await p.waitForTimeout(400);
-      if (!await p.$('#planMyWeek:visible')) { await p.click('.tab[data-view="plan"]'); await p.waitForTimeout(300); }
+      if (!await p.$('#planMyWeek:visible')) { await p.evaluate(() => window.Hive.go('plan')); await p.waitForTimeout(300); }
       await p.click('#planMyWeek');
       await p.waitForTimeout(300);
     };
@@ -412,7 +412,7 @@ module.exports = {
     await p.evaluate(() => { window.Store.clearPlan(); localStorage.setItem('sh.pw', JSON.stringify({ days: ['mon', 'tue', 'wed', 'thu', 'fri'], ppl: 8, bud: 20, t: 0, avoid: [] })); });
     await p.reload();
     await p.waitForTimeout(800);
-    await p.click('.tab[data-view="plan"]');
+    await p.evaluate(() => window.Hive.go('plan'));
     await p.waitForTimeout(300);
     await p.click('#planMyWeek');
     await p.waitForTimeout(300);
@@ -439,7 +439,7 @@ module.exports = {
     await p.clock.setFixedTime(new Date(2026, 9, 3, 9, 0, 0));   // Saturday 3 October, the same week
     await p.reload();
     await p.waitForTimeout(800);
-    await p.click('.tab[data-view="plan"]');
+    await p.evaluate(() => window.Hive.go('plan'));
     await p.waitForTimeout(300);
     await p.click('#planMyWeek');
     await p.waitForTimeout(300);

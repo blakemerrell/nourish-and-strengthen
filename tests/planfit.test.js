@@ -27,7 +27,7 @@ module.exports = {
     });
     t.ok('there are dinners to plan with', dinners.length === 6, dinners.length);
     const [X, Y, Z] = dinners;
-    await p.click('.tab[data-view="plan"]');
+    await p.evaluate(() => window.Hive.go('plan'));
     await p.waitForTimeout(300);
     const day = (d) => p.evaluate((d) => window.Store.day(d), d);
 
@@ -153,7 +153,7 @@ module.exports = {
       const k = Object.keys(window.PANTRY).find((k) => window.PANTRY[k].usd > 0.5 && window.PANTRY[k].stap);
       window.Store.setLow(k || 'butter', true);
     }, [X]);
-    await p.click('.tab[data-view="plan"]');
+    await p.evaluate(() => window.Hive.go('plan'));
     await p.waitForTimeout(300);
     const plan$ = await p.evaluate(() => (document.getElementById('planSum').textContent.match(/\$[\d.]+/) || [''])[0]);
     await p.evaluate(() => window.Hive.go('list'));

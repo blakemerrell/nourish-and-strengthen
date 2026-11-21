@@ -23,7 +23,7 @@ module.exports = {
       localStorage.setItem('sh.pw', JSON.stringify({ days: ['mon', 'tue', 'wed', 'thu', 'fri'], ppl: 6, t: 0 }));
       return d.map((r) => r.id);
     });
-    await p.click('.tab[data-view="plan"]');
+    await p.evaluate(() => window.Hive.go('plan'));
     await p.waitForTimeout(300);
     const sum = await p.evaluate(() => document.getElementById('planSum').textContent);
     t.ok('the week’s numbers sit at the top: three of seven nights planned', /3 of 7\s*nights planned/.test(sum), sum);
@@ -74,10 +74,10 @@ module.exports = {
     /* Leftovers on Friday: an earlier dinner again, not bought again. The
        list's amounts are read before and after, on the List tab. */
     const qty = async () => {
-      await p.click('.tab[data-view="plan"]').then(() => p.evaluate(() => window.Hive.go('list')));
+      await p.evaluate(() => window.Hive.go('list'));
       await p.waitForTimeout(200);
       const q = await p.evaluate(() => [...document.querySelectorAll('#listBody .qty')].map((e) => e.textContent).join('|'));
-      await p.click('.tab[data-view="plan"]');
+      await p.evaluate(() => window.Hive.go('plan'));
       await p.waitForTimeout(200);
       return q;
     };

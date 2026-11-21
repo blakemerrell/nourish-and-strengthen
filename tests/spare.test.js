@@ -72,6 +72,15 @@ module.exports = {
       return { xi, rir: xi >= 0 ? L.x[xi].rir : null, j: xi >= 0 ? L.x[xi].s.findIndex((s) => !s.wu) : -1 };
     });
     t.ok('week 1 of the block asks for three to spare', live.rir === 3, JSON.stringify(live));
+    /* The aim, one line at the top of the lift (redesign 2a): the next
+       working set's weight and reps, and the week's reps to spare. */
+    const aimLine = await p.evaluate((x) => {
+      const c = document.querySelector('.tr-ex[data-xi="' + x + '"]'), a = c && c.querySelector('.tr-aim');
+      const h = c && c.querySelector('.tr-set-h');
+      return a ? { t: a.textContent.replace(/\s+/g, ' ').trim(), above: !!h && a.getBoundingClientRect().bottom <= h.getBoundingClientRect().top + 1 } : null;
+    }, live.xi);
+    t.ok('the lift opens on its aim: "Aim: …" and "stop with 3 to spare", above the sets',
+      !!aimLine && /^Aim: /.test(aimLine.t) && /stop with 3 to spare/.test(aimLine.t) && aimLine.above, JSON.stringify(aimLine));
     const x = live.xi, j = live.j;
     const aim = await p.evaluate(([x, j]) => {
       const w = document.querySelector(`[data-in="q"][data-x="${x}"][data-s="${j}"]`).closest('.tr-rqw');

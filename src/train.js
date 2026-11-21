@@ -6339,7 +6339,16 @@
         'aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></span><span class="tr-cpct">' + pct + '%</span></div>' +
       '<div class="tr-cstat"><span><b>' + done + ' of ' + tot + '</b> sessions' + (gone ? ', ' + gone + ' skipped' : '') + '</span>' +
         (nx ? '<span><b>' + thisWk + ' of ' + ms.days.length + '</b> this week</span>' : '') + '</div>';
-    return html + phaseLine(ms, nx) + weekGrid(ms, nx, sel) +
+    /* This week first (redesign 3): the four sessions you are in, with the
+       whole block one tap away. Twenty-four boxes led the screen, five rows
+       of them empty for weeks; the review (2026-11-07) asked for this week
+       as the first view and the grid behind it. Picking a session in
+       another week, from History or the plan, opens the whole block, since
+       that box is the one being looked at. */
+    var allWks = !nx || !!S.gridAll || !!(sel && sel.w !== nx.w);
+    var gridTog = nx && weeksOf(ms) > 1 ? '<button type="button" class="tr-lnk tr-gall" data-t="gridall" aria-expanded="' + allWks + '">' +
+      (allWks ? 'This week only' : 'Whole block (' + weeksOf(ms) + ' weeks)') + '</button>' : '';
+    return html + phaseLine(ms, nx) + weekGrid(ms, nx, sel, null, allWks ? -1 : nx.w) + gridTog +
       (S.gridTapped ? '' : '<div class="tr-ghint">Tap a box to see that session</div>') +
       ldHTML(ms, nx) + '</div>';
   }
@@ -6470,7 +6479,9 @@
   }
   var LD_S = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-  function weekGrid(ms, nx, sel, act) {
+  /* `only`, a week's index, draws that week's row alone (the Train home's
+     first view since redesign 3); -1 or nothing draws them all. */
+  function weekGrid(ms, nx, sel, act, only) {
     /* History draws a block's grid too, where a tap chooses in History and
        the weekday under each column (this week's, from your lifting days)
        means nothing for a block gone by. */
@@ -6489,6 +6500,7 @@
         }).join('');
       })() + '</div>';
     for (var w = 0; w < weeksOf(ms); w++) {
+      if (only >= 0 && w !== only) continue;
       html += '<div class="tr-grow" role="row"><span class="tr-gw" role="rowheader">' +
         (w >= accOf(ms) ? 'Deload' : 'Wk ' + (w + 1)) + '</span>';
       for (var d = 0; d < ms.days.length; d++) {
@@ -7854,6 +7866,27 @@
     '</button>';
   }
 
+  /* The aim, one line at the top of a lift (redesign 2a): the weight and
+     reps the next working set asks for and how many to leave in the tank,
+     the same numbers the set's own boxes hold faint (ghost, repsPh), said
+     where the eye lands first. Blake, 2026-11-03: "I don't feel like the
+     workout is suggesting the right weight at the rep target" — the answer
+     was there, split across faint placeholders and a box that said "–".
+     Nothing when every set is ticked, and only working sets: a warm-up's
+     numbers are not the aim. */
+  function aimHTML(x, i) {
+    var j = -1;
+    for (var k = 0; k < x.s.length; k++) if (!x.s[k].t && !x.s[k].wu) { j = k; break; }
+    if (j < 0) return '';
+    var s = x.s[j], g = ghost(i, j), bodyOn = onBody(x.e);
+    var reps = repsPh(x, s, g);
+    var load = bodyOn ? (g.w > 0 ? '+' + fmtN(g.w) + ' ' + T.pr.u : 'Bodyweight')
+      : g.w !== null && g.w !== undefined ? fmtN(g.w) + ' ' + T.pr.u : '';
+    var what = (load ? load + ' \u00d7 ' : '') + reps + (load ? '' : ' reps');
+    var rir = fin(x.rir) ? (x.rir > 0 ? 'stop with ' + x.rir + ' to spare' : 'to your last good rep') : '';
+    return '<div class="tr-aim" data-x="' + i + '"><b>Aim: ' + esc(what) + '</b>' + (rir ? '<span> \u00b7 ' + esc(rir) + '</span>' : '') + '</div>';
+  }
+
   function exCard(x, i, label, mv) {
     var ex = lib(x.e);
     var rq = !!T.pr.rq;
@@ -7979,22 +8012,20 @@
           '<span class="tr-cue-ed" aria-hidden="true">' + (note ? 'Edit' : '+ Note') + '</span>' +
         '</button>' : '') +
       '</div>' +
+      aimHTML(x, i) +
       healHTML(i) +
       '<div class="tr-set tr-set-h" aria-hidden="true"><span>Set</span><span>' + (nb ? 'Last time' : 'Previous') + '</span><span>' + (bodyOn ? '+' : '') + T.pr.u + '</span><span>Reps</span>' +
         (rq ? (rpeOn() ? '<span title="Rate of perceived exertion">RPE</span>' : '<span title="Reps to spare: how many more you could have done">Spare</span>') : '') + '<span></span></div>' +
       rows +
-      /* One row, each with its picture and its word: another set first and
-         dark, as the thing done most, and Remove, the one that takes
-         something away, last and red. */
+      /* Under the sets, only what is done to the sets: another set, first and
+         dark as the thing done most, and one fewer. Warm-ups, Plates, Swap,
+         Note and Remove were a row of seven beside them, the same five the
+         lift's ⋯ already holds (#trPop, since #194); the redesign's review
+         (2026-11-07) counted seven equal buttons on a card as the thing to
+         cut, and 2b moves them to the ⋯ alone. */
       '<div class="tr-ex-a">' +
         '<button class="tr-ea tr-ea-add" data-t="addset" data-x="' + i + '" aria-label="Add a set of ' + esc(ex.n) + '">' + EA_ICO.plus + '<span>Set</span></button>' +
         (x.s.length > 1 ? eaBtn('dropset', 'minus', 'Set', ' data-x="' + i + '"', 'Take off the last set') : '') +
-        (ex.k === 'c' && ex.q !== 'bw' ? eaBtn('warm', 'warm', 'Warm', ' data-x="' + i + '"', 'Add warm-up sets') : '') +
-        (plateLoaded(ex) ? eaBtn('plates', 'plates', 'Plates', ' data-x="' + i + '"', 'What plates to load, or count the ones you loaded') : '') +
-        eaBtn('swap', 'swap', 'Swap', ' data-x="' + i + '"', 'Swap ' + ex.n + ' for another exercise') +
-        (note ? '' : eaBtn('note', 'note', 'Note', ' data-e="' + esc(x.e) + '"', 'Add a note to ' + ex.n)) +
-        '<button class="tr-ea tr-ea-rm' + (armed ? ' tr-lnk-arm' : '') + '" data-t="rmex" data-x="' + i + '">' + EA_ICO.rm +
-          '<span>' + (armed ? 'Tap again: remove it and its ' + nDone + ' done set' + (nDone === 1 ? '' : 's') : 'Remove') + '</span></button>' +
       '</div>' +
       /* Done, at the foot of the card (Blake, 2026-11-06). Beside the name it
          shared a line with the "14 reps vs last" badge and the menu, and on a
@@ -13129,6 +13160,7 @@
       }
       saveLive(); draw(); return;
     }
+    if (t === 'gridall') { S.gridAll = !S.gridAll; draw(); return; }
     if (t === 'expop' && LIVE) {
       var pxi = num('data-x');
       S.pop = S.pop && S.pop.k === 'expop' && S.pop.x === pxi ? null : { k: 'expop', x: pxi };

@@ -188,13 +188,10 @@ module.exports = {
     t.ok('logging liquid foods/drinks in a meal (Crio Bru + Milk) auto-counts their fluid oz in Water & Drinks',
       /Auto-counted from meals/.test(await txt(p, '#modalRoot .mhyd-card')) &&
       /oz from meals/.test(await txt(p, '#modalRoot .mhyd-card')));
-    t.ok('logging a Crio Bru recipe (#26 Crio Bru Power Morning Cocktail) shows its 16 oz hydration badge on the meal card and auto-counts in Water & Drinks',
+    t.ok('logging a Crio Bru recipe (#26 Crio Bru Power Morning Cocktail) auto-counts 16 oz in Water & Drinks while keeping the shut card pill clean',
       /Crio Bru Power Morning Cocktail/.test(await txt(p, '#modalRoot .mhyd-card')) &&
       /\+16 oz Crio Bru Power Morning Cocktail/.test(await txt(p, '#modalRoot .mhyd-card')) &&
-      await p.evaluate(() => {
-        const badge = document.querySelector('#macroSlots [data-mslot="s"] .mfl-hyd');
-        return !!badge && /16 oz/.test(badge.textContent);
-      }));
+      await p.evaluate(() => !document.querySelector('#macroSlots [data-mslot="s"] .mfl-hyd')));
     await p.click('#modalRoot .mhyd-sheet .sheet-x');
     await p.waitForTimeout(150);
     t.ok('tapping × closes the Water & Drinks modal sheet',
@@ -272,39 +269,35 @@ module.exports = {
       /\+14 oz\s*Chicken Noodle Soup/.test(liq) && !/Rice Pudding/.test(liq), liq);
     await r.click('#modalRoot .mhyd-sheet .sheet-x');
     await r.waitForTimeout(150);
-    t.ok('and the drink wears its hydration droplet inside its portion pill on the meal card, tappable to toggle off/on',
-      await r.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray-f')].some((row) =>
-        /Protein Crio Brew/.test((row.querySelector('.mtray-fn') || {}).textContent || '') &&
-        /24 oz/.test((row.querySelector('.mfl-amt .mfl-hyd') || {}).textContent || ''))),
-      await r.evaluate(() => [...document.querySelectorAll('#macroSlots .mfl-hyd')].map((b) => b.textContent).join(' | ')));
-    /* Tapping the hydration droplet inside the pill turns hydration off for
-       that item (e.g. protein powder mixed into already-counted Crio Bru +
-       milk), and tapping it again turns it back on. */
-    await r.click('#macroSlots [data-mslot="s"] .mfl-hyd[data-mhydtoggle]');
+    t.ok('tapping a drink line open on the meal card reveals its hydration chip and toggle without cluttering shut pills',
+      await r.evaluate(() => !document.querySelector('#macroSlots .mfl-hyd')));
+    await r.click('#macroSlots [data-mslot="s"] [data-mamt]');
     await r.waitForTimeout(150);
-    t.ok('tapping the hydration droplet in the portion pill mutes that item’s hydration (38 oz -> 14 oz)',
+    t.ok('opening the drink line shows its 24 oz fluid chip and hydration toggle button',
+      /24 oz fluid/.test(await txt(r, '#macroSlots [data-mslot="s"] .mhyd-chip')) &&
+      await r.evaluate(() => {
+        const b = document.querySelector('#macroSlots [data-mslot="s"] [data-mhyd]');
+        return !!b && b.getAttribute('aria-pressed') === 'true';
+      }));
+    /* Tapping the hydration toggle button on the open drink line turns hydration
+       off for that item, and tapping it again restores it. */
+    await r.click('#macroSlots [data-mslot="s"] [data-mhyd]');
+    await r.waitForTimeout(150);
+    t.ok('tapping the hydration toggle on the open line mutes that item’s hydration (38 oz -> 14 oz)',
       /14 \/ 100 oz/.test(await txt(r, '#macroTrayHead')) &&
       await r.evaluate(() => {
-        const b = document.querySelector('#macroSlots [data-mslot="s"] .mfl-hyd[data-mhydtoggle]');
-        return !!b && b.classList.contains('off') && b.getAttribute('aria-pressed') === 'false';
+        const b = document.querySelector('#macroSlots [data-mslot="s"] [data-mhyd]');
+        return !!b && b.getAttribute('aria-pressed') === 'false' && !document.querySelector('#macroSlots [data-mslot="s"] .mhyd-chip');
       }));
-    await r.click('#macroSlots [data-mslot="s"] .mfl-hyd[data-mhydtoggle]');
+    await r.click('#macroSlots [data-mslot="s"] [data-mhyd]');
     await r.waitForTimeout(150);
-    t.ok('tapping the hydration droplet again restores its hydration (14 oz -> 38 oz)',
+    t.ok('tapping the hydration toggle again restores its hydration (14 oz -> 38 oz)',
       /38 \/ 100 oz/.test(await txt(r, '#macroTrayHead')) &&
+      /24 oz fluid/.test(await txt(r, '#macroSlots [data-mslot="s"] .mhyd-chip')) &&
       await r.evaluate(() => {
-        const b = document.querySelector('#macroSlots [data-mslot="s"] .mfl-hyd[data-mhydtoggle]');
-        return !!b && !b.classList.contains('off') && b.getAttribute('aria-pressed') === 'true';
+        const b = document.querySelector('#macroSlots [data-mslot="s"] [data-mhyd]');
+        return !!b && b.getAttribute('aria-pressed') === 'true';
       }));
-    /* Once, not twice: the droplet in the pill, and not again as "oz
-       fluid" on the macro line under it (Blake, 2026-10-30). */
-    // the macro line is on a food's open line (Details, which put one under every food, went on 2026-11-06)
-    await r.click('#macroSlots [data-mslot="s"] .mtray-f:has(.mfl-hyd) [data-mamt]'); await r.waitForTimeout(150);
-    const once = await r.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray-f')]
-      .filter((f) => f.querySelector('.mfl-hyd') && f.querySelector('.mfl-mac'))
-      .map((f) => !f.querySelector('.mhyd-chip')));
-    t.ok('and says it once: no second "oz fluid" on a line that already wears its ounces',
-      once.length > 0 && once.every(Boolean), JSON.stringify(once));
     await r.context().close();
 
     /* ---- a drink named for its flavour --------------------------------

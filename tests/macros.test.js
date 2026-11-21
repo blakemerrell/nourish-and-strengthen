@@ -1097,11 +1097,10 @@ module.exports = nourish({
     t.ok('planned protein is the recipe times the suggested portion',
       (await shown()) === (await expectP(picked.x)),
       (await shown()) + ' shown, ' + (await expectP(picked.x)) + ' expected at ×' + picked.x);
-    /* An added plate arrives planned, whatever the hour — Blake, 2026-09-27:
-       "Why when I add a dish does it mark it as eaten?... I want to tick it
-       complete." The tick is the only way a plate becomes eaten. */
-    t.ok('added to breakfast, the plate arrives planned, not eaten',
-      await p.evaluate(() => !!document.querySelector('.mitem') && !document.querySelector('.mitem.eaten')));
+    /* Manual adds on today count as eaten immediately (2026-11-21); Fill, pins,
+       and future days stay planned until ticked. */
+    t.ok('added to breakfast on today, the plate arrives eaten at once',
+      await p.evaluate(() => !!document.querySelector('.mitem.eaten')));
 
     /* ---- the dial moves in servings and the totals follow. A recipe was
        dialled by the gram from 2026-10-04 to 2026-11-20; since 1h (Blake:
@@ -1151,7 +1150,9 @@ module.exports = nourish({
       await p.evaluate(() => (document.querySelector('#modalRoot [data-mset="b:0:2"]') || {}).getAttribute && document.querySelector('#modalRoot [data-mset="b:0:2"]').getAttribute('aria-pressed') === 'true'),
       String(await xb()));
 
-    // ---- eaten: the tick fills the bar and the line-through arrives
+    // ---- eaten: untick Breakfast back to planned, then test the tick and sweep
+    await p.click('#modalRoot [data-mdot="b"]');
+    await p.waitForTimeout(150);
     t.ok('nothing is eaten yet, so the eaten sweep is empty',
       await p.evaluate(() => document.querySelector('[data-macro="kcal"]').dataset.eaten === '0'));
     t.ok('a planned but uneaten meal is still ahead of you on the day',
@@ -1521,11 +1522,14 @@ module.exports = nourish({
     await p.waitForTimeout(300);
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(150);
-    /* A reloaded day is trays (2026-10-04): each meal's foods as lines, the
-       plates' controls in the meal's sheet. */
+    /* A reloaded day is trays (2026-10-04): each eaten meal folds to Status
+       until opened; both meals' foods appear on the day and dials in the sheet. */
     t.ok('the day survives a reload, as trays',
-      await p.evaluate(() => document.querySelectorAll('#macroSlots .mtray.filled').length === 2 &&
-        document.querySelectorAll('#macroSlots .mtray-f:not(.mtray-none)').length === 2 && !document.querySelector('#macroSlots .mitem')),
+      await p.evaluate(() => {
+        document.querySelectorAll('#macroSlots [data-mview][data-mv="1"]').forEach((b) => b.click());
+        return document.querySelectorAll('#macroSlots .mtray.filled').length === 2 &&
+          document.querySelectorAll('#macroSlots .mtray-f:not(.mtray-none)').length === 2 && !document.querySelector('#macroSlots .mitem');
+      }),
       await p.evaluate(() => document.querySelectorAll('#macroSlots .mtray.filled').length + ' filled trays'));
     let plates = 0;
     for (const sk of ['b', 'l']) {

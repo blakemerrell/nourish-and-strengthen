@@ -65,28 +65,16 @@
 
   /* Whether food added to meal `sk` of day `k` goes on as eaten.
    *
-     Blake: "Added to a current or past meal = eaten at once; later meals and
-     Fill drafts stay planned until ticked." A day behind you is all eaten —
-     nobody plans yesterday. A day ahead is all plan. Today, a meal whose time
-     has come is the one you are logging, and one still to come is the one you
-     are planning. Fill and the pins do not come through here: they are the
-     app's suggestions, never a statement that you ate. */
-  /* Reversed 2026-09-27. Blake, after a week of it: "Why when I add a dish
-     does it mark it as eaten?... I want to tick it complete." A plate added
-     at lunchtime to plan lunch read as already eaten. So nothing arrives
-     eaten: every add is planned, on any day, until you tick it — the tick,
-     or Mark all complete, is the only way food becomes eaten. The rule
-     below is kept behind M_ADDS_EATEN in case the old one is wanted back. */
-  var M_ADDS_EATEN = false;
+     Smart split (Blake, 2026-11-21): manually logging a food on today or a
+     past day marks it eaten at once so normal food logging takes zero
+     checkboxes. App-planned items (Fill, Autofill, Everyday pins, Week
+     dinners) never come through here and stay planned (`eaten: 0`), and
+     anything added to a future day stays planned too until ticked. Kept
+     behind M_ADDS_EATEN in case a global toggle is ever wanted back. */
+  var M_ADDS_EATEN = true;
   function mAddsEaten(k, sk) {
     if (!M_ADDS_EATEN) return 0;
-    var today = todayKey();
-    if (k < today) return 1;
-    if (k > today) return 0;
-    var list = mReadSlots().list, at = -1;
-    list.forEach(function (s, i) { if (s.k === sk) at = i; });
-    if (at < 0) return 1;
-    return mNowMins() >= mSlotOpens(list, at) ? 1 : 0;
+    return k > todayKey() ? 0 : 1;
   }
 
   /* When today is far enough along to be judged: once dinner's time has come

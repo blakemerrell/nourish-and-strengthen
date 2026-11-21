@@ -2989,6 +2989,7 @@
   }
 
   function mAhead(k) { return k > todayKey(); }
+  function mKeepOpen(k, sk) { (S.mView[k] = S.mView[k] || {})[sk] = 2; }
 
   /* src/mealtime.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
@@ -4964,6 +4965,7 @@
       var to = S.editAddTo;
       S.editAddTo = null;
       var ate = mAddsEaten(to.k, to.sk);
+      mKeepOpen(to.k, to.sk);
       mEditDay(to.k, function (day) { (day[to.sk] = day[to.sk] || []).push({ id: rec.id, x: 1, eaten: ate }); });
       mHeardDone();
       renderAll();
@@ -6135,10 +6137,10 @@
        is open on: the day's trays have no dials. */
     /* `fromDay`: the scale on the meal's card (myday.js), which balances
        with no sheet open — the re-fit is otherwise the open sheet's alone. */
-    function mRefitMeal(k, sk, hold, fromDay, addedAt) {
+    function mRefitMeal(k, sk, hold, fromDay, addedAt, includeEaten) {
       if (!fromDay && (!S.macroPick || S.macroPick.slot !== sk)) return {};
       var before = (mDay(k)[sk] || []).map(function (it) { return { id: it.id, x: it.x }; });
-      mBalanceMeal(sk, { hold: hold, quiet: true });
+      mBalanceMeal(sk, { hold: hold, quiet: true, includeEaten: !!includeEaten });
       var after = mDay(k)[sk] || [], was = {};
       before.forEach(function (b, i) {
         if (i === hold || i === addedAt || !after[i] || String(after[i].id) !== String(b.id)) return;
@@ -6226,7 +6228,7 @@
         // the plate it put on, wherever it is now: the day may have moved since
         if (!list[at] || String(list[at].id) !== u.id) {
           at = -1;
-          list.forEach(function (it, i) { if (String(it.id) === u.id && !it.eaten) at = i; });
+          list.forEach(function (it, i) { if (String(it.id) === u.id) at = i; });
         }
         if (at >= 0) list.splice(at, 1);
       });
@@ -6471,6 +6473,7 @@
         var ur = BY_ID[uid];
         if (!ur) return;
         var uat = -1;
+        mKeepOpen(uk, usk);
         mEditDay(uk, function (day) {
           var list = (day[usk] = day[usk] || []);
           list.push({ id: uid, x: ux, eaten: mAddsEaten(uk, usk) });
@@ -6581,10 +6584,15 @@
          difference between a skip and an empty meal. */
       var skp = e.target.closest('[data-mskip]');
       if (skp) {
-        var sKey = skp.dataset.mskip;
-        mSetSkip(mViewKey(), sKey, !mSkipped(mViewKey(), sKey));
+        var sKey = skp.dataset.mskip, svk = mViewKey();
         S.mMenu = '';
-        mRedraw();
+        if (mSkipped(svk, sKey)) {
+          mSetSkip(svk, sKey, false);
+          mRedraw();
+        } else {
+          mSkipMeal(svk, sKey);
+          if (S.macroPick) renderModal();
+        }
         return;
       }
 
@@ -6645,8 +6653,17 @@
       if (bal) {
         var bk = mViewKey(), bsk = bal.dataset.mbal;
         if (S.mAmt && S.mAmt !== '*') S.mAmt = '';
-        mEditDay(bk, function (day) { (day[bsk] || []).forEach(function (it) { if (!it.eaten && it.l === 1) it.l = 0; }); });
-        var bwas = mRefitMeal(bk, bsk, undefined, !S.macroPick);
+        var bhasPlanned = (mDay(bk)[bsk] || []).some(function (it) {
+          var r = BY_ID[it.id];
+          return !it.eaten && it.l !== 2 && r && !r.eatout && r.macro && r.macro.kcal > 0;
+        });
+        var bIncludeEaten = !bhasPlanned;
+        mEditDay(bk, function (day) {
+          (day[bsk] || []).forEach(function (it) {
+            if ((!it.eaten || bIncludeEaten) && it.l === 1) it.l = 0;
+          });
+        });
+        var bwas = mRefitMeal(bk, bsk, undefined, !S.macroPick, undefined, bIncludeEaten);
         S.mMarks = { k: bk, sk: bsk, was: bwas, fresh: {}, snap: null };
         S.mMenu = '';
         mRedraw();
@@ -6863,7 +6880,7 @@
         mEditDay(mViewKey(), function (day) {
           var it = (day[qp[0]] || [])[Number(qp[1])];
           if (!it) return;
-          if (it.eaten && S.mEdit !== qp.slice(0, 2).join(':')) return;
+          if (it.eaten && mDoneAt(mViewKey()) > 0 && S.mEdit !== qp.slice(0, 2).join(':')) return;
           it.x = Number(qp[2]) || it.x;
           if (S.macroPick && S.macroPick.slot === qp[0] && !it.l) it.l = 1;
         });
@@ -6877,7 +6894,7 @@
           var it = (day[sp[0]] || [])[Number(sp[1])];
           if (!it) return;
           // the disabled attribute is paint; this is the rule
-          if (it.eaten && S.mEdit !== sp.slice(0, 2).join(':')) return;
+          if (it.eaten && mDoneAt(mViewKey()) > 0 && S.mEdit !== sp.slice(0, 2).join(':')) return;
           /* Quarter-serving steps land on eighths, so fmtNum always has a
              glyph and never falls back to a decimal. */
           it.x = mDialStep(BY_ID[it.id], it.x, sp[2] === 'up' ? 1 : -1);
@@ -8222,6 +8239,7 @@
         S.foodOpen = null;
         S.mBackPending = !!S.macroPick;
         S.mFavBackPending = backToFav;
+        mKeepOpen(fk, fsk);
         mEditDay(fk, function (d5) {
           (d5[fsk] = d5[fsk] || []).push({ id: fr.id, x: fx, eaten: fate });
         });
@@ -8241,6 +8259,7 @@
         S.mCopyFrom = null;
         if (its.length) {
           var cate = mAddsEaten(toK, csk);
+          mKeepOpen(toK, csk);
           mEditDay(toK, function (d6) {
             d6[csk] = (d6[csk] || []).concat(its.map(function (it) {
               var cItem = { id: it.id, x: it.x, eaten: cate };
@@ -8268,6 +8287,7 @@
           var heardId = mSaveMeal(sk3, nm3, mkd.dataset.mkdo === 'share', S.keepItems);
           if (!heardId) { $('mkNote').textContent = 'Nothing to keep.'; return; }
           var ate3 = mAddsEaten(mViewKey(), sk3);
+          mKeepOpen(mViewKey(), sk3);
           mEditDay(mViewKey(), function (day) { (day[sk3] = day[sk3] || []).push({ id: heardId, x: 1, eaten: ate3 }); });
           S.keepItems = null;
           S.keepMeal = '';
@@ -8522,6 +8542,7 @@
         if (mar && mask) {
           var maSnap = JSON.parse(JSON.stringify(mDay(mavk)[mask] || []));
           var maAte = mAddsEaten(mavk, mask);
+          mKeepOpen(mavk, mask);
           mEditDay(mavk, function (d) { (d[mask] = d[mask] || []).push({ id: mar.id, x: 1, eaten: maAte }); });
           S.mLastFoodsUndo = { kind: 'log', k: mavk, sk: mask, snap: maSnap };
           close();
@@ -8852,6 +8873,7 @@
              1½ servings asked for went on as 1, a packet's one serving as a
              quarter (tests/scanlabel.test.js). Kept is what the − / + and a
              typed amount leave too. */
+          mKeepOpen(nk, nsk);
           mEditDay(nk, function (day) {
             var list = (day[nsk] = day[nsk] || []);
             list.push({ id: nid, x: nx, eaten: nfe, l: 1 });
@@ -8868,8 +8890,9 @@
           return;
         }
         var nslot = S.newFood.slot;
-        var nate = mAddsEaten(mViewKey(), nslot);
-        mEditDay(mViewKey(), function (day) {
+        var nvk = mViewKey(), nate = mAddsEaten(nvk, nslot);
+        mKeepOpen(nvk, nslot);
+        mEditDay(nvk, function (day) {
           (day[nslot] = day[nslot] || []).push({ id: 'f:my:' + fkey, x: nx, eaten: nate });
         });
         S.newFood = null;
@@ -8946,6 +8969,7 @@
         if (what === 'all') {
           var ate = mAddsEaten(dk, dsk), hSnap = null;
           var closeAfter = !!(S.macroPick && S.macroPick.fromBar);
+          mKeepOpen(dk, dsk);
           mEditDay(dk, function (day) {
             var list = (day[dsk] = day[dsk] || []);
             hSnap = JSON.parse(JSON.stringify(list));
@@ -9010,6 +9034,7 @@
           S.mMarks = { k: pk, sk: psk, was: mRefitMeal(pk, psk), fresh: {}, snap: null };
         } else {
           var pate = mAddsEaten(pk, psk), swap = S.mpSwap && S.mpSwap.slot === psk ? S.mpSwap : null, at2 = -1;
+          mKeepOpen(pk, psk);
           mEditDay(pk, function (day) {
             var list = (day[psk] = day[psk] || []);
             var plate = { id: pid, x: px, eaten: pate };

@@ -198,17 +198,17 @@ module.exports = nourish({
         JSON.stringify(opens) === JSON.stringify([{ k: 'b', at: 0 }, { k: 'l', at: 660 }, { k: 'd', at: 1020 }, { k: 's', at: 0 }]),
         JSON.stringify(opens));
       await addFood('b', 'banana', 'f:banana');
-      t.ok('at half past one, food added to breakfast arrives planned', ((await stored(WED)).b || [])[0].eaten === 0,
+      t.ok('at half past one, food manually added to breakfast on today arrives eaten', ((await stored(WED)).b || [])[0].eaten === 1,
         JSON.stringify(await stored(WED)));
       await addFood('l', 'banana', 'f:banana');
-      t.ok('and to lunch, the meal you are on, planned too', ((await stored(WED)).l || [])[0].eaten === 0, JSON.stringify(await stored(WED)));
+      t.ok('and to lunch on today, eaten too', ((await stored(WED)).l || [])[0].eaten === 1, JSON.stringify(await stored(WED)));
       await addFood('d', 'banana', 'f:banana');
-      t.ok('but dinner, still to come, stays a plan', ((await stored(WED)).d || [])[0].eaten === 0, JSON.stringify(await stored(WED)));
-      /* The look: eaten in ink beside its tick, nothing struck. Breakfast and
-         lunch ticked by hand — with the MEAL's tick, on its tray, since there
-         is no per-plate tick (Blake, 2026-10-04: "No individual foods
-         ticks... I'll complete the whole meal"); each holds one plate. Then
-         each meal's sheet opened in turn to read its plate. */
+      t.ok('and to dinner on today, eaten too', ((await stored(WED)).d || [])[0].eaten === 1, JSON.stringify(await stored(WED)));
+      /* Untick dinner so lookD can verify a planned (unticked) plate alongside
+         eaten breakfast and lunch. */
+      await pg.evaluate(() => { const c = document.querySelector('#macroSlots [data-mdot="d"]');
+        if (c && c.getAttribute('aria-pressed') === 'true') c.click(); });
+      await pg.waitForTimeout(200);
       const mealTick = async (sk) => {
         await pg.evaluate((k) => { const c = document.querySelector('#macroSlots [data-mdot="' + k + '"]');
           if (c && c.getAttribute('aria-pressed') !== 'true') c.click(); }, sk);
@@ -309,23 +309,23 @@ module.exports = nourish({
       const drafts = [].concat(...Object.keys(drafted).map((sk) => (drafted[sk] || []).filter((it) => it.by === 'f')));
       t.ok('Fill drafts stay planned, even on meals whose time has come',
         drafts.length > 0 && drafts.every((it) => it.eaten === 0), JSON.stringify(drafted));
-      /* A day behind you is all eaten; a day ahead is all plan. */
+      /* A day behind you is eaten at once; a day ahead stays planned. */
       await homeDay(pg); await goDay(pg, TUE);
       await pg.waitForTimeout(300);
       await addFood('d', 'banana', 'f:banana');
-      t.ok('on yesterday, dinner arrives planned too', ((await stored(TUE)).d || [])[0].eaten === 0, JSON.stringify(await stored(TUE)));
+      t.ok('on yesterday, manually added dinner arrives eaten', ((await stored(TUE)).d || [])[0].eaten === 1, JSON.stringify(await stored(TUE)));
       await homeDay(pg); await goDay(pg, THU);
       await pg.waitForTimeout(300);
       await addFood('b', 'banana', 'f:banana');
-      t.ok('and on tomorrow, even breakfast is a plan', ((await stored(THU)).b || [])[0].eaten === 0, JSON.stringify(await stored(THU)));
+      t.ok('and on tomorrow, even breakfast stays a plan', ((await stored(THU)).b || [])[0].eaten === 0, JSON.stringify(await stored(THU)));
       await homeDay(pg); await goDay(pg, WED);
       await pg.waitForTimeout(300);
-      /* At quarter to eleven lunch has not started; at five past, it has. */
+      /* On today, manual adds count as eaten regardless of hour. */
       await at(2026, 8, 30, 10, 45);
       const early = await pg.evaluate((k) => [window.__macroLab.addsEaten(k, 'l'), window.__macroLab.addsEaten(k, 'd')], WED);
       await at(2026, 8, 30, 17, 5);
       const late = await pg.evaluate((k) => [window.__macroLab.addsEaten(k, 'l'), window.__macroLab.addsEaten(k, 'd')], WED);
-      t.ok('and the hour never makes an add eaten', early.join() === '0,0' && late.join() === '0,0',
+      t.ok('on today, manual adds count as eaten at any hour', early.join() === '1,1' && late.join() === '1,1',
         JSON.stringify({ early, late }));
       await at(2026, 8, 30, 13, 30);
 
@@ -1031,8 +1031,8 @@ module.exports = nourish({
       await pg.click('.mcf-day [data-mcopy="' + FAR + '"]');
       await pg.waitForTimeout(400);
       const dWed = await stored(WED);
-      t.ok('one tap puts it on this dinner at the amounts it was, planned, since dinner is still to come',
-        !!dWed && JSON.stringify((dWed.d || []).map((it) => [it.id, it.x, it.eaten])) === JSON.stringify([['f:chicken_breast', 1.5, 0], ['f:broccoli', 2, 0]]),
+      t.ok('one tap puts it on this dinner at the amounts it was, eaten immediately on today',
+        !!dWed && JSON.stringify((dWed.d || []).map((it) => [it.id, it.x, it.eaten])) === JSON.stringify([['f:chicken_breast', 1.5, 1], ['f:broccoli', 2, 1]]),
         JSON.stringify(dWed));
       /* It used to keep the last 120 days and let OLD go on the next write;
          Blake, 2026-10-18: "I would assume that I'm keeping everything". */
@@ -1048,9 +1048,9 @@ module.exports = nourish({
       await pg.click('[data-mcopy="' + MON + '"]');
       await pg.waitForTimeout(400);
       const after = (await stored(WED)).b || [];
-      t.ok('copied to a meal whose time has come, it arrives planned',
-        after.length === 3 && after.filter((it) => it.id === 'f:oats').every((it) => it.eaten === 0) &&
-          after[after.length - 1].eaten === 0, JSON.stringify(after));
+      t.ok('copied to today via Repeat a day, what was copied arrives eaten',
+        after.length === 3 && after.filter((it) => it.id === 'f:oats').every((it) => it.eaten === 1) &&
+          after[after.length - 1].eaten === 1, JSON.stringify(after));
 
       /* The day's date is the phone's calendar (2026-10-18): it runs from the
          first day ever logged to a week ahead, and a date picked there goes. */
@@ -1115,8 +1115,8 @@ module.exports = nourish({
       await pg.waitForTimeout(400);
       const bAfter = (await stored(WED)).b || [];
       const added = bAfter[bAfter.length - 1];
-      t.ok('Add puts it on breakfast at that amount, planned until ticked',
-        bAfter.length === 4 && added.id === 'f:egg' && Math.abs(added.x - 2) < 0.001 && added.eaten === 0,
+      t.ok('Add on today puts it on breakfast at that amount, already marked eaten',
+        bAfter.length === 4 && added.id === 'f:egg' && Math.abs(added.x - 2) < 0.001 && added.eaten === 1,
         JSON.stringify(bAfter));
       await ctx.close();
     }

@@ -694,7 +694,8 @@ module.exports = nourish({
     await wake.click('#macroFill');
     await wake.waitForTimeout(600);
     /* The first meal Fill put food on, opened in its sheet (2026-10-04). */
-    await openMeal(wake, await wake.evaluate(() => document.querySelector('#macroSlots .mtray.filled [data-mopen]').dataset.mopen));
+    const firstSk = await wake.evaluate(() => document.querySelector('#macroSlots .mtray.filled [data-mopen]').dataset.mopen);
+    await openMeal(wake, firstSk);
     /* the type BEFORE it is eaten, to compare against after */
     const typeWas = await wake.evaluate(() => {
       const c = getComputedStyle(document.querySelector('#modalRoot .mrows .mstep-x'));
@@ -708,13 +709,22 @@ module.exports = nourish({
        land on the bar's very top pixel and get through; with the meal verbs
        at a plate key's size (2026-09-27) the card ends 24px sooner and it
        stalled on the bar for thirty seconds. */
-    /* Eaten with the MEAL's tick on the open meal's head: there is no
-       per-plate tick since the RP-style day (Blake, 2026-10-04: "No
-       individual foods ticks... I'll complete the whole meal"), and ticking
-       the whole meal is what eats this plate now. */
+    /* Eaten with the MEAL's tick on the open meal's head, then close the
+       day so spent portions lock behind the .mstep-wake button. */
     await wake.click('#modalRoot .msh-h [data-mdot]');
+    await wake.waitForTimeout(300);
+    await wake.evaluate(() => {
+      const p2 = (n) => (n < 10 ? '0' : '') + n, d = new Date();
+      const k = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+      localStorage.setItem('bsc.macroDone', JSON.stringify({ [k]: Date.now() }));
+    });
+    await wake.reload();
     await wake.waitForTimeout(400);
-    t.ok('a locked portion offers a way back in',
+    await wake.click('.tab[data-view="macros"]');
+    await wake.waitForTimeout(300);
+    await openMeal(wake, firstSk);
+    await wake.waitForTimeout(300);
+    t.ok('a locked portion on a closed day offers a way back in',
       await wake.evaluate(() => !!document.querySelector('#modalRoot .mstep-wake')));
     /* And it does not change SIZE on the way.
      *
@@ -837,7 +847,8 @@ module.exports = nourish({
     await spent.click('#macroFill');
     await spent.waitForTimeout(600);
     // open a meal's sheet so a plate and its stepper are on screen
-    await openMeal(spent, await spent.evaluate(() => document.querySelector('#macroSlots .mtray.filled [data-mopen]').dataset.mopen));
+    const spentSk = await spent.evaluate(() => document.querySelector('#macroSlots .mtray.filled [data-mopen]').dataset.mopen);
+    await openMeal(spent, spentSk);
     const stepWas = await spent.evaluate(() => {
       const st = document.querySelector('#modalRoot .mrows .mstep');
       return { x: st.querySelector('.mstep-x').textContent.trim(),
@@ -847,10 +858,20 @@ module.exports = nourish({
     t.ok('an uneaten plate can still be resized', stepWas.live && !stepWas.grey,
       JSON.stringify(stepWas));
 
-    /* The meal's tick, in the sheet's header (2026-10-04): see the same
-       note in "One tap on a spent portion", above. */
+    /* Ticking a meal eaten on a closed day locks its portions until unticked or woken. */
     await spent.click('#modalRoot .msh-h [data-mdot]');
+    await spent.waitForTimeout(300);
+    await spent.evaluate(() => {
+      const p2 = (n) => (n < 10 ? '0' : '') + n, d = new Date();
+      const k = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+      localStorage.setItem('bsc.macroDone', JSON.stringify({ [k]: Date.now() }));
+    });
+    await spent.reload();
     await spent.waitForTimeout(400);
+    await spent.click('.tab[data-view="macros"]');
+    await spent.waitForTimeout(300);
+    await openMeal(spent, spentSk);
+    await spent.waitForTimeout(300);
     /* The lock is not on the dial: it guards against the machine rather than
        against you, and it lives behind the food's ⋯ since 2026-10-04. */
     await spent.evaluate(() => document.querySelector('#modalRoot .mrows [data-mfmenu]').click());
@@ -868,7 +889,7 @@ module.exports = nourish({
         faded: [...st.querySelectorAll('[data-mstep]')]
           .every((b) => parseFloat(getComputedStyle(b).opacity) < 0.6) };
     });
-    t.ok('ticking it eaten locks the portion', stepNow.dead && stepNow.grey,
+    t.ok('ticking it eaten on a closed day locks the portion', stepNow.dead && stepNow.grey,
       JSON.stringify(stepNow));
     /* The lock is a different job — it holds a food steady while the other
        meals rebalance around it, which is still worth saying about a plate

@@ -51,22 +51,38 @@ module.exports = {
     await p.waitForTimeout(500);
 
     /* ---- where each card starts ---- */
+    const shutSheet = async () => {
+      await p.evaluate(() => { const b = document.querySelector('#modalRoot .msh-done') || document.querySelector('#modalRoot .sheet-x'); if (b) b.click(); });
+      await p.waitForTimeout(400);
+    };
+    const skipInSheet = async (sk) => {
+      await p.evaluate((s) => {
+        const d = document.querySelector('#macroSlots [data-mslot="' + s + '"] .mtray-b[data-mopen]') ||
+          document.querySelector('#macroSlots [data-mslot="' + s + '"] [data-mopen]');
+        if (d) d.click();
+      }, sk);
+      await p.waitForTimeout(300);
+      await p.click('#modalRoot [data-mmenu="' + sk + '"]');
+      await p.waitForTimeout(200);
+      await p.click('#modalRoot .msh-menu [data-mskip="' + sk + '"]');
+      await p.waitForTimeout(300);
+    };
     const start = await p.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray[data-mslot]')].map((c) => ({
       k: c.dataset.mslot, v: (c.className.match(/\bmv-(\d)/) || [])[1], beads: c.querySelectorAll('.mbd').length,
-      skip: !!c.querySelector('[data-mskipask]'), door: !!c.querySelector('.mtray-b[data-mopen]') })));
+      skip: !!c.querySelector('[data-mskipask]'), bal: !!c.querySelector('[data-mbal]'), door: !!c.querySelector('.mtray-b[data-mopen]') })));
     t.ok('the eaten breakfast starts on Status with its four rings; Lunch and Dinner on State 2 (Foods); the empty Snacks one row',
       start.map((c) => c.k + (c.v || '-')).join() === 'b1,l2,d2,s-' && start[0].beads === 4 && start.slice(1).every((c) => !c.beads) &&
       await p.evaluate(() => document.querySelector('#macroSlots [data-mslot="s"]').classList.contains('mtray-empty')), JSON.stringify(start));
-    t.ok('every card keeps its door to the meal, Status too', start.every((c) => c.door), JSON.stringify(start));
-    t.ok('a meal anything was eaten from has no ⊘; the others do', !start[0].skip && start.slice(1).every((c) => c.skip), JSON.stringify(start));
+    t.ok('every card keeps its door to the meal, Status too, with no card-level ⊘ or ⚖ clutter',
+      start.every((c) => c.door && !c.skip && !c.bal), JSON.stringify(start));
 
-    /* ---- an empty meal skips at once, with Undo ---- */
+    /* ---- empty meal skips from its ⋯ menu, with Undo ---- */
     const lunchWant0 = await wantOf(p, 'l');
-    await p.click('[data-mskipask="s"]');
-    await p.waitForTimeout(300);
+    await skipInSheet('s');
+    await shutSheet();
     const toast1 = await p.evaluate(() => { const el = document.getElementById('mToast'); return { shown: !el.hidden, text: el.textContent, undo: !!el.querySelector('[data-mskipundo]') }; });
-    t.ok('⊘ on the empty Snacks skips it at once: no question, and a toast with Undo',
-      (await skips(p)).join() === 's' && !(await p.$('.mtray-ask')) && toast1.shown && /^Snacks skipped\.Undo$/.test(toast1.text) && toast1.undo, JSON.stringify(toast1));
+    t.ok('Skip today on empty Snacks skips it with a toast + Undo',
+      (await skips(p)).join() === 's' && toast1.shown && /^Snacks skipped\.Undo$/.test(toast1.text) && toast1.undo, JSON.stringify(toast1));
     const row = await p.evaluate(() => {
       const el = document.querySelector('#macroSlots .mtray-skip');
       const pill = el && el.querySelector('.mtray-spread-pill');
@@ -74,8 +90,6 @@ module.exports = {
         back: (el.querySelector('[data-mskip]') || {}).textContent,
         pill: pill ? pill.textContent : '' };
     });
-    /* Short on the pill since 2026-10-30 ("Uncrowd the text"): the number,
-       the first meal it goes to, and +1 for the rest. */
     t.ok('and its row says skipped with a short spread pill (kcal → Lunch +1), opens its sheet, and has Put back on it',
       !!row && row.door === 's' && row.back === 'Put back' && /\d+ → Lunch \+1/.test(row.pill), JSON.stringify(row));
     const lunchWant1 = await wantOf(p, 'l');
@@ -85,34 +99,25 @@ module.exports = {
     t.ok('Undo puts it back', (await skips(p)).length === 0 && !(await p.$('#macroSlots .mtray-skip')) && (await wantOf(p, 'l')) === lunchWant0);
 
     /* Put back, on the row */
-    await p.click('[data-mskipask="s"]');
-    await p.waitForTimeout(300);
+    await skipInSheet('s');
+    await shutSheet();
     await p.click('#macroSlots .mtray-skip [data-mskip="s"]');
     await p.waitForTimeout(300);
     t.ok('and Put back on the row puts it back too', (await skips(p)).length === 0 && !!(await p.$(card('s'))));
 
-    /* ---- a meal with food on it asks first, on its card ---- */
-    const d0 = (await dayOf(p)).d;
-    await p.click('[data-mskipask="d"]');
-    await p.waitForTimeout(250);
-    const ask = await p.evaluate((sel) => {
-      const a = document.querySelector(sel + ' .mtray-ask');
-      return a && { text: a.querySelector('p').textContent, go: (a.querySelector('[data-mskipgo]') || {}).textContent, no: (a.querySelector('[data-mskipno]') || {}).textContent };
-    }, card('d'));
-    t.ok('⊘ on Dinner asks on the card first, saying what goes and where its share goes',
-      !!ask && ask.text === 'Skip Dinner today? Its 2 planned foods come off, and its share goes to Lunch and Snacks.' &&
-      ask.go === 'Skip Dinner' && ask.no === 'Keep it' && (await skips(p)).length === 0, JSON.stringify(ask));
-    await p.click('[data-mskipno="d"]');
-    await p.waitForTimeout(250);
-    t.ok('Keep it closes the question, nothing changed, and the focus goes back to ⊘',
-      !(await p.$('.mtray-ask')) && JSON.stringify((await dayOf(p)).d) === JSON.stringify(d0) &&
-      await p.evaluate(() => document.activeElement && document.activeElement.dataset.mskipask === 'd'));
-    await p.click('[data-mskipask="d"]');
-    await p.waitForTimeout(250);
-    await p.click('[data-mskipgo="d"]');
+    /* ---- a planned meal skips from its ⋯ menu, while an eaten meal cannot ---- */
+    await p.evaluate((sel) => document.querySelector(sel + ' .mtray-b[data-mopen]').click(), card('b'));
     await p.waitForTimeout(300);
+    await p.click('#modalRoot [data-mmenu="b"]');
+    await p.waitForTimeout(200);
+    t.ok('an eaten meal has no Skip today in its ⋯ menu', !(await p.$('#modalRoot .msh-menu [data-mskip="b"]')));
+    await shutSheet();
+
+    const d0 = (await dayOf(p)).d;
+    await skipInSheet('d');
+    await shutSheet();
     const gone = await dayOf(p);
-    t.ok('Skip Dinner takes its food off and skips it, and the toast says so with Undo',
+    t.ok('Skip today on planned Dinner takes its food off and skips it, and the toast says so with Undo',
       (gone.d || []).length === 0 && (await skips(p)).join() === 'd' &&
       /^Dinner skipped, and its 2 foods came off\.Undo$/.test(await p.evaluate(() => document.getElementById('mToast').textContent)), JSON.stringify(gone.d));
     await p.click('#mToast [data-mskipundo]');
@@ -145,78 +150,59 @@ module.exports = {
       bPills.length === 4 && bPills[1].have > bPills[1].want * 1.1 && bRings[1] === 'rg-on' &&
       bPills[2].have > bPills[2].want * 1.1 && bRings[2] === 'rg-over', JSON.stringify({ bRings, bPills }));
 
-    /* ---- an empty meal: one row; its name, or + held down, opens the ways to fill it ---- */
+    /* ---- an empty meal: one calm row; tapping it or + opens food search ---- */
     const emp = () => p.evaluate((sel) => {
       const c = document.querySelector(sel);
       return { open: c.classList.contains('open'), h: Math.round(c.getBoundingClientRect().height), pills: c.querySelectorAll('.mcap').length,
         none: !!c.querySelector('.mtray-none'), aim: (c.querySelector('.mtray-aim') || {}).textContent || '',
-        acts: [...c.querySelectorAll('.mtray-acts button')].map((b) => Object.keys(b.dataset)[0] + ':' + b.textContent) };
+        acts: c.querySelectorAll('.mtray-acts button').length,
+        verbs: [...c.querySelectorAll('.mtray-vbs button')].map((b) => Object.keys(b.dataset)[0]) };
     }, card('s'));
-    const shutSheet = async () => {
-      await p.evaluate(() => { const b = document.querySelector('#modalRoot .msh-done') || document.querySelector('#modalRoot .sheet-x'); if (b) b.click(); });
-      await p.waitForTimeout(500);
-    };
     const e0 = await emp();
-    t.ok('shut, the empty Snacks is one row: its name, what it is for, + and ⊘, and no pills or "Nothing yet"',
-      !e0.open && e0.h < 70 && !e0.pills && !e0.none && /^\d[\d,]* kcal$/.test(e0.aim) && !e0.acts.length, JSON.stringify(e0));
-    await p.click(card('s') + ' [data-meopen]');
-    await p.waitForTimeout(200);
-    const e1 = await emp();
-    t.ok('its name opens one quiet line: Add food, Autofill, Repeat a day, Saved meals',
-      e1.open && e1.acts.join('|') === 'mopen:Add food|mtry:Autofill|mfrom:Repeat a day|msaved:Saved meals', JSON.stringify(e1));
-    await p.click(card('s') + ' [data-meopen]');
-    await p.waitForTimeout(200);
-    const hb = await p.$eval(card('s') + ' [data-mhold]', (e) => { e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
-    await p.mouse.move(hb.x, hb.y);
-    await p.mouse.down();
-    await p.waitForTimeout(650);
-    await p.mouse.up();
-    await p.waitForTimeout(500);
-    t.ok('holding + down opens the same line, and does not open food search', (await emp()).open && !(await p.$('#modalRoot .msheet')));
-    await p.click(card('s') + ' [data-mhold]');
-    await p.waitForTimeout(500);
-    t.ok('while a plain tap on + goes straight to food search, offering Same as yesterday when yesterday had that meal',
+    t.ok('an empty Snacks is one calm row: its name, what it is for, +, and no pills, ⊘, "Nothing yet", or .mtray-acts wall',
+      !e0.open && e0.h < 70 && !e0.pills && !e0.none && /^\d[\d,]* kcal$/.test(e0.aim) && !e0.acts && e0.verbs.join() === 'mopen', JSON.stringify(e0));
+    await p.click(card('s') + ' .mtray-hd[data-mopen]');
+    await p.waitForTimeout(450);
+    t.ok('tapping an empty meal name opens food search directly, offering Same as yesterday when yesterday had that meal',
       !!(await p.$('#modalRoot .msheet #mpFind')) &&
       await p.evaluate(() => {
         const b = document.querySelector('#modalRoot .msheet .msh-on-empty .msh-yest[data-mcopy="2026-10-09"]');
         return !!b && /^Same as yesterday/.test(b.getAttribute('aria-label') || '');
       }));
-    await shutSheet();
-    await p.click(card('s') + ' [data-msaved]');
-    await p.waitForTimeout(500);
+    /* Saved meals lens inside the picker, Repeat a day & Autofill via ⋯ in the empty meal sheet */
+    await p.selectOption('#modalRoot #mpSec', 'saved');
+    await p.waitForTimeout(250);
     const sv = await p.evaluate(() => ({ lens: (document.getElementById('mpSec') || {}).value,
       rows: [...document.querySelectorAll('#modalRoot #mpList [data-mpick]')].map((r) => ((r.closest('.mp-row') || r).querySelector('.mp-name') || {}).textContent) }));
-    t.ok('Saved meals opens Snacks’ sheet on its Saved meals lens, listing the saved meals and nothing else',
+    t.ok('Saved meals lens inside the sheet lists saved meals cleanly',
       sv.lens === 'saved' && sv.rows.length === 1 && /House side salad/.test(sv.rows[0]), JSON.stringify(sv));
-    await shutSheet();
-    await p.click(card('s') + ' [data-mfrom]');
-    await p.waitForTimeout(500);
-    t.ok('Repeat a day opens the days Snacks can be copied from', !!(await p.$('#modalRoot [data-mcopy="2026-10-09"]')));
+    await p.click('#modalRoot [data-mmenu="s"]');
+    await p.waitForTimeout(200);
+    await p.click('#modalRoot [data-mfrom="s"]');
+    await p.waitForTimeout(400);
+    t.ok('Repeat a day in the meal sheet ⋯ opens the days Snacks can be copied from', !!(await p.$('#modalRoot [data-mcopy="2026-10-09"]')));
     await p.goBack();
-    await p.waitForTimeout(500);
-    await shutSheet();
-    await p.click(card('s') + ' [data-mtry]');
-    await p.waitForTimeout(500);
+    await p.waitForTimeout(400);
+    await p.click('#modalRoot [data-mmenu="s"]');
+    await p.waitForTimeout(200);
+    await p.click('#modalRoot [data-mtry="s"]');
+    await p.waitForTimeout(450);
     const auto = (await dayOf(p)).s || [];
-    t.ok('Autofill drafts Snacks from the plan, there on the day, and it is a card with food on it',
+    t.ok('Autofill in empty meal sheet ⋯ drafts Snacks from the plan, planned and not a card wall',
       auto.length === 1 && auto[0].by === 'f' && auto[0].eaten === 0 &&
       await p.evaluate((sel) => !document.querySelector(sel).classList.contains('mtray-empty'), card('s')), JSON.stringify(auto));
-    /* ↻ left the card header for the meal's ⋯ (1j, 2026-11-20). */
-    t.ok('once filled, the card header has no ↻ of its own', !(await p.$(card('s') + ' .mtray-ib[data-mtry]')));
-    await p.evaluate((sel) => document.querySelector(sel + ' .mtray-b[data-mopen]').click(), card('s'));
-    await p.waitForTimeout(400);
     await p.click('#modalRoot [data-mmenu="s"]');
     await p.waitForTimeout(200);
     await p.click('#modalRoot [data-mtry="s"]');
     await p.waitForTimeout(350);
     const auto2 = (await dayOf(p)).s || [];
     await shutSheet();
-    t.ok('and the meal\u2019s ⋯ › Try another moves on to another suggestion',
-      auto2.length === 1 && auto2[0].id !== auto[0].id, JSON.stringify({ auto, auto2 }));
+    t.ok('once filled, the card header has no ↻ of its own and ⋯ › Try another moves on to another suggestion',
+      !(await p.$(card('s') + ' .mtray-ib[data-mtry]')) && auto2.length === 1 && auto2[0].id !== auto[0].id, JSON.stringify({ auto, auto2 }));
 
     /* ---- the narrowest phone: one line a head, a thumb a button, no sideways scroll ---- */
     await p.setViewportSize({ width: 320, height: 760 });
-    for (const v of [1, 2, 3]) {
+    for (const v of [1, 2]) {
       for (const sk of ['l', 'd']) {
         for (let i = 0; i < 3 && await p.$eval(card(sk) + ' [data-mview]', (e) => e.dataset.mv) !== String(v); i++) {
           await p.click(card(sk) + ' [data-mview]');
@@ -240,7 +226,7 @@ module.exports = {
     await p.waitForTimeout(600);
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(300);
-    await p.click(card('s') + ' [data-mhold]');
+    await p.click(card('s') + ' [data-mopen]');
     await p.waitForTimeout(400);
     const yestCopy = await p.evaluate(() => {
       const b = document.querySelector('#modalRoot .msheet .msh-yest[data-mcopy="2026-10-09"]');

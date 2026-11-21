@@ -6339,7 +6339,16 @@
         'aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></span><span class="tr-cpct">' + pct + '%</span></div>' +
       '<div class="tr-cstat"><span><b>' + done + ' of ' + tot + '</b> sessions' + (gone ? ', ' + gone + ' skipped' : '') + '</span>' +
         (nx ? '<span><b>' + thisWk + ' of ' + ms.days.length + '</b> this week</span>' : '') + '</div>';
-    return html + phaseLine(ms, nx) + weekGrid(ms, nx, sel) +
+    /* This week first (redesign 3): the four sessions you are in, with the
+       whole block one tap away. Twenty-four boxes led the screen, five rows
+       of them empty for weeks; the review (2026-11-07) asked for this week
+       as the first view and the grid behind it. Picking a session in
+       another week, from History or the plan, opens the whole block, since
+       that box is the one being looked at. */
+    var allWks = !nx || !!S.gridAll || !!(sel && sel.w !== nx.w);
+    var gridTog = nx && weeksOf(ms) > 1 ? '<button type="button" class="tr-lnk tr-gall" data-t="gridall" aria-expanded="' + allWks + '">' +
+      (allWks ? 'This week only' : 'Whole block (' + weeksOf(ms) + ' weeks)') + '</button>' : '';
+    return html + phaseLine(ms, nx) + weekGrid(ms, nx, sel, null, allWks ? -1 : nx.w) + gridTog +
       (S.gridTapped ? '' : '<div class="tr-ghint">Tap a box to see that session</div>') +
       ldHTML(ms, nx) + '</div>';
   }
@@ -6470,7 +6479,9 @@
   }
   var LD_S = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-  function weekGrid(ms, nx, sel, act) {
+  /* `only`, a week's index, draws that week's row alone (the Train home's
+     first view since redesign 3); -1 or nothing draws them all. */
+  function weekGrid(ms, nx, sel, act, only) {
     /* History draws a block's grid too, where a tap chooses in History and
        the weekday under each column (this week's, from your lifting days)
        means nothing for a block gone by. */
@@ -6489,6 +6500,7 @@
         }).join('');
       })() + '</div>';
     for (var w = 0; w < weeksOf(ms); w++) {
+      if (only >= 0 && w !== only) continue;
       html += '<div class="tr-grow" role="row"><span class="tr-gw" role="rowheader">' +
         (w >= accOf(ms) ? 'Deload' : 'Wk ' + (w + 1)) + '</span>';
       for (var d = 0; d < ms.days.length; d++) {
@@ -13148,6 +13160,7 @@
       }
       saveLive(); draw(); return;
     }
+    if (t === 'gridall') { S.gridAll = !S.gridAll; draw(); return; }
     if (t === 'expop' && LIVE) {
       var pxi = num('data-x');
       S.pop = S.pop && S.pop.k === 'expop' && S.pop.x === pxi ? null : { k: 'expop', x: pxi };

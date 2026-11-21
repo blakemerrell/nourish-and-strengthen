@@ -150,7 +150,15 @@ module.exports = {
       stored: !!JSON.parse(localStorage.getItem('bsc.train')).act,
     }));
     t.ok('starting it keeps it', d.act && d.stored);
-    t.ok('five weeks of four days on the grid, four hard and a deload', d.cells === 20, d.cells);
+    /* This week's row first since redesign 3 (2026-11-20); the whole block
+       is one tap away. */
+    t.ok('this week\u2019s four sessions on the grid first', d.cells === 4, d.cells);
+    await p.click('[data-t="gridall"]');
+    await p.waitForTimeout(100);
+    d.cells = await p.evaluate(() => document.querySelectorAll('.tr-gc').length);
+    t.ok('and Whole block opens five weeks of four days, four hard and a deload', d.cells === 20, d.cells);
+    await p.click('[data-t="gridall"]');
+    await p.waitForTimeout(100);
     t.ok('with the first session marked next', d.next === '0:0', d.next);
 
     // ---- every split, every kit -----------------------------------------
@@ -2190,6 +2198,8 @@ module.exports = {
     await p.click('[data-t="axk"][data-v="walk"]');
     await p.click('[data-t="axsave"]');
     await p.evaluate(() => { const b = document.querySelector('[data-t="gridopen"][aria-expanded="false"]'); if (b) b.click(); });
+    // week one is done now, so the home's first view is week two (3): open the whole block to read week one's box
+    await p.evaluate(() => { const b = document.querySelector('[data-t="gridall"][aria-expanded="false"]'); if (b) b.click(); });
     r = await p.evaluate((id) => {
       const _ = window.Train._, s = _.state(), a = Object.values(s.T.ax)[0], ms = s.T.ms[id];
       return { a, nx: _.nextSlot(ms), cell: (document.querySelector('.tr-gc[data-w="0"][data-d="2"]') || {}).textContent || '' };
@@ -4475,6 +4485,8 @@ module.exports = {
     await p.click('#trSesh [data-t="wosheet"]');
     t.ok('and it opens the workout itself', await p.evaluate(() => !!document.querySelector('.tr-sheet')));
     await p.evaluate(() => { const b = document.querySelector('.tr-sheet [data-t="close"]'); if (b) b.click(); });
+    await p.waitForTimeout(100);
+    await p.click('[data-t="gridall"]');   // the whole block, since the first view is this week (3)
     await p.waitForTimeout(100);
     await p.click('.tr-gc[data-w="2"][data-d="1"]');
     r = await cal();

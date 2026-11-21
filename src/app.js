@@ -3632,7 +3632,7 @@
 
   /* src/shares.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var SHARES = window.HiveParts.shares({ kcalOf: kcalOf, mDay: mDay, mInfoText: mInfoText, mSendOf: mSendOf, mSkipped: mSkipped, mSlotW: mSlotW, mTotals: mTotals, mViewKey: mViewKey, mWhyBtn: mWhyBtn, LIVE: LIVE });
+  var SHARES = window.HiveParts.shares({ S: S, kcalOf: kcalOf, mDay: mDay, mInfoText: mInfoText, mSendOf: mSendOf, mSkipped: mSkipped, mSlotW: mSlotW, mTotals: mTotals, mViewKey: mViewKey, mWhyBtn: mWhyBtn, LIVE: LIVE });
   function mMealDone(sk) { return SHARES.mMealDone(sk); }
   function mMealAsk(sk, targets, slots, adjust) { return SHARES.mMealAsk(sk, targets, slots, adjust); }
   function mLastFinished(targets, slots) { return SHARES.mLastFinished(targets, slots); }
@@ -6140,7 +6140,8 @@
     function mRefitMeal(k, sk, hold, fromDay, addedAt, includeEaten) {
       if (!fromDay && (!S.macroPick || S.macroPick.slot !== sk)) return {};
       var before = (mDay(k)[sk] || []).map(function (it) { return { id: it.id, x: it.x }; });
-      mBalanceMeal(sk, { hold: hold, quiet: true, includeEaten: !!includeEaten });
+      var basket = (!fromDay && S.macroPick && S.macroPick.slot === sk) ? S.mpBasket : null;
+      mBalanceMeal(sk, { hold: hold, quiet: true, includeEaten: !!includeEaten, basket: basket });
       var after = mDay(k)[sk] || [], was = {};
       before.forEach(function (b, i) {
         if (i === hold || i === addedAt || !after[i] || String(after[i].id) !== String(b.id)) return;
@@ -9046,6 +9047,7 @@
           swappedFrom = !!swap;
           S.mpSwap = null;
           S.mpAt[pid] = at2;
+          S.mpBasket[pid] = px;
           S.mMarks = { k: pk, sk: psk, was: mRefitMeal(pk, psk, undefined, false, at2), fresh: mpFresh(at2, pid), snap: null };
           S.mRowOpen = null;
           S.mpBasket[pid] = ((mDay(pk)[psk] || [])[at2] || {}).x || px;

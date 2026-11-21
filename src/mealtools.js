@@ -158,7 +158,8 @@
       var held = opt.hold !== undefined ? (day[sk] || [])[opt.hold] : null;
       var free = (day[sk] || []).filter(function (it) {
         var r = LIVE.BY_ID[it.id];
-        return it !== held && (!it.eaten || opt.includeEaten) && !it.l && r && !r.eatout && r.macro && r.macro.kcal > 0;
+        var canMove = !it.eaten || opt.includeEaten || (opt.basket && opt.basket[it.id] !== undefined);
+        return it !== held && canMove && !it.l && r && !r.eatout && r.macro && r.macro.kcal > 0;
       });
       if (!free.length) return;
       /* The meal's FULL share of the day, not what is left of the day after

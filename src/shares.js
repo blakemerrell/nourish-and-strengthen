@@ -16,6 +16,7 @@
   'use strict';
 
   // what it reads of the app's, and (LIVE) what the app replaces as it goes: BY_ID
+  var S = app.S;
   var kcalOf = app.kcalOf;
   var mDay = app.mDay;
   var mInfoText = app.mInfoText;
@@ -43,6 +44,7 @@
      A meal with nothing on it is not finished, it is empty — and an empty
      meal is the one most in need of a share. */
   function mMealDone(sk) {
+    if (S && S.macroPick && S.macroPick.slot === sk && S.mpBasket && Object.keys(S.mpBasket).length) return false;
     var items = (mDay(mViewKey())[sk] || []).filter(function (it) { return LIVE.BY_ID[it.id]; });
     if (!items.length) return false;
     return items.every(function (it) { return it.eaten; });

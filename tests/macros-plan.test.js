@@ -162,16 +162,15 @@ module.exports = nourish({
     await unitPg.click('.tab[data-view="macros"]');
     await unitPg.waitForTimeout(300);
     await openMeal(unitPg, 'b');
-    /* The dial is grams for a recipe with a serving weight (2026-10-04), so
-       the count is said in the small print beside the macros; a recipe with
-       no weight still says it on the dial. */
+    /* A dish is dialled in servings again since 1h (2026-11-20), so the
+       count is said on the dial and the weight is the small print. */
     const plateWords = await unitPg.evaluate(() => {
       const out = {};
       document.querySelectorAll('#modalRoot .mitem').forEach((row) => {
         const b = row.querySelector('[data-open]');
         const u = row.querySelector('.mitem-uom');
         const x = row.querySelector('.mstep-x');
-        if (b && (u || x)) out[String(b.dataset.open)] = (u ? u.textContent : x.textContent).trim();
+        if (b && (u || x)) out[String(b.dataset.open)] = (x ? x.textContent : u.textContent).trim();
       });
       return out;
     });

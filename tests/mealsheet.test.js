@@ -225,7 +225,8 @@ module.exports = {
     const sw = await mealOf(p, 'd');
     t.ok('and the next tap takes its place', sw.length === n0 && sw[1].id === 'f:banana', JSON.stringify(sw));
 
-    /* grams for everything, each by its own step */
+    /* each by its own step: a single food in grams, a dish in servings
+       since 1h (2026-11-20, Blake: "depends on the food") */
     const st = await p.evaluate(() => {
       const r = [...document.querySelectorAll('#modalRoot .mrows .mrow')];
       return r.map((x) => x.querySelector('.mstep-x').textContent);
@@ -234,8 +235,7 @@ module.exports = {
     await p.click('#modalRoot [data-mstep="d:0:up"]');
     await p.waitForTimeout(250);
     const st2 = await p.evaluate(() => document.querySelector('#modalRoot [data-mtype="d:0"]').textContent);
-    const g0 = parseInt(st[0].replace(/[^\d]/g, ''), 10), g1 = parseInt(st2.replace(/[^\d]/g, ''), 10);
-    t.ok('a recipe dials in grams from its serving weight, five at a time', /^~?[\d,]+ g$/.test(st[0]) && g1 - g0 >= 1 && g1 - g0 <= 5 && g1 % 5 === 0, JSON.stringify({ st, st2 }));
+    t.ok('a recipe dials in servings, a quarter at a time, and says so', /serving/.test(st[0]) && /serving/.test(st2) && st2 !== st[0], JSON.stringify({ st, st2 }));
 
     /* the pins: the header and pills always; the search under them once scrolled */
     await p.evaluate(() => { const s = document.querySelector('#modalRoot .scrim'); s.scrollTop = 900; });
@@ -276,6 +276,11 @@ module.exports = {
        it, and the list must not slide under the thumb that added it. */
     // a row not already put on this visit, which a second tap would take back off
     const fresh = '#mpList [data-mpick="f:egg"]';
+    /* The dish row opened above is shut first: adding a food shuts it anyway,
+       and since 1h it carries ½ · 1 · 1½ · 2, more than a 60 px scroll can
+       give back, so it would measure the row closing, not the list holding. */
+    await p.evaluate(() => { const b = document.querySelector('#modalRoot [data-mrowopen][aria-expanded="true"]'); if (b) b.click(); });
+    await p.waitForTimeout(200);
     await p.evaluate(() => { document.querySelector('#modalRoot .scrim').scrollTop = 60; });
     await p.waitForTimeout(200);
     const listAt = () => p.evaluate(() => ({ y: Math.round(document.getElementById('mpList').getBoundingClientRect().top),

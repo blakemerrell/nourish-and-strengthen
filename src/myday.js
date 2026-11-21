@@ -363,11 +363,27 @@
      The handlers are the sheet's (mDayClick answers both), so a step here
      is a step there. Eaten is a record, as in the sheet: the keys go quiet
      and a tap on the amount hands them back. */
+  /* A dish is had by the bowl, so its usual amounts are one tap each:
+     ½ · 1 · 1½ · 2 under the dial (redesign 1h, Blake 2026-11-20, asked
+     how he thinks about an amount: "depends on the food"). The dial itself
+     still goes a quarter at a time for anything between. Not for a single
+     food, which is dialled in grams, nor for an eaten plate, which is a
+     record until it is opened to be corrected. `name` is already escaped. */
+  function mServQuickHTML(r, it, tag, spent, name) {
+    if (!r || r.food || spent) return '';
+    return '<span class="mfl-qs no-print" role="group" aria-label="Servings of ' + name + '">' +
+      [[0.5, '\u00bd'], [1, '1'], [1.5, '1\u00bd'], [2, '2']].map(function (q) {
+        var on = Math.abs((Number(it.x) || 0) - q[0]) < 0.001;
+        return '<button type="button" class="mfl-q' + (on ? ' on' : '') + '" data-mset="' + tag + ':' + q[0] + '" aria-pressed="' + on + '" aria-label="' +
+          q[1] + ' ' + (q[0] === 1 ? 'serving' : 'servings') + ' of ' + name + '">' + q[1] + '</button>';
+      }).join('') + '</span>';
+  }
+
   function mLineOpenHTML(M, r, it, i) {
     var sk = M.sk, tag = sk + ':' + i, name = esc(r.name);
     var pinned = M.pins.some(function (p) { return String(p.id) === String(it.id); });
     var spent = it.eaten && S.mEdit !== tag;
-    var dialU = mDialG(r) ? 'g' : mDialUnit(r);
+    var dialU = r.food && mDialG(r) ? 'g' : mDialUnit(r);
     /* The droplet in the shut line's pill sits inside the pill's button, so
        it cannot take focus of its own; a keyboard or a screen reader had no
        way to mute a drink's water. The open line carries the same switch as
@@ -403,6 +419,7 @@
             '<button class="mfl-k" data-mstep="' + tag + ':up"' + (spent ? ' disabled' : '') + ' aria-label="More ' + name + '">' + I_PLUS + '</button>' +
           '</span>' +
         '</div>' +
+        mServQuickHTML(r, it, tag, spent, name) +
       '</div>';
   }
 
@@ -439,7 +456,7 @@
     var isSavedMeal = !!(r.parts && (r.parts.length > 1 || (r.parts.length === 1 && r.parts[0].x !== 1)) && r.parts.some(function (pt) { return LIVE.BY_ID[pt.id]; }));
     var sg = !r.food && mServeG(r);
     var measure = mDialMeasure(r, it.x);
-    var dialU = mDialG(r) ? 'g' : mDialUnit(r);
+    var dialU = r.food && mDialG(r) ? 'g' : mDialUnit(r);
     var destSlots = mReadSlots().list.filter(function (sl) {
       return sl.k !== sk && !mSkipped(M.k, sl.k);
     });
@@ -503,6 +520,7 @@
       (M.onPlan ? '<button class="mrow-more mfood-more no-print" data-mfmenu="' + tag + '" aria-haspopup="true" aria-expanded="' + menuOpen + '" aria-label="More for ' + esc(r.name) + '">' + I_DOTS + '</button>' : '<span></span>') +
       (isSavedMeal && partCount > 0 ? '<button type="button" class="mrow-split no-print" data-mexplode="' + tag + '" aria-label="Split ' + esc(r.name) + ' into ' + esc(partsLabel) + '">' +
         I_EXPLODE + '<span>Recipe with ' + esc(partsLabel) + ' &middot; Split into foods</span></button>' : '') +
+      mServQuickHTML(r, it, tag, spent, esc(r.name)) +
       // the why and Weigh the batch open the row's full width, under it
       mWhyStrip(it, tag) + mBatchStrip(r, it, tag) +
       (menuOpen ? '<div class="mfood-menu mrow-menu no-print" role="menu">' +
@@ -1063,7 +1081,7 @@
           var r = LIVE.BY_ID[it.id];
           if (!r) return '';
           var tag = sk + ':' + i, open = S.mAmt === k + '|' + tag;
-          var byG = mDialG(r);
+          var byG = r.food && mDialG(r);   // a dish is dialled in servings (portion.js mDialBase)
           var kitchen = byG ? mDialMeasure(r, it.x) : mDialText(r, it.x);
           var weight = byG ? mDialText(r, it.x) : mDialMeasure(r, it.x);
           if (kitchen === weight) kitchen = '';

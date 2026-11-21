@@ -1103,45 +1103,53 @@ module.exports = nourish({
     t.ok('added to breakfast, the plate arrives planned, not eaten',
       await p.evaluate(() => !!document.querySelector('.mitem') && !document.querySelector('.mitem.eaten')));
 
-    /* ---- the dial moves in grams and the totals follow. A recipe is dialled
-       by the gram from its serving weight since 2026-10-04 (Blake: "I dial in
-       grams of food not kitchen measurements"), five at a time. */
+    /* ---- the dial moves in servings and the totals follow. A recipe was
+       dialled by the gram from 2026-10-04 to 2026-11-20; since 1h (Blake:
+       "depends on the food") a dish is dialled in servings, a quarter at a
+       time, and its weight is the small print. */
     const xb = () => p.evaluate(() => {
       const days = JSON.parse(localStorage.getItem('bsc.macroDays'));
       return days[Object.keys(days)[0]].b[0].x;
     });
-    const gramsOn = async () => parseInt((await p.textContent('#modalRoot [data-mtype="b:0"]')).replace(/[^\d]/g, ''), 10);
-    const g0 = await gramsOn();
+    const dialOn = () => p.textContent('#modalRoot [data-mtype="b:0"]');
+    const x0 = await xb();
     await openRow(p, 'b:0');
     await p.click('#modalRoot [data-mstep="b:0:up"]');
     await p.waitForTimeout(150);
-    const g1 = await gramsOn(), x1 = await xb();
-    t.ok('a step up moves the portion five grams, onto the five-gram grid',
-      g1 > g0 && g1 - g0 <= 5 && g1 % 5 === 0, g0 + ' → ' + g1);
+    const x1 = await xb();
+    t.ok('a step up moves the portion a quarter of a serving, said in servings',
+      Math.abs(x1 - x0 - 0.25) < 0.01 && /serving/.test(await dialOn()), x0 + ' → ' + x1 + ', ' + (await dialOn()));
     t.ok('and the planned protein follows the portion',
       (await shown()) === (await expectP(x1)),
       (await shown()) + ' vs ' + (await expectP(x1)));
-    await openRow(p, 'b:0');
-    await p.click('#modalRoot [data-mstep="b:0:down"]');
-    await p.waitForTimeout(150);
-    for (let i = 0; i < 400 && (await gramsOn()) > 5; i++) await p.click('#modalRoot [data-mstep="b:0:down"]');
-    await openRow(p, 'b:0');
-    await p.click('#modalRoot [data-mstep="b:0:down"]');
-    await p.waitForTimeout(150);
-    t.ok('the portion clamps at five grams, not zero',
-      /^~?5 g$/.test(await p.textContent('#modalRoot [data-mtype="b:0"]')), await p.textContent('#modalRoot [data-mtype="b:0"]'));
+    let prevX = -1;
+    for (let i = 0; i < 60 && (await xb()) !== prevX; i++) {
+      prevX = await xb();
+      await openRow(p, 'b:0');
+      await p.click('#modalRoot [data-mstep="b:0:down"]');
+      await p.waitForTimeout(60);
+    }
     const xMin = await xb();
+    t.ok('the portion clamps at a quarter of a serving, not zero',
+      xMin > 0 && xMin <= 0.25 && /\u00bc/.test(await dialOn()), xMin + ', ' + (await dialOn()));
     t.ok('and the totals clamp with it',
       xMin > 0 && (await shown()) === (await expectP(xMin)),
       (await shown()) + ' vs ' + (await expectP(xMin)));
-    /* Typed back, the way a weigher does it: tap the grams, type, Enter. */
+    /* Typed back: tap the amount, type servings, Enter. */
     await openRow(p, 'b:0');
     await p.click('#modalRoot [data-mtype="b:0"]');
     await p.waitForTimeout(150);
-    await p.fill('#modalRoot .mstep-in', String(g0));
+    await p.fill('#modalRoot .mstep-in', '1.5');
     await p.press('#modalRoot .mstep-in', 'Enter');
     await p.waitForTimeout(250);
-    t.ok('and a typed weight sets it in grams', (await gramsOn()) === g0, (await gramsOn()) + ' vs ' + g0);
+    t.ok('and a typed amount sets it in servings', Math.abs((await xb()) - 1.5) < 0.01, String(await xb()));
+    /* ½ · 1 · 1½ · 2 under a dish's dial set it outright (1h). */
+    await openRow(p, 'b:0');
+    await p.click('#modalRoot [data-mset="b:0:2"]');
+    await p.waitForTimeout(200);
+    t.ok('and 2 under the dial makes it two servings, pressed', (await xb()) === 2 &&
+      await p.evaluate(() => (document.querySelector('#modalRoot [data-mset="b:0:2"]') || {}).getAttribute && document.querySelector('#modalRoot [data-mset="b:0:2"]').getAttribute('aria-pressed') === 'true'),
+      String(await xb()));
 
     // ---- eaten: the tick fills the bar and the line-through arrives
     t.ok('nothing is eaten yet, so the eaten sweep is empty',
@@ -1473,7 +1481,8 @@ module.exports = nourish({
           if (!it) return;
           const r = window.RECIPES.find((q) => String(q.id) === String(it.id));
           if (!r || !r.macro) return;                       // a food, priced elsewhere
-          const words = (row.querySelector('.mitem-uom') || {}).textContent || '';
+          // a dish's portion is on its dial since 1h (2026-11-20); its weight is the small print
+          const words = (row.querySelector('.mstep-x') || {}).textContent || '';
           out.push({
             name: r.name, x: it.x, servN: r.servN || 1,
             shown: count(words), words: words.trim(),

@@ -157,8 +157,8 @@ module.exports = nourish({
           listTxt: listBtn ? listBtn.textContent.trim() : '',
         };
       });
-      t.ok('Tonight (Plan >) and Shopping (List > + Walmart cart + Open the list) expose expected doors',
-        /^Plan/.test(doors.tonDoor) && /^List/.test(doors.shpDoor) &&
+      t.ok('Tonight (Cook >) and Shopping (List > + Walmart cart + Open the list) expose expected doors',
+        /^Cook/.test(doors.tonDoor) && /^List/.test(doors.shpDoor) &&
         /^https:\/\/www\.walmart\.com\/sc\/cart\/addToCart\?items=\d+_\d+/.test(doors.wmHref) &&
         doors.listTxt === 'Open the list', JSON.stringify(doors));
 

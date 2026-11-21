@@ -180,7 +180,7 @@ module.exports = {
       tab: (document.querySelector('[data-card="workout"] .td-tab') || {}).textContent || '',
     }));
     t.ok('the workout is the block’s next session, by name, with its lifts and its week', wk.title === E.w.name && wk.lifts === Math.min(5, E.w.lifts.length) &&
-      wk.facts.indexOf(E.w.week) === 0 && /^Strengthen/.test(wk.tab), JSON.stringify(wk));
+      wk.facts.indexOf(E.w.week) === 0 && /^Train/.test(wk.tab), JSON.stringify(wk));
     await p.click('[data-card="workout"] [data-td="start"]');
     await p.waitForTimeout(400);
     const st = await p.evaluate(() => ({ view: document.querySelector('.tab[aria-selected="true"]').dataset.view, live: !!window.Train._.state().LIVE }));

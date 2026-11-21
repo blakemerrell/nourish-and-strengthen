@@ -125,8 +125,8 @@ module.exports = {
       let eaten = false; Object.keys(d).forEach((sk) => (d[sk] || []).forEach((x) => { if (String(x.id) === id && x.eaten) eaten = true; }));
       return { cooked: window.Store.cooked('tue'), eaten, sheet: (document.querySelector('.td-sheet .sheet-eyebrow') || {}).textContent, says: (document.querySelector('.td-sheet .dsh-m') || {}).textContent };
     }, dinner.id);
-    t.ok('Cooked it: the household’s word, your dinner ticked eaten in Nourish, and how was it?',
-      ck.cooked && ck.eaten && ck.sheet === 'Dinner cooked' && /ticked eaten in Nourish/.test(ck.says), JSON.stringify(ck));
+    t.ok('Cooked it: the household’s word, your dinner ticked eaten in Eat, and how was it?',
+      ck.cooked && ck.eaten && ck.sheet === 'Dinner cooked' && /ticked eaten in Eat/.test(ck.says), JSON.stringify(ck));
     await p.click('[data-tdrate="-1"]');
     const not = await p.evaluate((id) => window.Store.rating(Number(id) || id), dinner.id);
     t.ok('Not again is the rating Plan my week reads', not === -1, String(not));

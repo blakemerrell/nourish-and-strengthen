@@ -69,8 +69,8 @@ module.exports = {
       s.fold === 'Breakfast eaten' && new RegExp('^' + want[0].kcal + ' cal · \\d+ g protein$').test(s.foldSub), JSON.stringify(s));
     t.ok('the rest stay open, each with its calories, the first one next',
       s.open.join() === ['Lunch:' + want[1].kcal + ' cal:next', 'Dinner:' + want[2].kcal + ' cal', 'Snacks:' + want[3].kcal + ' cal'].join(), JSON.stringify(s.open));
-    t.ok('the macros stay on the card as meters, and its corner says Nourish',
-      s.bars.join() === 'Protein,Carbs,Fat' && /^Nourish/.test(s.tab), JSON.stringify(s));
+    t.ok('the macros stay on the card as meters, and its corner says Eat',
+      s.bars.join() === 'Protein,Carbs,Fat' && /^Eat/.test(s.tab), JSON.stringify(s));
 
     /* Ticked from Today: eaten in Nourish too, and folded in with breakfast. */
     await p.click('[data-td="eat"][data-k="l"]');

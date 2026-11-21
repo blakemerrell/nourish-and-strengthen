@@ -5457,6 +5457,11 @@
        and the personal one first, because it is the one with a name on it.
        The pantry card (shared setup) is moved to Card 4 near the bottom,
        as requested by Blake: day telemetry and active help sit front and center. */
+    var bmOn = false;
+    try {
+      var bmPref = localStorage.getItem('sh.tdBm');
+      bmOn = bmPref === '1' ? true : bmPref === '0' ? false : mBodyDays().length > 0;
+    } catch (e) { bmOn = mBodyDays().length > 0; }
     return '<div class="scrim no-print" data-close="1">' +
       '<div class="sheet sync-sheet" role="dialog" aria-modal="true" aria-label="Sync and sharing">' +
         '<div class="sheet-top">' +
@@ -5484,7 +5489,11 @@
             var on = window.Door.help()[o[0]];
             return '<div class="kit-row"><span><b>' + o[1] + '</b><small>' + (on ? 'Today shows ' + o[2].charAt(0).toLowerCase() + o[2].slice(1) : 'Off: not on Today') + '</small></span>' +
               '<button class="kit-tog" role="switch" data-sync="help" data-v="' + o[0] + '" aria-checked="' + on + '" aria-label="' + o[1] + ' on Today"></button></div>';
-          }).join('') + '</div>' +
+          }).join('') +
+          '<div class="kit-row"><span><b>Weekly body measurements</b><small>' +
+            (bmOn ? 'Today shows weekly body measurements' : 'Off: not on Today') +
+          '</small></span><button class="kit-tog" role="switch" data-sync="bm" aria-checked="' + bmOn + '" aria-label="Weekly body measurements on Today"></button></div>' +
+          '</div>' +
           '<p class="kit-say">Only what Today shows. Every tab stays where it is.</p></div>' : '') +
 
         /* Card 3: Your kitchen */
@@ -8085,7 +8094,7 @@
     });
     $('shareHintX').addEventListener('click', dismissHint);
 
-    $('syncBtn').addEventListener('click', function () {
+    function openSyncSheet() {
       rememberOpener();
       S.syncOpen = true;
       S.myErr = '';
@@ -8095,7 +8104,9 @@
       renderModal();
       var x = document.querySelector('.sheet-x');
       if (x) x.focus();
-    });
+    }
+    $('syncBtn').addEventListener('click', openSyncSheet);
+    if ($('settingsBtn')) $('settingsBtn').addEventListener('click', openSyncSheet);
 
     document.addEventListener('click', function (e) {
       var root = $('modalRoot');
@@ -9521,6 +9532,13 @@
           if (S.view === 'today' && window.Today) window.Today.render();
           return;
         }
+        if (act === 'bm') {
+          var curBm = sy.getAttribute('aria-checked') === 'true';
+          try { localStorage.setItem('sh.tdBm', curBm ? '0' : '1'); } catch (e) { /* private */ }
+          renderModal();
+          if (S.view === 'today' && window.Today) window.Today.render();
+          return;
+        }
         if (act === 'copycode') {
           var codeToCopy = window.Store.house || S.pendingCode || '';
           if (codeToCopy) {
@@ -10314,7 +10332,7 @@
       Object.keys(dd).forEach(function (sk) { (dd[sk] || []).forEach(function (it) { if (String(it.id) === String(T.id) && it.eaten) ate = true; }); });
       kick = 'Dinner cooked';
       body = '<h2 class="dsh-h">' + esc(r.name) + '</h2>' +
-        (ate ? '<p class="dsh-m">Your dinner is ticked eaten in Nourish.</p>' : '') +
+        (ate ? '<p class="dsh-m">Your dinner is ticked eaten in Eat.</p>' : '') +
         '<div class="dsh-rl">How was it?</div><div class="td-rates" role="group" aria-label="How was it?">' +
         [[2, '\u2605', 'Favourite'], [1, '\ud83d\udc4d', 'Good'], [-1, '\ud83d\udc4e', 'Not again']].map(function (o) {
           return '<button class="td-rate" data-tdrate="' + o[0] + '" aria-pressed="' + (rt === o[0]) + '"><span aria-hidden="true">' + o[1] + '</span>' + o[2] + '</button>';
@@ -10333,19 +10351,19 @@
         '<p class="dsh-m">' + Math.round(tot.kcal).toLocaleString('en-US') + ' cal \u00b7 ' + Math.round(tot.p) + ' g protein' +
           (single ? ' \u00b7 ' + fmtNum(single.x) + (single.x === 1 ? ' serving' : ' servings') : '') + '</p>' +
         '<div class="dsh-rows">' +
-          (allEaten ? tdRow('uneat', 'Not eaten after all', 'Unticks it in Nourish too') : tdRow('eat', 'I ate it', 'Ticks it in Nourish too', 'dsh-main')) +
+          (allEaten ? tdRow('uneat', 'Not eaten after all', 'Unticks it in Eat too') : tdRow('eat', 'I ate it', 'Ticks it in Eat too', 'dsh-main')) +
           (single && !single.eaten ? '<div class="dsh-row td-steprow"><span><b>A bit more or less</b><small>Your numbers follow</small></span>' +
             '<span class="td-step"><button data-tdstep="-1" aria-label="Less">\u2212</button><b>' + fmtNum(single.x) + '</b><button data-tdstep="1" aria-label="More">+</button></span></div>' : '') +
           (allEaten ? '' : tdRow('swap', 'Swap for another that fits', 'Near the same calories and protein')) +
           tdRow('else', 'I ate something else', 'Search the food list, or build it') +
           tdRow('eatout', 'Eating out', 'Fast food, sit-down & grab-and-go spots') +
           (single ? tdRow('recipe', 'Open the recipe', '') : '') +
-          tdRow('nourish', 'Open the day in Nourish', 'Portions, shares, Fill, your plan') +
+          tdRow('nourish', 'Open the day in Eat', 'Portions, shares, Fill, your plan') +
         '</div>'
         : '<h2 class="dsh-h">Nothing planned for ' + esc(slot.n.toLowerCase()) + '</h2><div class="dsh-rows">' +
           tdRow('else', 'Add food', 'Search the food list, or build it', 'dsh-main') +
           tdRow('eatout', 'Eating out', 'Fast food, sit-down & grab-and-go spots') +
-          tdRow('nourish', 'Open the day in Nourish', 'Fill it there, to your numbers') + '</div>';
+          tdRow('nourish', 'Open the day in Eat', 'Fill it there, to your numbers') + '</div>';
     }
     return '<div class="scrim no-print" data-close="1">' +
       '<div class="sheet ds-sheet dsh-sheet td-sheet" role="dialog" aria-modal="true" aria-label="' + esc(kick) + '">' +

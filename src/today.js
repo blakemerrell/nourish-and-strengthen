@@ -41,7 +41,7 @@
      the list of cards), a line of its own on the right, then the body. */
   /* `go` makes the whole card a door to its tab: a tap anywhere on it that
      is not one of its own buttons goes there, and the corner says where. */
-  var TAB = { macros: 'Nourish', train: 'Strengthen', plan: 'Plan', list: 'List' };
+  var TAB = { macros: 'Eat', train: 'Train', plan: 'Cook', list: 'List' };
   var weighOdd = null, weighErr = '';
   function card(key, label, body, meta, go, done) {
     return '<section class="td-card' + (go ? ' td-go' : '') + (done ? ' td-fin' : '') + '" data-card="' + key + '"' +
@@ -299,7 +299,7 @@
         stBar +
         (cells.length ? '<div class="td-vt-grid">' + cells.join('') + '</div>' : '') +
         exHtml +
-        '<div class="td-vt-foot"><button type="button" class="nut-ask td-vt-hublink" data-td="hub">Explore 120-day Biometrics &amp; Trends in Strengthen \u203a</button></div>' +
+        '<div class="td-vt-foot"><button type="button" class="nut-ask td-vt-hublink" data-td="hub">Explore 120-day Biometrics &amp; Trends in Train \u203a</button></div>' +
       '</div>';
     }
 
@@ -396,7 +396,7 @@
   function eatingCard(e, main, hasStart) {
     if (!e.set) {
       return card('eating', 'Eating', title('Set your numbers') +
-        note('Your height and weight, and Nourish works out a calorie and protein target for you.') +
+        note('Your height and weight, and Eat works out a calorie and protein target for you.') +
         acts(btn(main, 'numbers', 'Set my numbers') + quiet('addfood', 'Just log food for now')), '', 'macros');
     }
     var left = e.kcal.want - e.kcal.have, meals = e.meals || [];
@@ -508,7 +508,7 @@
   function restDoneCard(r) {
     var said = r.did.map(function (a) { return a.n + ' ' + a.min + ' min'; }).join(' \u00b7 ');
     return card('workout', 'Rest day', '<p class="td-doneline">' + esc(said) + '</p>' +
-      '<p class="td-small">Logged in Strengthen \u00b7 ' + fmt(r.mins) + ' of ' + r.goal + ' active minutes this week</p>' +
+      '<p class="td-small">Logged in Train \u00b7 ' + fmt(r.mins) + ' of ' + r.goal + ' active minutes this week</p>' +
       '<button class="nut-ask" data-td="actedit" data-id="' + esc(r.did[r.did.length - 1].id) + '">Change it</button>', '', 'train', true);
   }
 
@@ -558,10 +558,20 @@
   var DAYNAME = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   var MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+  function showBmCard(bDays) {
+    try {
+      var pref = localStorage.getItem('sh.tdBm');
+      if (pref === '1') return true;
+      if (pref === '0') return false;
+    } catch (e) { /* private */ }
+    return !!(bDays && bDays.length);
+  }
+
   function measurementsCard(d) {
     if (!window.Hive || !window.Hive.mBodyDays) return '';
     var tk = dayKey(d.date);
     var bDays = window.Hive.mBodyDays();
+    if (!showBmCard(bDays)) return '';
     var last = bDays.length ? bDays[bDays.length - 1] : null;
     var lastKey = last ? last.k : null;
     var age = lastKey ? Math.round((new Date(tk + 'T12:00:00') - new Date(lastKey + 'T12:00:00')) / 864e5) : -1;

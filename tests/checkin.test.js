@@ -354,14 +354,21 @@ module.exports = {
     t.ok('and caffeine is omitted from morning check-in', noCaf);
     await hc.context().close();
 
-    /* ---- Weekly body measurements on Today screen ---- */
+    /* ---- Weekly body measurements on Today screen (opt-in or auto when data exists) ---- */
     const td = await t.fresh({ viewport: { width: 390, height: 844 } });
     await td.clock.setFixedTime(new Date(2026, 9, 26, 7, 30, 0));
     await td.evaluate(SETUP);
     await td.reload();
     await td.waitForTimeout(700);
+    const hiddenByDefault = await td.evaluate(() => !document.querySelector('#todayRoot .td-bm-bar'));
+    t.ok('Today screen hides weekly body measurements by default when no measurements exist', hiddenByDefault);
+    await td.click('#settingsBtn');
+    await td.waitForSelector('.sync-sheet [data-sync="bm"]');
+    await td.click('.sync-sheet [data-sync="bm"]');
+    await td.click('.sync-sheet .sheet-x');
+    await td.waitForTimeout(200);
     const hasBmBar = await td.evaluate(() => !!document.querySelector('#todayRoot .td-bm-bar'));
-    t.ok('Today screen displays weekly body measurements bar', hasBmBar);
+    t.ok('opting into Weekly body measurements in Share & Settings shows it on Today', hasBmBar);
     await td.click('#todayRoot [data-td="bmopen"]');
     await td.waitForTimeout(200);
     const isOpen = await td.evaluate(() => !!document.querySelector('#todayRoot .td-bm-open #tdBm_wa'));
@@ -372,6 +379,11 @@ module.exports = {
     await td.waitForTimeout(200);
     const savedBm = await td.evaluate(() => (JSON.parse(localStorage.getItem('bsc.macroAm') || '{}')['2026-10-26'] || {}).bm);
     t.ok('saving body measurements on Today writes to macroAm', savedBm && savedBm.wa === 34.5 && savedBm.ch === 41.5, JSON.stringify(savedBm));
+    await td.evaluate(() => localStorage.removeItem('sh.tdBm'));
+    await td.reload();
+    await td.waitForTimeout(700);
+    const autoShownWithData = await td.evaluate(() => !!document.querySelector('#todayRoot .td-bm-bar'));
+    t.ok('and once body measurements exist in macroAm, Today keeps showing them even without explicit opt-in', autoShownWithData);
     await td.context().close();
   }
 };

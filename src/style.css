@@ -605,6 +605,16 @@ main { padding-bottom: var(--bottom-nav-h, 64px); }
 .synbtn[data-tone="wait"] { color: var(--dot-wait); }
 .synbtn[data-tone="off"] { color: var(--dot-off); }
 .brand-skep { width: 26px; height: 20px; display: block; flex: none; }
+.top-set {
+  order: 3; flex: 0 0 auto; min-height: 36px; padding: 0 10px;
+  background: transparent; color: var(--on-chrome-2);
+  border: 1px solid rgba(255,255,255,0.16); border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  font-family: var(--sans); font-size: 0.8125rem; font-weight: 500; line-height: 1;
+  white-space: nowrap;
+}
+.top-set:hover { background: rgba(255,255,255,0.08); color: var(--on-chrome-hi); border-color: rgba(255,255,255,0.28); }
+.top-set-ic { width: 14px; height: 14px; flex: none; display: block; }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dot); flex: none; }
 .dot.on { background: var(--dot-on); }
 .dot.off { background: var(--dot-off); }
@@ -3998,6 +4008,7 @@ p.sync-diner { font-size: 0.8125rem; line-height: 1.6; color: var(--muted); }
   }
   .brand-name { font-size: 1.125rem; }
   .brand-sub { display: none; }
+  .top-set { padding: 0 8px; gap: 4px; }
   .filters-in { padding: 12px 16px; gap: 8px; }
   /* a select is as wide as its widest option unless min-width lets it shrink,
      and the section names are long enough to push the page sideways without it */
@@ -6582,8 +6593,8 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
    bottom tabs are already >=52px tall.) */
 @media (pointer: coarse) {
   /* Bands hung off small controls, which the finger cannot see. */
-  .synbtn, .m-toast button, .scaler-box button { position: relative; }
-  .synbtn::after, .m-toast button::after, .scaler-box button::after {
+  .synbtn, .top-set, .m-toast button, .scaler-box button { position: relative; }
+  .synbtn::after, .top-set::after, .m-toast button::after, .scaler-box button::after {
     content: ''; position: absolute; left: 50%; top: 50%;
     width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%);
   }

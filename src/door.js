@@ -157,11 +157,11 @@
         q('Days a week', chips('dpw', DPW, A.dpw, 'Days a week')) +
         q('Minutes a session', chips('min', MIN, A.min, 'Minutes a session'), 'Warm-up included.') +
         '<div class="dr-foot">' + next(last ? 'Show me today' : 'Next') + back +
-          '<p class="dr-note">Strengthen starts its setup with these filled in, and asks the rest: your goal, how long you have lifted, your back and joints.</p></div>';
+          '<p class="dr-note">Train starts its setup with these filled in, and asks the rest: your goal, how long you have lifted, your back and joints.</p></div>';
     }
     return head('Eating', 'What’s your goal?') +
       radios('goal', GOAL, A.goal, 'Your goal') +
-      '<p class="dr-note">Next, Nourish asks your height, weight and how active you are, so the numbers fit you.</p>' +
+      '<p class="dr-note">Next, Eat asks your height, weight and how active you are, so the numbers fit you.</p>' +
       '<div class="dr-foot">' + next('Set my numbers') +
         '<button type="button" class="nut-ask" data-dr="later">Later. Show me today</button>' + back + '</div>';
   }

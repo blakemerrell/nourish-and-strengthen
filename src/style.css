@@ -10553,3 +10553,11 @@ button.mf-name:hover { background: var(--card); }
 }
 .mfl-q.on { background: var(--ink); border-color: var(--ink); color: var(--card); }
 .mfl-q:hover, .mfl-q:focus-visible { border-color: var(--line-firm); }
+/* The aim at the top of a lift (redesign 2a, src/train.js aimHTML). */
+.tr-aim {
+  margin: 6px 0 4px; padding: 8px 12px; border-radius: 10px;
+  background: color-mix(in oklab, var(--ochre) 12%, var(--card)); color: var(--ink);
+  font: 500 0.9375rem/1.3 var(--sans);
+}
+.tr-aim b { font-weight: 700; }
+.tr-aim span { color: var(--note); }

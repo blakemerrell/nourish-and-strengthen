@@ -124,11 +124,11 @@ Split ownership by file so agents work in parallel without merge collisions:
 | 1e Eat header (`current/goal` + `left`) | Done | Antigravity | #209 |
 | 1f My Foods & Routines manager | Done | Antigravity | #210 |
 | 1g "What's left" big at the top; week strip folds | Done | Claude | #219 |
-| 1h Amount sheet: servings for recipes, grams for single foods | Done | Claude | `claude/gallant-rubin-mbsbh7` |
+| 1h Amount sheet: servings for recipes, grams for single foods | Done | Claude | #220 |
 | 1i Remove the rebalance banner | Done | Claude | #214 |
 | 1j Meal card header: ↻ moves under ⋯ (keep pills, ⚖, ⊘) | Done | Claude | #218 |
 | 1k Chips count logged food, ticked or not (still add unticked) | Done | Claude | #216 |
-| 2a Aim line (keep plates & RIR) | Not started | | |
+| 2a Aim line (keep plates & RIR) | Done | Claude | `claude/gallant-rubin-mbsbh7` |
 | 2b Prune duplicate `.tr-ex-a` buttons | Not started | | |
 | 2c Weigh-in to Today (with Step 5) | Bundled into 5 | | |
 | 2d Bottom rest bar | Dropped | | Keep `.tr-rdiv` pill |

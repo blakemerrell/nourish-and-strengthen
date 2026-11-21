@@ -6686,6 +6686,7 @@
       if (htg) {
         // data-mhyd is the same switch as a key on the open line, named apart
         // so keepingFocus finds that key again and not the pill's droplet
+        if (htg.closest('.mfood-menu')) S.mMenu = '';
         var hp = (htg.dataset.mhydtoggle || htg.dataset.mhyd).split(':');
         var hvk = mViewKey(), hsk = hp[0], hidx = Number(hp[1]);
         var hnh = 0, hid = null;
@@ -6709,7 +6710,8 @@
           });
           if (hsChanged) mWriteSlots(hslots);
         }
-        keepingFocus(renderMacros);
+        if (S.macroPick) mRedraw();
+        else keepingFocus(renderMacros);
         return;
       }
       /* A food's line on the day opens under itself; one at a time. */

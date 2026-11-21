@@ -443,6 +443,7 @@
     var menuOpen = S.mMenu === tag || moveOpen;
     var isSavedMeal = !!(r.parts && (r.parts.length > 1 || (r.parts.length === 1 && r.parts[0].x !== 1)) && r.parts.some(function (pt) { return LIVE.BY_ID[pt.id]; }));
     var sg = !r.food && mServeG(r);
+    var fOz = mItemFluidOz(r, it.x);
     var measure = mDialMeasure(r, it.x);
     var dialU = r.food && mDialG(r) ? 'g' : mDialUnit(r);
     var destSlots = mReadSlots().list.filter(function (sl) {
@@ -478,8 +479,6 @@
       ? 'class="mfood-mi mitem-name mitem-food mrow-door" data-mfood="' + esc(String(r.id)) + '" data-mx="' + it.x + '" data-mfslot="' + esc(sk) + '"'
       : 'class="mfood-mi mitem-name mrow-door" data-open="' + esc(String(r.id)) + '" data-mx="' + it.x + '"') +
       ' role="menuitem" aria-label="' + esc(r.name) + ', ' + (r.food ? 'the food' : 'the recipe') + '"';
-    var partCount = isSavedMeal ? (r.parts || []).filter(function (pt) { return LIVE.BY_ID[pt.id]; }).length : 0;
-    var partsLabel = partCount + (partCount === 1 ? ' food' : ' foods');
     return '<div class="' + cls + '">' +
       (swapping ? '<div class="mrow-swap">Tap its replacement below<button class="ghost" data-mswapx="1">Cancel</button></div>' : '') +
       sum +
@@ -487,8 +486,6 @@
       '<span class="mrow-m mitem-r2">' + (measure ? '<span class="mitem-uom">' + esc(measure) + '</span> &middot; ' : '') +
         '<span class="mitem-mac">' + mMacLine(r, it.x) + '</span>' + mHydChip(r, it.x, it.nh) + mSaltChip(r, it.x) + mWhyChip(it, tag) + '</span>' +
       (menuOpen ? '' : '<button ' + doorAttr + ' hidden>' + I_INFO + 'Details</button>') +
-      (M.onPlan ? '<button type="button" class="mrow-lock no-print' + (it.l ? ' on' : '') + '" data-mlock="' + tag + '" aria-pressed="' + (it.l ? 'true' : 'false') + '" aria-label="' +
-        (it.l ? 'Let ' + esc(r.name) + ' move' : 'Lock the amount of ' + esc(r.name)) + '">' + (it.l ? I_LOCK : I_OPEN) + '</button>' : '') +
       /* Typing opens an EMPTY box with the amount shown faint behind it, so
          what you type is the amount. Opened holding the number, it relied on
          the phone selecting it, and an iPhone often does not: Blake had to
@@ -506,8 +503,6 @@
         '<button class="mrow-k" data-mstep="' + tag + ':up"' + (spent ? ' disabled' : '') + ' aria-label="More ' + esc(r.name) + '">' + I_PLUS + '</button>' +
       '</span>' +
       (M.onPlan ? '<button class="mrow-more mfood-more no-print" data-mfmenu="' + tag + '" aria-haspopup="true" aria-expanded="' + menuOpen + '" aria-label="More for ' + esc(r.name) + '">' + I_DOTS + '</button>' : '<span></span>') +
-      (isSavedMeal && partCount > 0 ? '<button type="button" class="mrow-split no-print" data-mexplode="' + tag + '" aria-label="Split ' + esc(r.name) + ' into ' + esc(partsLabel) + '">' +
-        I_EXPLODE + '<span>Recipe with ' + esc(partsLabel) + ' &middot; Split into foods</span></button>' : '') +
       mServQuickHTML(r, it, tag, spent, esc(r.name)) +
       // the why and Weigh the batch open the row's full width, under it
       mWhyStrip(it, tag) + mBatchStrip(r, it, tag) +
@@ -524,6 +519,8 @@
           (mCanFav(r) ? '<button class="mfood-mi mfav" role="menuitem" data-mfav="' + esc(String(r.id)) + '" aria-pressed="' + (mIsFav(r) ? 'true' : 'false') + '">' +
             I_STAR + (mIsFav(r) ? 'Remove from favourites' : 'Favourite') + '</button>' : '') +
           (sg ? '<button class="mfood-mi" role="menuitem" data-mbatch="' + tag + '">' + I_WEIGH + 'Weigh the batch</button>' : '') +
+          (fOz > 0 ? '<button class="mfood-mi mhyd" role="menuitem" data-mhyd="' + tag + '" aria-pressed="' + (it.nh ? 'false' : 'true') + '">' +
+            I_DROP + (it.nh ? 'Count ' + fOz + ' oz toward water' : 'Don\u2019t count ' + fOz + ' oz water') + '</button>' : '') +
           '<button class="mfood-mi mdel" role="menuitem" data-mdel="' + tag + '" aria-label="Remove ' + esc(r.name) + '">' + I_BIN + 'Remove</button>'
         ) +
       '</div>' : '') +
@@ -583,12 +580,7 @@
           '<button class="ghost mslot-unskip" data-mskip="' + esc(sk) + '">Put ' + esc(name) + ' back</button></div>' };
     }
     var isMealView = S.mpMode === 'meal';
-    var remK = M.aim && M.aim.kcal > 0 ? Math.round(M.aim.kcal) - Math.round(M.sub.kcal) : 0;
-    var deltaHTML = isMealView && M.aim && M.aim.kcal > 0
-      ? '<div class="msh-delta"><span class="msh-dsub num"><b>' + fmtK(M.sub.kcal) + '</b> / ' + fmtK(M.aim.kcal) + ' kcal</span>' +
-        '<span class="msh-rem num' + (remK < 0 ? ' over' : '') + '">' + (remK >= 0 ? fmtK(remK) + ' kcal left' : fmtK(-remK) + ' kcal over') + '</span></div>'
-      : '';
-    var stick = deltaHTML + '<div class="mcaps">' + capsHTML(M.sub, M.aim, M.ask && M.ask.spent, !!(M.ask && M.ask.capped)) + '</div>';
+    var stick = '<div class="mcaps">' + capsHTML(M.sub, M.aim, M.ask && M.ask.spent, !!(M.ask && M.ask.capped)) + '</div>';
     var openIdx = isMealView ? -1 : mOpenRow(M);
     var rows = items.map(function (it, i) {
       var r = LIVE.BY_ID[it.id];
@@ -625,12 +617,6 @@
   function sheetOnHTML(M, rows) {
     var n = 0;
     M.items.forEach(function (it) { if (LIVE.BY_ID[it.id]) n++; });
-    var wChip = S.mpMode === 'meal'
-      ? '<span class="msh-wchips">' +
-          '<button type="button" class="ghost msh-wbtn" data-hyd="wt:8" aria-label="Add 8 oz water">+8 oz \ud83d\udca7</button>' +
-          '<button type="button" class="ghost msh-wbtn" data-hyd="wt:16" aria-label="Add 16 oz water">+16 oz \ud83d\udca7</button>' +
-        '</span>'
-      : '';
     if (!n) {
       /* One-tap repeat from yesterday when opening an empty meal sheet.
          Reuses mCopyItems and keyDate so its count and filter never diverge
@@ -645,46 +631,60 @@
           (S.mpMode === 'meal' ? '0 foods &middot; Tap Add foods below' : '0 foods &middot; Tap a food below to add it') + '</small></span>' +
         '<span class="msh-trh-r">' +
         (yestItems.length ? '<button class="ghost msh-yest" data-mcopy="' + esc(yestK) + '" aria-label="Same as yesterday, copy yesterday\u2019s ' + esc(M.name) + ' (' + yestItems.length + (yestItems.length === 1 ? ' food' : ' foods') + ')">' +
-          mIcon('fromday') + 'Same as yesterday</button>' : wChip) +
+          mIcon('fromday') + 'Same as yesterday</button>' : '') +
         '</span></div></section>';
+    }
+    if (S.mpMode === 'meal') {
+      return '<section class="msh-on no-print" aria-label="On ' + esc(M.name) + '">' + rows + '</section>';
     }
     return '<section class="msh-on no-print" aria-label="On ' + esc(M.name) + '">' +
       '<div class="msh-trh"><span class="msh-trt"><b>On ' + esc(M.name) + '</b><small class="num">' +
-        n + (n === 1 ? ' food' : ' foods') + ' &middot; ' + fmtK(M.sub.kcal) + ' kcal</small></span>' + wChip + '</div>' +
+        n + (n === 1 ? ' food' : ' foods') + ' &middot; ' + fmtK(M.sub.kcal) + ' kcal</small></span></div>' +
       rows + '</section>';
+  }
+
+  /* Show Balance when there is meaningful room to auto-balance (2+ scalable
+     unlocked items, or at least one planned item still open to sizing). */
+  function mShowBal(M) {
+    var n = 0, planned = 0;
+    M.items.forEach(function (it) {
+      var r = LIVE.BY_ID[it.id];
+      if (it.l !== 2 && r && !r.eatout && r.macro && r.macro.kcal > 0) {
+        n++;
+        if (!it.eaten) planned++;
+      }
+    });
+    return n >= 2 || planned >= 1;
   }
 
   /* The tray along the bottom: Balance and Done in find mode; Add foods,
      Balance and Done in separated meal view. */
   function sheetTrayHTML(M) {
-    var sk = M.sk, n = 0;
-    M.items.forEach(function (it) {
-      var r = LIVE.BY_ID[it.id];
-      if (it.l !== 2 && r && !r.eatout && r.macro && r.macro.kcal > 0) n++;
-    });
+    var sk = M.sk, showBal = mShowBal(M);
     var doneBtn = S.mpFromMeal
       ? '<button type="button" class="btn-primary msh-done" data-mpmode="meal">Done</button>'
-      : '<button class="btn-primary msh-done sheet-done">Done</button>';
+      : '<button type="button" class="btn-primary msh-done sheet-done">Done</button>';
     return '<div class="msh-tray open no-print">' +
-      '<div class="msh-acts">' +
-        '<button class="msh-bal" data-mbal="' + esc(sk) + '"' + (n ? '' : ' disabled') +
-          ' aria-label="Balance every food on ' + esc(M.name) + ', the amounts you set included">' + mIcon('scales') + 'Balance</button>' +
+      '<div class="msh-acts' + (showBal ? '' : ' single') + '">' +
+        (showBal
+          ? '<button class="msh-bal" data-mbal="' + esc(sk) + '"' +
+              ' aria-label="Balance every food on ' + esc(M.name) + ', the amounts you set included">' + mIcon('scales') + 'Balance</button>'
+          : '') +
         doneBtn +
       '</div></div>';
   }
 
   function sheetMealTrayHTML(M) {
-    var sk = M.sk, n = 0;
-    M.items.forEach(function (it) {
-      var r = LIVE.BY_ID[it.id];
-      if (it.l !== 2 && r && !r.eatout && r.macro && r.macro.kcal > 0) n++;
-    });
+    var sk = M.sk, showBal = mShowBal(M);
+    var cls = M.onPlan && showBal ? ' three' : !M.onPlan && !showBal ? ' single' : '';
     return '<div class="msh-tray open no-print">' +
-      '<div class="msh-acts' + (M.onPlan ? ' three' : '') + '">' +
+      '<div class="msh-acts' + cls + '">' +
         (M.onPlan ? '<button type="button" class="msh-addfoods" data-mpmode="home" aria-label="Add foods to ' + esc(M.name) + '">+ Add foods</button>' : '') +
-        '<button class="msh-bal" data-mbal="' + esc(sk) + '"' + (n ? '' : ' disabled') +
-          ' aria-label="Balance every food on ' + esc(M.name) + ', the amounts you set included">' + mIcon('scales') + 'Balance</button>' +
-        '<button class="btn-primary msh-done sheet-done">Done</button>' +
+        (showBal
+          ? '<button class="msh-bal" data-mbal="' + esc(sk) + '"' +
+              ' aria-label="Balance every food on ' + esc(M.name) + ', the amounts you set included">' + mIcon('scales') + 'Balance</button>'
+          : '') +
+        '<button type="button" class="btn-primary msh-done sheet-done">Done</button>' +
       '</div></div>';
   }
 

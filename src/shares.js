@@ -19,20 +19,11 @@
   var S = app.S;
   var kcalOf = app.kcalOf;
   var mDay = app.mDay;
-  var mInfoText = app.mInfoText;
-  var mSendOf = app.mSendOf;
   var mSkipped = app.mSkipped;
   var mSlotW = app.mSlotW;
   var mTotals = app.mTotals;
   var mViewKey = app.mViewKey;
-  var mWhyBtn = app.mWhyBtn;
   var LIVE = app.LIVE;
-
-  function esc(s) {
-    return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-  }
 
   /* The order a shrinking day gives way in, and what a gram of each costs.
      Protein last to go because a deficit is when muscle is easiest to lose;
@@ -198,7 +189,7 @@
   function mPlaceLeft(left, open, targets, slots) {
     var w = {}, capped = {}, lo = {}, hi = {}, plan = {};
     var vk = mViewKey();
-    var sent = mSendOf(vk) || { to: [], off: false };
+    var sent = { to: [], off: false };
     var K = left.kcal;
     if (!(K > 0)) {
       /* Nothing left to divide. Everyone asks for nothing rather than for a
@@ -316,178 +307,9 @@
     return out;
   }
 
-  /* One line, under the meal it is about, saying what already happened and
-     offering to do it differently. It reports rather than asks: the share has
-     landed by the time you read this, so ignoring the line entirely still
-     leaves the day right and nothing sits half-updated waiting on an answer. */
-  function mCascadeLineHTML(sk, targets, slots) {
-    var ev = mLastFinished(targets, slots);
-    if (!ev || ev.k !== sk) return '';
-    if (Math.abs(ev.miss) < MCASCADE_MIN) return '';
-    var vk = mViewKey(), day = mDay(vk);
-    var sent = mSendOf(vk);
-    if (sent && sent.f !== sk) sent = null;         // the question has moved on
-    var to = sent ? sent.to : [], off = !!(sent && sent.off);
-    var shut = !!(sent && sent.ack);
-    var over = ev.miss > 0;
-    var amt = Math.abs(Math.round(ev.miss));
-
-    var open = [];
-    slots.list.forEach(function (s2) {
-      if (mMealDone(s2.k)) return;
-      if (mSkipped(vk, s2.k) && !(day[s2.k] || []).length) return;
-      open.push(s2);
-    });
-    if (!open.length) return '';
-
-    /* Every open meal's own share and what it is being asked for now. The
-       difference is what this miss did to it, and it is read off mMealAsk
-       rather than worked out again here — the card and the meal's own pills
-       have to agree about the same meal, and the only way to guarantee that
-       is to read the same function. */
-    var rows = [], floored = [], un = 0;
-    /* `was` is each meal's ask had this meal landed on its share; `now` is
-       its ask as things stand. The difference is what THIS miss did to it.
-     *
-       It used to show the meal's plan share against its current ask, which
-       folds in every meal finished so far — so under a heading that said
-       "Lunch went 216 under", the rows summed to 850, and a wake-up and a
-       breakfast that had run over were doing most of the moving. Blake, with
-       the screenshots: "the macro is shifting after I click Complete". The
-       rows were true and the heading was about something else. The note on
-       `un` below records the same confusion caught once already, for the
-       landing line; this is the rows catching up. */
-    var undo = { kcal: ev.plan.kcal - ev.got.kcal, p: ev.plan.p - ev.got.p,
-      f: ev.plan.f - ev.got.f, c: ev.plan.c - ev.got.c };
-    open.forEach(function (s2) {
-      var a = mMealAsk(s2.k, targets, slots);
-      if (!a || !a.plan) return;
-      var before = mMealAsk(s2.k, targets, slots, undo);
-      var was = Math.round(((before && before.now) || a.plan).kcal);
-      var now = Math.round((a.now || a.plan).kcal);
-      var on = off ? false : (to.length ? to.indexOf(s2.k) >= 0 : true);
-      if (on && a.capped) floored.push(s2.n);
-      /* One number for the whole day's remainder, so every open meal's ask
-         carries the same copy of it. Read rather than reconstructed: the
-         first version of this line worked the landing out as "the miss minus
-         what the rows gave up", which are two different quantities — the
-         miss is measured against LUNCH'S share and the rows against their
-         own — and it confidently reported a day 463 over that was not. */
-      if (typeof a.unplaced === 'number') un = Math.round(a.unplaced);
-      rows.push({ k: s2.k, n: s2.n, was: was, now: now, d: was - now, on: on, cap: !!a.capped });
-    });
-    if (!rows.length) return '';
-
-    /* Where the day lands, in the same sentence in every state. Negative
-       means the meals left cannot give back enough and the day runs over;
-       positive means they cannot absorb it all and the day comes in short. */
-    var lands = un < -0.5 ? 'The day ends <b>' + Math.abs(un) + ' over</b>.'
-      : un > 0.5 ? 'The day ends <b>' + un + ' short</b>.'
-      : 'The day still <b>lands on plan</b>.';
-
-    /* Where the day LANDS. The old card ended on what it had done —
-       "Borrowed from Evening Snack and Dinner" — which is the app's own
-       bookkeeping, in the app's vocabulary, leaving the reader to work out
-       what it meant for them. Blake: "I kind of want something that will let
-       me know what's going to happen now that I've overeaten."
-     *
-       A meal never drops below a third of its share nor grows past twice it,
-       so a big miss frequently cannot be absorbed at all — and the line that
-       matters is the one saying so. Ending on "borrowed from" implied the
-       books were square when they were hundreds of calories from it. */
-    var said = off
-      ? (over ? '<b>No meal shrinks.</b> ' : '<b>No meal grows.</b> ') + lands
-      : lands + (floored.length
-        ? ' ' + floored.join(' and ') + (floored.length > 1 ? ' are' : ' is') +
-          ' at the ' + (over ? 'floor' : 'ceiling') + ' — ticking more places no more.'
-        : '');
-
-    var head = ev.skipped
-      ? 'Skipping ' + esc(ev.name) + ' frees ' + amt
-      : esc(ev.name) + ' went ' + amt + (over ? ' over its share' : ' under its share');
-
-    var shell = function (inner, ariaShut) {
-      return '<div class="mcasc' + (over ? ' over' : '') + (shut ? ' shut' : '') +
-        '" role="status">' +
-        '<span class="mcasc-i" aria-hidden="true">' + (over ? '&#8599;' : '&#8600;') + '</span>' +
-        '<span class="mcasc-b">' + inner + '</span></div>';
-    };
-
-    /* Answered, so it gets out of the way. The day was already right before
-       any of this was read — the share lands on render — so once you have
-       looked at it the card has no further business taking a third of the
-       screen. The line stays, because what happened to the day is worth
-       being able to see; the apparatus for changing it does not. */
-    if (shut) {
-      var pillLand = off
-        ? (over ? 'no meal shrinks' : 'no meal grows')
-        : (un < -0.5 ? Math.abs(un) + ' over' : un > 0.5 ? un + ' short' : 'lands on plan');
-      var pillSay = (ev.skipped
-        ? 'Skipped \u00b7 +' + amt + ' freed'
-        : (over ? '+' : '\u2212') + amt + (over ? ' over' : ' under') + ' share') +
-        ' \u00b7 ' + pillLand;
-      return shell(
-        '<button class="mcasc-fold" data-msend="open" aria-expanded="false">' +
-          '<span class="mcasc-pill-i" aria-hidden="true">i</span>' +
-          // the eye's short version; a reader hears the full one below, once
-          '<span class="mcasc-pill-tx" aria-hidden="true">' + pillSay + '</span>' +
-          '<span class="mcasc-foldt vis-hidden">' +
-            '<span class="mcasc-t">' + head + '</span> ' +
-            '<span class="mcasc-s">' + said + '</span>' +
-          '</span>' +
-          '<span class="mcasc-cue" aria-hidden="true">&#8964;</span>' +
-        '</button>');
-    }
-
-    /* A list you choose several from, drawn as one. Each was a ghost button
-       reading "Borrow from Dinner" that toggled when pressed a second time —
-       a control that toggles ought to look like it toggles — and "Don't
-       borrow" sat at the bottom in different words for what is plainly the
-       None of this list. */
-    var pick = rows.map(function (r) {
-      return '<button class="mcasc-row" role="checkbox" data-msend="' + esc(r.k) + '"' +
-        ' aria-checked="' + (r.on ? 'true' : 'false') + '">' +
-        '<span class="mcasc-box" aria-hidden="true">&#10003;</span>' +
-        '<span class="mcasc-nm">' + esc(r.n) +
-          (r.on && r.cap
-            ? '<span class="mcasc-cap">at its ' + (over ? 'floor' : 'ceiling') + '</span>'
-            : '') +
-        '</span>' +
-        /* The price of ticking this one, on the row that does it. Choosing
-           between consequences rather than between meal names. */
-        '<span class="mcasc-was">' + r.was + ' &rarr; <i>' + r.now + '</i></span>' +
-        /* The sign is the row's own. It was chosen by whether the finished
-           meal went over, so a row moving down read "+49" whenever lunch had
-           come in light. `d` is was - now: positive means this meal is being
-           asked for less than it would have been, and that is a minus. */
-        '<span class="mcasc-d">' + (r.on && r.d ? (r.d > 0 ? '&minus;' : '+') +
-          Math.abs(r.d) : '&mdash;') + '</span>' +
-      '</button>';
-    }).join('');
-
-    /* Why a big miss can outlast the other meals is the same sentence every
-       time, so it waits behind "why?" under the line it explains. */
-    var capWhy = 'A meal never ' +
-      (over ? 'drops below a third of its share' : 'grows past twice its share') +
-      ', so there is a limit to what ' + (over ? 'an overshoot' : 'a surplus') +
-      ' can be made to disappear into.';
-    return shell(
-      '<span class="mcasc-t">' + head + '</span>' +
-      '<span class="mcasc-s">' + said + ' ' + mWhyBtn('casc') + '</span>' +
-      mInfoText('casc', capWhy, 'mcasc-note') +
-      '<div class="mcasc-pick no-print">' +
-        '<div class="mcasc-ph">' +
-          '<span>' + (over ? 'Take it from' : 'Give it to') + '</span>' +
-          '<span class="mcasc-pa">' +
-            '<button data-msend="all">All</button>' +
-            '<button data-msend="none" aria-pressed="' + (off ? 'true' : 'false') + '">None</button>' +
-          '</span>' +
-        '</div>' + pick +
-        '<div class="mcasc-done">' +
-          '<button class="btn-primary" data-msend="ack">Done</button>' +
-        '</div>' +
-      '</div>');
-  }
+  /* Silent auto-coach (2026-11-22): share redistributions apply automatically
+     via mPlaceLeft / mMealAsk without popping a per-meal chooser between cards. */
+  function mCascadeLineHTML() { return ''; }
 
   /* `past` asks for the share a meal BEHIND you had, which is its plain
      share of the day and nothing else.

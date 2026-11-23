@@ -49,7 +49,7 @@ const read = (p) => p.evaluate(() => {
     fold: (c.querySelector('.td-fold b') || {}).textContent || '',
     foldSub: (c.querySelector('.td-fold small') || {}).textContent || '',
     open: [...c.querySelectorAll('.td-meal')].map((m) => m.querySelector('.td-ms').textContent + ':' + m.querySelector('.td-kc').textContent + (m.querySelector('.td-tag') ? ':next' : '')),
-    bars: [...c.querySelectorAll('.td-bar-t span:first-child')].map((x) => x.textContent),
+    pills: [...c.querySelectorAll('.td-caps .mcap')].map((x) => x.dataset.macro),
     tab: (c.querySelector('.td-tab') || {}).textContent || '',
     title: (c.querySelector('.td-title') || {}).textContent || '',
   };
@@ -69,8 +69,8 @@ module.exports = {
       s.fold === 'Breakfast eaten' && new RegExp('^' + want[0].kcal + ' cal · \\d+ g protein$').test(s.foldSub), JSON.stringify(s));
     t.ok('the rest stay open, each with its calories, the first one next',
       s.open.join() === ['Lunch:' + want[1].kcal + ' cal:next', 'Dinner:' + want[2].kcal + ' cal', 'Snacks:' + want[3].kcal + ' cal'].join(), JSON.stringify(s.open));
-    t.ok('the macros stay on the card as meters, and its corner says Eat',
-      s.bars.join() === 'Protein,Carbs,Fat' && /^Eat/.test(s.tab), JSON.stringify(s));
+    t.ok('the macros stay on the card as 4 pills, and its corner says Eat',
+      s.pills.join() === 'kcal,p,f,c' && /^Eat/.test(s.tab), JSON.stringify(s));
 
     /* Ticked from Today: eaten in Nourish too, and folded in with breakfast. */
     await p.click('[data-td="eat"][data-k="l"]');
@@ -117,16 +117,14 @@ module.exports = {
       d: [{ id: R[2].id, x: 1, eaten: 1 }], s: [{ id: R[3].id, x: 1, eaten: 1 }] })));
     p.on('pageerror', (e) => errs.push(e.message));
     s = await read(p);
-    t.ok('all four eaten: one green line, nothing left open, the numbers still there',
-      s.fold === 'Breakfast, lunch, dinner and snacks eaten' && s.open.length === 0 && s.bars.length === 3, JSON.stringify(s));
+    t.ok('all four eaten: one green line, nothing left open, the 4 macro pills still there',
+      s.fold === 'Breakfast, lunch, dinner and snacks eaten' && s.open.length === 0 && s.pills.length === 4, JSON.stringify(s));
     /* N4: deleting one of two eaten items on Breakfast keeps bsc.macroDone[k] set because all remaining slots/items are still eaten. */
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(250);
     await p.click('#macroFill');
     await p.waitForTimeout(200);
     await p.goBack();
-    await p.waitForTimeout(150);
-    await p.click('[data-mview="b"]');
     await p.waitForTimeout(150);
     await p.click('[data-mamt$="|b:1"]');
     await p.waitForTimeout(150);
@@ -147,8 +145,8 @@ module.exports = {
     p.on('pageerror', (e) => errs.push(e.message));
     s = await read(p);
     const acts = await p.evaluate(() => [...document.querySelectorAll('[data-card="eating"] [data-td]')].map((b) => b.dataset.td).join());
-    t.ok('nothing planned: the Eating card says so, with the numbers, Fill my day and Add food',
-      s.title === 'Nothing planned yet' && s.bars.length === 3 && /fill/.test(acts) && /addfood/.test(acts), JSON.stringify({ s, acts }));
+    t.ok('nothing planned: the Eating card says so, with the 4 pills, Fill my day and Add food',
+      s.title === 'Nothing planned yet' && s.pills.length === 4 && /fill/.test(acts) && /addfood/.test(acts), JSON.stringify({ s, acts }));
     /* Nourish left on yesterday: Today's Fill still fills today. */
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(300);

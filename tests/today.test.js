@@ -165,13 +165,16 @@ module.exports = {
     const eat = await p.evaluate(() => ({
       big: (document.querySelector('[data-card="eating"] .td-big b') || {}).textContent,
       meta: (document.querySelector('[data-card="eating"] .td-lift') || {}).textContent || '',
-      bars: [...document.querySelectorAll('[data-card="eating"] .td-bar-t span:last-child')].map((x) => x.textContent),
+      pills: [...document.querySelectorAll('[data-card="eating"] .td-caps .mcap')].map((x) => ({
+        m: x.dataset.macro,
+        txt: x.querySelector('.mcap-t').textContent,
+      })),
     }));
     const fmt = (n) => Math.round(n).toLocaleString('en-US');
-    t.ok('eating says what is left today, from the day’s own target',
-      // calories are the number left and the ring; the meters are protein, carbs and fat (2026-11-01)
-      eat.big === fmt(E.e.kcal.want - E.e.kcal.have) && eat.bars[0] === fmt(E.e.p.have) + ' of ' + fmt(E.e.p.want) + ' g' &&
-      eat.bars.length === 3, JSON.stringify(eat));
+    t.ok('eating says what is left today, from the day’s own target, with 4 macro pills',
+      eat.big === fmt(E.e.kcal.want - E.e.kcal.have) && eat.pills.length === 4 &&
+      eat.pills.map((x) => x.m).join() === 'kcal,p,f,c' &&
+      eat.pills[1].txt.indexOf(fmt(E.e.p.have) + '/' + fmt(E.e.p.want) + 'g') >= 0, JSON.stringify(eat));
     t.ok('and says when it is a lifting day', (eat.meta === 'Lifting day') === !!E.e.training, eat.meta + ' / ' + E.e.training);
     const wk = await p.evaluate(() => ({
       title: (document.querySelector('[data-card="workout"] .td-title') || {}).textContent,
@@ -379,14 +382,13 @@ module.exports = {
     p.on('pageerror', (e) => errs.push(e.message));
     const vitals0 = await p.evaluate(() => ({
       hasStrip: !!document.querySelector('#todayRoot .td-vitals'),
-      hasRing: !!document.querySelector('#todayRoot .td-dual-ring'),
-      // the P/C/F pills became meters under the ring (2026-11-01)
-      mpills: document.querySelectorAll('#todayRoot .td-mbars .td-bar').length,
+      noRing: !document.querySelector('#todayRoot .td-dual-ring'),
+      mpills: document.querySelectorAll('#todayRoot .td-caps .mcap').length,
       has24oz: !!document.querySelector('#todayRoot [data-td="water"][data-oz="24"]'),
       trayOpen: !!document.querySelector('#todayRoot .td-vitals-tray')
     }));
-    t.ok('Today renders Health Connect vitals strip, concentric Cal+Protein ring, P/C/F meters, and +24 oz button',
-      vitals0.hasStrip && vitals0.hasRing && vitals0.mpills === 3 && vitals0.has24oz && !vitals0.trayOpen, JSON.stringify(vitals0));
+    t.ok('Today renders Health Connect vitals strip, 4 macro pills (no dual ring), and +24 oz button',
+      vitals0.hasStrip && vitals0.noRing && vitals0.mpills === 4 && vitals0.has24oz && !vitals0.trayOpen, JSON.stringify(vitals0));
 
     await p.click('#todayRoot [data-td="vitals"]');
     const vitals1 = await p.evaluate(() => ({

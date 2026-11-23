@@ -70,8 +70,8 @@ module.exports = {
     const start = await p.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray[data-mslot]')].map((c) => ({
       k: c.dataset.mslot, v: (c.className.match(/\bmv-(\d)/) || [])[1], beads: c.querySelectorAll('.mbd').length,
       skip: !!c.querySelector('[data-mskipask]'), bal: !!c.querySelector('[data-mbal]'), door: !!c.querySelector('.mtray-b[data-mopen]') })));
-    t.ok('the eaten breakfast starts on Status with its four rings; Lunch and Dinner on State 2 (Foods); the empty Snacks one row',
-      start.map((c) => c.k + (c.v || '-')).join() === 'b1,l2,d2,s-' && start[0].beads === 4 && start.slice(1).every((c) => !c.beads) &&
+    t.ok('all populated meals start open on State 2 (Foods) with zero .mbd circles; empty Snacks is one calm row',
+      start.map((c) => c.k + (c.v || '-')).join() === 'b2,l2,d2,s-' && start.every((c) => !c.beads) &&
       await p.evaluate(() => document.querySelector('#macroSlots [data-mslot="s"]').classList.contains('mtray-empty')), JSON.stringify(start));
     t.ok('every card keeps its door to the meal, Status too, with no card-level ⊘ or ⚖ clutter',
       start.every((c) => c.door && !c.skip && !c.bal), JSON.stringify(start));
@@ -132,23 +132,24 @@ module.exports = {
     await p.evaluate(() => window.dispatchEvent(new Event('afterprint')));
     await p.waitForTimeout(200);
     const back = await p.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray[data-mslot]')].map((c) => (c.className.match(/\bmv-(\d)/) || [])[1]).join());
-    // the empty Snacks has nothing to show on either, and stays as it was drawn
-    t.ok('printing shows every meal with food open, and the cards go back after', paper === '2,2,2,' && back === '1,2,2,', JSON.stringify({ paper, back }));
+    // all populated meals stay open (mv-2) before, during, and after printing
+    t.ok('printing shows every meal with food open, and the cards stay open after', paper === '2,2,2,' && back === '2,2,2,', JSON.stringify({ paper, back }));
 
-    /* ---- rings: protein past its share stays green, fat past it amber ---- */
-    const ringsOf = (sk) => p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mbd')].map((b) => (b.className.match(/rg-\w+/) || [''])[0]), card(sk));
-    const bRings = await ringsOf('b');
-    await p.click(card('b') + ' [data-mview]');
-    await p.waitForTimeout(200);
-    const bPills = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-caps .mcap')].map((c) => ({ want: Number(c.dataset.want),
-      have: Number(c.querySelector('.mcap-t').childNodes[1].textContent.replace(/,/g, '')) })), card('b'));
-    await p.click(card('b') + ' [data-mview]');
-    await p.waitForTimeout(150);
-    await p.click(card('b') + ' [data-mview]');
-    await p.waitForTimeout(150);
-    t.ok('on the eaten breakfast, protein past its share is still green and fat past it is amber',
-      bPills.length === 4 && bPills[1].have > bPills[1].want * 1.1 && bRings[1] === 'rg-on' &&
-      bPills[2].have > bPills[2].want * 1.1 && bRings[2] === 'rg-over', JSON.stringify({ bRings, bPills }));
+    /* ---- pills: protein past its share stays green, fat past it amber ---- */
+    const bPills = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-caps .mcap')].map((c) => ({
+      want: Number(c.dataset.want),
+      have: Number(c.querySelector('.mcap-t').childNodes[1].textContent.replace(/,/g, '')),
+      on: c.classList.contains('on'),
+      over: c.classList.contains('over'),
+    })), card('b'));
+    const bNoBeads = await p.evaluate((sel) => ({
+      beads: document.querySelectorAll(sel + ' .mbd').length,
+      mview: document.querySelectorAll(sel + ' [data-mview]').length,
+    }), card('b'));
+    t.ok('on the eaten breakfast, protein past its share is still green and fat past it is amber, rendered via pills with no circles',
+      bPills.length === 4 && bPills[1].have > bPills[1].want * 1.1 && bPills[1].on && !bPills[1].over &&
+      bPills[2].have > bPills[2].want * 1.1 && bPills[2].over && !bNoBeads.beads && !bNoBeads.mview,
+      JSON.stringify({ bPills, bNoBeads }));
 
     /* ---- an empty meal: one calm row; tapping it or + opens food search ---- */
     const emp = () => p.evaluate((sel) => {
@@ -202,24 +203,16 @@ module.exports = {
 
     /* ---- the narrowest phone: one line a head, a thumb a button, no sideways scroll ---- */
     await p.setViewportSize({ width: 320, height: 760 });
-    for (const v of [1, 2]) {
-      for (const sk of ['l', 'd']) {
-        for (let i = 0; i < 3 && await p.$eval(card(sk) + ' [data-mview]', (e) => e.dataset.mv) !== String(v); i++) {
-          await p.click(card(sk) + ' [data-mview]');
-          await p.waitForTimeout(150);
-        }
-      }
-      const fit = await p.evaluate(() => {
-        const heads = [...document.querySelectorAll('#macroSlots .mtray-hr')].map((h) => Math.round(h.getBoundingClientRect().height));
-        const small = [...document.querySelectorAll('#macroSlots .mtray button, #macroSlots .mtray-skip button')].filter((e) => {
-          const r = e.getBoundingClientRect();
-          return r.width && r.height && Math.min(r.width, r.height) < 43.5 && !e.classList.contains('mtray-b') && !e.classList.contains('mtray-fn');
-        }).map((e) => e.className + ' ' + Math.round(e.getBoundingClientRect().width) + 'x' + Math.round(e.getBoundingClientRect().height));
-        return { heads, small, wide: document.documentElement.scrollWidth };
-      });
-      t.ok('at 320 px on view ' + v + ': every head one line, every button a thumb, nothing sideways',
-        fit.heads.every((h) => h <= 50) && !fit.small.length && fit.wide <= 320, JSON.stringify(fit));
-    }
+    const fit = await p.evaluate(() => {
+      const heads = [...document.querySelectorAll('#macroSlots .mtray-hr')].map((h) => Math.round(h.getBoundingClientRect().height));
+      const small = [...document.querySelectorAll('#macroSlots .mtray button, #macroSlots .mtray-skip button')].filter((e) => {
+        const r = e.getBoundingClientRect();
+        return r.width && r.height && Math.min(r.width, r.height) < 43.5 && !e.classList.contains('mtray-b') && !e.classList.contains('mtray-fn');
+      }).map((e) => e.className + ' ' + Math.round(e.getBoundingClientRect().width) + 'x' + Math.round(e.getBoundingClientRect().height));
+      return { heads, small, wide: document.documentElement.scrollWidth };
+    });
+    t.ok('at 320 px: every head one line, every button a thumb, nothing sideways',
+      fit.heads.every((h) => h <= 50) && !fit.small.length && fit.wide <= 320, JSON.stringify(fit));
     /* Double-tapping Same as yesterday before the sheet closes lands yesterday's foods only once. */
     await p.evaluate(SETUP);
     await p.reload();

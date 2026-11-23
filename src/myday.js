@@ -29,7 +29,6 @@
   var mAhead = app.mAhead;
   var mBatchStrip = app.mBatchStrip;
   var mCanFav = app.mCanFav;
-  var mCascadeLineHTML = app.mCascadeLineHTML;
   var mCopyItems = app.mCopyItems;
   var mDay = app.mDay;
   var mDayTargets = app.mDayTargets;
@@ -56,7 +55,6 @@
   var mNowMins = app.mNowMins;
   var mReadSlots = app.mReadSlots;
   var mSaltChip = app.mSaltChip;
-  var mSendOf = app.mSendOf;
   var mServeG = app.mServeG;
   var mSkipped = app.mSkipped;
   var mSlotOpens = app.mSlotOpens;
@@ -304,23 +302,11 @@
   }
   function mViewsNow() {
     var b = $('macroViews');
-    if (!b) return;
-    var a = mViewsAll();
-    b.hidden = !a.n;
-    b.innerHTML = mIcon(a.folded ? 'openall' : 'foldall');
-    b.setAttribute('aria-label', a.folded ? 'Open every meal' : 'Fold every meal');
-    b.title = a.folded ? 'Open every meal' : 'Fold every meal';
+    if (b) b.hidden = true;
   }
 
-  function mViewOf(k, sk, M, nextSk) {
-    if (S.mViewAll) return S.mViewAll;
-    var held = S.mView[k] && S.mView[k][sk];
-    if (held) return held === 1 ? 1 : 2;
-    /* A meal whose last food was just ticked stays open a beat (app.js,
-       the eaten box) so the tick is seen landing before the card folds;
-       folding under the finger read as the card running off. */
-    if (S.mFoldSoon === k + '|' + sk) return 2;
-    return M.eatenAll ? 1 : 2;
+  function mViewOf() {
+    return 2;
   }
 
   /* Everything the tray and the sheet say about one meal, worked out once. */
@@ -977,14 +963,7 @@
       if (!M) return '';
       var items = M.items;
 
-      /* Skipped: one line, with its way back on it (Put back, since
-         2026-10-10, now that skipping is on the card too) as well as in its
-         sheet; the chooser for where its share goes (the largest cascade
-         there is) rides under it. */
       if (onPlan && !items.length && mSkipped(k, sk)) {
-        /* With the card under it asking where the share goes, the line does
-           not claim it simply went to the rest. */
-        var skSend = mCascadeLineHTML(sk, targets, slots);
         var skKcal = M.ask && M.ask.plan ? Math.round(M.ask.plan.kcal) : 0;
         var openSlots = slots.list.filter(function (s2) {
           if (s2.k === sk) return false;
@@ -993,46 +972,26 @@
           if (its2.length && its2.every(function (it) { return it.eaten; })) return false;
           return true;
         });
-        var sent = mSendOf ? mSendOf(k) : null;
-        if (sent && sent.f !== sk) sent = null;
         var destSlots = openSlots;
-        if (sent && sent.off) destSlots = [];
-        else if (sent && sent.to && sent.to.length) {
-          destSlots = openSlots.filter(function (s2) { return sent.to.indexOf(s2.k) >= 0; });
-        }
         var destTxt = destSlots.length === 1 ? destSlots[0].n
           : destSlots.length === 2 ? destSlots[0].n.replace(/ Snack$/i, '') + ', ' + destSlots[1].n.replace(/ Snack$/i, '')
           : destSlots.length > 2 ? destSlots[0].n.replace(/ Snack$/i, '') + ', ' + destSlots[1].n.replace(/ Snack$/i, '') + '\u2026'
           : '';
-        /* Short on the pill, whole in its label. "283 kcal → Dinner, Evening"
-           ran past the pill's edge on a phone (Blake, 2026-10-30: "Uncrowd
-           the text"), so it shows the number and the first meal it goes to,
-           and "+1" for the rest; the button's label still names them all. */
         var destShort = destSlots.length ? destSlots[0].n.replace(/ Snack$/i, '') +
           (destSlots.length > 1 ? ' +' + (destSlots.length - 1) : '') : '';
         var swHTML = skKcal > 0
           ? '<span class="mtray-spread-pill num">' + skKcal + (destShort ? ' &rarr; ' + esc(destShort) : ' kcal skipped') + '</span>' +
-            '<span class="sr-only"> (' + (skSend ? 'skipped' : 'skipped &middot; its share went to the rest') + ')</span>'
-          : (skSend ? 'skipped' : 'skipped &middot; its share went to the rest');
-        /* Once Done is pressed the chooser folds, and folded it used to stay
-           on as a line of its own under the pill — "Skipping Lunch frees
-           283" — saying again what the pill beside it already says, 283 kcal
-           to Dinner and Evening. Blake circled it: "Make that go away." So a
-           folded chooser draws nothing, and the pill itself is how it opens
-           again: a tap on a skipped meal asks where its share goes, which is
-           the one thing left to decide about it (Put back is beside it). */
-        var sendFolded = !!(skSend && sent && sent.ack);
+            '<span class="sr-only"> (skipped &middot; its share went to the rest)</span>'
+          : 'skipped &middot; its share went to the rest';
         return '<div class="mtray-skip">' +
-            (sendFolded
-              ? '<button class="mtray-skb" data-msend="open" aria-expanded="false" aria-label="' + esc(name) + ', skipped' + (skKcal > 0 && destTxt ? ', ' + skKcal + ' kcal to ' + esc(destTxt) : '') + '. Choose where its share goes">'
-              : '<button class="mtray-skb" data-mopen="' + esc(sk) + '" aria-label="' + esc(name) + ', skipped' + (skKcal > 0 && destTxt ? ', ' + skKcal + ' kcal to ' + esc(destTxt) : '') + '. Open it">') +
+            '<button class="mtray-skb" data-mopen="' + esc(sk) + '" aria-label="' + esc(name) + ', skipped' + (skKcal > 0 && destTxt ? ', ' + skKcal + ' kcal to ' + esc(destTxt) : '') + '. Open it">' +
               '<span class="mtray-skpill">' +
                 '<span class="mtray-n">' + esc(name) + '</span>' +
                 '<span class="mtray-sw">' + swHTML + '</span>' +
               '</span>' +
             '</button>' +
             '<button class="mtray-unskip" data-mskip="' + esc(sk) + '" aria-label="Put ' + esc(name) + ' back">Put back</button>' +
-          '</div>' + (sendFolded ? '' : skSend);
+          '</div>';
       }
 
       /* Each food is a line of its own again (Blake, 2026-10-08), the way the
@@ -1058,12 +1017,10 @@
          one day is not open on the next. Foods and Details both draw these
          lines. */
       var live = M.live, anyEaten = items.some(function (it) { return it.eaten; });
-      if (!live && onPlan) return emptyHTML(M, sk, name) + mCascadeLineHTML(sk, targets, slots);
+      if (!live && onPlan) return emptyHTML(M, sk, name);
       var showTicks = items.some(function (it) { return !it.eaten && LIVE.BY_ID[it.id]; });
-      var view = mViewOf(k, sk, M, nextSk);
-      var lines = '';
-      if (view === 2) {
-        lines = items.map(function (it, i) {
+      var view = 2;
+      var lines = items.map(function (it, i) {
           var r = LIVE.BY_ID[it.id];
           if (!r) return '';
           var tag = sk + ':' + i, open = S.mAmt === k + '|' + tag;
@@ -1100,23 +1057,15 @@
           return '<div class="mtray-f' + (r.food ? '' : ' mtray-go') + (it.eaten ? ' eaten' : '') + (it.l ? ' held' : '') + (open ? ' open' : '') + '">' +
             line + (open ? mLineOpenHTML(M, r, it, i) : '') + '</div>';
         }).join('');
-      }
 
-      /* The head: the name opens and folds the meal; an empty meal has
-         nothing to fold, so its name is the way to food, the same as its
-         pills (Blake: "clicking a meal that is empty just takes me to food
-         selection, right?"). The circles ride in the name when folded. */
-      var B = mBeadsOf(M);
       var head = live
-        ? '<button class="mtray-hd" data-mview="' + esc(sk) + '" data-mv="' + view + '" aria-expanded="' + (view === 2) + '" aria-label="' + esc(name) + ', ' + esc(mBeadsSay(M, B)) +
-            '. ' + (view === 1 ? 'Folded; tap to open' : 'Open; tap to fold') + '">' +
-            mChevHTML() + '<span class="mtray-n">' + esc(name) + '</span>' +
-            (view !== 1 ? '' : M.aim ? mBeadsHTML(B) : '<span class="mtray-k num"><b>' + fmtK(M.sub.kcal) + '</b> kcal</span>') + '</button>'
+        ? '<button class="mtray-hd" data-mopen="' + esc(sk) + '" aria-label="' + esc(name) + (M.pillsSay ? ' \u2014 ' + esc(M.pillsSay) : '') + '. Open meal">' +
+            '<span class="mtray-n">' + esc(name) + '</span></button>'
         : '<button class="mtray-hd" data-mopen="' + esc(sk) + '" aria-label="' + esc(name) + ', nothing on it yet. Add food">' +
             '<span class="mtray-n">' + esc(name) + '</span></button>';
       /* Calm populated card header (2026-11-21): keep + when open; Balance and
          Skip today live inside the meal sheet and its ⋯ menu. */
-      var verbs = (view === 1 || !onPlan ? '' : '<button class="mtray-ib" data-mopen="' + esc(sk) + '" data-madd="1" aria-label="Add food to ' + esc(name) + '" title="Add food">' + mIcon('plus') + '</button>');
+      var verbs = !onPlan ? '' : '<button class="mtray-ib" data-mopen="' + esc(sk) + '" data-madd="1" aria-label="Add food to ' + esc(name) + '" title="Add food">' + mIcon('plus') + '</button>';
 
       /* Skipping a meal with food on it asks first, on the card, and says
          what goes: its plates come off and its share moves to the meals
@@ -1146,20 +1095,14 @@
           '<div class="mtray-c">' +
             '<div class="mtray-hr">' + head + '<span class="mtray-vbs">' + verbs + '</span></div>' +
             '<button class="mtray-b" data-mopen="' + esc(sk) + '" aria-label="Open ' + esc(name) + (M.pillsSay ? ' — ' + esc(M.pillsSay) : '') + '">' +
-            (view === 1 ? '</button>' :
-                /* The meal's pills, small: what it holds against its share,
-                   the way its sheet says it (Blake: "adding back the subtle
-                   pills that show me that meal's calories and macros"). An
-                   empty meal shows them too: 0 of its share is what it is
-                   for. */
                 (M.aim ? '<span class="mtray-caps">' + capsHTML(M.sub, M.aim, M.ask && M.ask.spent, !!(M.ask && M.ask.capped)) + '</span>'
                   : '<span class="mtray-k num"><b>' + fmtK(M.sub.kcal) + '</b> kcal</span>') +
               '</button>' +
-              '<div class="mtray-fs">' + (lines || '<span class="mtray-f mtray-none">Nothing yet</span>') + '</div>') +
+              '<div class="mtray-fs">' + (lines || '<span class="mtray-f mtray-none">Nothing yet</span>') + '</div>' +
             ask +
             mSlotHoldBarHTML(sk, name, anyEaten) +
           '</div>' +
-        '</div>' + (onPlan ? mCascadeLineHTML(sk, targets, slots) : '');
+        '</div>';
     };
     /* No notice above the meals. Step 1c put a "Meals are off target — tap
        to rebalance" strip here; at twenty to one it fired on a day with

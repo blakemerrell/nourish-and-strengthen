@@ -3612,7 +3612,7 @@
 
   /* src/myday.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var MYDAY = window.HiveParts.myday({ MDAYS: MDAYS, MWEIGHTS: MWEIGHTS, M_MONS: M_MONS, S: S, WGAPI: WGAPI, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mpIcon: mpIcon, leaf: leaf, mAhead: mAhead, mBatchStrip: mBatchStrip, mCanFav: mCanFav, mCascadeLineHTML: mCascadeLineHTML, mCopyItems: mCopyItems, mDay: mDay, mDayTargets: mDayTargets, mDialUnit: mDialUnit, mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mEditDay: mEditDay, mFillRoom: mFillRoom, mFoldForget: mFoldForget, mHydChip: mHydChip, mIcon: mIcon, mIsFav: mIsFav, mItemFluidOz: mItemFluidOz, mLatestKey: mLatestKey, mLongDate: mLongDate, mMacLine: mMacLine, mMarkAccountUI: mMarkAccountUI, mMealAsk: mMealAsk, mMealPillsSay: mMealPillsSay, mNowMins: mNowMins, mReadSlots: mReadSlots, mSaltChip: mSaltChip, mSendOf: mSendOf, mServeG: mServeG, mSkipped: mSkipped, mSlotOpens: mSlotOpens, mSnapTargets: mSnapTargets, mViewKey: mViewKey, mWeekHTML: mWeekHTML, mWeekTilesHTML: mWeekTilesHTML, mWhyChip: mWhyChip, mWhyStrip: mWhyStrip, macroFootHTML: macroFootHTML, macroWeighHTML: macroWeighHTML, syncShrunk: syncShrunk, todayKey: todayKey, mDialFromX: mDialFromX, mDialG: mDialG, mDialMeasure: mDialMeasure, mDialText: mDialText, LIVE: LIVE });
+  var MYDAY = window.HiveParts.myday({ MDAYS: MDAYS, MWEIGHTS: MWEIGHTS, M_MONS: M_MONS, S: S, WGAPI: WGAPI, dayKey: dayKey, kcalOf: kcalOf, keyDate: keyDate, mpIcon: mpIcon, leaf: leaf, mAhead: mAhead, mBatchStrip: mBatchStrip, mCanFav: mCanFav, mCopyItems: mCopyItems, mDay: mDay, mDayTargets: mDayTargets, mDialUnit: mDialUnit, mDoneAt: mDoneAt, mEarliestKey: mEarliestKey, mEditDay: mEditDay, mFillRoom: mFillRoom, mFoldForget: mFoldForget, mHydChip: mHydChip, mIcon: mIcon, mIsFav: mIsFav, mItemFluidOz: mItemFluidOz, mLatestKey: mLatestKey, mLongDate: mLongDate, mMacLine: mMacLine, mMarkAccountUI: mMarkAccountUI, mMealAsk: mMealAsk, mMealPillsSay: mMealPillsSay, mNowMins: mNowMins, mReadSlots: mReadSlots, mSaltChip: mSaltChip, mServeG: mServeG, mSkipped: mSkipped, mSlotOpens: mSlotOpens, mSnapTargets: mSnapTargets, mViewKey: mViewKey, mWeekHTML: mWeekHTML, mWeekTilesHTML: mWeekTilesHTML, mWhyChip: mWhyChip, mWhyStrip: mWhyStrip, macroFootHTML: macroFootHTML, macroWeighHTML: macroWeighHTML, syncShrunk: syncShrunk, todayKey: todayKey, mDialFromX: mDialFromX, mDialG: mDialG, mDialMeasure: mDialMeasure, mDialText: mDialText, LIVE: LIVE });
   function renderMacros() {
     var r = MYDAY.renderMacros();
     if (S.view === 'today' && window.Today) window.Today.render();
@@ -3632,7 +3632,7 @@
 
   /* src/shares.js, handed what it reads of the app's and kept under its own
      names here, as declarations, so they answer from anywhere in this file. */
-  var SHARES = window.HiveParts.shares({ S: S, kcalOf: kcalOf, mDay: mDay, mInfoText: mInfoText, mSendOf: mSendOf, mSkipped: mSkipped, mSlotW: mSlotW, mTotals: mTotals, mViewKey: mViewKey, mWhyBtn: mWhyBtn, LIVE: LIVE });
+  var SHARES = window.HiveParts.shares({ S: S, kcalOf: kcalOf, mDay: mDay, mSkipped: mSkipped, mSlotW: mSlotW, mTotals: mTotals, mViewKey: mViewKey, LIVE: LIVE });
   function mMealDone(sk) { return SHARES.mMealDone(sk); }
   function mMealAsk(sk, targets, slots, adjust) { return SHARES.mMealAsk(sk, targets, slots, adjust); }
   function mLastFinished(targets, slots) { return SHARES.mLastFinished(targets, slots); }
@@ -7083,20 +7083,7 @@
         if (it) it.eaten = c.checked ? 1 : 0;
         all = its.length > 0 && its.every(function (x) { return x.eaten; });
       });
-      /* Ticking a meal's last food folds it to its rings (myday.js,
-         mViewOf), but a beat later, so the tick is seen landing first; a
-         card that folded under the finger read as running off. A meal you
-         opened or folded yourself today is left as you set it. */
-      var held = S.mView[ek] && S.mView[ek][cp[0]];
-      S.mFoldSoon = all && !held ? ek + '|' + cp[0] : '';
-      if (S.mFoldSoon) {
-        var soon = S.mFoldSoon;
-        setTimeout(function () {
-          if (S.mFoldSoon !== soon) return;
-          S.mFoldSoon = '';
-          if (S.view === 'macros') keepingFocus(renderMacros);
-        }, 900);
-      }
+      S.mFoldSoon = '';
       keepingFocus(renderMacros);
     });
 

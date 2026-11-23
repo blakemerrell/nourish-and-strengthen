@@ -1099,6 +1099,7 @@
                   : '<span class="mtray-k num"><b>' + fmtK(M.sub.kcal) + '</b> kcal</span>') +
               '</button>' +
               '<div class="mtray-fs">' + (lines || '<span class="mtray-f mtray-none">Nothing yet</span>') + '</div>' +
+            (onPlan && S.mUsualOpen === k + '|' + sk ? mUsualHTML(k, sk, name, day, true) : '') +
             ask +
             mSlotHoldBarHTML(sk, name, anyEaten) +
           '</div>' +
@@ -1251,10 +1252,12 @@
    *
      Only on today, only on the meal whose time it is (the latest to have
      opened, the same rule the picker uses to choose where "Add food" goes,
-     src/picksheet.js mNextMeal), and only while that meal is empty: once
-     anything is on it the meal is under way and its own + is the door. A
-     skipped meal draws its skip line instead and never reaches here. */
-  var MUSUAL_DAYS = 28, MUSUAL_MAX = 3;
+     src/picksheet.js mNextMeal), while that meal is empty — and while the
+     user is still tapping through its chips in the same session (`S.mUsualOpen`),
+     so logging a multi-item meal (coffee, cream, eggs) takes rapid taps
+     rather than losing the strip after the first pick. A skipped meal draws
+     its skip line instead and never reaches here. */
+  var MUSUAL_DAYS = 28, MUSUAL_MAX = 6;
 
   function mNowSlot(k) {
     if (k !== todayKey()) return '';
@@ -1299,12 +1302,16 @@
       .slice(0, MUSUAL_MAX);
   }
 
-  function mUsualHTML(k, sk, name, today) {
+  function mUsualHTML(k, sk, name, today, keep) {
     if (mNowSlot(k) !== sk) return '';
     var us = mUsualOf(k, sk, today);
     if (!us.length) return '';
-    return '<div class="mtray-usual no-print" role="group" aria-label="What you usually have at ' + esc(name) + '">' +
-      '<span class="mtray-usual-h">You usually have</span>' +
+    return '<div class="mtray-usual' + (keep ? ' mtray-usual-more' : '') + ' no-print" role="group" aria-label="' +
+        (keep ? 'Add more foods you usually have at ' : 'What you usually have at ') + esc(name) + '">' +
+      '<div class="mtray-usual-top">' +
+        '<span class="mtray-usual-h">' + (keep ? 'Add more usuals' : 'You usually have') + '</span>' +
+        (keep ? '<button type="button" class="mtray-usual-done" data-musualdone="' + esc(sk) + '" aria-label="Done adding usual foods to ' + esc(name) + '">Done</button>' : '') +
+      '</div>' +
       '<span class="mtray-usual-row">' +
         us.map(function (u) {
           var r = LIVE.BY_ID[u.id];

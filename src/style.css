@@ -7596,8 +7596,15 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
    not three. Starts at the card's edge like the line of ways above it. */
 /* Above the door's reach (.mtray-b::after covers the whole card), as the
    line of ways is: without it a tap on a chip opened the meal's sheet. */
-.mtray-usual { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 4px; margin: 2px 0 6px -48px; min-width: 0; }
+.mtray-usual { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 4px; margin: 2px 0 6px -48px; min-width: 0; max-width: calc(100% + 48px); }
+.mtray-usual-more { margin: 8px 0 2px -36px; padding-top: 2px; border-top: 1px solid var(--line-soft); max-width: calc(100% + 36px); }
+.mtray-usual-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .mtray-usual-h { font: 600 0.8125rem/1.2 var(--sans); color: var(--label); padding-left: 2px; }
+.mtray-usual-done {
+  flex: none; min-height: 44px; padding: 0 12px; margin: 0; border: 0; border-radius: 10px; background: none; cursor: pointer;
+  font: 600 0.8125rem/1 var(--sans); color: var(--ochre-text);
+}
+.mtray-usual-done:hover, .mtray-usual-done:focus-visible { background: var(--hint); }
 .mtray-usual-row {
   display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 4px; scrollbar-width: none;
   -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;

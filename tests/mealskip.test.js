@@ -214,6 +214,7 @@ module.exports = {
     t.ok('at 320 px: every head one line, every button a thumb, nothing sideways',
       fit.heads.every((h) => h <= 50) && !fit.small.length && fit.wide <= 320, JSON.stringify(fit));
     /* Double-tapping Same as yesterday before the sheet closes lands yesterday's foods only once. */
+    await p.setViewportSize({ width: 390, height: 844 });
     await p.evaluate(SETUP);
     await p.reload();
     await p.waitForTimeout(600);

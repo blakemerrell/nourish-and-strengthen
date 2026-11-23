@@ -7926,7 +7926,9 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   background: var(--card); border: 1px solid var(--line-firm); border-radius: 14px;
   padding: 12px; margin: 8px 0; display: flex; flex-direction: column; gap: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  scroll-margin-bottom: 160px;
 }
+.madd-pop button { scroll-margin-bottom: 160px; }
 .madd-hd { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .madd-hd b { font-size: 0.875rem; color: var(--ink); }
 .madd-x {

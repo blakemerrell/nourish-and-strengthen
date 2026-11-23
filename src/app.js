@@ -923,7 +923,7 @@
        folding one you have eaten. Ephemeral: a new day starts fresh. */
     mFold: {}, mFoldFor: '', mTouched: '', mtOpen: '',
     // each meal's view on the day, by day (myday.js, mViewOf); the skip a card is asking about; Undo's copy
-    mView: {}, mViewAll: 0, mFoldSoon: '', mSkipAsk: '', mSkipUndo: null, mUsualUndo: null,
+    mView: {}, mViewAll: 0, mFoldSoon: '', mSkipAsk: '', mSkipUndo: null, mUsualUndo: null, mUsualOpen: '',
     // a meal said into the picker's box (heard.js): the band's choices; foods to keep as one; a meal a new recipe goes on
     mpHeard: null, mpMicHint: false, keepItems: null, editAddTo: null, mLastHeard: null,
     // which empty meals have their line of ways to fill them open, by day (myday.js, emptyHTML)
@@ -3722,7 +3722,14 @@
      names here, as declarations, so they answer from anywhere in this file. */
   var PICKSHEET = window.HiveParts.picksheet({ S: S, mDay: mDay, mMealSheetParts: mMealSheetParts, mNowMins: mNowMins, mReadSlots: mReadSlots, mSlotOpens: mSlotOpens, mSlotSecs: mSlotSecs, mSlotW: mSlotW, mViewKey: mViewKey, mpHomeBodyHTML: mpHomeBodyHTML, mpIcon: mpIcon, mpShelvesHTML: mpShelvesHTML, pushSheet: pushSheet, rememberOpener: rememberOpener, renderModal: renderModal, todayKey: todayKey });
   function mNextMeal() { return PICKSHEET.mNextMeal(); }
-  function mOpenPicker(slotKey, mode) { if (mode === 'scan') mCamDone = false; return PICKSHEET.mOpenPicker(slotKey, mode); }
+  function mOpenPicker(slotKey, mode) {
+    var hadUsual = !!S.mUsualOpen;
+    S.mUsualOpen = '';
+    if (mode === 'scan') mCamDone = false;
+    var r = PICKSHEET.mOpenPicker(slotKey, mode);
+    if (hadUsual && S.view === 'macros') renderMacros();
+    return r;
+  }
   function macroPickerHTML() { return PICKSHEET.macroPickerHTML(); }
 
   /* src/pickgap.js, handed what it reads of the app's and kept under its own
@@ -4330,7 +4337,7 @@
     'data-cal', 'data-calweek', 'data-calagain', 'data-calfrom', 'data-caltpl', 'data-cookgo', 'data-qchip', 'data-cardadd', 'data-cookday', 'data-cooknext', 'data-cookopen', 'data-cookclose',
     'data-addday', 'data-pswap', 'data-prate', 'data-adf', 'data-adadd', 'data-adsw', 'data-adopen', 'data-pwpick', 'data-pwsee', 'data-pwback', 'data-pwpre', 'data-pwmore', 'data-pwwant', 'data-pwopen', 'data-dayopen', 'data-dsact', 'data-listmark', 'data-fold',
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
-    'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mslotdel', 'data-mslotmove', 'data-mholdclose', 'data-maddslot', 'data-mslotpreset', 'data-maddpop', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mset', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend',
+    'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mslotdel', 'data-mslotmove', 'data-mholdclose', 'data-maddslot', 'data-mslotpreset', 'data-maddpop', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mset', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend', 'data-musualdone',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
     'data-mmore', 'data-fppick', 'data-fpmore', 'data-fpstaples', 'data-mfsec', 'data-mfunpin', 'data-mfedit', 'data-mfdel', 'data-mfnew', 'data-mfadd', 'data-mffood', 'data-mfundo', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mwtiles', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd', 'data-hydmodal', 'data-hyd', 'data-hydmg', 'data-hydoz', 'data-mweekfold', 'data-mlog', 'data-mpslot', 'data-mheardundo', 'data-mrowopen', 'data-mpclear'];
 
@@ -6011,6 +6018,7 @@
     document.querySelectorAll('.tab').forEach(function (b) {
       b.addEventListener('click', function () {
         COOK.closeQuickAdd(true);
+        if (b.dataset.view !== 'macros') S.mUsualOpen = '';
         S.view = b.dataset.view;
         try { localStorage.setItem('sh.view', S.view); viewSeen(); } catch (e) { /* private mode */ }
         renderView();
@@ -6223,6 +6231,7 @@
       if (had.length) mEditDay(k, function (day) { day[sk] = []; });
       mSetSkip(k, sk, true);
       S.mSkipAsk = '';
+      S.mUsualOpen = '';
       if (S.mAmt && S.mAmt.indexOf(k + '|' + sk + ':') === 0) { S.mAmt = ''; S.mType = null; }
       S.mSkipUndo = { k: k, sk: sk, items: had };
       renderMacros();
@@ -6242,6 +6251,7 @@
         }
         if (at >= 0) list.splice(at, 1);
       });
+      S.mUsualOpen = (mDay(u.k)[u.sk] || []).length ? u.k + '|' + u.sk : '';
       var el = $('mToast'); if (el) el.hidden = true;
       if (S.view === 'macros') renderMacros();
     });
@@ -6330,6 +6340,7 @@
       mWriteSlots(slots);
       S.mCardHold = '';
       S.mSkipAsk = '';
+      S.mUsualOpen = '';
       renderMacros();
       mToast(esc(removed.n) + ' removed from your plan.');
     }
@@ -6484,6 +6495,7 @@
         if (!ur) return;
         var uat = -1;
         mKeepOpen(uk, usk);
+        S.mUsualOpen = uk + '|' + usk;
         mEditDay(uk, function (day) {
           var list = (day[usk] = day[usk] || []);
           list.push({ id: uid, x: ux, eaten: mAddsEaten(uk, usk) });
@@ -6492,6 +6504,12 @@
         S.mUsualUndo = { k: uk, sk: usk, id: String(uid), at: uat };
         renderMacros();
         mToast(esc(ur.name) + ' is on ' + esc(mSlotName(usk)) + '.', usk, 'data-musualundo');
+        return;
+      }
+      var usd = e.target.closest('[data-musualdone]');
+      if (usd) {
+        S.mUsualOpen = '';
+        renderMacros();
         return;
       }
       var skn = e.target.closest('[data-mskipno]');
@@ -10129,6 +10147,7 @@
   window.addEventListener('pagehide', viewSeen);
   function goView(v) {
     COOK.closeQuickAdd(true);
+    if (v !== 'macros') S.mUsualOpen = '';
     if (PLAN_STEPS.some(function (p) { return p[0] === v; }) && v !== 'plan') { goStep(v); viewSeen(); return; }
     S.view = v;
     try { localStorage.setItem('sh.view', v); } catch (e) { /* private mode */ }

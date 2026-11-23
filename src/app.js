@@ -4339,7 +4339,7 @@
     'data-scale', 'data-units', 'data-sync', 'data-edit', 'data-open', 'data-close', 'data-ed',
     'data-mopen', 'data-mview', 'data-meopen', 'data-msaved', 'data-mskipask', 'data-mskipgo', 'data-mskipno', 'data-mslotdel', 'data-mslotmove', 'data-mholdclose', 'data-maddslot', 'data-mslotpreset', 'data-maddpop', 'data-mtray', 'data-mswapx', 'data-mstep', 'data-mset', 'data-mdel', 'data-mpick', 'data-mtarg', 'data-mlock', 'data-mpin', 'data-mfav', 'data-mtry', 'data-mdot', 'data-medit', 'data-mskip', 'data-msend', 'data-musualdone',
     'data-mtsex', 'data-mtgoal', 'data-mtext', 'data-mtact', 'data-mtprot', 'data-mtedit', 'data-mtmfold', 'data-mtsec', 'data-mtfree', 'data-mtuse', 'data-mtw', 'data-mysync', 'data-mpnew', 'data-mplook', 'data-nf', 'data-nfpick', 'data-nfsize', 'data-nfamt', 'data-scan',
-    'data-mmore', 'data-fppick', 'data-fpmore', 'data-fpstaples', 'data-mfsec', 'data-mfunpin', 'data-mfedit', 'data-mfdel', 'data-mfnew', 'data-mfadd', 'data-mffood', 'data-mfundo', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mwtiles', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd', 'data-hydmodal', 'data-hyd', 'data-hydmg', 'data-hydoz', 'data-mweekfold', 'data-mlog', 'data-mpslot', 'data-mheardundo', 'data-mrowopen', 'data-mpclear'];
+    'data-mmore', 'data-fppick', 'data-fpmore', 'data-fpstaples', 'data-mfsec', 'data-mfunpin', 'data-mfedit', 'data-mfdel', 'data-mfnew', 'data-mfadd', 'data-mffood', 'data-mfundo', 'data-nfcode', 'data-mpmode', 'data-mpshelf', 'data-mpkind', 'data-mpspot', 'data-mweek', 'data-mwtiles', 'data-mfold', 'data-mtrain', 'data-mtdee', 'data-mpfav', 'data-mline', 'data-mchart', 'data-mchartopen', 'data-mchartgo', 'data-mbal', 'data-mfmenu', 'data-mmenu', 'data-mamt', 'data-mswap', 'data-mmove', 'data-mmoveto', 'data-mexplode', 'data-mkeep', 'data-mkdo', 'data-mfood', 'data-mpills', 'data-mtrained', 'data-mgotrain', 'data-mtsync', 'data-mwhy', 'data-mdo', 'data-mallow', 'data-mbatch', 'data-mbsave', 'data-mbforget', 'data-minfo', 'data-mcrng', 'data-mfrom', 'data-mcopy', 'data-mfsadd', 'data-mfsmeal', 'data-mffix', 'data-mffno', 'data-mffsave', 'data-mhyd', 'data-hydmodal', 'data-hyd', 'data-hydmg', 'data-hydoz', 'data-mweekfold', 'data-mlog', 'data-mpslot', 'data-mheardundo', 'data-mrowopen', 'data-mpclear'];
 
   function focusKey(el) {
     if (!el || el === document.body || !el.getAttribute) return null;
@@ -8348,6 +8348,14 @@
         renderModal();
         return;
       }
+      var mgo = e.target.closest('[data-mchartgo]');
+      if (mgo && S.chartOpen) {
+        var gtab = mgo.dataset.mchartgo || 'body';
+        close();
+        goView('train');
+        if (window.Train && window.Train.openProgress) window.Train.openProgress(gtab);
+        return;
+      }
 
       /* A chip flips its own pressed state and refreshes the list. NOT a
          renderModal: that would rebuild the sheet, and the sheet now holds
@@ -10419,6 +10427,13 @@
        was adding to Sep 30 while the card went on saying nothing planned. */
     go: function (v) { if (v === 'macros') S.macroDate = null; goView(v); },
     openHub: function () { goView('train'); if (window.Train && window.Train.openHub) window.Train.openHub(); },
+    openTrends: function (which) {
+      rememberOpener();
+      S.chartWhich = which || 'weight';
+      S.chartOpen = true;
+      pushSheet({ m: 1 });
+      renderModal();
+    },
     open: function (id) { rememberOpener(); openRecipe(idOf(id)); },
     swap: function (id, day) { planSwap(idOf(id), day); },
     planWeek: function () { goView('plan'); pwOpen(); },

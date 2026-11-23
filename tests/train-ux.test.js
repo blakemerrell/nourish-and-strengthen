@@ -229,42 +229,48 @@ module.exports = {
       p2.c1PillClearedOnNextSet && p2.infoHidden && p2.infoShownAgain && p2.finishPromptsAllThree,
       JSON.stringify(p2));
 
-    // Pillar 3: Unified Progress tab
+    // Pillar 3: Unified 4-lens Progress Hub
     const p3 = await p.evaluate(() => {
       const _ = window.Train._, st = _.state();
       st.S.sub = 'progress';
+      st.S.pgTab = 'overview';
       st.S.rvSpan = 'week';
       _.draw();
       const mapOnWeek = !!document.querySelector('#view-train .tr-hm-card');
-      const phdOnWeek = document.querySelectorAll('#view-train .tr-pg-wk').length === 4;
-      const collapsedWeekHasL0 = document.querySelectorAll('#view-train .tr-pg-wk .tr-pg-l0').length === 4;
-
-      st.S.rvSpan = 'block';
-      _.draw();
-      const mapOnBlock = !!document.querySelector('#view-train .tr-hm-card');
-      const phdOnBlock = document.querySelectorAll('#view-train .tr-pg').length === 4;
-
-      st.S.rvSpan = 'all';
-      _.draw();
-      const mapOnAll = !!document.querySelector('#view-train .tr-hm-card');
-      const phdOnAll = document.querySelectorAll('#view-train .tr-pg').length === 4;
+      const dirOnOverview = document.querySelectorAll('#view-train .tr-pg-dirb').length === 3 &&
+        document.querySelectorAll('#view-train .tr-pg').length === 0 &&
+        !document.querySelector('#view-train [data-t="pgexpall"]');
 
       const hasStrModeBtn = !!document.querySelector('#view-train [data-t="hmmode"][data-v="str"]');
       document.querySelector('#view-train [data-t="hmmode"][data-v="str"]').click();
       const strModeActive = st.S.hmMode === 'str' && !!document.querySelector('#view-train .tr-hm-card');
 
+      document.querySelector('#view-train [data-t="pgtab"][data-v="body"]').click();
+      const bodyCards = [...document.querySelectorAll('#view-train .tr-pg')].map((c) => c.dataset.pg).join(',');
+      const hasTrendsCard = document.querySelectorAll('#view-train .tr-pg-tbtn').length === 5;
       const hasPgTog = !!document.querySelector('#view-train [data-t="pgtog"][data-v="on-pace"]');
       document.querySelector('#view-train [data-t="pgtog"][data-v="on-pace"]').click();
       const paceCollapsed = !!document.querySelector('#view-train [data-pg="on-pace"] .tr-pg-body.is-collapsed') &&
         !!document.querySelector('#view-train [data-pg="on-pace"] .tr-pg-l0');
-      document.querySelector('#view-train [data-t="pgexpall"]').click();
-      const paceExpandedAll = !document.querySelector('#view-train [data-pg="on-pace"] .tr-pg-body.is-collapsed');
+      document.querySelector('#view-train [data-t="pgtog"][data-v="on-pace"]').click();
+      const paceExpanded = !document.querySelector('#view-train [data-pg="on-pace"] .tr-pg-body.is-collapsed');
 
-      return { mapOnWeek, phdOnWeek, collapsedWeekHasL0, mapOnBlock, phdOnBlock, mapOnAll, phdOnAll, hasStrModeBtn, strModeActive, hasPgTog, paceCollapsed, paceExpandedAll };
+      document.querySelector('#view-train [data-t="pgtab"][data-v="lab"]').click();
+      const labCards = [...document.querySelectorAll('#view-train .tr-pg')].map((c) => c.dataset.pg).join(',');
+      document.querySelector('#view-train [data-t="pgtog"][data-v="muscles"]').click();
+      const musclesCollapsed = !!document.querySelector('#view-train [data-pg="muscles"] .tr-pg-body.is-collapsed') &&
+        !!document.querySelector('#view-train [data-pg="muscles"] .tr-pg-l0');
+
+      document.querySelector('#view-train [data-t="rvspan"][data-v="block"]').click();
+      const blockLabOk = st.S.rvSpan === 'block' && document.querySelectorAll('#view-train .tr-pg').length === 2;
+
+      return { mapOnWeek, dirOnOverview, hasStrModeBtn, strModeActive, bodyCards, hasTrendsCard, hasPgTog, paceCollapsed, paceExpanded, labCards, musclesCollapsed, blockLabOk };
     });
-    t.ok('Pillar 3 (Unified Progress): Front/Back body map across week/block/all, 3-way coloring mode (sets/rec/str), and collapsible PhD Analytics Lab cards with L0 executive takeaway',
-      p3.mapOnWeek && p3.phdOnWeek && p3.collapsedWeekHasL0 && p3.mapOnBlock && p3.phdOnBlock && p3.mapOnAll && p3.phdOnAll &&
-      p3.hasStrModeBtn && p3.strModeActive && p3.hasPgTog && p3.paceCollapsed && p3.paceExpandedAll,
+    t.ok('Pillar 3 (Unified Progress): 4-lens Hub (Overview · Body · Recovery · Lab), calm Overview directory, Body & Lab cards collapsible with L0 takeaway',
+      p3.mapOnWeek && p3.dirOnOverview && p3.hasStrModeBtn && p3.strModeActive &&
+      p3.bodyCards === 'on-pace,keeping-muscle' && p3.hasTrendsCard && p3.hasPgTog &&
+      p3.paceCollapsed && p3.paceExpanded && p3.labCards === 'what-helps-your-lifts,muscles' &&
+      p3.musclesCollapsed && p3.blockLabOk,
       JSON.stringify(p3));
 
     // Pillar 4: History tab & Lift Sheet + mc-ohp fix + >=13px font size check

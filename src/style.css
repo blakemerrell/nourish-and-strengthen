@@ -10316,6 +10316,27 @@ button.tr-mus-row { width: 100%; min-height: 44px; border: 0; border-bottom: 1px
   background: var(--paper-soft); font: inherit; font-size: 0.8125rem; font-weight: 600;
   color: var(--muted); cursor: pointer;
 }
+.tr-pg-tabs { display: flex; width: 100%; margin: 0 0 8px; }
+#view-train .tr-pg-tabs button {
+  flex: 1 1 auto; min-height: 44px; padding: 6px 6px; font-size: 0.8125rem; white-space: nowrap; text-align: center;
+}
+.tr-pg-deep { margin-bottom: 0; }
+.tr-pg-dir { display: flex; flex-direction: column; gap: 0; }
+.tr-pg-dir .tr-eyebrow { margin-bottom: 6px; }
+.tr-pg-dirb {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 52px;
+  padding: 10px 6px; border: 0; border-top: 1px solid var(--line-soft); background: none; text-align: left;
+  cursor: pointer; font: inherit; color: var(--ink); border-radius: 0;
+}
+.tr-pg-dirb:hover, .tr-pg-dirb:focus-visible { background: var(--hint); border-radius: 8px; }
+.tr-pg-dirt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tr-pg-dirt b { font-size: 0.9375rem; font-weight: 600; color: var(--ink); }
+.tr-pg-dirt small { font-size: 0.8125rem; color: var(--muted); line-height: 1.35; }
+.tr-pg-dira { flex: none; color: var(--label); font-size: 1.125rem; line-height: 1; }
+.tr-pg-tbtns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.tr-pg-tbtn { min-height: 44px; padding: 6px 12px; font-size: 0.8125rem; }
+.mc-foot-link { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line-soft); text-align: right; }
+.mc-foot-link button { min-height: 44px; font-size: 0.8125rem; }
 
 /* Pillar 4: History 2-Column Session Table, Lift Cards & Lift Sheet Controls */
 .tr-h-table { margin-top: 8px; border-top: 1px solid var(--line-soft); padding-top: 6px; }

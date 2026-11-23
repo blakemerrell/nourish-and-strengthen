@@ -4585,7 +4585,8 @@
       } catch (e) { return 'block'; }
     })(),
     qz: null,             // the quiz, while it is being answered; see quiz()
-    // Review's span, kept: This week, This block or All time (progressHTML)
+    // Review's lens & span, kept: This week, This block or All time (reviewHTML)
+    pgTab: 'overview',
     rvSpan: (function () { try { var v = localStorage.getItem('bsc.trainSpan'); return v === 'block' || v === 'all' ? v : 'week'; } catch (e) { return 'week'; } })(),
     rvDeep: false,        // The math, rather than Simple, on the longer spans
     lib: false,           // the whole library, rather than the picks
@@ -9146,6 +9147,13 @@
    * card that compares two kinds of day refuses to say anything until each
    * kind has at least three sessions behind it. */
   var PG_MIN = 3;
+  function pgTabSeg() {
+    var tab = S.pgTab || 'overview';
+    return '<div class="seg tr-pg-tabs" role="group" aria-label="Progress sections">' +
+      [['overview', 'Overview'], ['body', 'Body'], ['recovery', 'Recovery'], ['lab', 'Lab']].map(function (o) {
+        return '<button type="button" data-t="pgtab" data-v="' + o[0] + '" aria-pressed="' + (tab === o[0]) + '">' + o[1] + '</button>';
+      }).join('') + '</div>';
+  }
   function pgSpanSeg() {
     var sp = S.rvSpan || 'week';
     return '<div class="seg tr-pg-seg" role="group" aria-label="How far back">' +
@@ -9293,9 +9301,8 @@
   }
 
   function pgCard(eye, body, math, D) {
-    var isWk = D && D.span === 'week';
     var key = String(eye).toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    var open = S.pgOpen && S.pgOpen[key] !== undefined ? !!S.pgOpen[key] : !isWk;
+    var open = S.pgOpen && S.pgOpen[key] !== undefined ? !!S.pgOpen[key] : true;
     var hasViz = /<svg|tr-hl-row|tr-hm-svg/.test(body);
     var badge = (!hasViz && /tr-pg-wait/.test(body)) ? 'Collecting'
       : /slipped|both going <b>down<\/b>|Weaker ones came/.test(body) ? 'Review' : 'Active';
@@ -9313,7 +9320,7 @@
     var stats = S.rvDeep && math ? '<div class="tr-pg-stats">' + math.map(function (m) {
       return '<div><small>' + esc(m[0]) + '</small><b>' + esc(m[1]) + '</b>' + (m[2] ? '<small>' + esc(m[2]) + '</small>' : '') + '</div>';
     }).join('') + '</div>' : '';
-    return '<div class="tr-card ' + (isWk ? 'tr-pg-wk' : 'tr-pg') + (open ? ' is-open' : ' is-shut') + '" data-pg="' + esc(key) + '">' +
+    return '<div class="tr-card tr-pg' + (open ? ' is-open' : ' is-shut') + '" data-pg="' + esc(key) + '">' +
       '<div class="tr-pg-hbar">' +
         '<div class="tr-eyebrow">' + eye + '</div>' +
         '<div class="tr-pg-hacts tr-pg-hright">' +
@@ -9709,25 +9716,91 @@
       '<p class="tr-pg-wait">From ' + nUsed + ' workout' + (nUsed === 1 ? '' : 's') + '. “Too early” means fewer than ' + PG_MIN + ' workouts on one side, or a gap still small next to how much workouts vary. These went together; they don’t prove cause.</p>', math, D);
   }
 
-  function progressHTML(span) {
-    var D = pgData(span);
-    var head = D.span === 'block' || D.span === 'week'
-      ? (D.ms ? esc(D.ms.n || 'This block') + ' · since ' + esc(pgDate(D.from)) : 'No block running · the last six weeks')
+  function pgHeadText(D) {
+    return D.span === 'block' || D.span === 'week'
+      ? (D.ms ? esc(D.ms.n || 'This block') + ' \u00b7 since ' + esc(pgDate(D.from)) : 'No block running \u00b7 the last six weeks')
       : 'Since ' + esc(pgDate(D.from));
-    var pgKeys = ['on-pace', 'keeping-muscle', 'muscles', 'what-helps-your-lifts'];
-    var allOpen = pgKeys.every(function (k) {
-      return S.pgOpen && S.pgOpen[k] !== undefined ? !!S.pgOpen[k] : span !== 'week';
-    });
+  }
+  function pgMathToggleHTML(D) {
     return '<div class="tr-pg-labhead">' +
-        '<div class="seg tr-pg-seg" role="group" aria-label="How much to show">' +
-          '<button data-t="rvdeep" data-v="0" aria-pressed="' + !S.rvDeep + '">Simple</button>' +
-          '<button data-t="rvdeep" data-v="1" aria-pressed="' + !!S.rvDeep + '">The math</button></div>' +
-        '<button type="button" class="ghost tr-pg-expall" data-t="pgexpall" aria-expanded="' + allOpen + '">' + (allOpen ? 'Collapse All PhD Charts' : 'Expand All PhD Charts') + '</button>' +
+        '<div class="seg tr-pg-seg tr-pg-deep" role="group" aria-label="How much to show">' +
+          '<button type="button" data-t="rvdeep" data-v="0" aria-pressed="' + !S.rvDeep + '">Simple</button>' +
+          '<button type="button" data-t="rvdeep" data-v="1" aria-pressed="' + !!S.rvDeep + '">The math</button></div>' +
       '</div>' +
-      '<p class="tr-pg-head">' + head + '</p>' +
-      pgReadinessHTML(D) +
-      hcBiometricsHubHTML(D) +
-      pgPace(D) + pgMuscle(D) + pgMuscles(D) + pgHelps(D);
+      '<p class="tr-pg-head">' + pgHeadText(D) + '</p>';
+  }
+  function pgTrendsCardHTML() {
+    var items = [
+      ['weight', 'Weight trend'],
+      ['rate', 'Weekly rate'],
+      ['jump', 'Overnight salt'],
+      ['recomp', 'Recomp & photos'],
+      ['off', 'Vs plan']
+    ];
+    return '<div class="tr-card tr-pg-trends">' +
+      '<div class="tr-eyebrow">Scale &amp; body charts</div>' +
+      '<p class="tr-pg-say" style="margin-top:0">Open process-control charts for weight, weekly rate, salt spikes, recomposition, and plan pace.</p>' +
+      '<div class="tr-pg-tbtns">' + items.map(function (it) {
+        return '<button type="button" class="ghost tr-pg-tbtn" data-t="opentrends" data-v="' + it[0] + '">' + it[1] + '</button>';
+      }).join('') + '</div>' +
+    '</div>';
+  }
+  function pgDirectoryHTML(D) {
+    var ws = (D.days || []).filter(function (d) { return d.w > 0; });
+    var u = T.pr.u === 'kg' ? 'kg' : 'lb';
+    var bodySay = 'Goal pace, muscle retention & scale charts';
+    if (ws.length >= 2) {
+      var now = ws[ws.length - 1].w;
+      var shown = Math.round((u === 'kg' ? now / 2.20462 : now) * 10) / 10;
+      if (D.goalLb && ws[0].w > D.goalLb) {
+        var pct = Math.max(0, Math.min(100, Math.round((ws[0].w - now) / (ws[0].w - D.goalLb) * 100)));
+        bodySay = pct + '% to ' + D.goalLb + ' lb \u00b7 ' + fmtN(shown) + ' ' + u + ' now';
+      } else {
+        bodySay = 'Latest ' + fmtN(shown) + ' ' + u + ' \u00b7 Pace, muscle retention & scale charts';
+      }
+    }
+    var hd = typeof window !== 'undefined' && window.HealthData;
+    var hInfo = hd && hd.spanInfo ? hd.spanInfo() : { days: 0 };
+    var slDays = (D.days || []).filter(function (d) { return fin(d.sl); });
+    var recSay = hInfo.days
+      ? hInfo.days + 'd watch vitals, readiness & sleep'
+      : slDays.length
+      ? slDays[slDays.length - 1].sl.toFixed(1) + 'h last sleep \u00b7 Readiness & watch vitals'
+      : 'Readiness, sleep & watch biometrics';
+    var labSay = D.wos && D.wos.length >= 2
+      ? D.wos.length + ' workouts \u00b7 Habit correlations & muscle growth'
+      : 'What helps your lifts, muscle growth & math';
+    var rows = [
+      ['body', 'Body & weight', bodySay],
+      ['recovery', 'Recovery & watch', recSay],
+      ['lab', 'Strength & habits lab', labSay]
+    ];
+    return '<div class="tr-card tr-pg-dir">' +
+      '<div class="tr-eyebrow">Insights &amp; charts</div>' +
+      rows.map(function (rw) {
+        return '<button type="button" class="tr-pg-dirb" data-t="pgtab" data-v="' + rw[0] + '">' +
+          '<span class="tr-pg-dirt"><b>' + rw[1] + '</b><small>' + esc(rw[2]) + '</small></span>' +
+          '<span class="tr-pg-dira" aria-hidden="true">\u203a</span>' +
+        '</button>';
+      }).join('') +
+    '</div>';
+  }
+  function progressBodyHTML(sp) {
+    var D = pgData(sp);
+    return pgMathToggleHTML(D) + pgPace(D) + pgMuscle(D) + pgTrendsCardHTML();
+  }
+  function progressRecoveryHTML(sp) {
+    var D = pgData(sp);
+    var rd = pgReadinessHTML(D), hc = hcBiometricsHubHTML(D);
+    var empty = !rd && !hc
+      ? '<div class="tr-card tr-pg-empty"><div class="tr-eyebrow">Recovery &amp; watch</div>' +
+          '<p class="tr-pg-wait">Log morning sleep in Today or connect Health Connect to see readiness, HRV, resting heart rate, and watch workouts here.</p></div>'
+      : '';
+    return '<p class="tr-pg-head">' + pgHeadText(D) + '</p>' + rd + hc + empty + checksAndRefsHTML(review());
+  }
+  function progressLabHTML(sp) {
+    var D = pgData(sp);
+    return pgMathToggleHTML(D) + pgHelps(D) + pgMuscles(D) + refsDetailsHTML();
   }
 
   /* The week's lit body, small, on the Workout tab: the motivator stays in
@@ -9763,21 +9836,35 @@
     return bits.length ? bits.join(' \u00b7 ') : 'this week, from your hard sets';
   }
   function snapshotAndHubHTML(ms, nx) {
-    return '<section class="tr-snapshot-card" id="trSnapshotCard" aria-label="Block review and biometrics">' +
-      '<div class="tr-snap-head"><span class="tr-eyebrow">Progress &amp; Biometrics</span></div>' +
+    return '<section class="tr-snapshot-card" id="trSnapshotCard" aria-label="Progress and insights">' +
+      '<div class="tr-snap-head"><span class="tr-eyebrow">Progress &amp; Insights</span></div>' +
       reviewHTML() +
     '</section>';
   }
 
   function reviewHTML() {
-    if (S.rvSpan === 'block' || S.rvSpan === 'all') return pgSpanSeg() + muscleMapCard(review()) + progressHTML(S.rvSpan);
-    return pgSpanSeg() + reviewWeekHTML();
+    var sp = S.rvSpan || 'week';
+    var tab = S.pgTab || 'overview';
+    var nav = pgTabSeg() + pgSpanSeg();
+    if (tab === 'body') return nav + progressBodyHTML(sp);
+    if (tab === 'recovery') return nav + progressRecoveryHTML(sp);
+    if (tab === 'lab') return nav + progressLabHTML(sp);
+    return nav + (sp === 'week' ? reviewWeekHTML() : reviewSpanOverviewHTML(sp));
   }
-  function reviewWeekHTML() {
-    var r = review();
-    var done = S.flash2 ? '<div class="tr-note tr-flash2" role="status">' + esc(S.flash2) + '</div>' : '';
-    S.flash2 = '';
-    var html = done + weekCard() + muscleMapCard(r) + progressHTML('week');
+  function reviewSpanOverviewHTML(sp) {
+    var D = pgData(sp);
+    return '<p class="tr-pg-head">' + pgHeadText(D) + '</p>' + muscleMapCard(review()) + pgDirectoryHTML(D);
+  }
+  function refsDetailsHTML() {
+    return '<details class="tr-how" id="trRefs"><summary>Where the numbers come from</summary>' +
+      '<dl class="tr-refs">' + Object.keys(REFS).map(function (k) {
+        return '<dt id="tr-ref-' + k + '">' + esc(REFS[k][0]) + '</dt>' +
+          '<dd><i>' + esc(REFS[k][1]) + '</i><br>' + esc(REFS[k][2]) + '</dd>';
+      }).join('') + '</dl>' +
+      '<p class="tr-fine">What this cannot do: it counts direct sets only, the way the landmarks are written; it cannot see reps to spare; and it knows nothing about your sleep, food or stress, which move recovery more than any of this. The research gives ranges and trends across groups of people, not a prescription for one.</p>' +
+    '</details>';
+  }
+  function checksAndRefsHTML(r) {
     var ckOpen = S.ck || {};
     var ordered = r.checks.slice().sort(function (a, b) {
       var rank = { look: 0, info: 1, good: 2 };
@@ -9799,7 +9886,7 @@
     };
     var looks = ordered.filter(function (c) { return c.st === 'look'; });
     var rest = ordered.filter(function (c) { return c.st !== 'look'; });
-    html += looks.map(function (c) { return ckRow(c, true); }).join('');
+    var html = looks.map(function (c) { return ckRow(c, true); }).join('');
     if (rest.length === 1 && !looks.length) {
       html += ckRow(rest[0], true);
     } else if (rest.length) {
@@ -9808,14 +9895,13 @@
         rest.map(function (c) { return ckRow(c, false); }).join('') +
       '</div>';
     }
-    html += '<details class="tr-how" id="trRefs"><summary>Where the numbers come from</summary>' +
-      '<dl class="tr-refs">' + Object.keys(REFS).map(function (k) {
-        return '<dt id="tr-ref-' + k + '">' + esc(REFS[k][0]) + '</dt>' +
-          '<dd><i>' + esc(REFS[k][1]) + '</i><br>' + esc(REFS[k][2]) + '</dd>';
-      }).join('') + '</dl>' +
-      '<p class="tr-fine">What this cannot do: it counts direct sets only, the way the landmarks are written; it cannot see reps to spare; and it knows nothing about your sleep, food or stress, which move recovery more than any of this. The research gives ranges and trends across groups of people, not a prescription for one.</p>' +
-    '</details>';
-    return html;
+    return html + refsDetailsHTML();
+  }
+  function reviewWeekHTML() {
+    var r = review();
+    var done = S.flash2 ? '<div class="tr-note tr-flash2" role="status">' + esc(S.flash2) + '</div>' : '';
+    S.flash2 = '';
+    return done + weekCard() + muscleMapCard(r) + pgDirectoryHTML(pgData('week')) + checksAndRefsHTML(r);
   }
 
   /* ---------------------------------------------------------------- sheets
@@ -11919,6 +12005,7 @@
     var v = $('view-train'), tab = document.querySelector('.tab[data-view="train"]');
     if (v && v.classList.contains('hide') && tab) tab.click();
     S.rvSpan = 'week';
+    S.pgTab = 'overview';
     S.browse = false;
     S.qz = null;
     S.sub = 'progress';
@@ -11933,6 +12020,21 @@
     var v = $('view-train'), tab = document.querySelector('.tab[data-view="train"]');
     if (v && v.classList.contains('hide') && tab) tab.click();
     S.rvSpan = 'block';
+    S.pgTab = 'recovery';
+    S.browse = false;
+    S.qz = null;
+    S.sub = 'progress';
+    if (LIVE) S.minim = 1;
+    try { localStorage.setItem(LS_SUB, 'progress'); } catch (e) { /* private mode */ }
+    draw();
+    var el = $('trSnapshotCard');
+    if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else scrollTop();
+  }
+  function openProgress(tab) {
+    var v = $('view-train'), tb = document.querySelector('.tab[data-view="train"]');
+    if (v && v.classList.contains('hide') && tb) tb.click();
+    S.pgTab = ['overview', 'body', 'recovery', 'lab'].indexOf(tab) >= 0 ? tab : 'overview';
     S.browse = false;
     S.qz = null;
     S.sub = 'progress';
@@ -13190,16 +13292,18 @@
     if (t === 'hmmode') { S.hmMode = v === 'rec' ? 'rec' : v === 'str' ? 'str' : 'sets'; draw(); return; }
     if (t === 'pgtog') {
       S.pgOpen = S.pgOpen || {};
-      var curPgOpen = S.pgOpen[v] !== undefined ? !!S.pgOpen[v] : (S.rvSpan === 'block' || S.rvSpan === 'all');
+      var curPgOpen = S.pgOpen[v] !== undefined ? !!S.pgOpen[v] : true;
       S.pgOpen[v] = !curPgOpen;
       draw(); return;
     }
-    if (t === 'pgexpall') {
-      S.pgOpen = S.pgOpen || {};
-      var pgKs = ['on-pace', 'keeping-muscle', 'muscles', 'what-helps-your-lifts'];
-      var allPgNow = pgKs.every(function (k) { return S.pgOpen[k] !== undefined ? !!S.pgOpen[k] : (S.rvSpan === 'block' || S.rvSpan === 'all'); });
-      pgKs.forEach(function (k) { S.pgOpen[k] = !allPgNow; });
+    if (t === 'pgtab') {
+      S.pgTab = ['overview', 'body', 'recovery', 'lab'].indexOf(v) >= 0 ? v : 'overview';
       draw(); return;
+    }
+    if (t === 'opentrends') {
+      var oh = hive();
+      if (oh && oh.openTrends) oh.openTrends(v || 'weight');
+      return;
     }
     // a muscle tapped, on the figure or in the list
     if (t === 'musopen' && MUS[v]) { openSheet({ k: 'mus', m: v, title: MUS[v].n, eyebrow: MUS[v].n }); return; }
@@ -14274,6 +14378,7 @@
     // the weekly check-in, for Nourish's morning card
     openCheckin: openCheckin,
     openHub: openHub,
+    openProgress: openProgress,
     dayText: dayText,
     /* The workouts saved on a day, by name — Nourish ticks "Trained today"
        off this, so a session logged here moves the day's carbohydrate there. */

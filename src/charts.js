@@ -443,6 +443,7 @@
           '</div>' +
           mcTabsHTML() +
           mcRecompHTML() +
+          '<div class="mc-foot-link"><button type="button" class="nut-ask" data-mchartgo="body">Open Progress &amp; Lab in Train \u203a</button></div>' +
         '</div></div>';
     }
     var full = mcSeries(S.chartWhich);
@@ -468,6 +469,7 @@
         }).join('') + mInfoBtn('mc-' + S.chartWhich, 'What this chart shows') + '</div>' +
           mInfoText('mc-' + S.chartWhich, why, 'mc-note')) +
         body +
+        '<div class="mc-foot-link"><button type="button" class="nut-ask" data-mchartgo="body">Open Progress &amp; Lab in Train \u203a</button></div>' +
       '</div></div>';
   }
 

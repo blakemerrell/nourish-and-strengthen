@@ -353,19 +353,24 @@
       '<div class="td-meter ' + cls + '" role="meter" aria-label="' + name + '" aria-valuemin="0" aria-valuemax="' + Math.round(want) +
       '" aria-valuenow="' + Math.round(have) + '"><i style="width:' + pct + '%"></i></div></div>';
   }
-  function dualRingSVG(e) {
-    var kPct = e.kcal.want > 0 ? Math.max(0, Math.min(1, e.kcal.have / e.kcal.want)) : 0;
-    var pPct = e.p.want > 0 ? Math.max(0, Math.min(1, e.p.have / e.p.want)) : 0;
-    var c1 = 2 * Math.PI * 36, c2 = 2 * Math.PI * 26;
-    var o1 = (c1 * (1 - kPct)).toFixed(1), o2 = (c2 * (1 - pPct)).toFixed(1);
-    return '<svg class="td-dual-ring" viewBox="0 0 88 88" role="img" aria-label="Calorie and protein progress ring">' +
-      '<circle class="td-dr-bg" cx="44" cy="44" r="36" stroke-width="6.5"/>' +
-      '<circle class="td-dr-kcal" cx="44" cy="44" r="36" stroke-width="6.5" stroke-dasharray="' + c1.toFixed(1) + '" stroke-dashoffset="' + o1 + '" transform="rotate(-90 44 44)"/>' +
-      '<circle class="td-dr-bg" cx="44" cy="44" r="26" stroke-width="6"/>' +
-      '<circle class="td-dr-p" cx="44" cy="44" r="26" stroke-width="6" stroke-dasharray="' + c2.toFixed(1) + '" stroke-dashoffset="' + o2 + '" transform="rotate(-90 44 44)"/>' +
-      '<text x="44" y="42" text-anchor="middle" class="td-dr-pct">' + Math.round(kPct * 100) + '%</text>' +
-      '<text x="44" y="54" text-anchor="middle" class="td-dr-sub">' + Math.round(e.p.have) + 'g P</text>' +
-    '</svg>';
+  function eatPill(m, lbl, cls, have, want, unit) {
+    var pct = want > 0 ? Math.max(0, Math.min(100, have * 100 / want)) : 0;
+    var sl = m === 'kcal' ? Math.max(25, want * 0.08) : Math.max(5, want * 0.08);
+    var st = m !== 'p' && have > want + sl ? 'over' : have >= want - sl && want > 0 ? 'on' : '';
+    var name = m === 'kcal' ? 'Calories' : m === 'p' ? 'Protein' : m === 'f' ? 'Fat' : 'Carbs';
+    return '<span class="mcap td-mcap ' + st + '" data-macro="' + m + '" data-want="' + Math.round(want) + '" role="meter" aria-label="' + name + '" aria-valuemin="0" aria-valuemax="' + Math.round(want) + '" aria-valuenow="' + Math.round(have) + '">' +
+      '<span class="mcap-fl" style="width:' + pct.toFixed(1) + '%"></span>' +
+      '<span class="mcap-t num"><i class="' + cls + '">' + lbl + '</i>' + fmt(have) + '<em>/' + fmt(want) + (unit || '') + '</em></span></span>';
+  }
+  function eatPillsHTML(e) {
+    var k = eatPill('kcal', '\uD83D\uDD25', '', e.kcal.have, e.kcal.want, '');
+    var p = eatPill('p', 'P', 'mb-p', e.p.have, e.p.want, 'g');
+    var f = e.f ? eatPill('f', 'F', 'mb-f', e.f.have, e.f.want, 'g') : '';
+    var c = e.c ? eatPill('c', 'C', 'mb-c', e.c.have, e.c.want, 'g') : '';
+    return '<div class="mcaps td-caps" role="group" aria-label="Today\u2019s calories and macros">' +
+      '<span class="mcaps-two">' + k + p + '</span>' +
+      (f || c ? '<span class="mcaps-two">' + f + c + '</span>' : '') +
+    '</div>';
   }
   /* A meal on Today: a circle to tick it eaten, what it is, its calories.
      Eaten ones fold into one green line; the rest stay open. */
@@ -406,12 +411,7 @@
     var curLine = '<p class="td-eat-cur"><span>' + fmt(e.kcal.have) + ' / ' + fmt(e.kcal.want) + ' kcal</span>' +
       ' <span aria-hidden="true">\u00b7</span> ' +
       '<span><b>' + fmt(Math.abs(pLeft)) + ' g</b> protein ' + (pLeft >= 0 ? 'to go' : 'over') + '</span></p>';
-    var hero = '<div class="td-eat-hero">' + dualRingSVG(e) + '<div class="td-eat-hero-r">' + big + curLine + '</div></div>';
-    /* The day's three macros as meters under the ring. Calories were said
-       three times (the number left, the ring, and a bar), and protein twice;
-       the ring and the number say calories, and these say the rest. */
-    var bars = '<div class="td-mbars">' + bar('Protein', e.p.have, e.p.want, ' g', 'td-p') +
-      (e.c ? bar('Carbs', e.c.have, e.c.want, ' g', 'td-c') : '') + (e.f ? bar('Fat', e.f.have, e.f.want, ' g', 'td-f') : '') + '</div>';
+    var hero = '<div class="td-eat-nums">' + big + curLine + '</div>' + eatPillsHTML(e);
     var w = e.water;
     var wStrip = w ? '<div class="td-water"><span class="td-water-l">💧 <b>' + fmt(w.have) + '</b> / ' + fmt(w.want) + ' oz' +
       (w.caf > 0 ? ' <small>· ' + fmt(w.caf) + ' mg caf</small>' : '') + '</span>' +
@@ -424,12 +424,12 @@
     if (!meals.some(function (m) { return !m.empty; })) {
       return card('eating', 'Eating', hero + title('Nothing planned yet') +
         note('Fill it from the recipes to your numbers, or add what you eat as you go.') +
-        bars + wStrip + acts(btn(main, 'fill', 'Fill my day') + btn(false, 'addfood', '+ Log food') + quiet('eatout', 'Eating out')), '', 'macros');
+        wStrip + acts(btn(main, 'fill', 'Fill my day') + btn(false, 'addfood', '+ Log food') + quiet('eatout', 'Eating out')), '', 'macros');
     }
     var eaten = meals.filter(function (m) { return m.eaten; }), open = meals.filter(function (m) { return !m.eaten && !m.empty; });
     return card('eating', 'Eating', hero + (eaten.length ? eatenLine(eaten) : '') +
       (open.length ? '<div class="td-meals">' + open.map(function (m, i) { return mealRow(m, i === 0, e.key); }).join('') + '</div>' : '') +
-      bars + wStrip + acts(btn(main && !hasStart, 'addfood', '+ Log food') + quiet('eatout', 'Eating out')), '', 'macros');
+      wStrip + acts(btn(main && !hasStart, 'addfood', '+ Log food') + quiet('eatout', 'Eating out')), '', 'macros');
   }
 
   // ---------------------------------------------------------------- workout

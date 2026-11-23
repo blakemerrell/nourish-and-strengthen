@@ -434,29 +434,17 @@ module.exports = nourish({
     await ccPg.click('.tab[data-view="macros"]');
     await ccPg.waitForTimeout(400);
     const cc = await ccPg.evaluate(() => {
-      const el = document.querySelector('.mcasc');
-      if (!el) return null;
-      const head = (el.querySelector('.mcasc-t') || {}).textContent || '';
-      const miss = Number((head.match(/(\d+) (under|over)/) || [])[1]);
-      const rows = [...el.querySelectorAll('.mcasc-row[aria-checked="true"]')].map((r) => {
-        const w = (r.querySelector('.mcasc-was') || {}).textContent || '';
-        const was = Number(w.split('\u2192')[0].trim()), now = Number(w.split('\u2192')[1].trim());
-        const dTxt = (r.querySelector('.mcasc-d') || {}).textContent || '';
-        return { was, now, sign: dTxt.charAt(0), d: Number(dTxt.replace(/[^\d]/g, '')) };
+      const asks = {};
+      document.querySelectorAll('#macroSlots .mtray[data-mslot]').forEach((tr) => {
+        const k = tr.dataset.mslot;
+        const aim = tr.querySelector('.mtray-aim');
+        const cap = tr.querySelector('.mtray-caps .mcap[data-want]');
+        asks[k] = aim ? Number(aim.textContent.replace(/\D/g, '')) : (cap ? Number(cap.dataset.want) : 0);
       });
-      return { head, miss, rows };
+      return { casc: !!document.querySelector('.mcasc'), asks };
     });
-    t.ok('the cascade card appears under a lunch that finished light',
-      !!cc && /under/.test(cc.head) && cc.rows.length > 0, JSON.stringify(cc));
-    /* Within a few calories of rounding, and only when nothing is capped —
-       a capped meal cannot take its full part, and the landing line says so. */
-    t.ok('and its rows add up to the miss the heading names',
-      !!cc && Math.abs(cc.rows.reduce((a, r) => a + r.d, 0) - cc.miss) <= cc.rows.length + 1,
-      !!cc && cc.rows.map((r) => r.d).join(' + ') + ' vs ' + cc.miss);
-    t.ok('and every sign points the way its own arrow does',
-      !!cc && cc.rows.every((r) => (r.now > r.was && r.sign === '+') ||
-        (r.now < r.was && r.sign === '\u2212') || r.now === r.was),
-      !!cc && JSON.stringify(cc.rows));
+    t.ok('no .mcasc chooser appears under a finished meal while Dinner & Evening Snack automatically absorb the day proportionally',
+      !cc.casc && cc.asks.d > cc.asks.e && Math.abs(cc.asks.d / cc.asks.e - 3) < 0.05, JSON.stringify(cc));
     await ccPg.context().close();
 
     { /* own scope: run(t) is one function and its names are spoken for */

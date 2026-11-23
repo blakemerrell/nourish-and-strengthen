@@ -78,7 +78,7 @@ module.exports = {
       day.bar.join() === 'macroFill' && day.menuTools.join() === 'macroRebal,macroSweep,macroAddMeal', JSON.stringify(day));
 
     /* ---- the sheet ---- */
-    await p.click('[data-mopen="l"]');
+    await p.click('.mtray-ib[data-mopen="l"]');
     await p.waitForTimeout(500);
     /* A meal with food on it opens on its foods, up in the page over the
        search (Blake, 2026-10-08: "the foods that I have in my basket are
@@ -181,7 +181,7 @@ module.exports = {
       await p.evaluate(() => document.querySelector('[data-mopen="l"]').closest('.mtray').classList.contains('done')));
 
     /* ---- adding: one tap, straight onto the meal ---- */
-    await p.click('[data-mopen="d"]');
+    await p.click('.mtray-ib[data-mopen="d"]');
     await p.waitForTimeout(500);
     await openTray(p);
     const n0 = (await mealOf(p, 'd')).length;
@@ -320,7 +320,7 @@ module.exports = {
     await p.waitForTimeout(800);
     await p.click('.tab[data-view="macros"]');
     await p.waitForTimeout(500);
-    await p.click('[data-mopen="d"]');
+    await p.click('.mtray-ib[data-mopen="d"]');
     await p.waitForTimeout(400);
     await openTray(p);
     const wi = (await mealOf(p, 'd')).findIndex((it) => it.id === 'f:whey');
@@ -424,7 +424,7 @@ module.exports = {
     await sp.waitForTimeout(600);
     await sp.click('.tab[data-view="macros"]');
     await sp.waitForTimeout(400);
-    await sp.evaluate(() => document.querySelector('[data-mopen="b"]').click());
+    await sp.evaluate(() => document.querySelector('.mtray-ib[data-mopen="b"]').click());
     await sp.waitForTimeout(400);
     await sp.click('#modalRoot .msh-h [data-mmenu="b"]');
     await sp.waitForTimeout(200);

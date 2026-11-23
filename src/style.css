@@ -7926,7 +7926,9 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   background: var(--card); border: 1px solid var(--line-firm); border-radius: 14px;
   padding: 12px; margin: 8px 0; display: flex; flex-direction: column; gap: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  scroll-margin-bottom: 160px;
 }
+.madd-pop button { scroll-margin-bottom: 160px; }
 .madd-hd { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .madd-hd b { font-size: 0.875rem; color: var(--ink); }
 .madd-x {
@@ -9815,6 +9817,13 @@ button.mhyd-head { cursor: pointer; }
 .td-dr-pct { font: 700 13px/1 var(--sans); fill: var(--ink); }
 .td-dr-sub { font: 600 11px/1 var(--sans); fill: var(--muted); }
 .td-eat-hero-r, .td-eat-nums { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.td-caps { margin: 8px 0 4px; --cap-gap: 6px; }
+.td-caps .mcap { padding: 5px 6px; }
+.td-caps .mcap-t { font-size: 0.8125rem; }
+@media (max-width: 420px) {
+  .td-caps { --cap-gap: 5px; }
+  .td-caps .mcap { padding: 5px 4px; }
+}
 .td-mpills { display: flex; flex-wrap: wrap; gap: 6px; }
 .td-mpill {
   font-size: 0.8125rem; padding: 2px 8px; border-radius: 999px; background: var(--paper-soft);

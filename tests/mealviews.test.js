@@ -77,8 +77,10 @@ module.exports = {
         kcal: kc ? kc.textContent : '',
         kh: kc ? kc.getBoundingClientRect().height : 0 };
     });
-    t.ok('the row is the day\u2019s box, the meal views button and the menu, on one line',
-      head.ids.slice(1).join() === 'macroSum,macroViews,macroMore' && head.oneRow, JSON.stringify(head));
+    t.ok('the row is the day\u2019s box and the menu, on one line, with the fold-all button hidden',
+      head.ids.slice(1).join() === 'macroSum,macroMore' && head.oneRow &&
+        (await p.evaluate(() => !!document.getElementById('macroViews') && document.getElementById('macroViews').hidden)),
+      JSON.stringify(head));
     t.ok('the day\u2019s box holds the calendar date badge and the calories + filling water droplet, a thumb tall, and no box round it',
       sum.holds && /kcal/.test(sum.kcal) && /oz/.test(sum.kcal) && sum.kh >= 44 && sum.h >= 44 &&
         /* no box round it since 2026-10-30 (Blake: "I don't need a box around that") */
@@ -121,57 +123,45 @@ module.exports = {
     t.ok('and the title is for a screen reader at every width, not only on a phone', wideTitle <= 1, wideTitle);
     await wide.context().close();
 
-    /* Two views since 2026-11-06 (Blake: the third "just shows me macros.
-       It's really not that helpful"): a meal's name opens and folds it, and
-       the button beside the menu folds every meal, or opens them all when
-       every one is folded. */
-    let b = await button(p);
-    t.ok('meals all open: the button draws its icon and offers to fold every meal',
-      (await views(p)) === '222' && b.icon && b.say === 'Fold every meal' && b.w >= 44 && b.h >= 44, JSON.stringify(b));
-    await pressViews(p);
-    t.ok('pressed, every meal folds to its rings, and the button offers to open them all',
-      (await views(p)) === '111' && (await button(p)).say === 'Open every meal');
-    await pressViews(p);
-    t.ok('again, every meal opens to its foods', (await views(p)) === '222');
-
-    await p.click('#macroSlots [data-mview="l"]');
-    b = await button(p);
-    const lunchSays = await p.evaluate(() => document.querySelector('#macroSlots [data-mview="l"]').getAttribute('aria-expanded'));
-    t.ok('a meal’s own name folds that meal alone and says so, and the button still offers to fold the rest',
-      (await views(p)) === '212' && lunchSays === 'false' && b.say === 'Fold every meal', JSON.stringify([b, lunchSays]));
-    await pressViews(p);
-    t.ok('pressed with meals in both views, every meal folds', (await views(p)) === '111');
-    await p.click('#macroSlots [data-mview="d"]');
-    t.ok('a name opens its meal again from there', (await views(p)) === '112', await views(p));
-    await p.click('#macroSlots [data-mview="d"]');
-    t.ok('and folds it on the next press: two views, never a third', (await views(p)) === '111', await views(p));
-    await p.click('#macroSlots [data-mview="d"]');
+    /* Populated meals stay permanently open with their macro pills and food rows:
+       no fold-all button, no [data-mview] chevrons, no .mbd circles, and ticking
+       breakfast's last food marks it .done without collapsing the card. */
+    const b = await button(p);
+    const mv = await p.evaluate(() => ({
+      trays: [...document.querySelectorAll('#macroSlots .mtray.filled')].map((c) => c.dataset.mslot + ':' + (c.classList.contains('mv-2') ? '2' : 'other')),
+      mviews: document.querySelectorAll('#macroSlots [data-mview]').length,
+      chevs: document.querySelectorAll('#macroSlots .mtray-chev').length,
+      beads: document.querySelectorAll('#macroSlots .mbd').length,
+    }));
+    t.ok('the fold-every-meal button is hidden and every populated meal stays open with pills (no chevrons or circles)',
+      b.hidden && mv.trays.join() === 'b:2,l:2,d:2' && mv.mviews === 0 && mv.chevs === 0 && mv.beads === 0,
+      JSON.stringify({ b, mv }));
 
     /* Card header keeps only + on open populated meals; Balance and Skip live in the meal sheet. */
     const opened = await p.evaluate(() => {
       const d = document.querySelector('#macroSlots .mtray[data-mslot="d"]');
       return { plus: !!d.querySelector('.mtray-vbs [data-mopen][data-madd]'), bal: !!d.querySelector('[data-mbal]'),
         skip: !!d.querySelector('[data-mskipask]'), quiet: document.querySelectorAll('#macroSlots .mfl-q').length,
-        chev: !!d.querySelector('.mtray-hd .mtray-chev') };
+        mopenHd: !!d.querySelector('.mtray-hd[data-mopen="d"]') };
     });
-    t.ok('an open meal has +, a chevron on its name, no card-level ⚖ or ⊘, and no line of numbers under its shut foods',
-      opened.plus && !opened.bal && !opened.skip && opened.quiet === 0 && opened.chev, JSON.stringify(opened));
+    t.ok('an open meal has +, a name button that opens the meal sheet, no card-level ⚖ or ⊘, and no line of numbers under its shut foods',
+      opened.plus && !opened.bal && !opened.skip && opened.quiet === 0 && opened.mopenHd, JSON.stringify(opened));
 
-    /* Ticking a meal's last food folds it to its rings, a beat later, so
-       the tick is seen landing first; a meal opened or folded by its own
-       name today is left as it was set. */
+    /* Ticking breakfast's last food marks it done while keeping it open with its food lines visible. */
     const q = await open({ width: 390, height: 844 });
     await q.click('#macroSlots .mtray[data-mslot="b"] input[data-meat]');
-    const atOnce = (await views(q)).charAt(0);
-    await q.waitForTimeout(1200);
-    const later = (await views(q)).charAt(0);
-    t.ok('ticking breakfast’s last food leaves it open a beat, then folds it', atOnce === '2' && later === '1', atOnce + later);
-    await q.click('#macroSlots [data-mview="l"]');
-    await q.click('#macroSlots [data-mview="l"]');
-    // each tick redraws the card, so the next box is found afresh
-    for (let i = 0; i < 2; i++) await q.click('#macroSlots .mtray[data-mslot="l"] input[data-meat]:not(:checked)');
-    await q.waitForTimeout(1200);
-    t.ok('a meal opened by its own name stays open when its last food is ticked', (await views(q)).charAt(1) === '2', await views(q));
+    await q.waitForTimeout(400);
+    const doneOpen = await q.evaluate(() => {
+      const bk = document.querySelector('#macroSlots .mtray[data-mslot="b"]');
+      return {
+        done: bk.classList.contains('done'),
+        mv2: bk.classList.contains('mv-2'),
+        foods: bk.querySelectorAll('.mtray-f:not(.mtray-none)').length,
+        beads: bk.querySelectorAll('.mbd').length,
+      };
+    });
+    t.ok('ticking breakfast’s last food marks it done while keeping it open with its food rows',
+      doneOpen.done && doneOpen.mv2 && doneOpen.foods === 1 && doneOpen.beads === 0, JSON.stringify(doneOpen));
     await q.context().close();
 
     /* ---- the date's calendar, and weeks ---- */
@@ -224,13 +214,13 @@ module.exports = {
       const sum = document.getElementById('macroSum').getBoundingClientRect(), kc = document.getElementById('macroTrayHead');
       return { oneRow: Math.max(...tops) - Math.min(...tops) <= 2, inside: kids.every((e) => e.getBoundingClientRect().right <= head.right + 0.5),
         kcalIn: [...kc.querySelectorAll('span, b')].every((e) => !e.getBoundingClientRect().width || e.getBoundingClientRect().right <= sum.right + 0.5),
-        page: document.documentElement.scrollWidth <= innerWidth, day: document.getElementById('macroDate').getBoundingClientRect().width,
+        page: document.documentElement.scrollWidth <= innerWidth,
+        day: document.getElementById('macroDate').getBoundingClientRect().width,
         whole: (() => { const tx = document.getElementById('macroDateTx'); return tx.scrollWidth <= tx.clientWidth; })(),
-        // the fold-every-meal button keeps its icon this narrow
-        icon: (() => { const ic = document.querySelector('#macroViews svg'); return ic ? ic.getBoundingClientRect().width : 0; })() };
+        viewsHidden: document.getElementById('macroViews').hidden };
     });
-    t.ok('at 320 px in the dark the head stays one row, inside the screen, the calories inside their box, the date whole and the fold button\u2019s icon shown',
-      narrow.oneRow && narrow.inside && narrow.kcalIn && narrow.page && narrow.day >= 44 && narrow.whole && narrow.icon >= 16, JSON.stringify(narrow));
+    t.ok('at 320 px in the dark the head stays one row, inside the screen, the calories inside their box, the date whole and the fold button hidden',
+      narrow.oneRow && narrow.inside && narrow.kcalIn && narrow.page && narrow.day >= 44 && narrow.whole && narrow.viewsHidden, JSON.stringify(narrow));
     await n.context().close();
 
     t.ok('with no error on the page', errs.length === 0, errs.join(' | '));

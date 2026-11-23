@@ -173,16 +173,13 @@ module.exports = {
     await p.goBack();
     await p.waitForTimeout(500);
 
-    /* ---- three views (Blake, 2026-10-13) ----
-       Where each card starts: uneaten meals start on State 2 (Foods with
-       Unified Split Pill and checkboxes); eaten meals start on State 1
-       (Status); empty Breakfast is one row its name opens. */
+    /* ---- always-open cards with macro pills (2026-11-22) ---- */
     const views = await p.evaluate(() => [...document.querySelectorAll('#macroSlots .mtray[data-mslot]')].map((c) => ({
-      k: c.dataset.mslot, v: c.querySelector('[data-mview]') ? c.querySelector('[data-mview]').dataset.mv : '',
+      k: c.dataset.mslot, mv2: c.classList.contains('mv-2'),
       cls: c.className, head: Object.keys((c.querySelector('.mtray-hd') || { dataset: {} }).dataset).join() })));
-    t.ok('each card starts where it should: uneaten meals on State 2 (mv-2), empty Breakfast one row its name opens to food search',
-      views.map((c) => c.k + (c.v || '-')).join() === 'b-,l2,d2,s2' && /\bmtray-empty\b/.test(views[0].cls) && views[0].head === 'mopen' &&
-      /\bmv-2\b/.test(views[1].cls), JSON.stringify(views));
+    t.ok('each card starts open on State 2 (mv-2) with .mtray-hd opening the meal directly',
+      views.map((c) => c.k).join() === 'b,l,d,s' && /\bmtray-empty\b/.test(views[0].cls) && views[0].head === 'mopen' &&
+      views.slice(1).every((c) => c.mv2 && c.head === 'mopen'), JSON.stringify(views));
 
     /* State 2 (Foods): leaf, name, Unified Split Pill (kitchen/each + g), and eaten checkbox */
     const foods = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-f')].map((l) => ({
@@ -262,43 +259,25 @@ module.exports = {
     t.ok('unlocked, Balance inside the meal sheet balances the meal',
       after.some((it, i) => it.x !== before[i].x) && after.every((it) => !it.l) && !(await p.$('#modalRoot .msheet')), JSON.stringify({ before, after }));
 
-    /* Recompute ring expectations after balancing Lunch */
-    const wantAfter = await p.evaluate((sel) => [...document.querySelectorAll(sel + ' .mtray-caps .mcap')].map((c) => ({
-      want: Number(c.dataset.want), have: Number(c.querySelector('.mcap-t').childNodes[1].textContent.replace(/,/g, '')) })), card('l'));
-    const judged = wantAfter.map((w, i) => {
-      const r = w.have / w.want;
-      return r >= 0.9 && (i === 1 || r <= 1.1) ? 'on' : r > 1.1 ? 'over' : 'under';
-    });
-
-    /* the name folds and opens the card: open (Foods) → folded (Status) → open */
-    await p.click(card('l') + ' [data-mview]');
-    await p.waitForTimeout(250);
-    const status = await p.evaluate((sel) => {
+    /* Populated meals keep their 4 macro pills + food rows (no collapse/circles), and tapping the meal name opens its sheet */
+    const lunchUi = await p.evaluate((sel) => {
       const c = document.querySelector(sel);
-      return { v: c.querySelector('[data-mview]').dataset.mv, lines: c.querySelectorAll('.mtray-f').length, pills: !!c.querySelector('.mtray-caps'),
-        beads: [...c.querySelectorAll('.mbd')].map((b) => b.className.replace('mbd ', '')), say: c.querySelector('[data-mview]').getAttribute('aria-label'),
-        verbs: [...c.querySelectorAll('.mtray-vbs button')].map((b) => Object.keys(b.dataset)[0]), h: Math.round(c.getBoundingClientRect().height),
-        focus: document.activeElement === c.querySelector('[data-mview]') };
+      return {
+        mv2: c.classList.contains('mv-2'),
+        pills: c.querySelectorAll('.mtray-caps .mcap').length,
+        beads: c.querySelectorAll('.mbd').length,
+        mview: c.querySelectorAll('[data-mview]').length,
+        chev: c.querySelectorAll('.mtray-chev').length,
+      };
     }, card('l'));
-    t.ok('a tap on the name of an open card folds it to State 1 (Status): no lines, no pills, a circle each for 🔥 P F C, and calm header with no verbs',
-      status.v === '1' && status.lines === 0 && !status.pills && status.beads.length === 4 && /^mbd-kcal/.test(status.beads[0]) &&
-      status.verbs.length === 0 && status.h < 70 && status.focus, JSON.stringify(status));
-    const SAY = { on: '(on plan|over, which is fine)', over: 'over', under: '\\d+% there' };
-    const said = new RegExp('^Lunch, planned: ' + ['calories', 'protein', 'fat', 'carbs'].map((m, i) => m + ' ' + SAY[judged[i]]).join(', ') +
-      '\\. Folded; tap to open$');
-    t.ok('the rings fill by the meal’s share, green on plan, and it is said in words',
-      wantAfter.length === 4 && judged.some((j) => j !== 'under') && status.beads.join() === ['kcal', 'p', 'f', 'c'].map((m, i) => 'mbd-' + m + ' rg-' + judged[i]).join() &&
-      said.test(status.say), JSON.stringify({ wantAfter, judged, status }));
-    await p.click(card('l') + ' [data-mview]');
-    await p.waitForTimeout(250);
-    const onState2 = await p.evaluate((sel) => {
-      const c = document.querySelector(sel);
-      const ls = [...c.querySelectorAll('.mtray-f')];
-      return c.classList.contains('mv-2') && ls.length === 2 &&
-        ls.every((l) => !!l.querySelector('.mfl-amt.split-pill') && !!l.querySelector('input.mitem-ate') && !l.classList.contains('open'));
-    }, card('l'));
-    t.ok('again, and it is open on its foods (Unified Split Pill and ticks), and says so',
-      onState2 && (await p.$eval(card('l') + ' [data-mview]', (b) => b.getAttribute('aria-expanded'))) === 'true');
+    t.ok('populated meal keeps 4 macro pills and food lines open with zero circles, chevrons, or fold toggles',
+      lunchUi.mv2 && lunchUi.pills === 4 && lunchUi.beads === 0 && lunchUi.mview === 0 && lunchUi.chev === 0,
+      JSON.stringify(lunchUi));
+    await p.click(card('l') + ' .mtray-hd[data-mopen="l"]');
+    await p.waitForTimeout(300);
+    t.ok('tapping the meal name opens the meal sheet cleanly', !!(await p.$('#modalRoot .msheet')));
+    await p.click('#modalRoot .msh-done');
+    await p.waitForTimeout(300);
 
     /* the meal’s pills open the meal sheet, where food is added */
     await p.click(card('l') + ' .mtray-caps');

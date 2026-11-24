@@ -43,10 +43,9 @@
      is not one of its own buttons goes there, and the corner says where. */
   var TAB = { macros: 'Eat', train: 'Train', plan: 'Cook', list: 'List' };
   var weighOdd = null, weighErr = '';
-  function card(key, label, body, meta, go, done, cap) {
-    return '<section class="td-card' + (go ? ' td-go' : '') + (done ? ' td-fin' : '') + (cap ? ' td-has-cap' : '') + '" data-card="' + key + '"' +
+  function card(key, label, body, meta, go, done) {
+    return '<section class="td-card' + (go ? ' td-go' : '') + (done ? ' td-fin' : '') + '" data-card="' + key + '"' +
         (go ? ' data-go="' + go + '"' : '') + ' aria-labelledby="td-' + key + '">' +
-      (cap || '') +
       '<div class="td-head"><span class="td-badge">' + (done ? CHECK : icon(key)) + '</span>' +
         '<h2 class="td-label" id="td-' + key + '">' + label + '</h2>' +
         (go ? '<button class="td-tab" data-td="go" data-go="' + go + '">' + TAB[go] + ' <span aria-hidden="true">\u203a</span></button>'
@@ -412,8 +411,7 @@
     var curLine = '<p class="td-eat-cur"><span>' + fmt(e.kcal.have) + ' / ' + fmt(e.kcal.want) + ' kcal</span>' +
       ' <span aria-hidden="true">\u00b7</span> ' +
       '<span><b>' + fmt(Math.abs(pLeft)) + ' g</b> protein ' + (pLeft >= 0 ? 'to go' : 'over') + '</span></p>';
-    var cap = eatPillsHTML(e);
-    var hero = '<div class="td-eat-nums">' + big + curLine + '</div>';
+    var hero = '<div class="td-eat-nums">' + big + curLine + '</div>' + eatPillsHTML(e);
     var w = e.water;
     var wStrip = w ? '<div class="td-water"><span class="td-water-l">💧 <b>' + fmt(w.have) + '</b> / ' + fmt(w.want) + ' oz' +
       (w.caf > 0 ? ' <small>· ' + fmt(w.caf) + ' mg caf</small>' : '') + '</span>' +
@@ -426,12 +424,12 @@
     if (!meals.some(function (m) { return !m.empty; })) {
       return card('eating', 'Eating', hero + title('Nothing planned yet') +
         note('Fill it from the recipes to your numbers, or add what you eat as you go.') +
-        wStrip + acts(btn(main, 'fill', 'Fill my day') + btn(false, 'addfood', '+ Log food') + quiet('eatout', 'Eating out')), '', 'macros', false, cap);
+        wStrip + acts(btn(main, 'fill', 'Fill my day') + btn(false, 'addfood', '+ Log food') + quiet('eatout', 'Eating out')), '', 'macros');
     }
     var eaten = meals.filter(function (m) { return m.eaten; }), open = meals.filter(function (m) { return !m.eaten && !m.empty; });
     return card('eating', 'Eating', hero + (eaten.length ? eatenLine(eaten) : '') +
       (open.length ? '<div class="td-meals">' + open.map(function (m, i) { return mealRow(m, i === 0, e.key); }).join('') + '</div>' : '') +
-      wStrip + acts(btn(main && !hasStart, 'addfood', '+ Log food') + quiet('eatout', 'Eating out')), '', 'macros', false, cap);
+      wStrip + acts(btn(main && !hasStart, 'addfood', '+ Log food') + quiet('eatout', 'Eating out')), '', 'macros');
   }
 
   // ---------------------------------------------------------------- workout

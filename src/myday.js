@@ -186,7 +186,7 @@
          edge say it; a screen reader still hears it. */
       if (spent[x[0]]) {
         var hv = sub[x[0]] || 0;
-        return '<span class="mcap spent" data-want="0"><span class="mcap-t num"><i class="' + x[2] + '">' + x[1] + '</i>' +
+        return '<span class="mcap mcap-' + x[0] + ' spent" data-want="0"><span class="mcap-t num"><i class="' + x[2] + '">' + x[1] + '</i>' +
           (hv > 0 ? fmtK(hv) : '&mdash;') + '<span class="vis-hidden"> none left</span></span></span>';
       }
       var have = sub[x[0]] || 0, a = x[0] === 'kcal' ? (aim.kcal || (4 * aim.p + 9 * aim.f + 4 * aim.c)) : (aim[x[0]] || 0);
@@ -197,7 +197,7 @@
          can be: the number is the limit the arithmetic ran into, not its
          answer — the old day pills' mark (mmp-cap), kept. */
       if (capped && x[0] === 'kcal') cls += ' mcap-max';
-      return '<span class="mcap ' + cls + '" data-want="' + Math.round(a) + '"' +
+      return '<span class="mcap mcap-' + x[0] + (cls ? ' ' + cls : '') + '" data-want="' + Math.round(a) + '"' +
         (capped && x[0] === 'kcal' ? ' title="The most this meal can be asked for"' : '') + '><span class="mcap-fl" style="width:' + pct.toFixed(1) + '%"></span>' +
         '<span class="mcap-t num"><i class="' + x[2] + '">' + x[1] + '</i>' + fmtK(have) + '<em>/' + fmtK(a) + '</em></span></span>';
     });
@@ -1084,17 +1084,17 @@
             '<button class="ghost" data-mskipno="' + esc(sk) + '">Keep it</button></div></div>';
       }
 
-      /* The pills sit flush along the card's top (P1 espresso cap, 2026-11-23)
-         whenever the meal has a macro share (M.aim); empty meals and meals
-         without targets keep the plain row. The door (.mtray-b::after) still
-         reaches over the card while .mtray-hr and .mtray-fs stand above it,
-         so a tap on a food is the food's and on the cap or margins is the meal's. */
+      /* Style C1 Oat & Ink pills sit cleanly below the meal title row
+         (.mtray-hr) whenever the meal has a macro share (M.aim); empty meals
+         and meals without targets keep their plain row. Keeping M.dot inside
+         .mtray-hr lets `.mtray-caps` align edge-to-edge under the card's
+         title without negative offsets across the tick. */
       var door = '<button class="mtray-b" data-mopen="' + esc(sk) + '" aria-label="Open ' + esc(name) + (M.pillsSay ? ' \u2014 ' + esc(M.pillsSay) : '') + '">' +
         (M.aim ? '<span class="mtray-caps">' + capsHTML(M.sub, M.aim, M.ask && M.ask.spent, !!(M.ask && M.ask.capped)) + '</span>'
           : '<span class="mtray-k num"><b>' + fmtK(M.sub.kcal) + '</b> kcal</span>') +
       '</button>';
       var headRow = M.aim
-        ? door + '<div class="mtray-hr">' + M.dot + head + '<span class="mtray-vbs">' + verbs + '</span></div>'
+        ? '<div class="mtray-hr">' + M.dot + head + '<span class="mtray-vbs">' + verbs + '</span></div>' + door
         : '<div class="mtray-hr">' + head + '<span class="mtray-vbs">' + verbs + '</span></div>' + door;
       return '<div class="mslot mtray' + (M.aim ? ' mtray-cap' : '') + ' mv-' + view + (items.length ? ' filled' : '') + (M.eatenAll ? ' done' : '') + '" data-mslot="' + esc(sk) + '">' +
           (M.aim ? '' : M.dot) +

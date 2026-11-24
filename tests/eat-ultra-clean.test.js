@@ -12,9 +12,9 @@
  *  3) Today Eating card uses 4 .td-caps .mcap pills (kcal,p,f,c) with ZERO
  *     .td-dual-ring and ZERO .td-mbars.
  *  4) 320x568 light & dark layout audit on both Today and Eat: 0px
- *     horizontal overflow, P1 espresso cap flush above card headings, all 4
- *     bounded pill containers (radius >= 6px) on 1 single row, 0 clipped
- *     digits, compact 8.5–10.5px text, and 0 page errors. */
+ *     horizontal overflow, Style C1 Oat & Ink full capsules (radius >= 12px,
+ *     macro hues for kcal/p/f/c) positioned under card headings on 1 single row,
+ *     0 clipped digits, compact 8.5–11px text, and 0 page errors. */
 module.exports = {
   name: 'Eat & Today: silent auto-coach, always-open pill cards, and Today macro pills',
   async run(t) {
@@ -170,17 +170,19 @@ module.exports = {
         return {
           overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
           pills: pills.length,
+          macros: pills.map((el) => el.dataset.macro).join(),
           rows,
           cut,
-          flushAbove: !!cap && !!head && cap.getBoundingClientRect().top <= head.getBoundingClientRect().top,
+          belowHead: !!cap && !!head && cap.getBoundingClientRect().top >= head.getBoundingClientRect().bottom - 1,
           minFont: Math.min.apply(null, capFonts),
           maxFont: Math.max.apply(null, capFonts),
           minRadius: Math.min.apply(null, radii),
         };
       });
-      t.ok('320px Today (' + scheme + '): 0px overflow, flush P1 cap above head, 1 row, 0 cut, 8.5–10.5px bounded pills',
-        tdAudit.overflow <= 0 && tdAudit.pills === 4 && tdAudit.rows === 1 && tdAudit.cut === 0 &&
-          tdAudit.flushAbove && tdAudit.minFont >= 8.5 && tdAudit.maxFont <= 10.5 && tdAudit.minRadius >= 6,
+      t.ok('320px Today (' + scheme + '): 0px overflow, C1 Oat & Ink capsules below head, 1 row, 0 cut, 8.5–11px',
+        tdAudit.overflow <= 0 && tdAudit.pills === 4 && tdAudit.macros === 'kcal,p,f,c' &&
+          tdAudit.rows === 1 && tdAudit.cut === 0 && tdAudit.belowHead &&
+          tdAudit.minFont >= 8.5 && tdAudit.maxFont <= 11 && tdAudit.minRadius >= 12,
         JSON.stringify(tdAudit));
 
       await mob.click('.tab[data-view="macros"]');
@@ -192,9 +194,13 @@ module.exports = {
         const radii = pills.map((el) => parseFloat(getComputedStyle(el).borderRadius));
         const rowsPerTray = trays.map((tr) =>
           new Set([...tr.querySelectorAll('.mtray-caps .mcap')].map((el) => Math.round(el.getBoundingClientRect().top))).size);
-        const flushPerTray = trays.every((tr) => {
+        const belowPerTray = trays.every((tr) => {
           const cap = tr.querySelector('.mtray-caps'), hr = tr.querySelector('.mtray-hr');
-          return !!cap && !!hr && cap.getBoundingClientRect().top <= hr.getBoundingClientRect().top;
+          return !!cap && !!hr && cap.getBoundingClientRect().top >= hr.getBoundingClientRect().top;
+        });
+        const macrosOk = trays.every((tr) => {
+          const ps = [...tr.querySelectorAll('.mtray-caps .mcap')];
+          return ['kcal', 'p', 'f', 'c'].every((m, i) => ps[i] && ps[i].classList.contains('mcap-' + m));
         });
         const cut = pills.filter((el) => {
           const pr = el.getBoundingClientRect(), tr = el.querySelector('.mcap-t').getBoundingClientRect();
@@ -204,18 +210,19 @@ module.exports = {
           overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
           trays: trays.length,
           pills: pills.length,
+          macrosOk,
           rowsPerTray,
           cut,
-          flushPerTray,
+          belowPerTray,
           minFont: Math.min.apply(null, capFonts),
           maxFont: Math.max.apply(null, capFonts),
           minRadius: Math.min.apply(null, radii),
         };
       });
-      t.ok('320px Eat (' + scheme + '): 0px overflow, flush P1 caps above heads, 1 row each, 0 cut, 8.5–10.5px bounded pills',
-        eatAudit.overflow <= 0 && eatAudit.trays === 2 && eatAudit.pills === 8 &&
-          eatAudit.rowsPerTray.every((r) => r === 1) && eatAudit.cut === 0 && eatAudit.flushPerTray &&
-          eatAudit.minFont >= 8.5 && eatAudit.maxFont <= 10.5 && eatAudit.minRadius >= 6,
+      t.ok('320px Eat (' + scheme + '): 0px overflow, C1 Oat & Ink capsules below title, 1 row each, 0 cut, 8.5–11px',
+        eatAudit.overflow <= 0 && eatAudit.trays === 2 && eatAudit.pills === 8 && eatAudit.macrosOk &&
+          eatAudit.rowsPerTray.every((r) => r === 1) && eatAudit.cut === 0 && eatAudit.belowPerTray &&
+          eatAudit.minFont >= 8.5 && eatAudit.maxFont <= 11 && eatAudit.minRadius >= 12,
         JSON.stringify(eatAudit));
     }
     await mob.context().close();

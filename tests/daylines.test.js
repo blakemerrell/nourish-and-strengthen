@@ -111,7 +111,10 @@ module.exports = {
       const ctl = l.querySelector('.mfl-ctl').getBoundingClientRect(), key = l.querySelector('.mfl-ic').getBoundingClientRect();
       return { same: Math.abs(ics.top - dial.top) < 4 && Math.abs(ics.bottom - dial.bottom) < 4, spare: Math.round(ctl.width - ics.width - dial.width), kh: key.height, kw: key.width };
     }, line('l', 0));
-    t.ok('the − amount + dial sits on the keys’ line, not under them, with room for one more key', row.same && row.spare >= row.kw + 6 && row.kh >= 44, JSON.stringify(row));
+    /* Match the repo's 43.9 px tolerance (macros-1c-drift, macros-1d-logbar)
+       so Chromium float32 subpixel rounding (43.999969 on a 44 px box at a
+       fractional y) does not flake on headless Linux. */
+    t.ok('the − amount + dial sits on the keys’ line, not under them, with room for one more key', row.same && row.spare >= row.kw + 6 && row.kh >= 43.9, JSON.stringify(row));
 
     /* + moves the food, the meal and the day together */
     const meal0 = await textOf(p, card('l') + ' .mtray-caps'), day0 = await textOf(p, '#macroPills');

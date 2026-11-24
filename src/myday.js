@@ -1084,20 +1084,22 @@
             '<button class="ghost" data-mskipno="' + esc(sk) + '">Keep it</button></div></div>';
       }
 
-      /* The pills are the door to the meal's sheet, and the door reaches
-         over the card (.mtray-b::after, the length of .mtray-c); the head
-         and the foods' lines stand above that reach, so a tap on a food is
-         the food's and on the card's margins is still the meal's. Status
-         keeps the door with nothing in it: its reach, and a way into the
-         meal for a keyboard, on a card with no pills and no +. */
-      return '<div class="mslot mtray mv-' + view + (items.length ? ' filled' : '') + (M.eatenAll ? ' done' : '') + '" data-mslot="' + esc(sk) + '">' +
-          M.dot +
+      /* The pills sit flush along the card's top (P1 espresso cap, 2026-11-23)
+         whenever the meal has a macro share (M.aim); empty meals and meals
+         without targets keep the plain row. The door (.mtray-b::after) still
+         reaches over the card while .mtray-hr and .mtray-fs stand above it,
+         so a tap on a food is the food's and on the cap or margins is the meal's. */
+      var door = '<button class="mtray-b" data-mopen="' + esc(sk) + '" aria-label="Open ' + esc(name) + (M.pillsSay ? ' \u2014 ' + esc(M.pillsSay) : '') + '">' +
+        (M.aim ? '<span class="mtray-caps">' + capsHTML(M.sub, M.aim, M.ask && M.ask.spent, !!(M.ask && M.ask.capped)) + '</span>'
+          : '<span class="mtray-k num"><b>' + fmtK(M.sub.kcal) + '</b> kcal</span>') +
+      '</button>';
+      var headRow = M.aim
+        ? door + '<div class="mtray-hr">' + M.dot + head + '<span class="mtray-vbs">' + verbs + '</span></div>'
+        : '<div class="mtray-hr">' + head + '<span class="mtray-vbs">' + verbs + '</span></div>' + door;
+      return '<div class="mslot mtray' + (M.aim ? ' mtray-cap' : '') + ' mv-' + view + (items.length ? ' filled' : '') + (M.eatenAll ? ' done' : '') + '" data-mslot="' + esc(sk) + '">' +
+          (M.aim ? '' : M.dot) +
           '<div class="mtray-c">' +
-            '<div class="mtray-hr">' + head + '<span class="mtray-vbs">' + verbs + '</span></div>' +
-            '<button class="mtray-b" data-mopen="' + esc(sk) + '" aria-label="Open ' + esc(name) + (M.pillsSay ? ' — ' + esc(M.pillsSay) : '') + '">' +
-                (M.aim ? '<span class="mtray-caps">' + capsHTML(M.sub, M.aim, M.ask && M.ask.spent, !!(M.ask && M.ask.capped)) + '</span>'
-                  : '<span class="mtray-k num"><b>' + fmtK(M.sub.kcal) + '</b> kcal</span>') +
-              '</button>' +
+            headRow +
               '<div class="mtray-fs">' + (lines || '<span class="mtray-f mtray-none">Nothing yet</span>') + '</div>' +
             (onPlan && S.mUsualOpen === k + '|' + sk ? mUsualHTML(k, sk, name, day, true) : '') +
             ask +

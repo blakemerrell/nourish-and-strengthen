@@ -265,8 +265,8 @@ module.exports = nourish({
     };
 
     const gapEmpty = await gapAt(0);
-    t.ok('every pill on the meal\u2019s sheet is still a pill, and is drawn with a fill',
-      gapEmpty.length === 4 && gapEmpty.every((g) => g.grad && g.radius >= 12),
+    t.ok('every pill on the meal\u2019s sheet is still a bounded pill container drawn with a fill',
+      gapEmpty.length === 4 && gapEmpty.every((g) => g.grad && g.radius >= 6),
       JSON.stringify(gapEmpty.map((g) => g.radius + '/' + g.grad)));
     t.ok('and each says both halves — what is on the meal, and what it is for',
       gapEmpty.every((g) => g.both && g.want > 0), gapEmpty.map((g) => g.txt).join(' '));

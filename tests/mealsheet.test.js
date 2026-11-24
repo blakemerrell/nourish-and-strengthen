@@ -368,7 +368,8 @@ module.exports = {
     t.ok('at 320 an ordinary meal’s four pills say every digit, on one row', usual.n === 4 && usual.cut.length === 0 && usual.rows === 1 && !usual.wide,
       JSON.stringify(usual));
     const big = await pillsAt320({ p: 250, f: 110, c: 400 }, [['egg_white', 6], ['cheddar', 1], ['banana', 3], ['oats', 2]]);
-    t.ok('and a big meal’s break two and two rather than lose one', big.n === 4 && big.cut.length === 0 && big.rows === 2 && !big.wide,
+    /* P1 espresso cap (2026-11-23) keeps even big 4-digit meals on 1 single row at 320px without losing a digit. */
+    t.ok('and a big meal stays on one row without losing a digit', big.n === 4 && big.cut.length === 0 && big.rows === 1 && !big.wide,
       JSON.stringify(big));
 
     /* ---- a meal the day has nothing left for ----

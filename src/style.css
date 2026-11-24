@@ -194,6 +194,27 @@
   --dot-off:           oklch(0.70 0.14 45);
   --dot-wait:          oklch(0.79 0.15 85);
 
+  /* ---- P1 espresso macro cap (2026-11-23) -------------------------------
+     Dark espresso band across the top of food/today/sheet cards holding
+     four bounded pill containers with a thick bottom progress meter. Always
+     stays on one row down to 320px. */
+  --cap-bg:            oklch(0.27 0.02 60);
+  --cap-edge:          oklch(0.21 0.018 60);
+  --cap-ink:           oklch(0.97 0.008 85);
+  --cap-sub:           oklch(0.83 0.015 75);
+  --cap-p:             oklch(0.80 0.11 22);
+  --cap-f:             oklch(0.85 0.11 75);
+  --cap-c:             oklch(0.80 0.11 148);
+  --cap-warn-t:        oklch(0.86 0.14 55);
+  --cap-och:           oklch(0.76 0.11 62);
+  --cap-grn:           oklch(0.75 0.12 148);
+  --cap-wrn:           oklch(0.79 0.14 50);
+  --cap-pill-bg:       oklch(1 0 0 / 0.075);
+  --cap-pill-bd:       oklch(1 0 0 / 0.22);
+  --cap-pill-bd-on:    oklch(0.75 0.12 148 / 0.48);
+  --cap-pill-bd-over:  oklch(0.79 0.14 50 / 0.58);
+  --cap-track:         oklch(1 0 0 / 0.13);
+
   /* ---- shade: scrims and shadows ---------------------------------------- */
   --scrim:             oklch(0.26 0.02 60 / 0.55);
   --scrim-soft:        oklch(0.26 0.02 60 / 0.35);
@@ -448,6 +469,12 @@
        now dark too, still sits under it */
     --chrome: oklch(0.165 0.01 60);
     --chrome-hi: oklch(0.27 0.02 60);
+    --cap-bg: oklch(0.165 0.01 65);
+    --cap-edge: oklch(0.34 0.015 65);
+    --cap-sub: oklch(0.78 0.014 75);
+    --cap-pill-bg: oklch(1 0 0 / 0.055);
+    --cap-pill-bd: oklch(1 0 0 / 0.20);
+    --cap-track: oklch(1 0 0 / 0.11);
 
     --scrim: oklch(0 0 0 / 0.6);
     --scrim-soft: oklch(0 0 0 / 0.45);
@@ -7457,28 +7484,59 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
    equal pills cut the target short at 320 px ("581/89" for 581 of 898, a
    number that is not there), and on a big meal on any phone (2,116 of 1,396
    wanted 91 px at 375 and had 85), so a pill takes the room its numbers
-   need and the row breaks, two and two, before a digit is lost.
- *
-   How the widths stay exact: the pairs share the row 2.3 to 2, each starting
-   one gap wide so the gap inside it is the pair's to give and not its pills';
-   inside, a grid splits what is left, padding and all. Protein, fat and carbs
-   come out exactly as wide as each other (macros-meal measures it to the
-   tenth of a pixel) and the calories 1.3 of them, as the one grid they
-   replaced had it, until a pill's numbers need more. */
-.mcaps { --cap-gap: 6px; display: flex; flex-wrap: wrap; gap: var(--cap-gap); }
-.mcaps-two {
-  display: grid; grid-template-columns: minmax(min-content, 1fr) minmax(min-content, 1fr); gap: var(--cap-gap);
-  flex: 2 1 var(--cap-gap); min-width: min-content;
+   P1 espresso macro cap (Blake, 2026-11-23): a dark espresso band holds four
+   bounded pill containers on one row down to 320px, each with compact high-
+   contrast figures above a thick bottom progress bar. `minmax(0, ...)` locks
+   every calorie pill and every P/F/C pill to exact uniform widths across
+   meals and cards. `.mcaps-two` stays `display: contents` so the four pills
+   always share one grid. */
+.mcaps, .mtray-caps {
+  display: grid; grid-template-columns: minmax(0, 1.38fr) repeat(3, minmax(0, 1fr));
+  align-items: center; gap: 4px; padding: 4px 5px;
+  background: var(--cap-bg); box-sizing: border-box;
 }
-.mcaps-two:first-child { flex-grow: 2.3; grid-template-columns: minmax(min-content, 1.3fr) minmax(min-content, 1fr); }
-.mtray-caps .mcaps-two { display: contents; }
-.mcap { position: relative; border-radius: 999px; overflow: hidden; border: 1px solid var(--line-firm); background: var(--card); padding: 7px 6px; text-align: center; white-space: nowrap; }
-.mcap-fl { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ochre-soft); }
-.mcap.on .mcap-fl { background: var(--tint-green, var(--paper-soft)); } .mcap.over .mcap-fl { background: var(--danger-wash, var(--ochre-soft)); }
-.mcap-t { position: relative; font-size: 0.875rem; font-weight: 600; }
-.mcap-t i { font-style: normal; font-weight: 700; margin-right: 2px; }
-.mcap-t em { font-style: normal; font-weight: 400; color: var(--note); }
-.mcap.over .mcap-t { color: var(--warn); }
+.mcaps { border-radius: 9px; overflow: clip; }
+.mcaps-two { display: contents; }
+.mcap {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  height: 24px; min-width: 0; border-radius: 7px; border: 1px solid var(--cap-pill-bd);
+  background: var(--cap-pill-bg); padding: 0 3px 5.5px; text-align: center;
+  white-space: nowrap; overflow: clip; box-sizing: border-box;
+}
+.mcap::before {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 5.5px;
+  background: var(--cap-track); pointer-events: none;
+}
+.mcap-fl {
+  position: absolute; left: 0; bottom: 0; height: 5.5px; background: var(--cap-och);
+  border-radius: 0 2px 0 0; pointer-events: none;
+}
+.mcap.on { border-color: var(--cap-pill-bd-on); }
+.mcap.on .mcap-fl { background: var(--cap-grn); }
+.mcap.over { border-color: var(--cap-pill-bd-over); }
+.mcap.over .mcap-fl { background: var(--cap-wrn); border-radius: 0; }
+.mcap-t {
+  position: relative; z-index: 1; font-size: 0.59375rem; font-weight: 700; line-height: 1;
+  letter-spacing: -0.02em; color: var(--cap-ink); white-space: nowrap;
+}
+.mcap-t i { font-style: normal; font-weight: 800; margin-right: 1.5px; }
+.mcap-t i:not([class]), .mcap-t i[class=""] { font-size: 0.92em; margin-right: 1px; }
+.mcap-t i.mb-p { color: var(--cap-p); }
+.mcap-t i.mb-f { color: var(--cap-f); }
+.mcap-t i.mb-c { color: var(--cap-c); }
+.mcap-t em { font-style: normal; font-weight: 400; color: var(--cap-sub); }
+.mcap.over .mcap-t { color: var(--cap-warn-t); }
+.mcap.over .mcap-t em { color: var(--cap-sub); }
+@media (max-width: 360px) {
+  .mcaps, .mtray-caps { padding: 3px 4px; gap: 3px; }
+  .mcap { height: 22px; border-radius: 6px; padding: 0 2px 5px; }
+  .mcap::before, .mcap-fl { height: 5px; }
+  .mcap-t { font-size: 0.5625rem; letter-spacing: -0.025em; }
+}
+@media (forced-colors: active) {
+  .mcap { border-color: CanvasText; }
+  .mcap-fl { background: Highlight; forced-color-adjust: none; }
+}
 .mscreen-empty { text-align: center; color: var(--note); padding: 24px 8px; }
 
 /* ---- Trays and the meal sheet (Blake, 2026-10-04) ---------------------------
@@ -7867,21 +7925,23 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
   .mtray-f.open .mfl-x { animation: mfl-drop 140ms ease-out; }
 }
 @keyframes mfl-drop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-/* the meal's pills, small, under its name */
-.mtray-caps { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 4px; margin: 4px 0 6px; }
-/* Thin, and the card's whole width (Blake, 2026-11-06: "thin up the pills
-   and stretch the whole span of the card"): they reach back under the meal's
-   tick to the card's 12px edge, where the food names now start too. The
-   pills are not buttons of their own; the meal's door (.mtray-b) behind them
-   keeps its 44px. */
-.mtray-b .mtray-caps { margin-left: -36px; width: calc(100% + 36px); }
-.mtray-caps .mcap { padding: 0 3px; line-height: 1.35; }
-.mtray-caps .mcap-t { font-size: 0.8125rem; }
-/* On the narrowest phones four pills in a row cut their own numbers short
-   ("1,504/5" for 1,504 of 513), so the pills go two to a row. */
-@media (max-width: 360px) {
-  .mtray-caps { grid-template-columns: 1fr 1fr; }
+/* Flush P1 espresso top cap on populated meal cards (myday.js, trayHTML):
+   `.mtray-b` keeps a 44px hit box while `.mtray-hr` sits cleanly below the
+   33px espresso header. Empty meals without targets keep their plain row. */
+#macroSlots .mtray.mtray-cap { display: block; }
+.mtray.mtray-cap .mtray-c { padding: 0 12px 9px 12px; }
+.mtray.mtray-cap .mtray-b {
+  margin: 0 -12px -11px; width: calc(100% + 24px);
+  min-height: 44px; justify-content: flex-start; padding: 0;
 }
+.mtray.mtray-cap .mtray-caps { width: 100%; margin: 0; border-bottom: 1px solid var(--cap-edge); }
+.mtray.mtray-cap .mtray-hr { margin: 2px 0 0 -10px; min-height: 44px; }
+#macroSlots .mtray.mtray-cap .mday-dot { margin: 0; }
+.mtray.mtray-cap .mtray-hd { min-height: 44px; }
+.mtray.mtray-cap .mtray-fs { margin: 2px 0 0 -12px; }
+.mtray.mtray-cap .mtray-acts,
+.mtray.mtray-cap .mtray-usual { margin-left: 0; max-width: 100%; }
+.mtray.mtray-cap .mtray-usual-more { margin: 8px 0 2px 0; max-width: 100%; }
 .mtray-none { color: var(--note); }
 .mtray-skip {
   display: flex; align-items: center; gap: 6px; width: 100%; min-height: 44px; margin: -6px 0; box-sizing: border-box;
@@ -8040,13 +8100,10 @@ button.td-mt { border: 0; background: none; padding: 6px 0; text-align: left; fo
 .msh-i svg { width: 22px; height: 22px; }
 .msh-i:hover, .msh-i[aria-expanded="true"] { background: var(--hint); }
 .msh-i:disabled { opacity: 0.35; cursor: default; }
-.msheet .mcaps { padding: 2px 4px 0; }
-/* A 320 phone's ordinary meal (581 of 898) wants 275 px of a 276 px row, so
-   the gaps give back the few pixels that keep it one row rather than two. */
-@media (max-width: 360px) {
-  .msheet .mcaps { padding: 2px 2px 0; --cap-gap: 4px; }
+.msheet .mcaps { margin: 2px 0 0; border-radius: 9px; }
+@media (max-width: 600px) {
+  .msheet .mcaps { margin: 2px -8px 0; }
 }
-.msheet .mcap { padding: 5px 4px; }
 
 /* a ⋯ opens a small list, over what is under it */
 .msheet .mfood-menu {
@@ -8415,8 +8472,9 @@ button.mrow-sum { cursor: pointer; }
 #modalRoot .msheet .mfood-mi.mdel { color: var(--danger); }
 /* Spent: dashed and quiet, on the day's trays as in the sheet, now that the
    pill carries no words to say so (2026-10-06). */
-.mcap.spent { border-style: dashed; opacity: 0.8; }
-.mcap.spent .mcap-t { color: var(--muted); }
+.mcap.spent { border-style: dashed; border-color: var(--cap-pill-bd); opacity: 0.82; padding-bottom: 0; }
+.mcap.spent::before { display: none; }
+.mcap.spent .mcap-t { color: var(--cap-sub); }
 /* thumb-sized: the menus' rows 44 tall, and − and + a 44 square each with
    the 28 px circle drawn inside it */
 #modalRoot .msheet .mfood-mi { min-height: 44px; }
@@ -8427,7 +8485,7 @@ button.mrow-sum { cursor: pointer; }
 .msheet .mrow .mrow-m .mitem-uom { white-space: nowrap; font-size: 0.8125rem; }
 .mrow-mk { letter-spacing: 0.03em; }
 .mrow-g small { line-height: 1.1; }
-.msheet .mcap.mcap-max { border-color: var(--dial-over); }
+.msheet .mcap.mcap-max { border-color: var(--cap-wrn); }
 /* The small print wraps wherever it must: no piece of it is allowed to push
    the row sideways on the narrowest phone, whatever the system font. */
 .msheet .mrow .mrow-m, .msheet .mrow .mrow-m * { white-space: normal; overflow-wrap: break-word; }
@@ -9824,13 +9882,8 @@ button.mhyd-head { cursor: pointer; }
 .td-dr-pct { font: 700 13px/1 var(--sans); fill: var(--ink); }
 .td-dr-sub { font: 600 11px/1 var(--sans); fill: var(--muted); }
 .td-eat-hero-r, .td-eat-nums { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.td-caps { margin: 8px 0 4px; --cap-gap: 6px; }
-.td-caps .mcap { padding: 5px 6px; }
-.td-caps .mcap-t { font-size: 0.8125rem; }
-@media (max-width: 420px) {
-  .td-caps { --cap-gap: 5px; }
-  .td-caps .mcap { padding: 5px 4px; }
-}
+.td-card.td-has-cap { overflow: clip; }
+.td-card > .td-caps { margin: -14px -16px 2px; border-radius: 0; border-bottom: 1px solid var(--cap-edge); }
 .td-mpills { display: flex; flex-wrap: wrap; gap: 6px; }
 .td-mpill {
   font-size: 0.8125rem; padding: 2px 8px; border-radius: 999px; background: var(--paper-soft);

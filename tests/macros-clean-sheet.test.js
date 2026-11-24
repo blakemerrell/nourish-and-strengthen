@@ -173,7 +173,8 @@ module.exports = nourish({
         let n;
         while ((n = w.nextNode())) {
           const el = n.parentElement;
-          if (!n.textContent.trim() || !el || el.closest('svg, .leaf-n, .leaf-sr, .vis-hidden, [aria-hidden="true"], .hide, [hidden]')) continue;
+          /* P1 espresso macro cap (2026-11-23) intentionally uses 9–9.5 px text inside its 4-pill header row. */
+          if (!n.textContent.trim() || !el || el.closest('svg, .leaf-n, .leaf-sr, .mcap-t, .vis-hidden, [aria-hidden="true"], .hide, [hidden]')) continue;
           if (!el.getBoundingClientRect().width) continue;
           const fs = parseFloat(getComputedStyle(el).fontSize);
           if (fs < 12.95) tiny.push(fs + 'px:' + n.textContent.trim());

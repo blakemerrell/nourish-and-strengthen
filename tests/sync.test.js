@@ -131,6 +131,7 @@ module.exports = {
 
       // ---- what one does, the other sees -----------------------------------
       await A.click('.tab[data-view="browse"]');
+      await A.click('#grid .chap-card >> nth=0');
       await A.click('#grid .card >> nth=2');
       await A.click('.daybtn[data-day="thu"]');
       await A.click('.sheet-x');
@@ -163,6 +164,7 @@ module.exports = {
       await A.click('[data-ed="save"]');
       // window.RECIPES is the printed book; what B renders is the merged list
       await B.click('.tab[data-view="browse"]');
+      await B.click('[data-browseall]');
       t.ok('a recipe written on one phone reaches the other',
         await waitFor(B, () => Object.keys(window.Store.state.mine).length === 1 &&
           [...document.querySelectorAll('.card-name')].some((e) => e.textContent === 'Test Rolls')),

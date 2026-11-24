@@ -12,6 +12,8 @@ module.exports = {
     const p = await t.fresh();
     await p.click('.tab[data-view="browse"]');   // the app opens on Today; these are Recipes' tests
     await p.waitForTimeout(200);
+    await p.click('[data-browseall]');
+    await p.waitForTimeout(150);
 
     /* ---------------------------------------------------------------- number
      *

@@ -68,6 +68,8 @@ function look() {
     // the app opens on Today; the recipes are all there the moment Recipes is
     const rec = document.querySelector('.tab[data-view="browse"]');
     if (rec) rec.click();
+    const ba = document.querySelector('[data-browseall]');
+    if (ba) ba.click();
     out.cards = document.querySelectorAll('.card').length;
     return out;
   })();

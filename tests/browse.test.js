@@ -6,6 +6,8 @@ module.exports = {
     const p = await t.fresh();
     await p.click('.tab[data-view="browse"]');   // the app opens on Today; these are Recipes' tests
     await p.waitForTimeout(200);
+    await p.click('[data-browseall]');
+    await p.waitForTimeout(150);
 
     const n = await p.evaluate(() => document.querySelectorAll('.card').length);
     /* However many there are, not a number written down here. It has been
@@ -223,6 +225,8 @@ module.exports = {
     t.ok('a favorite sticks', (await p.textContent('#favCount')) === '(1)', await p.textContent('#favCount'));
 
     // the panel: scaling the ingredients, and the score breakdown
+    await p.click('.chap-card >> nth=0');
+    await p.waitForTimeout(150);
     await p.click('#grid .card >> nth=0');
     const before = await p.textContent('.sheet-ing');
     await p.click('[data-scale="up"]');
@@ -470,6 +474,8 @@ module.exports = {
     const phone = await t.fresh({ viewport: { width: 376, height: 860 } });
     await phone.click('.tab[data-view="browse"]');
     await phone.waitForTimeout(200);
+    await phone.click('[data-browseall]');
+    await phone.waitForTimeout(150);
 
     /* The section divider pins under the header, on the width where it did
      * not.
@@ -569,6 +575,8 @@ module.exports = {
           const chips = document.querySelectorAll('#cookChips .cook-chip').length;
           return s.top >= 0 && s.bottom <= window.innerHeight && chips >= 5;
         }) && !(await on()) && (await filt()) && (await drawerClosed()));
+      await sp.click('[data-browseall]');
+      await sp.waitForTimeout(150);
       await sp.evaluate(() => window.scrollTo(0, 1600));
       await sp.waitForTimeout(150);
       t.ok('scroll down and the search + chip strip stays pinned under the header',

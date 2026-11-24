@@ -893,7 +893,11 @@
     })(),
     bookF: 'all', secF: 'all', diffF: 'all', pantryF: 'all',
     favOnly: false, qy: '', sort: 'book', quickF: '', openId: null, scale: 1, printSet: 'all',
-    filtPop: false,
+    filtPop: false, browseAll: false,
+    chapGroup: (function () {
+      try { return localStorage.getItem('sh.chapGroup') === 'meal' ? 'meal' : 'book'; }
+      catch (e) { return 'book'; }
+    })(),
     /* The list's folds and the one line whose source switch is open; a
        day's dinner opened on the week. None of it is saved. */
     listFold: {}, listMark: false, daySheet: null,
@@ -1232,10 +1236,14 @@
        their section is named for the search. Without it, "breakfast" returning
        fifty recipes reads as fifty breakfasts, and the reader scrolls looking
        for the mistake. */
+    var chapters = COOK.buildChapters(list);
+    var inChapters = !S.browseAll && !qs && S.secF === 'all' && S.diffF === 'all' &&
+      S.pantryF === 'all' && !S.favOnly && !S.quickF && S.sort === 'book' && chapters.length > 1;
     var loose = qs ? list.filter(function (r) { return matchRank(r, qs) === 1; }).length : 0;
     $('browseCount').textContent = list.length + (list.length === 1 ? ' recipe' : ' recipes') +
-      (loose ? ' · ' + (list.length - loose) + ' matching, ' + loose + ' more from sections named for it'
-             : (order[S.sort] || ''));
+      (inChapters ? ' \u00b7 ' + chapters.length + ' chapters'
+        : loose ? ' \u00b7 ' + (list.length - loose) + ' matching, ' + loose + ' more from sections named for it'
+                : (order[S.sort] || ''));
     $('browseEmpty').classList.toggle('hide', list.length !== 0);
     /* Your own shelf, and nothing on it covers a whole recipe yet: say where
        the shelf is, not that the filters are wrong. Named the way the door
@@ -1249,59 +1257,72 @@
     $('filtCount').textContent = fn ? String(fn) : '';
     $('filtBtn').setAttribute('aria-label', fn ? 'Filters, ' + fn + ' on' : 'Filters');
 
-    /* Section headings down the grid.
-     *
-     * The collection is two hundred and seventy-seven cards and, in book
-     * order, it is also fourteen sections that mean something — Breakfasts,
-     * then Snacks, then Lunch. None of that was on the page: the card says
-     * RUN · 042 and nothing says why 042 sits between 041 and 043, so
-     * scrolling the whole collection was scrolling a wall.
-     *
-     * Only in book order, and only when there is more than one section in
-     * what is showing. Sorted by score or by time the recipes are no longer
-     * in sections, and a divider claiming otherwise would be a lie about the
-     * order underneath it. Searching, the same. */
-    var secKey = function (r) { return r.book + '-' + r.secNum; };
-    var secCount = {};
-    list.forEach(function (r) { secCount[secKey(r)] = (secCount[secKey(r)] || 0) + 1; });
-    var showSecs = S.sort === 'book' && !qs && Object.keys(secCount).length > 1;
-    var lastSec = null;
+    var grid = $('grid');
+    grid.classList.toggle('grid-chaps', inChapters);
     var onWeek = COOK.weekIds();
 
-    $('grid').innerHTML = list.map(function (r) {
-      var head = '';
-      if (showSecs && secKey(r) !== lastSec) {
-        lastSec = secKey(r);
-        var n = secCount[lastSec];
-        head = '<div class="grid-sec">' +
-          '<span class="grid-sec-b">' + esc((BOOKS[r.book] || BOOKS[3]).short) + '</span>' +
-          '<b>' + esc(SEC_SHORT[lastSec] || r.secName) + '</b>' +
-          '<span class="grid-sec-n">' + n + '</span>' +
-          ((APP_SEC_NOTE[lastSec] || SEC_NOTE[lastSec]) ? '<span class="grid-sec-s">' + esc(APP_SEC_NOTE[lastSec] || SEC_NOTE[lastSec]) + '</span>' : '') +
-        '</div>';
+    if (inChapters) {
+      grid.innerHTML = COOK.chaptersHTML(list, onWeek);
+    } else {
+      /* Section headings down the grid.
+       *
+       * The collection is two hundred and seventy-seven cards and, in book
+       * order, it is also fourteen sections that mean something — Breakfasts,
+       * then Snacks, then Lunch. None of that was on the page: the card says
+       * RUN · 042 and nothing says why 042 sits between 041 and 043, so
+       * scrolling the whole collection was scrolling a wall.
+       *
+       * Only in book order, and only when there is more than one section in
+       * what is showing. Sorted by score or by time the recipes are no longer
+       * in sections, and a divider claiming otherwise would be a lie about the
+       * order underneath it. Searching, the same. */
+      var secKey = function (r) { return r.book + '-' + r.secNum; };
+      var secCount = {};
+      list.forEach(function (r) { secCount[secKey(r)] = (secCount[secKey(r)] || 0) + 1; });
+      var showSecs = S.sort === 'book' && !qs && Object.keys(secCount).length > 1;
+      var lastSec = null;
+      var prefix = '';
+      if (S.secF !== 'all' && list.length) {
+        prefix = COOK.drillHeroHTML(list);
+      } else if (S.browseAll && !qs && S.diffF === 'all' && S.pantryF === 'all' && !S.favOnly && !S.quickF && S.sort === 'book' && chapters.length > 1) {
+        prefix = COOK.allBarHTML();
       }
-      var fav = window.Store.isFav(r.id);
-      var chip = r.score === null
-        ? '<span class="chip plain">' + esc(diffLabel(r.diff)) + '</span>'
-        : leaf(r.score);
-      /* esc, like every other interpolation on this card. A recipe id is
-         generated locally and is safe — but a recipe arriving from the shared
-         household document was typed by somebody else, and the whole point of
-         a household is that it holds other people's writing. */
-      var card = '<button class="card" data-open="' + esc(r.id) + '">' +
-        '<span class="card-top">' +
-          '<span class="card-num">' + (BOOKS[r.book] || BOOKS[3]).short + ' · ' + no(r) + '</span>' +
-          '<span class="card-fav">' + (fav ? '★ Saved' : '') + '</span>' +
-        '</span>' +
-        '<span class="card-name">' + esc(r.name) + '</span>' +
-        '<span class="card-sub">' + esc(r.tagline || macroLine(r)) + '</span>' +
-        '<span class="card-foot">' +
-          '<span class="card-meta">' + esc(r.time + ' · ' + r.servings.split(' (')[0]) + '</span>' +
-          chip +
-        '</span>' +
-      '</button>';
-      return head + COOK.cardCellHTML(r, card, !!onWeek[String(r.id)]);
-    }).join('');
+
+      grid.innerHTML = prefix + list.map(function (r) {
+        var head = '';
+        if (showSecs && secKey(r) !== lastSec) {
+          lastSec = secKey(r);
+          var n = secCount[lastSec];
+          head = '<div class="grid-sec">' +
+            '<span class="grid-sec-b">' + esc((BOOKS[r.book] || BOOKS[3]).short) + '</span>' +
+            '<b>' + esc(SEC_SHORT[lastSec] || r.secName) + '</b>' +
+            '<span class="grid-sec-n">' + n + '</span>' +
+            ((APP_SEC_NOTE[lastSec] || SEC_NOTE[lastSec]) ? '<span class="grid-sec-s">' + esc(APP_SEC_NOTE[lastSec] || SEC_NOTE[lastSec]) + '</span>' : '') +
+          '</div>';
+        }
+        var fav = window.Store.isFav(r.id);
+        var chip = r.score === null
+          ? '<span class="chip plain">' + esc(diffLabel(r.diff)) + '</span>'
+          : leaf(r.score);
+        /* esc, like every other interpolation on this card. A recipe id is
+           generated locally and is safe — but a recipe arriving from the shared
+           household document was typed by somebody else, and the whole point of
+           a household is that it holds other people's writing. */
+        var card = '<button class="card" data-open="' + esc(r.id) + '">' +
+          '<span class="card-top">' +
+            '<span class="card-num">' + (BOOKS[r.book] || BOOKS[3]).short + ' · ' + no(r) + '</span>' +
+            '<span class="card-fav">' + (fav ? '★ Saved' : '') + '</span>' +
+          '</span>' +
+          '<span class="card-name">' + esc(r.name) + '</span>' +
+          '<span class="card-sub">' + esc(r.tagline || macroLine(r)) + '</span>' +
+          '<span class="card-foot">' +
+            '<span class="card-meta">' + esc(r.time + ' · ' + r.servings.split(' (')[0]) + '</span>' +
+            chip +
+          '</span>' +
+        '</button>';
+        return head + COOK.cardCellHTML(r, card, !!onWeek[String(r.id)]);
+      }).join('');
+    }
     COOK.renderChips();
     COOK.renderNav();
     /* A search that leaves twelve cards can pull the page back up past the
@@ -4046,8 +4067,14 @@
     LIVE: LIVE,
     DAYS: DAYS,
     CAL_DAYS: CAL_DAYS,
+    BOOKS: BOOKS,
+    SEC_SHORT: SEC_SHORT,
+    SEC_NOTE: SEC_NOTE,
+    APP_SEC_NOTE: APP_SEC_NOTE,
     esc: esc,
     idOf: idOf,
+    no: no,
+    leaf: leaf,
     timeMins: timeMins,
     pwIsDinner: pwIsDinner,
     pwAnswers: pwAnswers,

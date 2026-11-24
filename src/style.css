@@ -229,6 +229,9 @@
   --shadow-cover-on:   rgba(59, 54, 48, 0.4);
   --shadow-card-hover: oklch(0.62 0.10 55 / 0.14);
   --mwk-shade:         oklch(0 0 0 / 0.26);
+  --chap-art-bg:     oklch(0.948 0.018 82);
+  --chap-art-filter: contrast(1.06);
+  --chap-art-blend:  multiply;
 
   /* ---- the score: a leaf, a word and a bar, in three bands -------------- */
   --score-good-ink:  oklch(0.34 0.10 148);
@@ -464,6 +467,9 @@
     --danger-wash-2: var(--danger-wash);
     --warn: oklch(0.78 0.11 50);
     --warn-2: var(--warn);
+    --chap-art-bg: oklch(0.215 0.012 65);
+    --chap-art-filter: contrast(1.06) invert(1) sepia(0.18) brightness(0.9);
+    --chap-art-blend: screen;
 
     /* the header was always night; it goes a shade further so the page,
        now dark too, still sits under it */
@@ -902,9 +908,12 @@ select { max-width: 280px; }
 #view-browse { --brw-strip-h: 92px; }
 #view-browse > .cook-nav-slot,
 #view-where > .cook-nav-slot,
-#view-book > .cook-nav-slot { max-width: 1240px; margin: 0 auto; padding: 10px 22px 4px; }
-#view-browse > .view { padding-top: 14px; }
-#view-browse .view-head { margin-bottom: 12px; padding-bottom: 6px; }
+#view-book > .cook-nav-slot { max-width: 1240px; margin: 0 auto; padding: 8px 22px 2px; }
+#view-browse > .view { padding-top: 8px; }
+#view-browse .view-head { margin-bottom: 8px; padding-bottom: 4px; }
+#view-browse .view-head-row { gap: 4px 10px; }
+#view-browse .brw-about { margin-top: 2px; }
+#view-browse .brw-about > summary { padding: 2px 0; }
 .view > .cook-nav-slot,
 .list-view > .cook-nav-slot { padding: 0 0 12px; }
 .cook-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
@@ -922,7 +931,7 @@ select { max-width: 280px; }
   position: sticky; top: var(--topbar-h, 60px); z-index: var(--z-strip);
   background: var(--paper-soft); border-bottom: 1px solid var(--line);
 }
-.brw-strip-in { padding: 8px 0; }
+.brw-strip-in { padding: 6px 0; }
 .stripped .brw-strip { box-shadow: 0 2px 6px var(--shadow-strip); }
 .brw-strip-c {
   max-width: 1240px; margin: 0 auto; padding: 0 22px;
@@ -937,7 +946,7 @@ select { max-width: 280px; }
 }
 .brw-filt:hover { background: var(--paper); }
 .cook-chips {
-  max-width: 1240px; margin: 7px auto 0; padding: 0 22px;
+  max-width: 1240px; margin: 5px auto 0; padding: 0 22px;
   display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none;
 }
 .cook-chips::-webkit-scrollbar { display: none; }
@@ -1011,7 +1020,7 @@ select { max-width: 280px; }
 @media (max-width: 860px) {
   #view-browse > .cook-nav-slot,
   #view-where > .cook-nav-slot,
-  #view-book > .cook-nav-slot { padding: 8px 16px 4px; }
+  #view-book > .cook-nav-slot { padding: 6px 16px 2px; }
   .cook-chips { padding: 0 16px; }
   .brw-head-acts .favbtn { flex: 0 0 auto; }
 }
@@ -1041,6 +1050,94 @@ select { max-width: 280px; }
   border: 1px solid var(--chip-line); font-weight: 500;
 }
 .empty { padding: 60px 20px; text-align: center; color: var(--muted); font-size: 0.875rem; }
+
+/* ---- Visual Cookbook Chapters (Option 1) ---- */
+#grid.grid-chaps { display: flex; flex-direction: column; gap: 8px; }
+.chap-bar { display: flex; align-items: center; justify-content: flex-start; }
+.chap-grp-seg button { min-height: 44px; padding: 8px 14px; font-size: 0.8125rem; }
+.chap-sec { display: flex; flex-direction: column; gap: 6px; }
+.chap-grp-hd {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--line-head); padding-bottom: 6px;
+}
+.chap-grp-hd h2 { margin: 0; font-family: var(--serif); font-size: 1.0625rem; font-weight: 600; color: var(--ink); }
+.chap-grp-hd span { font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 12px; }
+.chap-card {
+  appearance: none; text-align: left; font: inherit; color: inherit;
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  overflow: hidden; padding: 0; cursor: pointer;
+  display: flex; flex-direction: column; min-width: 0;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.chap-card:hover { border-color: var(--ochre); box-shadow: 0 3px 14px var(--shadow-card-hover); }
+.chap-art-wrap {
+  position: relative; height: 104px;
+  background: var(--chap-art-bg); border-bottom: 1px solid var(--line-soft);
+  display: flex; align-items: center; justify-content: center;
+  padding: 6px; overflow: hidden;
+}
+.chap-art {
+  width: 100%; height: 100%; object-fit: contain;
+  mix-blend-mode: var(--chap-art-blend); filter: var(--chap-art-filter);
+}
+.chap-art-mono { font-family: var(--serif); font-size: 2rem; color: var(--ochre-text); opacity: 0.7; }
+.chap-cnt {
+  position: absolute; top: 6px; right: 6px;
+  font-size: 0.75rem; font-weight: 600; font-variant-numeric: tabular-nums;
+  background: var(--card); border: 1px solid var(--line); color: var(--muted-2);
+  border-radius: 999px; padding: 2px 8px; line-height: 1.2;
+}
+.chap-txt { padding: 10px 11px 12px; display: flex; flex-direction: column; gap: 3px; flex: 1 1 auto; }
+.chap-title { font-family: var(--serif); font-size: 0.96875rem; font-weight: 600; color: var(--ink); line-height: 1.24; }
+.chap-sub {
+  font-size: 0.8125rem; color: var(--note); line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.chap-saved-rail { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+.chap-saved-rail::-webkit-scrollbar { display: none; }
+.chap-saved-cell { position: relative; flex: none; width: 210px; display: flex; }
+.chap-saved-card {
+  flex: 1 1 auto; appearance: none; text-align: left; font: inherit; color: inherit;
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  padding: 11px 52px 10px 12px; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: space-between; gap: 8px; min-height: 88px;
+}
+.chap-saved-card:hover { border-color: var(--ochre); }
+.chap-saved-name {
+  font-family: var(--serif); font-size: 0.9375rem; font-weight: 600; color: var(--ink); line-height: 1.25;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.chap-saved-foot { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 0.8125rem; color: var(--muted-2); }
+
+.chap-drill, .chap-all-bar { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 10px; }
+.chap-drill-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.chap-back { min-height: 44px; padding: 8px 14px; font-size: 0.875rem; font-weight: 600; align-self: flex-start; }
+.chap-drill-cnt { font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chap-hero {
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; display: flex; align-items: center; gap: 14px;
+}
+.chap-thumb {
+  width: 72px; height: 72px; border-radius: 8px;
+  background: var(--chap-art-bg); border: 1px solid var(--line-soft);
+  display: flex; align-items: center; justify-content: center; padding: 5px; flex: none;
+}
+.chap-thumb img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: var(--chap-art-blend); filter: var(--chap-art-filter); }
+.chap-hero-info { min-width: 0; flex: 1 1 auto; }
+.chap-hero-book { font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ochre-text); font-weight: 600; }
+.chap-hero-title { margin: 2px 0 0; font-family: var(--serif); font-size: 1.1875rem; font-weight: 600; color: var(--ink); line-height: 1.2; }
+.chap-hero-sub { margin: 4px 0 0; font-size: 0.84375rem; color: var(--note); line-height: 1.4; }
+.chap-all-foot { display: flex; justify-content: center; padding: 6px 0 4px; }
+.chap-all-btn { min-height: 44px; padding: 9px 18px; font-size: 0.875rem; }
+
+@media (max-width: 640px) { .chap-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
+@media (max-width: 350px) {
+  .chap-grid { gap: 8px; }
+  .chap-art-wrap { height: 86px; }
+  .chap-saved-cell { width: 192px; }
+}
 
 /* ----------------------------------------------------------- meal plan */
 .week-acts { display: flex; gap: 8px; flex-wrap: wrap; }

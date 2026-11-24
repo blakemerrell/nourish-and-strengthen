@@ -79,6 +79,7 @@ module.exports = {
     await p.waitForTimeout(400);
 
     /* ---- cups and grams ------------------------------------------------- */
+    if (await p.$('.chap-card')) { await p.click('.chap-card >> nth=0'); await p.waitForTimeout(150); }
     await p.click('.card');
     await p.waitForTimeout(350);
 
@@ -124,6 +125,7 @@ module.exports = {
     // and the choice is remembered, because it is a preference not a mode
     await p.reload();
     await p.waitForTimeout(700);
+    if (await p.$('.chap-card')) { await p.click('.chap-card >> nth=0'); await p.waitForTimeout(150); }
     await p.click('.card');
     await p.waitForTimeout(350);
     t.ok('the choice survives a reload',

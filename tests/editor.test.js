@@ -112,6 +112,8 @@ module.exports = {
     await p.click('[data-book="1"]');
     await p.click('#filtersDone');
     await p.waitForTimeout(200);
+    await p.click('[data-browseall]');
+    await p.waitForTimeout(150);
     await p.click('#grid .card >> nth=0');
     await p.click('[data-edit]');
     await p.waitForSelector('.ed-sheet');

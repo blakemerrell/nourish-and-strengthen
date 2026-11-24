@@ -12,8 +12,14 @@
   var LIVE = app.LIVE;
   var DAYS = app.DAYS;
   var CAL_DAYS = app.CAL_DAYS;
+  var BOOKS = app.BOOKS;
+  var SEC_SHORT = app.SEC_SHORT;
+  var SEC_NOTE = app.SEC_NOTE;
+  var APP_SEC_NOTE = app.APP_SEC_NOTE;
   var esc = app.esc;
   var idOf = app.idOf;
+  var no = app.no;
+  var leaf = app.leaf;
   var timeMins = app.timeMins;
   var pwIsDinner = app.pwIsDinner;
   var pwAnswers = app.pwAnswers;
@@ -125,11 +131,189 @@
     for (var i = 0; i < hosts.length; i++) hosts[i].innerHTML = html;
   }
 
+  var MEAL_OF = {
+    '1-1': 'morning', '2-1': 'morning', '1-6': 'morning',
+    '1-3': 'mains', '2-2': 'mains', '1-4': 'mains', '2-3': 'mains', '2-4': 'mains', '2-7': 'mains',
+    '1-2': 'snacks', '1-5': 'snacks', '1-7': 'snacks',
+    '2-5': 'sweets', '2-6': 'sweets', '2-8': 'sweets', '2-9': 'sweets'
+  };
+  var MEAL_GROUPS = [
+    { id: 'morning', title: 'Mornings & Drinks' },
+    { id: 'mains', title: 'Lunches & Dinners' },
+    { id: 'snacks', title: 'Snacks & Batch Prep' },
+    { id: 'sweets', title: 'Sweets & Pantry Crafts' },
+    { id: 'ours', title: 'Ours' }
+  ];
+
+  function secSlug(s) {
+    return String(s || '').toLowerCase().replace(/&/g, 'and')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  function secArt(secName) {
+    return (window.SECTION_ART || {})[secSlug(secName)] || '';
+  }
+
+  function chapMeta(r) {
+    var shortKey = r.book + '-' + r.secNum;
+    return {
+      val: shortKey + '-' + r.secName,
+      shortKey: shortKey,
+      book: r.book,
+      secNum: r.secNum,
+      secName: r.secName,
+      title: SEC_SHORT[shortKey] || r.secName,
+      note: APP_SEC_NOTE[shortKey] || SEC_NOTE[shortKey] || (r.book === 3 ? 'Written by your household.' : ''),
+      art: secArt(r.secName),
+      count: 0
+    };
+  }
+
+  /* Group the visible recipes into chapters in book order so Cook > Recipes
+     opens on illustrated chapters instead of a 365-item scroll wall. */
+  function buildChapters(list) {
+    var out = [], byVal = {};
+    list.forEach(function (r) {
+      var val = r.book + '-' + r.secNum + '-' + r.secName;
+      if (!byVal[val]) {
+        byVal[val] = chapMeta(r);
+        out.push(byVal[val]);
+      }
+      byVal[val].count++;
+    });
+    return out;
+  }
+
+  function chaptersHTML(list, onWeek) {
+    var savedList = list.filter(function (r) { return window.Store.isFav(r.id); });
+    var savedHTML = '';
+    if (savedList.length) {
+      savedHTML = '<div class="chap-sec chap-saved-sec">' +
+        '<div class="chap-grp-hd"><h2>&#9733; Saved</h2><span>' +
+        savedList.length + (savedList.length === 1 ? ' recipe' : ' recipes') + '</span></div>' +
+        '<div class="chap-saved-rail">' + savedList.map(function (r) {
+          var id = esc(String(r.id));
+          var on = !!onWeek[String(r.id)];
+          var lbl = on ? 'Planned: ' + r.name + ' (edit days)' : 'Add ' + r.name + ' to this week';
+          var meta = r.time || ((BOOKS[r.book] || BOOKS[3]).short + ' \u00b7 ' + no(r));
+          var score = r.score !== null && r.score !== undefined ? leaf(r.score) : '';
+          return '<div class="chap-saved-cell">' +
+            '<button type="button" class="chap-saved-card" data-open="' + id + '">' +
+              '<span class="chap-saved-name">' + esc(r.name) + '</span>' +
+              '<span class="chap-saved-foot">' +
+                '<span class="chap-saved-meta">' + esc(meta) + '</span>' +
+                score +
+              '</span>' +
+            '</button>' +
+            '<button type="button" class="card-add no-print' + (on ? ' on' : '') + '" data-cardadd="' + id +
+            '" aria-pressed="' + on + '" aria-label="' + esc(lbl) + '">' +
+            (on ? '&#10003;' : '+') + '</button></div>';
+        }).join('') + '</div></div>';
+    }
+
+    var grpMode = S.chapGroup === 'meal' ? 'meal' : 'book';
+    var barHTML = S.bookF === 'all'
+      ? '<div class="chap-bar no-print">' +
+          '<div class="seg chap-grp-seg" role="group" aria-label="Group chapters">' +
+            '<button type="button" data-chapgrp="book" aria-pressed="' + (grpMode === 'book') + '">By book</button>' +
+            '<button type="button" data-chapgrp="meal" aria-pressed="' + (grpMode === 'meal') + '">By meal</button>' +
+          '</div>' +
+        '</div>'
+      : '';
+
+    var chapters = buildChapters(list);
+    var groups = [];
+    if (S.bookF === 'all' && grpMode === 'meal') {
+      var byMeal = {};
+      chapters.forEach(function (ch) {
+        var mid = MEAL_OF[ch.shortKey] || (ch.book === 3 ? 'ours' : 'mains');
+        if (!byMeal[mid]) byMeal[mid] = [];
+        byMeal[mid].push(ch);
+      });
+      MEAL_GROUPS.forEach(function (mg) {
+        if (byMeal[mg.id] && byMeal[mg.id].length) {
+          groups.push({ title: mg.title, chaps: byMeal[mg.id] });
+        }
+      });
+    } else {
+      var byBook = {}, bookOrder = [];
+      chapters.forEach(function (ch) {
+        if (!byBook[ch.book]) { byBook[ch.book] = []; bookOrder.push(ch.book); }
+        byBook[ch.book].push(ch);
+      });
+      bookOrder.forEach(function (b) {
+        groups.push({ title: (BOOKS[b] || BOOKS[3]).name, chaps: byBook[b] });
+      });
+    }
+
+    var idx = 0;
+    var groupsHTML = groups.map(function (g) {
+      var tot = g.chaps.reduce(function (sum, c) { return sum + c.count; }, 0);
+      var cards = g.chaps.map(function (ch) {
+        var lazy = idx >= 4 ? ' loading="lazy"' : '';
+        idx++;
+        var artHTML = ch.art
+          ? '<img class="chap-art" src="' + esc(ch.art) + '" alt="" decoding="async"' + lazy + '>'
+          : '<span class="chap-art-mono" aria-hidden="true">&#9998;</span>';
+        return '<button type="button" class="chap-card" data-chap="' + esc(ch.val) + '">' +
+          '<span class="chap-art-wrap">' + artHTML +
+            '<span class="chap-cnt">' + ch.count + '</span>' +
+          '</span>' +
+          '<span class="chap-txt">' +
+            '<span class="chap-title">' + esc(ch.title) + '</span>' +
+            (ch.note ? '<span class="chap-sub">' + esc(ch.note) + '</span>' : '') +
+          '</span>' +
+        '</button>';
+      }).join('');
+      return '<div class="chap-sec">' +
+        '<div class="chap-grp-hd"><h2>' + esc(g.title) + '</h2><span>' +
+          g.chaps.length + (g.chaps.length === 1 ? ' chapter' : ' chapters') + ' &middot; ' +
+          tot + (tot === 1 ? ' recipe' : ' recipes') + '</span></div>' +
+        '<div class="chap-grid">' + cards + '</div>' +
+      '</div>';
+    }).join('');
+
+    var footHTML = '<div class="chap-all-foot no-print">' +
+      '<button type="button" class="ghost chap-all-btn" data-browseall="1">Browse all ' + list.length + ' recipes</button>' +
+    '</div>';
+
+    return savedHTML + barHTML + groupsHTML + footHTML;
+  }
+
+  function drillHeroHTML(list) {
+    if (!list || !list.length) return '';
+    var ch = chapMeta(list[0]);
+    var bookName = (BOOKS[ch.book] || BOOKS[3]).name;
+    var artHTML = ch.art
+      ? '<img src="' + esc(ch.art) + '" alt="" decoding="async">'
+      : '<span class="chap-art-mono" aria-hidden="true">&#9998;</span>';
+    return '<div class="chap-drill">' +
+      '<div class="chap-drill-top">' +
+        '<button type="button" class="ghost chap-back" data-chapback="1">&lsaquo; All chapters</button>' +
+        '<span class="chap-drill-cnt">' + list.length + (list.length === 1 ? ' recipe' : ' recipes') + '</span>' +
+      '</div>' +
+      '<div class="chap-hero">' +
+        '<div class="chap-thumb">' + artHTML + '</div>' +
+        '<div class="chap-hero-info">' +
+          '<div class="chap-hero-book">' + esc(bookName) + '</div>' +
+          '<h2 class="chap-hero-title">' + esc(ch.title) + '</h2>' +
+          (ch.note ? '<p class="chap-hero-sub">' + esc(ch.note) + '</p>' : '') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function allBarHTML() {
+    return '<div class="chap-all-bar no-print">' +
+      '<button type="button" class="ghost chap-back" data-chapback="1">&lsaquo; Chapters</button>' +
+    '</div>';
+  }
+
   function renderChips() {
     var el = $('cookChips');
     if (!el) return;
     var isAll = !S.quickF && S.bookF === 'all' && S.secF === 'all' && S.diffF === 'all' &&
-      S.pantryF === 'all' && !S.favOnly && S.sort === 'book';
+      S.pantryF === 'all' && !S.favOnly && S.sort === 'book' && !S.browseAll;
     var chips = [
       ['all', 'All', isAll],
       ['dinner', 'Dinner', S.quickF === 'dinner'],
@@ -153,6 +337,7 @@
       S.pantryF = 'all';
       S.favOnly = false;
       S.sort = 'book';
+      S.browseAll = false;
       document.querySelectorAll('#bookSeg button[data-book]').forEach(function (b) {
         b.setAttribute('aria-pressed', String(b.dataset.book === 'all'));
       });
@@ -168,6 +353,10 @@
       S.favOnly = !S.favOnly;
       if ($('favBtn')) $('favBtn').setAttribute('aria-pressed', String(S.favOnly));
     } else {
+      if (k === 'dinner' && S.quickF !== 'dinner' && S.secF !== 'all') {
+        S.secF = 'all';
+        if ($('secSel')) $('secSel').value = 'all';
+      }
       S.quickF = S.quickF === k ? '' : k;
     }
     renderBrowse();
@@ -304,6 +493,42 @@
         return;
       }
 
+      var ch = e.target.closest('#grid [data-chap]');
+      if (ch) {
+        S.secF = ch.dataset.chap;
+        S.browseAll = false;
+        if ($('secSel')) $('secSel').value = S.secF;
+        renderBrowse();
+        window.scrollTo(0, 0);
+        return;
+      }
+
+      var cb = e.target.closest('#grid [data-chapback]');
+      if (cb) {
+        S.secF = 'all';
+        S.browseAll = false;
+        if ($('secSel')) $('secSel').value = 'all';
+        renderBrowse();
+        window.scrollTo(0, 0);
+        return;
+      }
+
+      var grp = e.target.closest('#grid [data-chapgrp]');
+      if (grp) {
+        S.chapGroup = grp.dataset.chapgrp === 'meal' ? 'meal' : 'book';
+        try { localStorage.setItem('sh.chapGroup', S.chapGroup); } catch (ex) { /* private mode */ }
+        renderBrowse();
+        return;
+      }
+
+      var ba = e.target.closest('#grid [data-browseall]');
+      if (ba) {
+        S.browseAll = true;
+        renderBrowse();
+        window.scrollTo(0, 0);
+        return;
+      }
+
       var cr = $('cookRoot');
       if (cr && cr.contains(e.target)) {
         if (e.target.dataset && e.target.dataset.cookscrim) { closeQuickAdd(); return; }
@@ -379,6 +604,10 @@
     matchQuick: matchQuick,
     renderNav: renderNav,
     renderChips: renderChips,
+    buildChapters: buildChapters,
+    chaptersHTML: chaptersHTML,
+    drillHeroHTML: drillHeroHTML,
+    allBarHTML: allBarHTML,
     cardCellHTML: cardCellHTML,
     planWalmartHTML: planWalmartHTML,
     closeQuickAdd: closeQuickAdd,

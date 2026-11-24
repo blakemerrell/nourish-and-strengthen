@@ -73,6 +73,7 @@ module.exports = {
     });
     const foot = async () => {
       await p.click('.tab[data-view="browse"]'); await p.waitForTimeout(300);
+      if (await p.$('.chap-card')) { await p.click('.chap-card >> nth=0'); await p.waitForTimeout(150); }
       await p.click('.card'); await p.waitForTimeout(300);
       const s = await p.evaluate(() => {
         const e = document.querySelector('.sheet-extras');
@@ -105,6 +106,7 @@ module.exports = {
        the difference between reading the list and reading a footnote. */
     const tinted = async () => {
       await p.click('.tab[data-view="browse"]'); await p.waitForTimeout(300);
+      if (await p.$('.chap-card')) { await p.click('.chap-card >> nth=0'); await p.waitForTimeout(150); }
       await p.click('.card'); await p.waitForTimeout(300);
       const rows = await p.evaluate(() => [...document.querySelectorAll('.sheet-ing div')]
         .map((d) => ({ t: d.textContent.trim(), buy: d.classList.contains('ing-buy') })));
@@ -163,6 +165,8 @@ module.exports = {
      * the count ever drops to zero the rule has been switched off, however
      * neatly the two halves still agree with each other. */
     await p.click('.tab[data-view="browse"]'); await p.waitForTimeout(250);
+    if (await p.$('[data-chapback]')) { await p.click('[data-chapback]'); await p.waitForTimeout(100); }
+    if (await p.$('[data-browseall]')) { await p.click('[data-browseall]'); await p.waitForTimeout(150); }
     await p.evaluate(() => {
       const el = document.querySelector('[data-open="17"]');
       if (el) el.click();

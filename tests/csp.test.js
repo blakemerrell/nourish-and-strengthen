@@ -108,6 +108,7 @@ module.exports = {
       walked.push(v + ':' + await q.evaluate((v) => !document.getElementById('view-' + v).classList.contains('hide'), v));
     }
     await go('.tab[data-view="browse"]');
+    walked.push('chapter:' + await go('#grid .chap-card'));
     walked.push('recipe:' + await go('#grid .card'));
     await go('.sheet-x');
     await go('#view-browse [data-cookgo="plan"]');

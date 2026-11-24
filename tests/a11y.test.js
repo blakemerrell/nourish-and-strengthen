@@ -229,7 +229,7 @@ module.exports = {
       const cs = getComputedStyle(document.body);
       return { bg: cs.backgroundColor, fg: cs.color, scheme: getComputedStyle(document.documentElement).colorScheme,
         ink: getComputedStyle(document.documentElement).getPropertyValue('--ink').trim(),
-        card: getComputedStyle(document.querySelector('.card')).backgroundColor,
+        card: getComputedStyle(document.querySelector('.card, .chap-card')).backgroundColor,
         header: getComputedStyle(document.querySelector('.topbar')).backgroundColor,
         meta: [...document.querySelectorAll('meta[name="theme-color"]')].map((m) => (m.media || '') + ' ' + m.content) };
     });
@@ -372,7 +372,10 @@ module.exports = {
     await q.evaluate(() => { document.getElementById('mToast').hidden = true; });
     // the recipe sheet: the star, the pencil, cups/grams and the scale
     await q.click('.tab[data-view="browse"]');
-    await q.evaluate(() => document.querySelector('[data-open]').click());
+    await q.evaluate(() => {
+      var ch = document.querySelector('#grid .chap-card'); if (ch) ch.click();
+      document.querySelector('[data-open]').click();
+    });
     await q.waitForTimeout(300);
     for (const [sel, what] of [['.sheet .iconbtn', 'the star and the pencil'], ['.unitseg button', 'cups and grams'],
       ['.scaler-box button', 'the scale\'s − and +'], ['.nut-ask', '"How is this scored?"']]) {

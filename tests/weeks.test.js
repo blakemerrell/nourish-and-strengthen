@@ -179,6 +179,7 @@ module.exports = {
     await p.click('#calNext');
     await p.waitForTimeout(150);
     await p.click('.tab[data-view="browse"]');
+    await p.click('#grid .chap-card >> nth=0');
     const opened = await p.evaluate(() => Number(document.querySelector('#grid .card').dataset.open));
     await p.click('#grid .card >> nth=0');
     await p.click('[data-scale="up"]');
@@ -552,8 +553,10 @@ module.exports = {
 
     /* ---- the back gesture, on every sheet there is ---- */
     for (const [what, open] of [
-      ['a recipe', async (q) => { await q.click('.tab[data-view="browse"]'); await q.evaluate(() =>
-        document.querySelector('.card[data-open]').click()); await q.waitForTimeout(350); }],
+      ['a recipe', async (q) => { await q.click('.tab[data-view="browse"]'); await q.evaluate(() => {
+        var ch = document.querySelector('.chap-card'); if (ch) ch.click();
+        document.querySelector('.card[data-open]').click();
+      }); await q.waitForTimeout(350); }],
       ['the Share sheet', async (q) => { await q.click('#syncBtn'); await q.waitForTimeout(350); }],
       ['the editor', async (q) => { await q.click('.tab[data-view="browse"]'); await q.click('#newRecipe'); await q.waitForTimeout(450); }],
       ['a confirm dialog', async (q) => {

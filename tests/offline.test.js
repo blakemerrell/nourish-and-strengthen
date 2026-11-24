@@ -199,7 +199,9 @@ module.exports = {
     t.ok('and it really is offline: nothing reaches the server, the worker\u2019s own requests included', reach === 'refused', String(reach));
     const alive = await p.evaluate(() => ({
       // it opens on Today; every recipe is there the moment Recipes is
-      cards: (document.querySelector('.tab[data-view="browse"]').click(), document.querySelectorAll('.card').length),
+      cards: (document.querySelector('.tab[data-view="browse"]').click(),
+        (function () { var ba = document.querySelector('[data-browseall]'); if (ba) ba.click(); }()),
+        document.querySelectorAll('.card').length),
       font: document.fonts.check('700 20px "Source Serif 4"'),
       planned: window.Store.day('wed').length,
       total: window.RECIPES.length,
@@ -213,7 +215,9 @@ module.exports = {
     await p2.goto(t.base + 'index.html');
     await p2.waitForTimeout(1200);
     t.ok('a fresh tab opens offline too',
-      await p2.evaluate(() => (document.querySelector('.tab[data-view="browse"]').click(), document.querySelectorAll('.card').length === window.RECIPES.length)),
+      await p2.evaluate(() => (document.querySelector('.tab[data-view="browse"]').click(),
+        (function () { var ba = document.querySelector('[data-browseall]'); if (ba) ba.click(); }()),
+        document.querySelectorAll('.card').length === window.RECIPES.length)),
       await p2.evaluate(() => document.querySelectorAll('.card').length + ' of ' + window.RECIPES.length));
     await p2.click('.tab[data-view="browse"]'); await p2.click('#bookBtn');
     await p2.waitForTimeout(3500);

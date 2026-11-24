@@ -105,7 +105,7 @@ module.exports = {
       t.ok('someone with no account is told to sign in to join',
         /invited to a pantry\. Sign in above/.test(await D.textContent('.sync-sheet')));
       t.ok('and nothing happens to the app for them otherwise',
-        !(await D.evaluate(() => window.Store.house)) && (await D.$$('#grid .card')).length > 0);
+        !(await D.evaluate(() => window.Store.house)) && (await D.$$('#grid .card, #grid .chap-card')).length > 0);
 
       // ---- the rules, asked directly --------------------------------------
       const denied = async (p, fn, arg) => p.evaluate(async ([src, a]) => {

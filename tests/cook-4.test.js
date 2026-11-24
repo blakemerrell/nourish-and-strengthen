@@ -37,7 +37,7 @@ module.exports = nourish({
       const minH = Math.min(...btns.map((b) => Math.round(b.getBoundingClientRect().height)));
       const tabs = [...document.querySelectorAll('.tabs [role="tab"]')].filter((b) => b.offsetParent !== null).length;
       const cookTabs = document.querySelectorAll('#view-browse [role="tab"]').length;
-      const firstCard = document.querySelector('#grid .card-cell');
+      const firstCard = document.querySelector('#grid .chap-card, #grid .card-cell');
       const cardTop = firstCard ? Math.round(firstCard.getBoundingClientRect().top) : 9999;
       const chipRow = document.querySelector('#cookChips');
       const chipTops = new Set([...chipRow.querySelectorAll('.cook-chip')].map((c) => Math.round(c.getBoundingClientRect().top)));
@@ -49,7 +49,7 @@ module.exports = nourish({
       JSON.stringify(nav));
 
     /* 3. Quick filter chips filter recipes and sync with Filter drawer */
-    const totalCards = await p.evaluate(() => document.querySelectorAll('#grid .card').length);
+    const totalCards = await p.evaluate(() => window.RECIPES.length);
     for (const [chip, check] of [
       ['dinner', (r) => r.book === 2 && [3, 4, 7].indexOf(r.secNum) >= 0 || r.book === 1 && r.secNum === 4],
       ['under30', (r) => {
@@ -81,9 +81,12 @@ module.exports = nourish({
     await p.click('#cookChips [data-qchip="all"]');
     await p.waitForTimeout(150);
     t.ok('All chip resets filters back to the full collection',
-      (await p.evaluate(() => document.querySelectorAll('#grid .card').length)) === totalCards);
+      (await p.evaluate(() => document.querySelectorAll('#grid .chap-card').length >= 16 &&
+        document.querySelectorAll('#grid .card').length === 0)));
 
     /* 4. Recipe card + quick-plan flow, Tab trap, Escape, and nav badges */
+    await p.click('#grid .chap-card >> nth=0');
+    await p.waitForTimeout(150);
     const cardGeom = await p.evaluate(() => {
       const cell = document.querySelector('#grid .card-cell');
       const card = cell.querySelector('button.card');
@@ -118,6 +121,8 @@ module.exports = nourish({
       !(await p.evaluate(() => !!document.querySelector('#cookRoot .scrim'))));
 
     // Plan onto a dinner recipe so Walmart ingredients are present
+    await p.click('#cookChips [data-qchip="dinner"]');
+    await p.waitForTimeout(150);
     const dinnerId = await p.evaluate(() => {
       const r = window.RECIPES.find((x) => x.book === 2 && x.secNum === 3);
       return String(r.id);

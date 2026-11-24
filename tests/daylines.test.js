@@ -73,17 +73,19 @@ module.exports = {
     }, line('d', 0));
     t.ok('a recipe’s line keeps the card clean with no superscript leaf, while its name stays the door to the recipe',
       !rec.sup && !rec.leaf && rec.go && rec.open === '66' && !rec.foodLeaf, JSON.stringify(rec));
-    /* Since 2026-11-06 the leaf is a superscript, not a column of its own,
-       so every food's name starts at the card's own edge, where the meal's
-       pills start too (Blake: "stretch the whole span of the card"). */
+    /* With the P1 espresso cap (2026-11-23), .mtray-caps spans flush
+       edge-to-edge across the entire card border (1 px inset), while every
+       food's name starts uniformly at the card's 12 px inner padding. */
     const names = await p.evaluate(() => {
       const edge = document.querySelector('#macroSlots .mtray-caps').getBoundingClientRect().left;
       const card = document.querySelector('#macroSlots .mtray-caps').closest('.mtray').getBoundingClientRect();
       return { edge: Math.round(edge - card.left), card: Math.round(card.width), capsRight: Math.round(card.right - document.querySelector('#macroSlots .mtray-caps').getBoundingClientRect().right),
         foods: [...document.querySelectorAll('#macroSlots .mtray-fn')].map((b) => Math.round(b.getBoundingClientRect().left - edge)) };
     });
-    t.ok('every food’s name starts where the meal’s pills do, at the card’s edge, and the pills reach across the card',
-      names.foods.every((d) => Math.abs(d) <= 2) && names.edge <= 14 && names.capsRight <= 14, JSON.stringify(names));
+    t.ok('the meal’s P1 cap spans edge-to-edge across the card and every food’s name aligns at the card’s inner padding',
+      names.edge <= 2 && names.capsRight <= 2 &&
+        names.foods.every((d) => d >= 10 && d <= 14 && Math.abs(d - names.foods[0]) <= 1),
+      JSON.stringify(names));
 
     /* ---- a tap on the line opens it there, on the day ---- */
     const at = await p.evaluate((sel) => { const r = document.querySelector(sel + ' .mfl-r').getBoundingClientRect(); return { x: r.left + r.width * 0.62, y: r.top + r.height / 2 }; }, line('l', 0));

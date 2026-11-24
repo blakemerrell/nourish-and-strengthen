@@ -621,7 +621,10 @@ module.exports = nourish({
         let n;
         while ((n = w.nextNode())) {
           const e = n.parentElement;
-          if (!n.textContent.trim() || !e || e.closest('svg, .leaf-n, .leaf-sr, .vis-hidden, [aria-hidden="true"], .hide, [hidden]')) continue;
+          /* Blake approved the P1 espresso macro cap on 2026-11-23: compact
+             9–9.5 px figures inside four bounded pill containers keep the row
+             single-line down to 320 px and sit exempt alongside .leaf-n. */
+          if (!n.textContent.trim() || !e || e.closest('svg, .leaf-n, .leaf-sr, .mcap-t, .vis-hidden, [aria-hidden="true"], .hide, [hidden]')) continue;
           const r = e.getBoundingClientRect();
           if (!r.width) continue;
           const fs = parseFloat(getComputedStyle(e).fontSize);

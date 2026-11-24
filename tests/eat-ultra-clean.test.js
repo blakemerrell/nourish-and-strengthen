@@ -12,8 +12,9 @@
  *  3) Today Eating card uses 4 .td-caps .mcap pills (kcal,p,f,c) with ZERO
  *     .td-dual-ring and ZERO .td-mbars.
  *  4) 320x568 light & dark layout audit on both Today and Eat: 0px
- *     horizontal overflow, >= 13px text on .td-caps .mcap-t and
- *     .mtray-caps .mcap-t, and 0 page errors. */
+ *     horizontal overflow, P1 espresso cap flush above card headings, all 4
+ *     bounded pill containers (radius >= 6px) on 1 single row, 0 clipped
+ *     digits, compact 8.5–10.5px text, and 0 page errors. */
 module.exports = {
   name: 'Eat & Today: silent auto-coach, always-open pill cards, and Today macro pills',
   async run(t) {
@@ -156,30 +157,66 @@ module.exports = {
       await mob.click('.tab[data-view="today"]');
       await mob.waitForTimeout(200);
       const tdAudit = await mob.evaluate(() => {
-        const capFonts = [...document.querySelectorAll('[data-card="eating"] .td-caps .mcap-t')]
-          .map((el) => parseFloat(getComputedStyle(el).fontSize));
+        const cap = document.querySelector('[data-card="eating"] .td-caps');
+        const head = document.querySelector('[data-card="eating"] .td-head');
+        const pills = [...document.querySelectorAll('[data-card="eating"] .td-caps .mcap')];
+        const capFonts = pills.map((el) => parseFloat(getComputedStyle(el.querySelector('.mcap-t')).fontSize));
+        const radii = pills.map((el) => parseFloat(getComputedStyle(el).borderRadius));
+        const rows = new Set(pills.map((el) => Math.round(el.getBoundingClientRect().top))).size;
+        const cut = pills.filter((el) => {
+          const pr = el.getBoundingClientRect(), tr = el.querySelector('.mcap-t').getBoundingClientRect();
+          return tr.left < pr.left - 0.5 || tr.right > pr.right + 0.5;
+        }).length;
         return {
           overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-          pills: capFonts.length,
+          pills: pills.length,
+          rows,
+          cut,
+          flushAbove: !!cap && !!head && cap.getBoundingClientRect().top <= head.getBoundingClientRect().top,
           minFont: Math.min.apply(null, capFonts),
+          maxFont: Math.max.apply(null, capFonts),
+          minRadius: Math.min.apply(null, radii),
         };
       });
-      t.ok('320px Today (' + scheme + '): 0px overflow and >= 13px macro pills',
-        tdAudit.overflow <= 0 && tdAudit.pills === 4 && tdAudit.minFont >= 12.95, JSON.stringify(tdAudit));
+      t.ok('320px Today (' + scheme + '): 0px overflow, flush P1 cap above head, 1 row, 0 cut, 8.5–10.5px bounded pills',
+        tdAudit.overflow <= 0 && tdAudit.pills === 4 && tdAudit.rows === 1 && tdAudit.cut === 0 &&
+          tdAudit.flushAbove && tdAudit.minFont >= 8.5 && tdAudit.maxFont <= 10.5 && tdAudit.minRadius >= 6,
+        JSON.stringify(tdAudit));
 
       await mob.click('.tab[data-view="macros"]');
       await mob.waitForTimeout(250);
       const eatAudit = await mob.evaluate(() => {
-        const capFonts = [...document.querySelectorAll('#macroSlots .mtray-caps .mcap-t')]
-          .map((el) => parseFloat(getComputedStyle(el).fontSize));
+        const trays = [...document.querySelectorAll('#macroSlots .mtray.mtray-cap')];
+        const pills = [...document.querySelectorAll('#macroSlots .mtray-caps .mcap')];
+        const capFonts = pills.map((el) => parseFloat(getComputedStyle(el.querySelector('.mcap-t')).fontSize));
+        const radii = pills.map((el) => parseFloat(getComputedStyle(el).borderRadius));
+        const rowsPerTray = trays.map((tr) =>
+          new Set([...tr.querySelectorAll('.mtray-caps .mcap')].map((el) => Math.round(el.getBoundingClientRect().top))).size);
+        const flushPerTray = trays.every((tr) => {
+          const cap = tr.querySelector('.mtray-caps'), hr = tr.querySelector('.mtray-hr');
+          return !!cap && !!hr && cap.getBoundingClientRect().top <= hr.getBoundingClientRect().top;
+        });
+        const cut = pills.filter((el) => {
+          const pr = el.getBoundingClientRect(), tr = el.querySelector('.mcap-t').getBoundingClientRect();
+          return tr.left < pr.left - 0.5 || tr.right > pr.right + 0.5;
+        }).length;
         return {
           overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-          pills: capFonts.length,
+          trays: trays.length,
+          pills: pills.length,
+          rowsPerTray,
+          cut,
+          flushPerTray,
           minFont: Math.min.apply(null, capFonts),
+          maxFont: Math.max.apply(null, capFonts),
+          minRadius: Math.min.apply(null, radii),
         };
       });
-      t.ok('320px Eat (' + scheme + '): 0px overflow and >= 13px tray pills',
-        eatAudit.overflow <= 0 && eatAudit.pills === 8 && eatAudit.minFont >= 12.95, JSON.stringify(eatAudit));
+      t.ok('320px Eat (' + scheme + '): 0px overflow, flush P1 caps above heads, 1 row each, 0 cut, 8.5–10.5px bounded pills',
+        eatAudit.overflow <= 0 && eatAudit.trays === 2 && eatAudit.pills === 8 &&
+          eatAudit.rowsPerTray.every((r) => r === 1) && eatAudit.cut === 0 && eatAudit.flushPerTray &&
+          eatAudit.minFont >= 8.5 && eatAudit.maxFont <= 10.5 && eatAudit.minRadius >= 6,
+        JSON.stringify(eatAudit));
     }
     await mob.context().close();
 

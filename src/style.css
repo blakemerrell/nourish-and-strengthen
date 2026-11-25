@@ -6653,17 +6653,42 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
 /* Have / Storehouse / Buy on every list line. The row keeps its tick; the
    switch sits beside it and wraps under on a narrow line. The storehouse
    colour is its own, and Buy is Walmart's blue, since that is where it goes. */
-.list-line { display: flex; align-items: center; column-gap: 8px; border-bottom: 1px solid var(--line-soft); }
-/* One line per food, read like a written list: the box, the thing, and how
-   much at the right, a thumb tall. Under Mark what I have the amount gives
-   its room to the Have / Storehouse / Buy switch, and the box goes, since
-   that is not the moment for ticking. */
-.list-line .list-row { flex: 1 1 auto; min-width: 0; border-bottom: 0; display: grid; grid-template-columns: 22px minmax(0, 1fr) auto;
-  column-gap: 12px; align-items: center; min-height: 48px; padding: 4px 2px; font-size: 1rem; }
-.list-line .list-row input:not(#u#u) { width: 22px; height: 22px; }
+.list-line { display: flex; align-items: center; column-gap: 6px; padding: 0 10px 0 12px; border-bottom: 1px solid var(--line-soft); }
+.list-line:last-child { border-bottom: 0; }
+.list-line-body { flex: 1 1 auto; min-width: 0; }
+.list-line .list-row {
+  min-width: 0; border-bottom: 0; display: grid; grid-template-columns: 24px minmax(0, 1fr) auto;
+  column-gap: 12px; align-items: center; min-height: 48px; padding: 8px 2px; font-size: 1rem;
+}
+.list-line .list-row input:not(#u#u) {
+  appearance: none; -webkit-appearance: none;
+  width: 24px; height: 24px; margin: 0; border-radius: 50%;
+  border: 1.75px solid var(--line-firm); background: var(--field);
+  display: grid; place-items: center; flex: none; cursor: pointer;
+}
+.list-line .list-row input:not(#u#u):checked { background: var(--green); border-color: var(--green); }
+.list-line .list-row input:not(#u#u):checked::after {
+  content: ''; width: 6px; height: 10px;
+  border: solid var(--on-green); border-width: 0 2.2px 2.2px 0;
+  transform: translateY(-1px) rotate(42deg);
+}
+.list-for {
+  display: block; padding: 0 2px 8px 36px; margin-top: -8px;
+  font-size: 0.78125rem; color: var(--note); line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.list-for-added { color: var(--ochre-text); font-weight: 600; }
 .list-line .list-row .qty { margin: 0; text-align: right; font-size: 0.875rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-#listBody.marking .list-row input, #listBody.marking .list-row .qty { display: none; }
+.list-del {
+  flex: none; width: 44px; height: 44px; margin-right: -6px;
+  border: 0; border-radius: 999px; background: transparent;
+  color: var(--muted); font-size: 1.25rem; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.list-del:hover { background: var(--line-soft); color: var(--ink); }
+#listBody.marking .list-row input:not(#u#u), #listBody.marking .list-row .qty { display: none; }
 #listBody.marking .list-line .list-row { grid-template-columns: minmax(0, 1fr); }
+#listBody.marking .list-for { padding-left: 2px; }
 .list-line.have .list-row span:not(.qty) { color: var(--muted); }
 .src-seg { display: inline-flex; flex: none; border: 1px solid var(--line-firm); border-radius: 99px; overflow: hidden; margin: 0; }
 .src-seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 0.75rem; min-height: 34px; min-width: 44px; padding: 0 8px; cursor: pointer; }
@@ -6709,9 +6734,9 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
 .low-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 0 0 12px; }
 .low-p { font-size: 0.78125rem; color: var(--muted); margin: 8px 0 0; }
 .low-pill[aria-pressed="true"] { background: var(--ochre); border-color: var(--ochre); color: var(--on-ochre); }
-.list-group.where-s, .list-group.where-b { border-radius: 10px; padding: 10px 12px 4px; }
-.list-group.where-s { background: color-mix(in oklch, var(--store) 9%, var(--card)); }
-.list-group.where-b { background: color-mix(in oklch, var(--walmart) 7%, var(--card)); }
+.list-group.where-s { border-radius: 10px; padding: 10px 12px 4px; background: color-mix(in oklch, var(--store) 9%, var(--card)); }
+.list-group.where-b { padding: 0; background: transparent; border-radius: 0; }
+.list-group.where-s .list-line, .list-group.where-h .list-line { padding-left: 2px; padding-right: 2px; }
 .list-group.where-h { opacity: 0.85; }
 .copy-order { width: 100%; min-height: 44px; margin: 4px 0 8px; border: 1.5px solid var(--store); border-radius: 99px; background: none; color: var(--store-ink); font: inherit; font-weight: 650; cursor: pointer; }
 .setup-card { display: flex; flex-direction: column; gap: 6px; background: var(--card); border: 1.5px solid var(--ochre); border-radius: 10px; padding: 12px 14px; margin: 0 0 12px; }
@@ -7176,27 +7201,91 @@ button.day-item-name { background: none; border: 0; padding: 0; text-align: left
 .dsh-row b { font-weight: 600; font-size: 0.96875rem; }
 .dsh-row small { font-size: 0.78125rem; color: var(--muted); }
 .dsh-row.dsh-danger b { color: var(--dial-over, #b3261e); }
-/* the list: Mark what I have, then To buy by aisle */
-.list-tools { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin: -4px 0 10px; }
-.list-tools .nut-ask { min-height: 44px; }
+/* the shopping assistant: quick-add, progress, aisle cards, In cart drawer */
+.list-qadd { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
+.list-qadd-in {
+  flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 8px 12px;
+  border: 1px solid var(--line-firm); border-radius: 10px;
+  background: var(--field); color: var(--ink); font: inherit; font-size: 0.9375rem;
+}
+.list-qadd-in::placeholder { color: var(--muted); }
+.list-qadd-btn {
+  flex: none; min-height: 44px; padding: 0 16px; border: 0; border-radius: 10px;
+  background: var(--ink); color: var(--on-ink); font: inherit; font-size: 0.875rem; font-weight: 600; cursor: pointer;
+}
+.list-qchips {
+  display: flex; align-items: center; gap: 6px; margin: 0 0 12px;
+  overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;
+}
+.list-qchips::-webkit-scrollbar { display: none; }
+.list-qchip {
+  flex: none; min-height: 44px; padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--line-firm); background: var(--card); color: var(--muted-2);
+  font: inherit; font-size: 0.8125rem; font-weight: 500; white-space: nowrap; cursor: pointer;
+}
+.list-qchip:hover { border-color: var(--ochre); color: var(--ink); }
+.list-qchip.added { background: var(--tint-green); border-color: var(--tint-green-line); color: var(--tint-green-ink); font-weight: 600; }
+
+.list-prog { margin: 0 0 10px; display: flex; flex-direction: column; gap: 5px; }
+.list-prog-m { display: flex; justify-content: space-between; gap: 8px; font-size: 0.8125rem; color: var(--muted-2); }
+.list-prog-m b { color: var(--ink); }
+.list-prog-track { height: 6px; border-radius: 999px; background: var(--line-soft); overflow: hidden; }
+.list-prog-fill { height: 100%; border-radius: 999px; background: var(--green); transition: width 0.18s ease; }
+
+.list-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; }
+.list-pill {
+  min-height: 44px; padding: 7px 13px; border-radius: 999px;
+  border: 1px solid var(--line-firm); background: var(--card); color: var(--ink);
+  font: inherit; font-size: 0.8125rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.list-pill:hover { border-color: var(--ochre); }
+.list-pill[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
 .list-tools.list-marking { justify-content: space-between; background: var(--hint); border-radius: 8px; padding: 4px 12px; margin: 0 0 12px; font-size: 0.875rem; }
-.list-aisle { margin-top: 10px; }
+.list-tools.list-marking .nut-ask { min-height: 44px; }
+
+.list-aisle {
+  margin-top: 10px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 12px; overflow: hidden;
+}
 .list-aisle:first-of-type { margin-top: 0; }
 .list-aisle-h {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 6px 2px 5px;
-  font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; color: var(--muted-2);
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 8px 12px; background: var(--paper-soft); border-bottom: 1px solid var(--line-soft);
+  font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--ochre-text);
 }
-.list-aisle-h small { letter-spacing: 0; text-transform: none; font-weight: 400; font-size: 0.8125rem; color: var(--muted); }
-summary.list-aisle-h { min-height: 44px; align-items: center; cursor: pointer; list-style: none; }
+.list-aisle-t { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.list-aisle-ic { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.list-aisle-h small { letter-spacing: 0; text-transform: none; font-weight: 600; font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+summary.list-aisle-h { min-height: 44px; cursor: pointer; list-style: none; border-bottom: 0; }
 summary.list-aisle-h::-webkit-details-marker { display: none; }
+details[open] > summary.list-aisle-h { border-bottom: 1px solid var(--line-soft); }
 summary.list-aisle-h span::after { content: ' \203A'; letter-spacing: 0; }
 details[open] > summary.list-aisle-h span::after { content: ' \2304'; }
+
+.list-cart-box {
+  margin-top: 12px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 12px; overflow: hidden;
+}
+.list-cart-h {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  min-height: 44px; padding: 8px 12px; background: var(--paper-soft);
+  font-size: 0.84375rem; font-weight: 650; color: var(--muted-2); cursor: pointer; list-style: none;
+}
+.list-cart-h::-webkit-details-marker { display: none; }
+.list-cart-box[open] > .list-cart-h { border-bottom: 1px solid var(--line-soft); }
+.list-cart-h small { font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.list-cart-foot {
+  display: flex; justify-content: flex-end; padding: 6px 12px;
+  background: var(--paper-soft); border-top: 1px solid var(--line-soft);
+}
+.list-cart-foot .nut-ask { min-height: 44px; }
+
 /* The Walmart button, pinned to the foot of the screen while To buy is on
    it, and last in the box once the box has scrolled by. */
 .wm-bar {
-  position: sticky; bottom: var(--bottom-nav-h, 64px); z-index: var(--z-lift); margin: 12px -12px -4px;
+  position: sticky; bottom: var(--bottom-nav-h, 64px); z-index: var(--z-lift); margin: 12px 0 0;
   padding: 10px 12px;
-  background: var(--card); border-top: 1px solid var(--line); border-radius: 0 0 10px 10px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
 }
 .wm-bar .wm-sub { margin-top: 5px; }
 /* at 320 the label went to two lines; a step smaller keeps it on one */

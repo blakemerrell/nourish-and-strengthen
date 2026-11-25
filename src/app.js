@@ -900,7 +900,7 @@
     })(),
     /* The list's folds and the one line whose source switch is open; a
        day's dinner opened on the week. None of it is saved. */
-    listFold: {}, listMark: false, daySheet: null,
+    listFold: {}, listMark: false, listAwake: false, daySheet: null,
     /* Cups or grams. Persisted on the device rather than shared, because it is
        a preference about reading, not about the plan — one of you can cook by
        weight while the other cooks by cup without either overruling the other. */
@@ -4009,7 +4009,8 @@
     canBuy: canBuy,
     srcW: srcW,
     pwPrice: pwPrice,
-    pwMoney: pwMoney
+    pwMoney: pwMoney,
+    mToast: mToast
   });
   function buildList(given) { return LIST.buildList(given); }
   function listUsd(built) { return LIST.listUsd(built); }
@@ -5973,6 +5974,7 @@
     /* Train draws itself — src/train.js — and is only told when to. */
     if (S.view === 'train' && window.Train) window.Train.render();
     if (S.view === 'list') renderList();
+    if (S.view !== 'list' && S.listAwake) LIST.releaseWake();
     if (S.view === 'pantry') renderPantry();
     if (S.view === 'book') renderBook();
     if (S.view !== 'browse') filtersPop(false);
@@ -8057,6 +8059,24 @@
       var c = e.target.closest('[data-check]');
       if (!c) return;
       window.Store.toggleChecked(c.dataset.check);
+    });
+    $('listBody').addEventListener('submit', function (e) {
+      var f = e.target.closest('#listQuickForm');
+      if (!f) return;
+      e.preventDefault();
+      var inp = f.querySelector('input');
+      if (inp && inp.value.trim()) LIST.addQuickItem(inp.value);
+      if (inp) inp.value = '';
+    });
+    $('listBody').addEventListener('click', function (e) {
+      if (!e.target.closest) return;
+      var chip = e.target.closest('[data-listchip]');
+      if (chip) { LIST.addQuickItem(chip.dataset.listchip); return; }
+      var del = e.target.closest('[data-delextra]');
+      if (del) { window.Store.removeExtra(del.dataset.delextra); return; }
+      if (e.target.closest('[data-uncheckall]')) { window.Store.clearChecked(); return; }
+      if (e.target.closest('[data-sharelist]')) { LIST.shareList(); return; }
+      if (e.target.closest('[data-listawake]')) { LIST.toggleWake(); }
     });
 
     /* Tapping a cover downloads it — the anchor does that by itself — and

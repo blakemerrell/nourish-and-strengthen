@@ -104,8 +104,9 @@
       }
     });
     var ents = planEntries();
+    var hasExtras = window.Store.extras && Object.keys(window.Store.extras()).length > 0;
     var nBuy = 0;
-    if (ents.length) {
+    if (ents.length || hasExtras) {
       buildList(ents).groups.forEach(function (g) {
         if (g.src === 'b') {
           g.items.forEach(function (it) {

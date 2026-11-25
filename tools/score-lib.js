@@ -1,6 +1,6 @@
 /*
  * The nutrition score, on its own so that three things can share it: the build
- * that scores the 266 printed recipes, the browser that scores the ones you
+ * that scores the 365 printed recipes, the browser that scores the ones you
  * write yourself, and anyone auditing either.
  */
 

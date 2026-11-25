@@ -11,7 +11,7 @@ module.exports = {
     await p.click('.tab[data-view="browse"]');
     await p.waitForTimeout(250);
 
-    /* 1. Landing state: 17 chapters (16 illustrated + Wilberg's monogram) summing to all recipes, zero recipe cards, no Saved shelf */
+    /* 1. Landing state: 17 chapters (all 17 illustrated) summing to all recipes, zero recipe cards, no Saved shelf */
     const land = await p.evaluate(() => {
       const chaps = [...document.querySelectorAll('#grid .chap-card')];
       const counts = chaps.map((c) => Number((c.querySelector('.chap-cnt') || {}).textContent || 0));
@@ -29,7 +29,7 @@ module.exports = {
     });
     t.ok('Cook > Recipes lands on 17 Visual Cookbook Chapters summing to all recipes with no card wall',
       land.chaps === 17 && land.sum === land.total && land.cards === 0 && !land.savedSec &&
-      land.imgs === 16 && /17 chapters/.test(land.countText), JSON.stringify(land));
+      land.imgs === 17 && /17 chapters/.test(land.countText), JSON.stringify(land));
 
     /* Scroll down so lazy-loaded engravings load too, then verify every chapter art loaded cleanly */
     await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -49,8 +49,8 @@ module.exports = {
       const imgs = [...document.querySelectorAll('#grid img.chap-art')];
       return { total: imgs.length, ok: imgs.filter((i) => i.complete && i.naturalWidth > 0).length };
     });
-    t.ok('all 16 section engravings load with naturalWidth > 0',
-      artLoaded.total === 16 && artLoaded.ok === 16, JSON.stringify(artLoaded));
+    t.ok('all 17 section engravings load with naturalWidth > 0',
+      artLoaded.total === 17 && artLoaded.ok === 17, JSON.stringify(artLoaded));
     await p.evaluate(() => window.scrollTo(0, 0));
     await p.waitForTimeout(150);
 

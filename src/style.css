@@ -865,6 +865,10 @@ select { max-width: 280px; }
   white-space: nowrap;
 }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(272px, 1fr)); gap: 14px; }
+#grid:not(.grid-chaps) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 860px) {
+  #grid:not(.grid-chaps) { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}
 
 /* A section divider, the full width of the grid.
    Sticky under the header, so the thing that tells you where you are is
@@ -883,7 +887,7 @@ select { max-width: 280px; }
      --brw-strip-h is the strip's height or nothing, set by .stripped. */
   top: calc(var(--topbar-h, 60px) + var(--brw-strip-h, 0px));
   display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
-  margin: 14px 0 -2px; padding: 8px 2px 7px;
+  margin: 14px 0 8px; padding: 8px 2px 7px;
   background: var(--paper); border-bottom: 1px solid var(--line-firm);
 }
 .grid-sec:first-child { margin-top: 0; }
@@ -985,15 +989,38 @@ select { max-width: 280px; }
 .card-cell { position: relative; display: flex; }
 .card-cell > .card { flex: 1 1 auto; }
 .card {
-  background: var(--card); border: 1px solid var(--line); border-radius: 3px;
-  padding: 16px 17px 14px; text-align: left; width: 100%;
-  display: flex; flex-direction: column; gap: 9px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 12px 62px 12px 14px; text-align: left; width: 100%; min-height: 68px;
+  display: flex; flex-direction: row; align-items: center; gap: 10px; min-width: 0;
   transition: border-color 0.12s, box-shadow 0.12s;
 }
 .card:hover { border-color: var(--ochre); box-shadow: 0 3px 14px var(--shadow-card-hover); }
-.card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding-right: 46px; min-height: 26px; }
+@media (max-width: 860px) {
+  #grid:not(.grid-chaps) > .card-cell {
+    background: var(--card); border-left: 1px solid var(--line); border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  #grid:not(.grid-chaps) > .card-cell:first-child,
+  #grid:not(.grid-chaps) > :not(.card-cell) + .card-cell {
+    border-top: 1px solid var(--line);
+    border-top-left-radius: 14px; border-top-right-radius: 14px;
+  }
+  #grid:not(.grid-chaps) > .card-cell:last-child,
+  #grid:not(.grid-chaps) > .card-cell:has(+ :not(.card-cell)) {
+    border-bottom: 1px solid var(--line);
+    border-bottom-left-radius: 14px; border-bottom-right-radius: 14px;
+    margin-bottom: 14px;
+  }
+  #grid:not(.grid-chaps) > .card-cell:last-child { margin-bottom: 0; }
+  #grid:not(.grid-chaps) .card { border: 0; border-radius: inherit; background: transparent; }
+  #grid:not(.grid-chaps) .card:hover { box-shadow: none; background: var(--paper-soft); }
+}
+.card-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.card-star { color: var(--ochre-text); font-size: 0.875rem; }
+.card-score { flex: none; display: inline-flex; align-items: center; justify-content: center; }
+.card-score .leaf { width: 28px; height: 33px; }
 .card-add {
-  position: absolute; top: 8px; right: 8px; z-index: 1;
+  position: absolute; top: 50%; right: 10px; transform: translateY(-50%); z-index: 1;
   width: 44px; height: 44px; border-radius: 50%;
   border: 1px solid var(--line-firm); background: var(--paper); color: var(--ink);
   font-size: 1.25rem; font-weight: 500; line-height: 1;
@@ -1030,15 +1057,18 @@ select { max-width: 280px; }
   color: var(--muted); white-space: nowrap;
 }
 .card-name {
-  font-family: var(--serif); font-size: 1.09375rem; line-height: 1.24; font-weight: 600;
+  font-family: var(--serif); font-size: 0.9375rem; line-height: 1.3; font-weight: 600;
   text-wrap: pretty; color: var(--ink);
 }
-.card-sub { font-size: 0.78125rem; color: var(--note); line-height: 1.5; }
-.card-foot {
-  margin-top: auto; padding-top: 9px; border-top: 1px solid var(--line-soft);
-  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+.card-sub {
+  display: flex; align-items: center; gap: 5px; min-width: 0;
+  font-size: 0.8125rem; line-height: 1.35; color: var(--note);
+  font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden;
 }
-.card-meta { font-size: 0.75rem; color: var(--muted-2); }
+.card-kcal, .card-dot, .card-meta { flex: none; }
+.card-pro { color: var(--p-fg); font-weight: 700; flex: none; }
+.card-sec { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+.card-meta { font-size: 0.8125rem; color: var(--note); }
 .chip {
   border-radius: 2px; padding: 2px 8px; font-size: 0.71875rem; font-weight: 600;
   letter-spacing: 0.04em; white-space: nowrap;
@@ -1111,10 +1141,16 @@ select { max-width: 280px; }
 }
 .chap-saved-foot { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 0.8125rem; color: var(--muted-2); }
 
-.chap-drill, .chap-all-bar { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 10px; }
-.chap-drill-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.chap-drill, .chap-all-bar { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+.chap-drill-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .chap-back { min-height: 44px; padding: 8px 14px; font-size: 0.875rem; font-weight: 600; align-self: flex-start; }
-.chap-drill-cnt { font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chap-sorts { display: inline-flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.chap-sort {
+  min-height: 44px; padding: 0 11px; border-radius: 999px;
+  border: 1px solid var(--line-firm); background: var(--card); color: var(--muted);
+  font: inherit; font-size: 0.8125rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.chap-sort[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 .chap-hero {
   background: var(--card); border: 1px solid var(--line); border-radius: 10px;
   padding: 12px 14px; display: flex; align-items: center; gap: 14px;
@@ -1137,6 +1173,10 @@ select { max-width: 280px; }
   .chap-grid { gap: 8px; }
   .chap-art-wrap { height: 86px; }
   .chap-saved-cell { width: 192px; }
+  .chap-back { padding: 8px 10px; font-size: 0.8125rem; }
+  .chap-sort { padding: 0 9px; }
+  .card { padding: 11px 58px 11px 12px; }
+  .card-name { font-size: 0.875rem; }
 }
 
 /* ----------------------------------------------------------- meal plan */

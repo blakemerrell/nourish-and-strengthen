@@ -91,7 +91,42 @@ module.exports = {
       drill.cards === drill.expected && /^2-3-/.test(drill.secVal) && drill.scrollY === 0,
       JSON.stringify(drill));
 
-    /* Star a recipe inside the chapter, then return to Chapters to verify Saved shelf */
+    const drillLayout = await p.evaluate(() => {
+      const cells = [...document.querySelectorAll('#grid .card-cell')].slice(0, 8);
+      const subs = cells.map((c) => c.querySelector('.card-sub')).filter(Boolean);
+      const adds = cells.map((c) => c.querySelector('.card-add')).filter(Boolean);
+      const avgH = cells.reduce((s, c) => s + c.getBoundingClientRect().height, 0) / Math.max(1, cells.length);
+      return {
+        avgH: Math.round(avgH),
+        hasLeaf: cells.every((c) => !!c.querySelector('.leaf')),
+        maxSubH: Math.max(...subs.map((s) => Math.round(s.getBoundingClientRect().height))),
+        minAddH: Math.min(...adds.map((a) => Math.round(a.getBoundingClientRect().height))),
+        sorts: document.querySelectorAll('#grid .chap-sort').length,
+      };
+    });
+    t.ok('chapter rows stay compact 2-line items with leaf score and >=44px + buttons',
+      drillLayout.avgH < 105 && drillLayout.hasLeaf && drillLayout.maxSubH <= 24 &&
+      drillLayout.minAddH >= 44 && drillLayout.sorts === 3, JSON.stringify(drillLayout));
+
+    await p.click('#grid [data-chapsort="protein"]');
+    await p.waitForTimeout(150);
+    const proSorted = await p.evaluate(() => {
+      const byId = {};
+      window.RECIPES.forEach((r) => { byId[r.id] = r; });
+      const ps = [...document.querySelectorAll('#grid .card')].slice(0, 8)
+        .map((c) => (byId[Number(c.dataset.open)] || {}).macro ? byId[Number(c.dataset.open)].macro.p : 0);
+      return { ps, desc: ps.every((v, i) => i === 0 || ps[i - 1] >= v) };
+    });
+    await p.click('#grid [data-chapsort="healthy"]');
+    await p.waitForTimeout(150);
+    const scSorted = await p.evaluate(() => {
+      const sc = [...document.querySelectorAll('#grid .leaf-n')].slice(0, 8).map((e) => parseInt(e.textContent, 10));
+      return { sc, desc: sc.every((v, i) => i === 0 || sc[i - 1] >= v) };
+    });
+    t.ok('inline Protein and Score sort pills reorder the chapter immediately',
+      proSorted.desc && scSorted.desc, JSON.stringify({ proSorted, scSorted }));
+
+    /* Star a recipe inside the chapter, then return to Chapters to verify Saved shelf (also resets sort) */
     await p.click('#grid .card >> nth=0');
     await p.waitForTimeout(200);
     await p.click('[data-fav]');
@@ -214,6 +249,24 @@ module.exports = {
     const okDark = dark.blend === 'screen' && !!dark.cardBg;
     t.ok('dark mode screens chapter engravings seamlessly onto the warm dark card palette',
       okDark, JSON.stringify(dark));
+
+    await dp.setViewportSize({ width: 320, height: 640 });
+    await dp.click('#grid [data-chap^="1-1-"]');
+    await dp.waitForTimeout(200);
+    const drill320 = await dp.evaluate(() => {
+      const sorts = [...document.querySelectorAll('#grid .chap-sort, #grid .chap-back, #grid .card-add')];
+      const cell = document.querySelector('#grid .card-cell');
+      return {
+        overflow: document.documentElement.scrollWidth - window.innerWidth,
+        minBtnH: Math.min(...sorts.map((b) => Math.round(b.getBoundingClientRect().height))),
+        nameFontPx: cell ? parseFloat(getComputedStyle(cell.querySelector('.card-name')).fontSize) : 0,
+        subFontPx: cell ? parseFloat(getComputedStyle(cell.querySelector('.card-sub')).fontSize) : 0,
+        subOverflow: cell ? cell.querySelector('.card-sub').scrollWidth > cell.querySelector('.card-sub').clientWidth + 1 : true,
+      };
+    });
+    t.ok('at 320px dark mode inside a chapter, controls >=44px, text >=13px, and 0px overflow',
+      drill320.overflow <= 1 && drill320.minBtnH >= 44 && drill320.nameFontPx >= 14 &&
+      drill320.subFontPx >= 13 && !drill320.subOverflow, JSON.stringify(drill320));
     await dctx.close();
 
     t.ok('no uncaught page errors', errs.length === 0, errs.join(' | '));

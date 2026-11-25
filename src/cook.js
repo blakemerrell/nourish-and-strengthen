@@ -36,6 +36,7 @@
   var rememberOpener = app.rememberOpener;
   var restoreOpener = app.restoreOpener;
 
+  var SITE_HOST = 'blakemerrell.github.io', SITE_ROOT = 'https://blakemerrell.github.io/nourish-and-strengthen/';
   var quickId = null;
 
   var HASH_MAP = {
@@ -605,6 +606,28 @@
         }
       }
     });
+
+    /* Android OTA syncs CORE scripts and data/art.js without updating the older
+       APK's bundled EXTRAS art. When a newly added chapter engraving is missing
+       from the phone's local copy, fetch it once from GitHub Pages (already
+       allowed in CSP img-src); if that also fails (offline), swap to the quiet
+       pencil monogram instead of showing a broken image icon. */
+    document.addEventListener('error', function (e) {
+      var el = e.target;
+      if (!el || el.tagName !== 'IMG') return;
+      if (!el.closest || !el.closest('#grid .chap-art-wrap, #grid .chap-thumb')) return;
+      var own = el.getAttribute('src') || '';
+      if (!el.getAttribute('data-web') && /^art\//.test(own) && location.hostname !== SITE_HOST) {
+        el.setAttribute('data-web', '1');
+        el.src = SITE_ROOT + own;
+        return;
+      }
+      var mono = document.createElement('span');
+      mono.className = 'chap-art-mono';
+      mono.setAttribute('aria-hidden', 'true');
+      mono.innerHTML = '&#9998;';
+      if (el.parentNode) el.parentNode.replaceChild(mono, el);
+    }, true);
 
     window.addEventListener('hashchange', function () {
       var v = viewFromHash();

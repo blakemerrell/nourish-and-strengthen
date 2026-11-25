@@ -1033,18 +1033,23 @@ module.exports = nourish({
     /* Recipe rows only. The list is one list now and holds single foods
        beside dishes, so a lookup in window.RECIPES comes back undefined for
        "f:tuna" — and these four assertions are about the RECIPE ranking. Food
-       ids carry a prefix; recipe ids are numbers. */
+       ids carry a prefix; recipe ids are numbers.
+       Default 'meal' caps rendered rows at 10 (out of ~71 breakfast recipes),
+       so the DOM's rows.slice(-5) would only inspect ranks 6-10; compare the
+       rendered top 5 against the true bottom 5 of __macroLab.rank('b', 999). */
     const sanity = await p.evaluate(() => {
       const rows = Array.from(document.querySelectorAll('.mpick-row[data-mpx]'))
         .filter((r) => !/^f:/.test(r.dataset.mpick));
       const macsOf = (r) => window.RECIPES.find((x) => String(x.id) === r.dataset.mpick).macro;
       const ppk = (r) => { const m = macsOf(r); return m.kcal ? m.p / m.kcal : 0; };
+      const rankPpk = (e) => (e.kcal ? e.p / e.kcal : 0);
       const mean = (a) => a.reduce((s, x) => s + x, 0) / (a.length || 1);
+      const full = window.__macroLab.rank('b', 999).filter((e) => !/^f:/.test(String(e.id)));
       return {
         n: rows.length,
         maxX: Math.max.apply(null, rows.map((r) => Number(r.dataset.mpx))),
         top: mean(rows.slice(0, 5).map(ppk)),
-        bottom: mean(rows.slice(-5).map(ppk)),
+        bottom: mean(full.slice(-5).map(rankPpk)),
       };
     });
     t.ok('the picker has rows to rank', sanity.n > 5, sanity.n + ' rows');
@@ -1149,6 +1154,10 @@ module.exports = nourish({
     t.ok('and 2 under the dial makes it two servings, pressed', (await xb()) === 2 &&
       await p.evaluate(() => (document.querySelector('#modalRoot [data-mset="b:0:2"]') || {}).getAttribute && document.querySelector('#modalRoot [data-mset="b:0:2"]').getAttribute('aria-pressed') === 'true'),
       String(await xb()));
+    /* Return to 0.5 servings so ticking Breakfast later keeps today in .open (< 90%
+       of the 1200 kcal target) rather than already hitting .on/.over opacity. */
+    await p.click('#modalRoot [data-mset="b:0:0.5"]');
+    await p.waitForTimeout(150);
 
     // ---- eaten: untick Breakfast back to planned, then test the tick and sweep
     await p.click('#modalRoot [data-mdot="b"]');

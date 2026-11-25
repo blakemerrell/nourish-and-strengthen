@@ -11,7 +11,7 @@ module.exports = {
     await p.click('.tab[data-view="browse"]');
     await p.waitForTimeout(250);
 
-    /* 1. Landing state: 16 illustrated chapters summing to 365, zero recipe cards, no Saved shelf */
+    /* 1. Landing state: 17 chapters (16 illustrated + Wilberg's monogram) summing to all recipes, zero recipe cards, no Saved shelf */
     const land = await p.evaluate(() => {
       const chaps = [...document.querySelectorAll('#grid .chap-card')];
       const counts = chaps.map((c) => Number((c.querySelector('.chap-cnt') || {}).textContent || 0));
@@ -27,9 +27,9 @@ module.exports = {
         firstTop: chaps[0] ? Math.round(chaps[0].getBoundingClientRect().top) : 9999,
       };
     });
-    t.ok('Cook > Recipes lands on 16 Visual Cookbook Chapters summing to all 365 recipes with no card wall',
-      land.chaps === 16 && land.sum === land.total && land.cards === 0 && !land.savedSec &&
-      land.imgs === 16 && /16 chapters/.test(land.countText), JSON.stringify(land));
+    t.ok('Cook > Recipes lands on 17 Visual Cookbook Chapters summing to all recipes with no card wall',
+      land.chaps === 17 && land.sum === land.total && land.cards === 0 && !land.savedSec &&
+      land.imgs === 16 && /17 chapters/.test(land.countText), JSON.stringify(land));
 
     /* Scroll down so lazy-loaded engravings load too, then verify every chapter art loaded cleanly */
     await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -62,8 +62,8 @@ module.exports = {
       chaps: document.querySelectorAll('#grid .chap-card').length,
       pressed: document.querySelector('#grid [data-chapgrp="meal"]').getAttribute('aria-pressed'),
     }));
-    t.ok('By meal regroups the 16 chapters into 4 meal-time sections',
-      byMeal.chaps === 16 && byMeal.pressed === 'true' &&
+    t.ok('By meal regroups the 17 chapters into 4 meal-time sections',
+      byMeal.chaps === 17 && byMeal.pressed === 'true' &&
       byMeal.headings.join('|') === 'Mornings & Drinks|Lunches & Dinners|Snacks & Batch Prep|Sweets & Pantry Crafts',
       JSON.stringify(byMeal));
 
@@ -116,8 +116,8 @@ module.exports = {
         secVal,
       };
     });
-    t.ok('returning via All chapters shows the 16-chapter grid again and surfaces Saved recipes in their own shelf with sibling + button',
-      saved.hasSaved && saved.cards === 1 && saved.siblingBtn && saved.chaps === 16 && saved.secVal === 'all',
+    t.ok('returning via All chapters shows the 17-chapter grid again and surfaces Saved recipes in their own shelf with sibling + button',
+      saved.hasSaved && saved.cards === 1 && saved.siblingBtn && saved.chaps === 17 && saved.secVal === 'all',
       JSON.stringify(saved));
 
     /* Tapping + on a Saved shelf recipe opens quick-plan sheet */
@@ -136,25 +136,26 @@ module.exports = {
         document.querySelectorAll('#grid .card').length > 0));
     await p.click('#cookChips [data-qchip="all"]');
     await p.waitForTimeout(150);
-    t.ok('tapping All chip returns to the 16-chapter grid',
-      await p.evaluate(() => document.querySelectorAll('#grid .chap-card').length === 16 &&
+    t.ok('tapping All chip returns to the 17-chapter grid',
+      await p.evaluate(() => document.querySelectorAll('#grid .chap-card').length === 17 &&
         document.querySelectorAll('#grid .card').length === 0));
 
-    /* 5. Browse all 365 footer escape & < Chapters back */
+    /* 5. Browse all footer escape & < Chapters back */
     await p.click('#grid [data-browseall="1"]');
     await p.waitForTimeout(200);
     const allView = await p.evaluate(() => ({
       cards: document.querySelectorAll('#grid .card').length,
+      total: window.RECIPES.length,
       divs: document.querySelectorAll('#grid .grid-sec').length,
       back: !!document.querySelector('#grid [data-chapback="1"]'),
       chaps: document.querySelectorAll('#grid .chap-card').length,
     }));
-    t.ok('Browse all shows the full 365-recipe grid with sticky dividers and < Chapters back button',
-      allView.cards === 365 && allView.divs === 16 && allView.back && allView.chaps === 0, JSON.stringify(allView));
+    t.ok('Browse all shows the full recipe grid with sticky dividers and < Chapters back button',
+      allView.cards === allView.total && allView.divs === 17 && allView.back && allView.chaps === 0, JSON.stringify(allView));
     await p.click('#grid [data-chapback="1"]');
     await p.waitForTimeout(150);
-    t.ok('clicking < Chapters returns to the 16-chapter grid',
-      await p.evaluate(() => document.querySelectorAll('#grid .chap-card').length === 16));
+    t.ok('clicking < Chapters returns to the 17-chapter grid',
+      await p.evaluate(() => document.querySelectorAll('#grid .chap-card').length === 17));
 
     /* 6. Custom recipe (Book 3 Ours) gets an Ours chapter card without broken image */
     await p.click('#newRecipe');
@@ -176,7 +177,7 @@ module.exports = {
       };
     });
     t.ok('writing a custom recipe adds an Ours chapter tile with monogram fallback',
-      ours.totalChaps === 17 && ours.hasOurs && ours.hasMono && !ours.hasImg, JSON.stringify(ours));
+      ours.totalChaps === 18 && ours.hasOurs && ours.hasMono && !ours.hasImg, JSON.stringify(ours));
 
     /* 7. Narrow phone (320px) overflow & 44px touch targets + Dark theme */
     await p.setViewportSize({ width: 320, height: 640 });

@@ -394,7 +394,10 @@ const WALMART = require('./walmart.js');
 }
 const DRIED_SPICE = { paprika: 1, garlic_powder: 1, onion_powder: 1, cumin: 1, oregano: 1, thyme: 1,
   basil: 1, ginger: 1, mustard_powder: 1, chili_powder: 1, white_pepper: 1, celery_salt: 1,
-  italian_seasoning: 1 };
+  italian_seasoning: 1, nutmeg: 1, cloves: 1, allspice: 1, turmeric: 1, celery_seed: 1,
+  pickling_spice: 1, sage: 1, marjoram: 1, bay_leaf: 1, cayenne: 1, pumpkin_spice: 1,
+  garlic_salt: 1, onion_salt: 1, seasoning_salt: 1, creole_seasoning: 1,
+  everything_bagel_seasoning: 1, five_spice: 1 };
 const FOOD_KEYS = new Set(Object.keys(FOODS));
 const anyExtra = {};
 out.forEach((r) => (r.ingp || []).forEach((it) => {

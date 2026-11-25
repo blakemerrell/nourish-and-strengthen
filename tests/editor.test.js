@@ -1,7 +1,7 @@
 /* Recipes of your own, and changes to the printed ones. */
 
 const ROLLS = {
-  name: "Grandma's Rolls",
+  name: "Grandma's Hearthside Rolls",
   servings: '12 Rolls',
   time: '2 hr 30 mins',
   ing: '4 cups flour\n1 packet yeast\n1 ½ cups milk\n2 tbsp sugar\n2 tsp salt\n4 tbsp butter\n1 egg',
@@ -92,7 +92,7 @@ module.exports = {
       await p.textContent('.brand-sub') + ' (expected ' + withMine + ')');
 
     // it is a recipe like any other
-    await p.fill('#search', 'grandma');
+    await p.fill('#search', 'hearthside');
     await p.waitForTimeout(200);
     t.ok('it is searchable', (await p.evaluate(() => document.querySelectorAll('.card').length)) === 1);
     await p.click('#grid .card');

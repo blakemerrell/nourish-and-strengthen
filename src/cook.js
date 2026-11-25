@@ -288,15 +288,21 @@
     var artHTML = ch.art
       ? '<img src="' + esc(ch.art) + '" alt="" decoding="async">'
       : '<span class="chap-art-mono" aria-hidden="true">&#9998;</span>';
+    var sorts = [['book', 'Book'], ['protein', 'Protein'], ['healthy', 'Score']];
+    var sortHTML = '<div class="chap-sorts no-print" role="group" aria-label="Sort chapter">' +
+      sorts.map(function (s) {
+        return '<button type="button" class="chap-sort" data-chapsort="' + s[0] +
+          '" aria-pressed="' + (S.sort === s[0]) + '">' + s[1] + '</button>';
+      }).join('') + '</div>';
     return '<div class="chap-drill">' +
       '<div class="chap-drill-top">' +
         '<button type="button" class="ghost chap-back" data-chapback="1">&lsaquo; All chapters</button>' +
-        '<span class="chap-drill-cnt">' + list.length + (list.length === 1 ? ' recipe' : ' recipes') + '</span>' +
+        sortHTML +
       '</div>' +
       '<div class="chap-hero">' +
         '<div class="chap-thumb">' + artHTML + '</div>' +
         '<div class="chap-hero-info">' +
-          '<div class="chap-hero-book">' + esc(bookName) + '</div>' +
+          '<div class="chap-hero-book">' + esc(bookName) + ' &middot; ' + list.length + (list.length === 1 ? ' recipe' : ' recipes') + '</div>' +
           '<h2 class="chap-hero-title">' + esc(ch.title) + '</h2>' +
           (ch.note ? '<p class="chap-hero-sub">' + esc(ch.note) + '</p>' : '') +
         '</div>' +
@@ -504,11 +510,21 @@
         return;
       }
 
+      var cs = e.target.closest('#grid [data-chapsort]');
+      if (cs) {
+        S.sort = cs.dataset.chapsort || 'book';
+        if ($('sortSel')) $('sortSel').value = S.sort;
+        renderBrowse();
+        return;
+      }
+
       var cb = e.target.closest('#grid [data-chapback]');
       if (cb) {
         S.secF = 'all';
+        S.sort = 'book';
         S.browseAll = false;
         if ($('secSel')) $('secSel').value = 'all';
+        if ($('sortSel')) $('sortSel').value = 'book';
         renderBrowse();
         window.scrollTo(0, 0);
         return;

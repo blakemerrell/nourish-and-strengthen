@@ -1283,6 +1283,7 @@
       var secCount = {};
       list.forEach(function (r) { secCount[secKey(r)] = (secCount[secKey(r)] || 0) + 1; });
       var showSecs = S.sort === 'book' && !qs && Object.keys(secCount).length > 1;
+      var showSecMeta = !showSecs && S.secF === 'all';
       var lastSec = null;
       var prefix = '';
       if (S.secF !== 'all' && list.length) {
@@ -1307,21 +1308,26 @@
         var chip = r.score === null
           ? '<span class="chip plain">' + esc(diffLabel(r.diff)) + '</span>'
           : leaf(r.score);
+        var timeTxt = r.time || (r.servings ? r.servings.split(' (')[0] : '');
+        var metaHTML = '';
+        if (r.macro && typeof r.macro.kcal === 'number') {
+          metaHTML += '<span class="card-kcal">' + Math.round(r.macro.kcal) + ' cal</span>' +
+            '<span class="card-dot" aria-hidden="true">&middot;</span>' +
+            '<span class="card-pro">P' + Math.round(r.macro.p) + '</span>';
+          if (timeTxt) metaHTML += '<span class="card-dot" aria-hidden="true">&middot;</span>';
+        }
+        if (timeTxt) metaHTML += '<span class="card-meta">' + esc(timeTxt) + '</span>';
+        if (showSecMeta) metaHTML += '<span class="card-sec">&middot; ' + esc(SEC_SHORT[secKey(r)] || r.secName) + '</span>';
         /* esc, like every other interpolation on this card. A recipe id is
            generated locally and is safe — but a recipe arriving from the shared
            household document was typed by somebody else, and the whole point of
            a household is that it holds other people's writing. */
         var card = '<button class="card" data-open="' + esc(r.id) + '">' +
-          '<span class="card-top">' +
-            '<span class="card-num">' + (BOOKS[r.book] || BOOKS[3]).short + ' · ' + no(r) + '</span>' +
-            '<span class="card-fav">' + (fav ? '★ Saved' : '') + '</span>' +
+          '<span class="card-main">' +
+            '<span class="card-name">' + (fav ? '<span class="card-star" aria-label="Saved">&#9733;</span> ' : '') + esc(r.name) + '</span>' +
+            '<span class="card-sub">' + metaHTML + '</span>' +
           '</span>' +
-          '<span class="card-name">' + esc(r.name) + '</span>' +
-          '<span class="card-sub">' + esc(r.tagline || macroLine(r)) + '</span>' +
-          '<span class="card-foot">' +
-            '<span class="card-meta">' + esc(r.time + ' · ' + r.servings.split(' (')[0]) + '</span>' +
-            chip +
-          '</span>' +
+          '<span class="card-score">' + chip + '</span>' +
         '</button>';
         return head + COOK.cardCellHTML(r, card, !!onWeek[String(r.id)]);
       }).join('');

@@ -48,7 +48,7 @@ const UNITS = {
    a plain "1 can peaches": No. 203 was scored on two-thirds again as much
    fruit as it has, and the shopping list asked for a second tin. 0.61 puts a
    29 oz can back at 502 g. */
-const DRAIN = { tuna: 0.85, chicken_canned: 0.85, black_beans: 0.6, pinto_beans: 0.6, white_beans: 0.6, corn: 0.65, green_beans: 0.65, carrot: 0.65, peaches_canned: 0.61 };
+const DRAIN = { tuna: 0.85, chicken_canned: 0.85, black_beans: 0.6, pinto_beans: 0.6, white_beans: 0.6, chickpeas: 0.6, kidney_beans: 0.6, corn: 0.65, green_beans: 0.65, carrot: 0.65, peaches_canned: 0.61, pears_canned: 0.61, sardines: 0.74 };
 
 /* A tin of something the table only knows raw. "1 can chicken breast" is what
    is written on the tin and what four recipes say, and it resolved to
@@ -143,8 +143,8 @@ function parseLine(raw) {
 
   // capture an explicit container size: "1 can (12.5 oz) chicken breast"
   let explicit = null;
-  const sizeM = s.match(/\((\d+(?:\.\d+)?)\s*(oz|lb|lbs|g)\)/);
-  if (sizeM) explicit = { n: parseFloat(sizeM[1]), u: UNITS[sizeM[2]] };
+  const sizeM = s.match(/\((\d+(?:\.\d+)?|[½¼¾⅓⅔⅛⅜⅝⅞])\s*(oz|lb|lbs|g)\)/);
+  if (sizeM) explicit = { n: FRAC[sizeM[1]] !== undefined ? FRAC[sizeM[1]] : parseFloat(sizeM[1]), u: UNITS[sizeM[2]] };
 
   // drop parentheticals ("(sliced)", "(cooked & chilled)")
   s = s.replace(/\s*\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();

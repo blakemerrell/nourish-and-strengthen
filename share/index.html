@@ -101,7 +101,7 @@ body {
    0.75pt is the floor. A true hairline is what a tired copier drops first. */
 .grid {
   flex: 1; display: grid; grid-template-columns: 1fr 1fr;
-  gap: 0 0; margin-top: 11pt;
+  gap: 0 0; margin-top: 8pt;
 }
 .rec { break-inside: avoid; }
 /* :not(.grid-3), because the row of three carries both classes and these rules
@@ -191,7 +191,7 @@ body {
   font-size: 7.5pt; letter-spacing: 0.16em; text-transform: uppercase;
   font-weight: 700; margin: 5pt 0 2pt;
 }
-.rec-ing { font-size: 9.5pt; line-height: 1.38; margin: 0; }
+.rec-ing { font-size: 9.5pt; line-height: 1.32; margin: 0; }
 /* Tightened when the recipes grew.
    Eight recipes on two sheets is the whole design of this handout, and the
    recipes got longer because they started saying how to cook rather than
@@ -200,7 +200,7 @@ body {
    marketing sheet does not get to shorten a method. */
 .rec-steps {
   list-style: none; counter-reset: s; padding: 0; margin: 0;
-  font-size: 9.2pt; line-height: 1.26;
+  font-size: 9.2pt; line-height: 1.20;
 }
 .rec-steps li {
   counter-increment: s; position: relative; padding-left: 12pt; margin-bottom: 1.8pt;
@@ -215,7 +215,7 @@ body {
    a rule of its own rather than a corner. A bare symbol tells you to scan
    and not why, and nobody scans a code to find out what it was for. */
 .foot {
-  margin-top: 11pt; border-top: 2pt solid var(--rule); padding-top: 9pt;
+  margin-top: 8pt; border-top: 2pt solid var(--rule); padding-top: 7pt;
   display: flex; gap: 16pt; align-items: center;
 }
 .foot-qr { width: 1.02in; flex: 0 0 auto; }

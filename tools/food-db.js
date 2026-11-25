@@ -38,7 +38,7 @@ const FOODS = {
   // ---- Dairy & eggs -------------------------------------------------------
   milk:            { eat: 1, kcal: 50,  p: 3.3,  c: 4.8,  f: 2.0, na: 44, fib: 0,  g: { cup: 244, tbsp: 15, tsp: 5 }, note: '2% milk' },
   dry_milk:        { kcal: 358, p: 36,   c: 52,   f: 0.8, na: 535, fib: 0,  g: { cup: 68, tbsp: 4.3 }, label: 'Dry milk powder', note: 'non-fat dry milk powder' },
-  evaporated_milk: { kcal: 134, p: 6.8,  c: 10,   f: 7.6, na: 106, fib: 0,  g: { cup: 252, can: 354 }, label: 'Evaporated milk', note: '12 fl oz', sold: { can: 12 } },
+  evaporated_milk: { kcal: 134, p: 6.8,  c: 10,   f: 7.6, na: 106, fib: 0,  g: { cup: 252, tbsp: 15.8, can: 378 }, label: 'Evaporated milk', note: '12 fl oz (1.5 cups = 378 g)', sold: { can: 12 } },
   cottage_cheese:  { eat: 1, kcal: 84,  p: 11,   c: 4.3,  f: 2.3, na: 330, fib: 0,  g: { cup: 226, tbsp: 14 }, label: 'Cottage cheese', note: '2% cottage cheese' },
   cheddar:         { eat: 1, kcal: 403, p: 23,   c: 3.1,  f: 33, na: 653, fib: 0,   g: { cup: 113, tbsp: 7, oz: 28.35, each: 28 }, label: 'Cheddar cheese', def: { qty: 0.5, unit: 'cup' }, note: 'shredded; "cheddar slice" = 28 g' },
   /* Not on the storehouse order — it is an extra in the two recipes that use
@@ -66,7 +66,7 @@ const FOODS = {
      egg whites for breakfast, because the ladder sorts anything you can eat
      as it comes above anything you can only add to a plate. */
   butter:          { lever: 1, kcal: 717, p: 0.85, c: 0.06, f: 81, na: 643, fib: 0,   g: { cup: 227, tbsp: 14.2, tsp: 4.7, each: 113 }, def: { qty: 1, unit: 'tbsp' } },
-  spray_butter:    { kcal: 0,   p: 0,    c: 0,    f: 0, na: 0, fib: 0,    g: { cup: 200, tbsp: 5 }, label: 'Spray butter', note: 'spray butter, treated as zero' },
+  spray_butter:    { kcal: 0,   p: 0,    c: 0,    f: 0, na: 0, fib: 0,    g: { cup: 80, tbsp: 5 }, label: 'Spray butter', note: 'spray butter, treated as zero' },
   egg:             { eat: 1, kcal: 143, p: 12.6, c: 0.7,  f: 9.5, na: 142, fib: 0,  g: { each: 50, cup: 243 }, label: 'Eggs', note: 'whole large egg, 50 g' },
   egg_white:       { eat: 1, lever: 1, kcal: 52,  p: 10.9, c: 0.7,  f: 0.2, na: 166, fib: 0, label: 'Egg whites',  g: { cup: 243, tbsp: 15, each: 33 } },
 
@@ -99,9 +99,9 @@ const FOODS = {
   tuna:            { eat: 1, kcal: 116, p: 26,   c: 0,    f: 0.8, na: 300, fib: 0,  g: { can: 120, oz: 28.35, cup: 154 }, label: 'Canned tuna', note: 'canned in water, 5 oz can drained = 120 g', sold: { can: 5 } },
 
   // ---- Beans --------------------------------------------------------------
-  black_beans:     { side: true, kcal: 91,  p: 6,    c: 16.6, f: 0.3, na: 250, fib: 6.9,  g: { can: 250, cup: 172 }, label: 'Black beans', note: 'canned, drained', sold: { can: 15 } },
-  pinto_beans:     { side: true, kcal: 88,  p: 5.5,  c: 16,   f: 0.8, na: 250, fib: 6, label: 'Pinto beans',  g: { can: 250, cup: 171 }, sold: { can: 15 } },
-  white_beans:     { kcal: 92,  p: 6.4,  c: 16.5, f: 0.4, na: 250, fib: 6.3,  g: { can: 250, cup: 179 }, label: 'Great Northern beans', note: 'Great Northern, canned', sold: { can: 15 } },
+  black_beans:     { side: true, kcal: 114, p: 7.0,  c: 20.0, f: 0.6, na: 240, fib: 7.5,  g: { can: 250, cup: 172 }, label: 'Black beans', note: 'canned, drained', sold: { can: 15 } },
+  pinto_beans:     { side: true, kcal: 114, p: 7.0,  c: 20.2, f: 0.9, na: 239, fib: 5.5, label: 'Pinto beans', note: 'canned, drained', g: { can: 250, cup: 171 }, sold: { can: 15 } },
+  white_beans:     { kcal: 114, p: 7.4,  c: 21.0, f: 0.4, na: 250, fib: 5.5,  g: { can: 250, cup: 179 }, label: 'Great Northern beans', note: 'Great Northern, canned, drained', sold: { can: 15 } },
   refried_beans:   { kcal: 90,  p: 5.5,  c: 15,   f: 1.2, na: 380, fib: 4.5, label: 'Refried beans',  g: { can: 440, cup: 238 } },
   pork_and_beans:  { kcal: 94,  p: 4.8,  c: 17.7, f: 0.9, na: 400, fib: 4, label: 'Pork and beans',  g: { can: 440, cup: 253 }, sold: { can: 15.5 } },
 
@@ -136,7 +136,7 @@ const FOODS = {
   lettuce:         { veg: 1, side: true, kcal: 15,  p: 1.4,  c: 2.9,  f: 0.2, na: 28, fib: 1.3,  g: { cup: 47, each: 600, oz: 28.35 }, def: { qty: 2, unit: 'cup' }, note: '1 head = 600 g' },
   onion:           { veg: 1, side: true, kcal: 40,  p: 1.1,  c: 9.3,  f: 0.1, na: 4, fib: 1.7,  g: { cup: 160, each: 110 }, label: 'Onions', def: { qty: 0.5, unit: 'each' } },
   tomato:          { veg: 1, side: true, kcal: 18,  p: 0.9,  c: 3.9,  f: 0.2, na: 5, fib: 1.2,  g: { cup: 180, each: 123 }, label: 'Tomatoes', def: { qty: 1, unit: 'each' }, note: '1 large = 182 g, handled by the parser' },
-  tomato_canned:   { veg: 1, side: true, kcal: 32,  p: 1.5,  c: 7,    f: 0.2, na: 180, fib: 1.6,  g: { can: 794, cup: 240 }, label: 'Diced tomatoes', note: 'diced tomatoes, 28 oz tin', sold: { can: 28 } },
+  tomato_canned:   { veg: 1, side: true, kcal: 18,  p: 0.8,  c: 3.5,  f: 0.3, na: 125, fib: 1.5,  g: { can: 794, cup: 240 }, label: 'Diced tomatoes', note: 'diced tomatoes, 28 oz tin', sold: { can: 28 } },
   bell_pepper:     { veg: 1, side: true, kcal: 26,  p: 1,    c: 6,    f: 0.3, na: 4, fib: 2.1,  g: { lb: 453.6, cup: 149, each: 119 }, label: 'Bell peppers', def: { qty: 1, unit: 'each' } },
   cucumber:        { veg: 1, side: true, kcal: 15,  p: 0.65, c: 3.6,  f: 0.1, na: 2, fib: 0.5,  g: { cup: 133, each: 300 }, label: 'Cucumbers', def: { qty: 0.5, unit: 'each' } },
   garlic:          { kcal: 149, p: 6.4,  c: 33,   f: 0.5, na: 17, fib: 2.1,  g: { each: 3, tsp: 2.8, tbsp: 8.4 }, def: { qty: 1, unit: 'each' } },
@@ -165,7 +165,7 @@ const FOODS = {
   cream_soup_mush: { kcal: 82,  p: 1.6,  c: 6.5,  f: 5.3, na: 700, fib: 0.4,  g: { can: 298, cup: 245 }, label: 'Cream of mushroom soup', note: 'condensed cream of mushroom', sold: { can: 10.5 } },
   soup_rts:        { kcal: 45,  p: 2.5,  c: 6,    f: 1.2, na: 350, fib: 0.8,  g: { can: 408, cup: 245 }, label: 'Chicken rotini soup', note: 'chicken rotini soup, 14.4 oz tin', sold: { can: 14.4 } },
   ketchup:         { kcal: 101, p: 1.0,  c: 25,   f: 0.1, na: 907, fib: 0.3,  g: { cup: 240, tbsp: 17 }, def: { qty: 1, unit: 'tbsp' } },
-  mustard:         { kcal: 66,  p: 3.7,  c: 5.8,  f: 3.3, na: 1120, fib: 3.3,  g: { cup: 249, tbsp: 15 }, def: { qty: 1, unit: 'tbsp' } },
+  mustard:         { kcal: 66,  p: 3.7,  c: 5.8,  f: 3.3, na: 1120, fib: 3.3,  g: { cup: 249, tbsp: 15, tsp: 5 }, def: { qty: 1, unit: 'tbsp' } },
   mayo:            { lever: 1, kcal: 680, p: 1,    c: 0.6,  f: 75, na: 635, fib: 0,   g: { cup: 220, tbsp: 14 }, def: { qty: 1, unit: 'tbsp' } },
   light_mayo:      { lever: 1, kcal: 233, p: 0.5,  c: 6.7,  f: 23, na: 800, fib: 0,   g: { cup: 230, tbsp: 15 }, label: 'Light mayo', note: '35 kcal per tablespoon' },
   ranch:           { lever: 1, kcal: 430, p: 1.3,  c: 6.6,  f: 45, na: 1000, fib: 0, label: 'Ranch dressing',   g: { cup: 240, tbsp: 15 } },
@@ -175,27 +175,27 @@ const FOODS = {
   hot_sauce:       { kcal: 11,  p: 0.5,  c: 1.8,  f: 0.4, na: 2600, fib: 1,  g: { cup: 240, tbsp: 15 }, label: 'Hot sauce', def: { qty: 1, unit: 'tbsp' } },
   gravy_mix:       { kcal: 350, p: 8,    c: 68,   f: 4, na: 4000, fib: 1, label: 'Gravy mix',    g: { pkg: 25, tbsp: 8 }, sold: { pkg: 0.87 } },
   syrup:           { kcal: 260, p: 0,    c: 65,   f: 0, na: 12, fib: 0,    g: { cup: 315, tbsp: 20 }, def: { qty: 2, unit: 'tbsp' } },
-  honey:           { kcal: 304, p: 0.3,  c: 82,   f: 0, na: 4, fib: 0.2,    g: { cup: 339, tbsp: 21 } },
+  honey:           { kcal: 304, p: 0.3,  c: 82,   f: 0, na: 4, fib: 0.2,    g: { cup: 339, tbsp: 21, tsp: 7 } },
   jam:             { kcal: 278, p: 0.4,  c: 69,   f: 0, na: 32, fib: 1.1, label: 'Jam',    g: { cup: 320, tbsp: 20 } },
-  peanut_butter:   { eat: 1, kcal: 588, p: 25,   c: 20,   f: 50, na: 430, fib: 6, label: 'Peanut butter',   g: { cup: 258, tbsp: 16 } },
-  oil:             { lever: 1, kcal: 884, p: 0,    c: 0,    f: 100, na: 0, fib: 0,  g: { cup: 218, tbsp: 13.6 }, label: 'Oil', def: { qty: 1, unit: 'tbsp' } },
+  peanut_butter:   { eat: 1, kcal: 588, p: 25,   c: 20,   f: 50, na: 430, fib: 6, label: 'Peanut butter',   g: { cup: 258, tbsp: 16, tsp: 5.3 } },
+  oil:             { lever: 1, kcal: 884, p: 0,    c: 0,    f: 100, na: 0, fib: 0,  g: { cup: 218, tbsp: 13.6, tsp: 4.5 }, label: 'Oil', def: { qty: 1, unit: 'tbsp' } },
 
   // ---- Baking & sweets ----------------------------------------------------
   sugar:           { kcal: 387, p: 0,    c: 100,  f: 0, na: 0, fib: 0,    g: { cup: 200, tbsp: 12.5, tsp: 4.2 } },
   brown_sugar:     { kcal: 380, p: 0,    c: 98,   f: 0, na: 28, fib: 0,    g: { cup: 220, tbsp: 13.8, tsp: 4.6 }, label: 'Brown sugar', def: { qty: 1, unit: 'tsp' } },
   powdered_sugar:  { kcal: 389, p: 0,    c: 100,  f: 0, na: 2, fib: 0, label: 'Powdered sugar',    g: { cup: 120, tbsp: 7.5 } },
   cinnamon_sugar:  { kcal: 380, p: 0.2,  c: 98,   f: 0.1, na: 1, fib: 1,  g: { cup: 200, tbsp: 12.5, tsp: 4.2 }, label: 'Cinnamon sugar', def: { qty: 1, unit: 'tbsp' } },
-  cocoa:           { kcal: 228, p: 19.6, c: 58,   f: 13.7, na: 21, fib: 33, g: { cup: 86, tbsp: 5.4, tsp: 1.8 } },
+  cocoa:           { kcal: 228, p: 19.6, c: 58,   f: 13.7, na: 21, fib: 37, g: { cup: 86, tbsp: 5.4, tsp: 1.8 } },
   chocolate_chips: { kcal: 480, p: 4.2,  c: 63,   f: 30, na: 25, fib: 5.9, label: 'Chocolate chips',   g: { cup: 170, tbsp: 10.6 } },
   cake_mix:        { kcal: 420, p: 4,    c: 80,   f: 9, na: 700, fib: 1.5,    g: { box: 432, cup: 120 }, label: 'Cake mix', note: 'dry mix', sold: { box: 15.25 } },
   cake_baked:      { kcal: 380, p: 4,    c: 53,   f: 17, na: 400, fib: 1.2,   g: { each: 900, cup: 100 }, label: 'Baked cake', note: 'one baked 9x13 cake = 900 g' },
-  pudding_mix:     { kcal: 370, p: 0,    c: 92,   f: 0.4, na: 900, fib: 0.5,  g: { pkg: 96, cup: 150 }, label: 'Pudding mix', note: 'dry instant pudding mix', sold: { pkg: 3.4 } },
+  pudding_mix:     { kcal: 374, p: 1.2,  c: 90,   f: 1.2, na: 1585, fib: 1.8, g: { pkg: 96, cup: 150 }, label: 'Pudding mix', note: 'dry instant pudding mix (average of vanilla/chocolate)', sold: { pkg: 3.4 } },
   pudding_made:    { kcal: 111, p: 2,    c: 19,   f: 3, na: 150, fib: 0.3,    g: { each: 140, serving: 140, cup: 240 }, label: 'Prepared pudding', def: { qty: 1, unit: 'serving' }, note: 'prepared pudding, 1 serving = 140 g' },
   gelatin_flavored:{ kcal: 380, p: 7,    c: 88,   f: 0, na: 400, fib: 0,    g: { pkg: 85, each: 85, packet: 85 }, label: 'Flavored gelatin', def: { qty: 1, unit: 'packet' }, note: 'dry flavored gelatin', sold: { pkg: 3 } },
   gelatin_plain:   { kcal: 335, p: 85,   c: 0,    f: 0, na: 200, fib: 0,    g: { pkg: 7, each: 7, packet: 7 }, label: 'Unflavored gelatin', def: { qty: 1, unit: 'packet' }, note: 'unflavored gelatin packet', sold: { pkg: 0.25 } },
   cocoa_mix:       { kcal: 400, p: 6,    c: 78,   f: 8, na: 600, fib: 3, label: 'Hot cocoa mix', def: { qty: 1, unit: 'packet' },    g: { pkg: 28, each: 28, packet: 28 }, sold: { pkg: 1 } },
   baking_powder:   { kcal: 53,  p: 0,    c: 28,   f: 0, na: 10600, fib: 0.2, label: 'Baking powder',    g: { tsp: 4.6, tbsp: 13.8 } },
-  baking_soda:     { kcal: 0,   p: 0,    c: 0,    f: 0, na: 27360, fib: 0, label: 'Baking soda',    g: { tsp: 4.6, tbsp: 13.8 } },
+  baking_soda:     { kcal: 0,   p: 0,    c: 0,    f: 0, na: 27360, fib: 0, label: 'Baking soda',    g: { tsp: 4.6, tbsp: 13.8, cup: 220.8 } },
   cornstarch:      { kcal: 381, p: 0.3,  c: 91,   f: 0.1, na: 9, fib: 0.9,  g: { cup: 128, tbsp: 8, tsp: 2.7 } },
   cola:            { kcal: 39,  p: 0,    c: 10.6, f: 0, na: 4, fib: 0, label: 'Cola',    g: { cup: 240, oz: 29.6, can: 355 } },
   salsa_verde:     { kcal: 36,  p: 1.1,  c: 6.5,  f: 0.9, na: 700, fib: 1.4, label: 'Salsa verde',  g: { cup: 260, tbsp: 16, jar: 453 } },
@@ -243,7 +243,7 @@ const FOODS = {
   mustard_powder:  { kcal: 0, p: 0, c: 0, f: 0, na: 0, fib: 0, g: { tsp: 2, tbsp: 6, cup: 96 }, label: 'Mustard powder' },
   chili_powder:    { kcal: 0, p: 0, c: 0, f: 0, na: 0, fib: 0, g: { tsp: 3, tbsp: 8, cup: 128 }, label: 'Chili powder' },
   white_pepper:    { kcal: 0, p: 0, c: 0, f: 0, na: 0, fib: 0, g: { tsp: 2, tbsp: 7, cup: 112 }, label: 'White pepper' },
-  cilantro:        { kcal: 0, p: 0, c: 0, f: 0, na: 0, fib: 0, g: { tsp: 1, tbsp: 3, cup: 16, each: 20 }, label: 'Cilantro' },
+  cilantro:        { kcal: 0, p: 0, c: 0, f: 0, na: 0, fib: 0, g: { tsp: 0.3, tbsp: 1, cup: 16, each: 20 }, label: 'Cilantro' },
   lime:            { kcal: 0, p: 0, c: 0, f: 0, na: 0, fib: 0, g: { tsp: 5, tbsp: 15, cup: 242, each: 67 }, label: 'Limes' },
   sweetener:       { kcal: 0, p: 0, c: 0, f: 0, na: 0, fib: 0, g: { tsp: 4, tbsp: 12, cup: 192, each: 1 }, label: 'Sweetener' },
   stevia:          { kcal: 0, p: 0, c: 0, f: 0, na: 0, fib: 0, g: { tsp: 4, tbsp: 12, cup: 192, each: 1 }, label: 'Stevia' },
@@ -303,7 +303,7 @@ const FOODS = {
   snapper:     { ext: 1, eat: 1, lever: 1, zone: 'protein', kcal: 100, p: 20.5, c: 0, f: 1.3, na: 64, fib: 0, g: { lb: 453.6, oz: 28.35, each: 170 }, def: { qty: 6, unit: 'oz' }, label: 'Snapper', note: 'mixed species, raw' },
   mackerel:    { ext: 1, eat: 1, zone: 'protein', kcal: 205, p: 18.6, c: 0, f: 13.9, na: 90, fib: 0, g: { lb: 453.6, oz: 28.35, each: 112 }, def: { qty: 5, unit: 'oz' }, label: 'Mackerel', note: 'Atlantic, raw; no lever flag — two thirds of its energy is fat, so it moves both knobs at once' },
   catfish:     { ext: 1, eat: 1, zone: 'protein', kcal: 119, p: 15.2, c: 0, f: 5.9, na: 98, fib: 0, g: { lb: 453.6, oz: 28.35, each: 159 }, def: { qty: 6, unit: 'oz' }, label: 'Catfish', note: 'channel, farmed, raw' },
-  sardines:    { ext: 1, eat: 1, zone: 'protein', kcal: 208, p: 24.6, c: 0, f: 11.4, na: 307, fib: 0, g: { can: 92, oz: 28.35 }, def: { qty: 1, unit: 'can' }, label: 'Sardines', note: 'canned in oil, drained, with bone; a tin is 92 g drained' },
+  sardines:    { ext: 1, eat: 1, zone: 'protein', kcal: 208, p: 24.6, c: 0, f: 11.4, na: 307, fib: 0, g: { can: 92, oz: 28.35 }, def: { qty: 1, unit: 'can' }, label: 'Sardines', note: 'canned in oil, drained, with bone; a tin is 92 g drained', sold: { can: 4.375 } },
   shrimp:      { ext: 1, eat: 1, lever: 1, zone: 'protein', kcal: 71, p: 13.6, c: 0.9, f: 1, na: 566, fib: 0, g: { lb: 453.6, oz: 28.35, cup: 145, each: 15 }, def: { qty: 4, unit: 'oz' }, label: 'Shrimp', note: 'raw. The sodium is high because the USDA figure is for shrimp treated to retain moisture, which is what a shop sells; untreated is nearer 120 mg' },
   crab:        { ext: 1, eat: 1, lever: 1, zone: 'protein', kcal: 87, p: 18.1, c: 0, f: 1.1, na: 293, fib: 0, g: { lb: 453.6, oz: 28.35, cup: 135 }, def: { qty: 4, unit: 'oz' }, label: 'Crab meat', note: 'blue, raw' },
   lobster:     { ext: 1, eat: 1, lever: 1, zone: 'protein', kcal: 77, p: 16.5, c: 0, f: 0.8, na: 423, fib: 0, g: { lb: 453.6, oz: 28.35 }, def: { qty: 4, unit: 'oz' }, label: 'Lobster', note: 'northern, raw' },
@@ -378,8 +378,8 @@ const FOODS = {
 
   /* ---- legumes and a dip. `side` like the beans above; the two canned ones
      carry the salt of the tin, as everything canned in this table does. */
-  chickpeas:      { ext: 1, side: true, zone: 'carbohydrate', kcal: 139, p: 7.1, c: 22.5, f: 2.8, na: 246, fib: 6.4, g: { can: 250, cup: 164 }, def: { qty: 0.5, unit: 'cup' }, label: 'Chickpeas', note: 'canned, drained' },
-  kidney_beans:   { ext: 1, side: true, zone: 'carbohydrate', kcal: 124, p: 8, c: 21.5, f: 1.1, na: 231, fib: 5.5, g: { can: 250, cup: 177 }, def: { qty: 0.5, unit: 'cup' }, label: 'Kidney beans', note: 'canned, drained' },
+  chickpeas:      { ext: 1, side: true, zone: 'carbohydrate', kcal: 139, p: 7.1, c: 22.5, f: 2.8, na: 246, fib: 6.4, g: { can: 250, cup: 164 }, def: { qty: 0.5, unit: 'cup' }, label: 'Chickpeas', note: 'canned, drained', sold: { can: 15 } },
+  kidney_beans:   { ext: 1, side: true, zone: 'carbohydrate', kcal: 124, p: 8, c: 21.5, f: 1.1, na: 231, fib: 5.5, g: { can: 250, cup: 177 }, def: { qty: 0.5, unit: 'cup' }, label: 'Kidney beans', note: 'canned, drained', sold: { can: 15 } },
   lentils:        { ext: 1, side: true, zone: 'carbohydrate', kcal: 116, p: 9, c: 20.1, f: 0.4, na: 2, fib: 7.9, g: { cup: 198 }, def: { qty: 0.5, unit: 'cup' }, label: 'Lentils', note: 'cooked, unsalted — the most fibre per calorie in the table' },
   hummus:         { ext: 1, eat: 1, zone: 'carbohydrate', kcal: 237, p: 7.8, c: 15, f: 17.8, na: 426, fib: 5.5, g: { cup: 246, tbsp: 15, oz: 28.35 }, def: { qty: 2, unit: 'tbsp' }, label: 'Hummus', note: 'the Zone table blocks it as carbohydrate; by calories it is mostly fat, and the app will shelve it where the arithmetic puts it' },
 
@@ -501,7 +501,7 @@ const ALIASES = {
   // meat & fish
   'chicken breast': 'chicken_breast', 'chicken breasts': 'chicken_breast',
   'canned chicken': 'chicken_canned', 'chicken': 'chicken_canned',
-  'ground beef': 'ground_beef',
+  'ground beef': 'ground_beef', 'lean ground beef': 'ground_beef_lean',
   /* Roast beef is a roast you cooked and sliced, not a packet from a deli
      counter. The two differ by fifteen times on sodium — 60 mg per hundred
      grams against 900 — and the deli reading was landing on a lettuce
@@ -533,7 +533,7 @@ const ALIASES = {
   'macaroni': 'pasta', 'ribbon pasta': 'pasta', 'spaghetti': 'pasta', 'pasta': 'pasta', 'rotini': 'pasta',
   'bread': 'bread', 'bread slices': 'bread', 'bread slice': 'bread', 'slices bread': 'bread',
   'wheat bread': 'wheat_bread',
-  'tortillas': 'tortilla', 'tortilla': 'tortilla', 'small tortillas': 'tortilla_small',
+  'tortillas': 'tortilla', 'tortilla': 'tortilla', 'small tortillas': 'tortilla_small', 'small tortilla': 'tortilla_small',
   'buns': 'bun', 'hamburger buns': 'bun', 'hot dog buns': 'bun', 'slider buns': 'slider_bun',
   'breadcrumbs': 'breadcrumbs',
   "honey nut o's": 'cereal_o', 'honey nut os': 'cereal_o', 'cereal': 'cereal_o',
@@ -610,7 +610,7 @@ const ALIASES = {
   'water': 'water', 'hot water': 'water', 'boiling water': 'water', 'ice': 'water',
 
   // free
-  'salt': 'salt', 'sea salt': 'salt', 'salt/pepper': 'salt', 'kosher salt': 'salt',
+  'salt': 'salt', 'sea salt': 'salt', 'salt/pepper': 'salt', 'salt and pepper': 'salt', 'salt & pepper': 'salt', 'kosher salt': 'salt',
   'pepper': 'black_pepper', 'black pepper': 'black_pepper',
   'paprika': 'paprika', 'cumin': 'cumin', 'garlic powder': 'garlic_powder', 'chili spices': 'chili_powder',
   'vanilla': 'vanilla', 'vanilla extract': 'vanilla', 'sweetener': 'sweetener', 'stevia': 'stevia',

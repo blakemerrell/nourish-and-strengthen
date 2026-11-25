@@ -166,6 +166,7 @@ function serve() {
   const shot = (name) => page.screenshot({ path: path.join(tmp, name + '.png') });
 
   await page.click('.tab[data-view="browse"]'); await page.waitForTimeout(500);
+  await page.click('[data-browseall]'); await page.waitForTimeout(300);
   await shot('app-1-browse');
   await page.click('.card'); await page.waitForTimeout(700);
   await shot('app-2-recipe');

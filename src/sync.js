@@ -154,6 +154,24 @@ window.Store = (function () {
     Object.keys(o).forEach(function (key) { if (KEY_OK.test(key) && o[key] === true) out[key] = true; });
     return out;
   }
+  // custom quick-add shopping items kept on the week so both phones share one family list
+  function cleanExtras(v) {
+    var o = obj(v), out = {}, n = 0;
+    Object.keys(o).forEach(function (key) {
+      if (n >= 200 || !KEY_OK.test(key)) return;
+      var e = o[key];
+      if (!e || typeof e !== 'object' || Array.isArray(e)) return;
+      var l = typeof e.l === 'string' ? e.l.trim().slice(0, 80) : '';
+      if (!l) return;
+      out[key] = {
+        l: l,
+        q: typeof e.q === 'string' ? e.q.trim().slice(0, 30) : '',
+        a: typeof e.a === 'string' ? e.a.trim().slice(0, 40) : ''
+      };
+      n++;
+    });
+    return out;
+  }
   /* local      not sharing — this phone only
      connecting  joined, still waiting for the first word from the server
      synced      the server has everything this phone has
@@ -514,12 +532,15 @@ window.Store = (function () {
     var curEmpty = !Object.keys(curPlan).some(function (d) { return Array.isArray(curPlan[d]) && curPlan[d].length; });
     if (curEmpty) {
       weeks[cur] = { name: '', ord: 0, plan: obj(weeks[pick].plan), checked: obj(weeks[pick].checked) };
+      var exMig = cleanExtras(weeks[pick].extras);
+      if (Object.keys(exMig).length) weeks[cur].extras = exMig;
       delete weeks[pick];
       /* Day by day and tick by tick, never the week whole: a write that set
          the whole week would take away whatever another phone had put on it
          since, if this one reached the server late. */
       Object.keys(weeks[cur].plan).forEach(function (d) { u['weeks.' + cur + '.plan.' + d] = weeks[cur].plan[d]; });
       Object.keys(weeks[cur].checked).forEach(function (k) { u['weeks.' + cur + '.checked.' + encodeKey(k)] = weeks[cur].checked[k]; });
+      if (weeks[cur].extras) Object.keys(weeks[cur].extras).forEach(function (k) { u['weeks.' + cur + '.extras.' + k] = weeks[cur].extras[k]; });
       u['weeks.' + pick] = 'DELETE';
     } else pick = null;
     und.forEach(function (k) {
@@ -573,6 +594,8 @@ window.Store = (function () {
       };
       var ck = cleanCooked(w.cooked);
       if (Object.keys(ck).length) weeks[k].cooked = ck;
+      var ex = cleanExtras(w.extras);
+      if (Object.keys(ex).length) weeks[k].extras = ex;
       if (w.tpl === 1) weeks[k].tpl = 1;
     });
     if (!Object.keys(weeks).length) {
@@ -754,8 +777,10 @@ window.Store = (function () {
          week, which the move onto dates would take for the old This Week and
          put over the household's current one. Templates stay templates. */
       var st = weekStart(id), tpl = w.tpl === 1 || !!(st && mirror);
+      var exC = cleanExtras(w.extras);
       if (st && !tpl) {
         addW[id] = { name: '', ord: ord++, plan: obj(w.plan), checked: obj(w.checked) };
+        if (Object.keys(exC).length) addW[id].extras = exC;
         return;
       }
       var base = w.name || (st ? 'Week of ' + st.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'This Week');
@@ -763,6 +788,7 @@ window.Store = (function () {
       while (used.indexOf(name) >= 0) { name = base + ' (' + n++ + ')'; }
       used.push(name);
       var nw = { name: name, ord: ord++, plan: obj(w.plan), checked: tpl ? {} : obj(w.checked) };
+      if (!tpl && Object.keys(exC).length) nw.extras = exC;
       if (tpl) nw.tpl = 1;
       addW[mirror ? newId() : id] = nw;
       if (st && w.tpl !== 1 && parked) parked.push({ name: name, dates: span(st) });
@@ -1987,6 +2013,65 @@ window.Store = (function () {
           w.checked = Object.assign({}, w.checked);
           if (on) w.checked[k] = true; else delete w.checked[k];
         });
+      });
+    },
+
+    extras: function () {
+      var w = state.weeks[state.active];
+      return Object.assign({}, w && w.extras ? w.extras : {});
+    },
+
+    addExtra: function (label, qty, aisle) {
+      var l = String(label || '').trim().slice(0, 80);
+      if (!l) return '';
+      var q = String(qty || '').trim().slice(0, 30);
+      var a = String(aisle || '').trim().slice(0, 40);
+      var id = 'x_' + newId();
+      var item = { l: l, q: q, a: a };
+      var path = wpath('extras.' + id);
+      push(function () {
+        var u = {}; u[path] = item; return doc.update(u);
+      }, function () {
+        editActive(function (w) {
+          w.extras = Object.assign({}, w.extras);
+          w.extras[id] = item;
+        });
+      });
+      return id;
+    },
+
+    removeExtra: function (id) {
+      if (!KEY_OK.test(id)) return;
+      var path = wpath('extras.' + id);
+      var chkKey = encodeKey(id);
+      var chkPath = chkKey && state.checked[chkKey] ? wpath('checked.' + chkKey) : '';
+      push(function () {
+        var u = {}; u[path] = FV.delete();
+        if (chkPath) u[chkPath] = FV.delete();
+        return doc.update(u);
+      }, function () {
+        editActive(function (w) {
+          w.extras = Object.assign({}, w.extras);
+          delete w.extras[id];
+          if (!Object.keys(w.extras).length) delete w.extras;
+          if (chkKey && w.checked && w.checked[chkKey]) {
+            w.checked = Object.assign({}, w.checked);
+            delete w.checked[chkKey];
+          }
+        });
+      });
+    },
+
+    clearChecked: function () {
+      var keys = Object.keys(state.checked).filter(function (k) { return state.checked[k] === true && KEY_OK.test(k); });
+      if (!keys.length) return;
+      var paths = keys.map(function (k) { return wpath('checked.' + k); });
+      push(function () {
+        var u = {};
+        paths.forEach(function (p) { u[p] = FV.delete(); });
+        return doc.update(u);
+      }, function () {
+        editActive(function (w) { w.checked = {}; });
       });
     },
 

@@ -999,7 +999,7 @@
      ahead of time — your favorites, this week, and recipes of your own. */
   var READY_MADE = {
     all: { file: 'Both-Books.pdf', label: 'Both books', pages: 576 },
-    one: { file: 'Nourish-and-Strengthen-Recipes.pdf', label: 'One book', pages: 564 },
+    one: { file: 'Nourish-and-Strengthen-Recipes.pdf', label: 'One book', pages: 568 },
     1: { file: 'Run-and-Not-Be-Weary.pdf', label: 'Run and Not Be Weary', pages: 148, booklet: true },
     2: { file: 'Around-the-Table.pdf', label: 'Around the Table', pages: 428, booklet: true }
   };

@@ -170,6 +170,7 @@ var EXTRAS = [
   './art/easy-lunches-wraps-and-after-school-favorites.png',
   './art/elaborate-sunday-feasts-and-roasts.png',
   './art/for-the-love-of-chocolate.png',
+  './art/grandma-wilberg-s-kitchen.png',
   './art/kid-approved-weeknight-comfort-dinners.png',
   './art/lunch.png',
   './art/made-not-bought.png',

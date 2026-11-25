@@ -7,6 +7,7 @@ window.SECTION_ART = {
   "easy-lunches-wraps-and-after-school-favorites": "art/easy-lunches-wraps-and-after-school-favorites.png",
   "elaborate-sunday-feasts-and-roasts": "art/elaborate-sunday-feasts-and-roasts.png",
   "for-the-love-of-chocolate": "art/for-the-love-of-chocolate.png",
+  "grandma-wilberg-s-kitchen": "art/grandma-wilberg-s-kitchen.png",
   "kid-approved-weeknight-comfort-dinners": "art/kid-approved-weeknight-comfort-dinners.png",
   "lunch": "art/lunch.png",
   "made-not-bought": "art/made-not-bought.png",

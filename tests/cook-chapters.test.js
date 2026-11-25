@@ -1,5 +1,7 @@
-/* Cook > Recipes: Option 1 Visual Cookbook Chapters (16 engravings, By book / By meal,
- * Saved shelf, drill-in hero, Search & quick-chip escape, Browse all 365, 320px, Dark, Ours). */
+/* Cook > Recipes: Option 1 Visual Cookbook Chapters (17 engravings, By book / By meal,
+ * Saved shelf, drill-in hero, Search & quick-chip escape, Browse all, 320px, Dark, Ours). */
+const fs = require('fs');
+const path = require('path');
 
 module.exports = {
   name: 'Cook chapters: visual cookbook chapters, engravings, drill-in, Saved shelf, 320px & dark',
@@ -268,6 +270,56 @@ module.exports = {
       drill320.overflow <= 1 && drill320.minBtnH >= 44 && drill320.nameFontPx >= 14 &&
       drill320.subFontPx >= 13 && !drill320.subOverflow, JSON.stringify(drill320));
     await dctx.close();
+
+    /* 8. Android OTA fallback: missing local engraving fetches from live site; double-404 degrades to monogram */
+    const gwBytes = fs.readFileSync(path.join(__dirname, '..', 'art', 'grandma-wilberg-s-kitchen.png'));
+    const fctx = await t.browser.newContext({ viewport: { width: 390, height: 844 } });
+    const fp = await fctx.newPage();
+    fp.on('pageerror', (e) => errs.push('ota: ' + e.message));
+    await fp.route('**/art/grandma-wilberg-s-kitchen.png', (route) => {
+      const url = route.request().url();
+      if (url.startsWith('https://blakemerrell.github.io/')) {
+        return route.fulfill({ status: 200, contentType: 'image/png', body: gwBytes });
+      }
+      return route.fulfill({ status: 404, contentType: 'text/plain', body: 'missing' });
+    });
+    await fp.goto(t.base + 'index.html#recipes');
+    await fp.waitForTimeout(300);
+    await fp.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await fp.waitForTimeout(500);
+    const recovered = await fp.evaluate(() => {
+      const tile = document.querySelector('#grid [data-chap^="2-10-"]');
+      const img = tile && tile.querySelector('img.chap-art');
+      return {
+        src: img ? img.src : '',
+        web: img ? img.getAttribute('data-web') : '',
+        nw: img ? img.naturalWidth : 0,
+      };
+    });
+    t.ok('local 404 on a new chapter engraving falls back to the live site and loads cleanly',
+      /^https:\/\/blakemerrell\.github\.io\//.test(recovered.src) && recovered.web === '1' && recovered.nw > 0,
+      JSON.stringify(recovered));
+    await fctx.close();
+
+    const octx = await t.browser.newContext({ viewport: { width: 390, height: 844 } });
+    const op = await octx.newPage();
+    op.on('pageerror', (e) => errs.push('offline-art: ' + e.message));
+    await op.route('**/art/grandma-wilberg-s-kitchen.png', (route) =>
+      route.fulfill({ status: 404, contentType: 'text/plain', body: 'missing' }));
+    await op.goto(t.base + 'index.html#recipes');
+    await op.waitForTimeout(300);
+    await op.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await op.waitForTimeout(500);
+    const monoFallback = await op.evaluate(() => {
+      const tile = document.querySelector('#grid [data-chap^="2-10-"]');
+      return {
+        hasImg: !!(tile && tile.querySelector('img')),
+        hasMono: !!(tile && tile.querySelector('.chap-art-mono')),
+      };
+    });
+    t.ok('when both local and live engraving fail offline, tile swaps cleanly to the pencil monogram instead of a broken image icon',
+      !monoFallback.hasImg && monoFallback.hasMono, JSON.stringify(monoFallback));
+    await octx.close();
 
     t.ok('no uncaught page errors', errs.length === 0, errs.join(' | '));
   },

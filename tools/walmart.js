@@ -158,6 +158,14 @@ module.exports = {
   italian_seasoning: ['637648335', 27, 'Great Value Italian seasoning, 0.95 oz'],
   celery_salt: ['248973865', 149, 'Great Value celery salt, 5.25 oz'],
   mustard_powder: ['10535030', 50, 'McCormick ground mustard, 1.75 oz'],
+  // added 2026-11: chia & pantry expansions
+  chia_seeds: ['787423006', 907, 'Great Value organic chia seeds, 32 oz'],
+  powdered_peanut_butter: ['10804865', 184, 'PB2 powdered peanut butter, 6.5 oz'],
+  pumpkin_puree: ['24538777', 425, 'Great Value 100% pure pumpkin, 15 oz can'],
+  lemon: ['10315750', 444, 'Great Value 100% lemon juice, 15 fl oz'],
+  coconut_oil: ['51108221', 397, 'Great Value organic unrefined virgin coconut oil, 14 oz'],
+  blueberries: ['44391604', 454, 'Great Value frozen blueberries, 16 oz'],
+  strawberries: ['44391605', 454, 'Fresh strawberries, 1 lb'],
 };
 
 /* Foods the book makes rather than buys, bought as what they are made from:
@@ -175,6 +183,7 @@ module.exports.AS = {
   cooked_beef: ['beef_roast', 1],
   cinnamon_sugar: ['sugar', 0.9],
   fruit_generic: ['apple', 1],
+  quick_mix: ['flour', 0.7],
 };
 
 /* Foods Walmart does not carry, and where they are bought instead:

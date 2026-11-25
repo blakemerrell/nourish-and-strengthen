@@ -231,7 +231,7 @@ module.exports = {
     // something of your own, which the books have never heard of: typed
     // into On hand's search, and added from there
     await p.evaluate(() => window.Hive.go('pantry')); await p.waitForTimeout(300);
-    await p.fill('#kitFind', 'Olive oil');
+    await p.fill('#kitFind', 'Truffle oil');
     await p.waitForTimeout(200);
     await p.click('[data-kitnew]');
     await p.waitForTimeout(300);
@@ -239,7 +239,7 @@ module.exports = {
     await p.evaluate(() => window.Hive.go('pantry')); await p.waitForTimeout(400);
     const own = await p.evaluate(() => {
       const g = [...document.querySelectorAll('#view-pantry .kit-grp')].find((x) => (x.querySelector('.kit-gh span') || {}).textContent === 'Yours');
-      return { shelf: !!g, oil: !!g && [...g.querySelectorAll('.kit-pill')].some((b) => b.textContent === 'Olive oil' && b.getAttribute('aria-pressed') === 'true') };
+      return { shelf: !!g, oil: !!g && [...g.querySelectorAll('.kit-pill')].some((b) => b.textContent === 'Truffle oil' && b.getAttribute('aria-pressed') === 'true') };
     });
     t.ok('what you add yourself gets a shelf and survives a reload', own.shelf && own.oil, JSON.stringify(own));
 
@@ -267,7 +267,7 @@ module.exports = {
     await p.click('.tab[data-view="browse"]'); await p.waitForTimeout(300);
     t.ok('resetting puts the storehouse list back', (await foot()) === '');
     t.ok('but keeps what you added yourself',
-      await p.evaluate(() => !!window.Store.pantryOwn().own_olive_oil));
+      await p.evaluate(() => !!window.Store.pantryOwn().own_truffle_oil));
 
     await ctx.close();
 

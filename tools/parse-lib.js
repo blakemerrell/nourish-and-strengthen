@@ -109,6 +109,9 @@ const EATEN = [
      two thirds of a cup of bicarbonate: counted in full it read 5,673 mg of
      sodium a pretzel. */
   { key: 'baking_soda', re: /for the water|for boiling|for the bath/i, part: 0.02 },
+  /* Crawfish boil seasoning dissolves in 4+ gallons of boil water that is
+     drained and discarded; roughly 5% clings to or absorbs into the meat. */
+  { key: 'creole_seasoning', re: /for boiling|for the boil/i, part: 0.05 },
 ];
 
 const ALIAS_KEYS = Object.keys(ALIASES).sort((a, b) => b.length - a.length);

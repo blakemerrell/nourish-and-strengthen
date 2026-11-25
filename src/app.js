@@ -653,7 +653,8 @@
     '1-5': 'Best Before Bed', '1-6': 'Power Drinks', '1-7': 'Batch Prep',
     '2-1': 'Weekday Breakfasts', '2-2': 'Lunches & Wraps', '2-3': 'Weeknight Dinners',
     '2-4': 'Sunday Feasts', '2-5': 'Treats & Desserts', '2-6': 'Worth the Afternoon',
-    '2-7': 'The Copycat Shelf', '2-8': 'Chocolate', '2-9': 'Made, Not Bought'
+    '2-7': 'The Copycat Shelf', '2-8': 'Chocolate', '2-9': 'Made, Not Bought',
+    '2-10': 'Wilberg\u2019s Kitchen'
   };
 
   var SEC_NOTE = {
@@ -672,7 +673,8 @@
     '2-6': 'Nothing quick here. Bread that rises, gravy that thickens, custard that sets.',
     '2-7': 'The restaurant version, worked out at home.',
     '2-8': 'For when only chocolate will do.',
-    '2-9': 'The three bottles you would otherwise buy, made from what is already on the shelf.'
+    '2-9': 'The three bottles you would otherwise buy, made from what is already on the shelf.',
+    '2-10': 'Handwritten family recipe cards, gathered from Grandma Wilberg\u2019s kitchen.'
   };
 
   /* The app says staples where the printed books say the storehouse. The
@@ -966,9 +968,10 @@
   // ------------------------------------------------------------------ browse
   /** "1 hr 20 mins" -> 80. Used for sorting by how long something takes. */
   function timeMins(r) {
+    var d = r.time.match(/(\d+(?:\.\d+)?)\s*day/i);
     var h = r.time.match(/(\d+(?:\.\d+)?)\s*hr/i);
     var m = r.time.match(/(\d+)\s*min/i);
-    return (h ? parseFloat(h[1]) * 60 : 0) + (m ? parseInt(m[1], 10) : 0);
+    return (d ? parseFloat(d[1]) * 1440 : 0) + (h ? parseFloat(h[1]) * 60 : 0) + (m ? parseInt(m[1], 10) : 0);
   }
 
   var SORTS = {

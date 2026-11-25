@@ -136,7 +136,7 @@
     '1-1': 'morning', '2-1': 'morning', '1-6': 'morning',
     '1-3': 'mains', '2-2': 'mains', '1-4': 'mains', '2-3': 'mains', '2-4': 'mains', '2-7': 'mains',
     '1-2': 'snacks', '1-5': 'snacks', '1-7': 'snacks',
-    '2-5': 'sweets', '2-6': 'sweets', '2-8': 'sweets', '2-9': 'sweets'
+    '2-5': 'sweets', '2-6': 'sweets', '2-8': 'sweets', '2-9': 'sweets', '2-10': 'sweets'
   };
   var MEAL_GROUPS = [
     { id: 'morning', title: 'Mornings & Drinks' },

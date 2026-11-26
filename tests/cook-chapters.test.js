@@ -242,20 +242,23 @@ module.exports = {
     await dp.waitForTimeout(400);
     const dark = await dp.evaluate(() => {
       const card = document.querySelector('#grid .chap-card');
-      const art = document.querySelector('#grid img.chap-art');
-      const gwWrap = document.querySelector('#grid [data-chap^="2-10-"] .chap-art-wrap');
-      const gwArt = document.querySelector('#grid [data-chap^="2-10-"] img.chap-art');
+      const cardBg = card ? getComputedStyle(card).backgroundColor : '';
+      const wraps = [...document.querySelectorAll('#grid .chap-art-wrap:has(img.chap-art)')];
+      const arts = [...document.querySelectorAll('#grid img.chap-art')];
       return {
-        cardBg: card ? getComputedStyle(card).backgroundColor : '',
-        blend: art ? getComputedStyle(art).mixBlendMode : '',
-        gwBlend: gwArt ? getComputedStyle(gwArt).mixBlendMode : '',
-        gwFilter: gwArt ? getComputedStyle(gwArt).filter : '',
-        gwBg: gwWrap ? getComputedStyle(gwWrap).backgroundColor : '',
+        cardBg,
+        artCount: arts.length,
+        allMultiply: arts.every((img) => getComputedStyle(img).mixBlendMode === 'multiply'),
+        noneInverted: arts.every((img) => !/invert/.test(getComputedStyle(img).filter)),
+        allParchment: wraps.length === arts.length
+          && wraps.every((w) => getComputedStyle(w).backgroundColor !== cardBg),
+        sampleBg: wraps[0] ? getComputedStyle(wraps[0]).backgroundColor : '',
+        sampleFilter: arts[0] ? getComputedStyle(arts[0]).filter : '',
       };
     });
-    const okDark = dark.blend === 'screen' && !!dark.cardBg
-      && dark.gwBlend === 'multiply' && !!dark.gwBg && !/invert/.test(dark.gwFilter);
-    t.ok('dark mode screens chapter engravings and keeps Grandma Wilberg portrait uninverted',
+    const okDark = !!dark.cardBg && dark.artCount === 17
+      && dark.allMultiply && dark.noneInverted && dark.allParchment;
+    t.ok('dark mode renders all 17 chapter engravings uninverted on warm parchment plates',
       okDark, JSON.stringify(dark));
 
     await dp.setViewportSize({ width: 320, height: 640 });

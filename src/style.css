@@ -230,11 +230,9 @@
   --shadow-card-hover: oklch(0.62 0.10 55 / 0.14);
   --mwk-shade:         oklch(0 0 0 / 0.26);
   --chap-art-bg:     oklch(0.948 0.018 82);
+  --chap-art-img-bg: var(--chap-art-bg);
   --chap-art-filter: contrast(1.06);
   --chap-art-blend:  multiply;
-  --chap-art-portrait-bg:     var(--chap-art-bg);
-  --chap-art-portrait-filter: var(--chap-art-filter);
-  --chap-art-portrait-blend:  var(--chap-art-blend);
 
   /* ---- the score: a leaf, a word and a bar, in three bands -------------- */
   --score-good-ink:  oklch(0.34 0.10 148);
@@ -471,11 +469,9 @@
     --warn: oklch(0.78 0.11 50);
     --warn-2: var(--warn);
     --chap-art-bg: oklch(0.215 0.012 65);
-    --chap-art-filter: contrast(1.06) invert(1) sepia(0.18) brightness(0.9);
-    --chap-art-blend: screen;
-    --chap-art-portrait-bg: oklch(0.77 0.032 76);
-    --chap-art-portrait-filter: sepia(0.24) contrast(1.04) brightness(0.95);
-    --chap-art-portrait-blend: multiply;
+    --chap-art-img-bg: oklch(0.77 0.032 76);
+    --chap-art-filter: sepia(0.24) contrast(1.04) brightness(0.95);
+    --chap-art-blend: multiply;
 
     /* the header was always night; it goes a shade further so the page,
        now dark too, still sits under it */
@@ -1117,12 +1113,7 @@ select { max-width: 280px; }
   width: 100%; height: 100%; object-fit: contain;
   mix-blend-mode: var(--chap-art-blend); filter: var(--chap-art-filter);
 }
-.chap-art-wrap:has(img[src*="grandma-wilberg"]) {
-  background: var(--chap-art-portrait-bg);
-}
-.chap-art[src*="grandma-wilberg"] {
-  mix-blend-mode: var(--chap-art-portrait-blend); filter: var(--chap-art-portrait-filter);
-}
+.chap-art-wrap:has(img.chap-art) { background: var(--chap-art-img-bg); }
 .chap-art-mono { font-family: var(--serif); font-size: 2rem; color: var(--ochre-text); opacity: 0.7; }
 .chap-cnt {
   position: absolute; top: 6px; right: 6px;
@@ -1173,8 +1164,7 @@ select { max-width: 280px; }
   display: flex; align-items: center; justify-content: center; padding: 5px; flex: none;
 }
 .chap-thumb img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: var(--chap-art-blend); filter: var(--chap-art-filter); }
-.chap-thumb:has(img[src*="grandma-wilberg"]) { background: var(--chap-art-portrait-bg); }
-.chap-thumb img[src*="grandma-wilberg"] { mix-blend-mode: var(--chap-art-portrait-blend); filter: var(--chap-art-portrait-filter); }
+.chap-thumb:has(img) { background: var(--chap-art-img-bg); }
 .chap-hero-info { min-width: 0; flex: 1 1 auto; }
 .chap-hero-book { font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ochre-text); font-weight: 600; }
 .chap-hero-title { margin: 2px 0 0; font-family: var(--serif); font-size: 1.1875rem; font-weight: 600; color: var(--ink); line-height: 1.2; }

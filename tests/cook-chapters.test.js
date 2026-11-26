@@ -243,13 +243,19 @@ module.exports = {
     const dark = await dp.evaluate(() => {
       const card = document.querySelector('#grid .chap-card');
       const art = document.querySelector('#grid img.chap-art');
+      const gwWrap = document.querySelector('#grid [data-chap^="2-10-"] .chap-art-wrap');
+      const gwArt = document.querySelector('#grid [data-chap^="2-10-"] img.chap-art');
       return {
         cardBg: card ? getComputedStyle(card).backgroundColor : '',
         blend: art ? getComputedStyle(art).mixBlendMode : '',
+        gwBlend: gwArt ? getComputedStyle(gwArt).mixBlendMode : '',
+        gwFilter: gwArt ? getComputedStyle(gwArt).filter : '',
+        gwBg: gwWrap ? getComputedStyle(gwWrap).backgroundColor : '',
       };
     });
-    const okDark = dark.blend === 'screen' && !!dark.cardBg;
-    t.ok('dark mode screens chapter engravings seamlessly onto the warm dark card palette',
+    const okDark = dark.blend === 'screen' && !!dark.cardBg
+      && dark.gwBlend === 'multiply' && !!dark.gwBg && !/invert/.test(dark.gwFilter);
+    t.ok('dark mode screens chapter engravings and keeps Grandma Wilberg portrait uninverted',
       okDark, JSON.stringify(dark));
 
     await dp.setViewportSize({ width: 320, height: 640 });
